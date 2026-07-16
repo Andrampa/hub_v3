@@ -8,6 +8,8 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import {
   apiLinks,
+  BROWSER_EXPORT_LIMIT,
+  bulkDownloadScripts,
   buildWhere,
   downloadCsv,
   downloadGeoJson,
@@ -18,6 +20,7 @@ import {
   fieldIsNumeric,
   fieldIsText,
   HUB_DOWNLOAD_FORMATS,
+  hubDownloadRequest,
   resourceForDataset,
   usableFields,
   type DatasetDefinition,
@@ -61,6 +64,15 @@ function withTimeout<T>(promise: Promise<T>, message: string, timeout = 18000) {
 
 function fieldLabel(field: FeatureField) {
   return field.alias || field.name
+}
+
+function formatItemDate(value?: number) {
+  if (!value) return 'Not provided'
+  return new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(value))
+}
+
+function recommendedFilterFields(fields: FeatureField[]) {
+  return fields.filter((field) => /(^|_)(adm0_(name|iso3)|country|iso3|round|survey_round|cycle)($|_)/i.test(field.name))
 }
 
 function initialField(fields: FeatureField[]) {
@@ -117,9 +129,13 @@ export default function DatasetExplorer() {
 
   const resource = resourceForDataset(datasetId)
   const fields = useMemo(() => definition ? usableFields(definition.layer.fields) : [], [definition])
+  const recommendedFields = useMemo(() => recommendedFilterFields(fields), [fields])
+  const remainingFields = useMemo(() => fields.filter((field) => !recommendedFields.includes(field)), [fields, recommendedFields])
   const draftFieldDefinition = fields.find((field) => field.name === draftField)
   const where = useMemo(() => buildWhere(filters, fields), [filters, fields])
   const links = definition ? apiLinks(definition, where) : undefined
+  const scripts = definition ? bulkDownloadScripts(definition, where) : undefined
+  const overDownloadLimit = count !== undefined && count > BROWSER_EXPORT_LIMIT
 
   useEffect(() => {
     if (auth.status !== 'authenticated' || !datasetId) return
@@ -191,6 +207,10 @@ export default function DatasetExplorer() {
     window.setTimeout(() => setCopied(undefined), 1800)
   }
 
+  function downloadScript(source: string, filename: string, type: string) {
+    downloadBlob(new Blob([source], { type }), filename)
+  }
+
   async function exportCsv() {
     if (!definition || count === undefined) return
     setDownloadState('Preparing CSV download...')
@@ -212,6 +232,24 @@ export default function DatasetExplorer() {
       setDownloadState('GeoJSON download started.')
     } catch (error) {
       setDownloadState(error instanceof Error ? error.message : 'GeoJSON download could not be prepared.')
+    }
+  }
+
+  async function exportServerFormat(format: typeof HUB_DOWNLOAD_FORMATS[number]['format']) {
+    if (!definition || count === undefined) return
+    if (count > BROWSER_EXPORT_LIMIT) {
+      setDownloadState(`Filter this result to ${BROWSER_EXPORT_LIMIT.toLocaleString()} records or fewer before downloading.`)
+      return
+    }
+    const { descriptor, url, params } = hubDownloadRequest(definition, format, where)
+    setDownloadState(`Requesting ${descriptor.label} from the DIEM export service...`)
+    try {
+      const blob = await auth.downloadProtected(url, params)
+      downloadBlob(blob, `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}.${descriptor.extension}`)
+      setDownloadState(`${descriptor.label} download started.`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ''
+      setDownloadState(`${descriptor.label} could not be generated. ${message || 'The source item may not have this export format enabled.'}`)
     }
   }
 
@@ -244,22 +282,55 @@ export default function DatasetExplorer() {
             </section>
             <section className="dataset-explorer-workspace section-wrap">
               <aside className="dataset-control-panel">
-                <div className="control-panel-heading"><span><ExplorerIcon name="filter"/></span><div><strong>Filters</strong><small>Refine records before previewing or downloading.</small></div></div>
+                <section className="dataset-info-stack" aria-labelledby="dataset-about-heading">
+                  <span className="dataset-info-type">{definition.resource.item?.type || (definition.isTable ? 'Feature Table' : 'Feature Layer')}</span>
+                  <h2 id="dataset-about-heading">{definition.resource.item?.title || definition.resource.fallbackTitle}</h2>
+                  <p className="dataset-info-owner">Published by <strong>{definition.resource.item?.owner || 'FAO DIEM'}</strong></p>
+                  <p>{definition.resource.item?.snippet || definition.resource.description}</p>
+                  <div className="dataset-info-actions"><a href="#dataset-table">View data table</a><a href="#dataset-download">Download options</a></div>
+                  <a className="dataset-arcgis-link" href={links?.item} target="_blank" rel="noreferrer">View full ArcGIS details <ExplorerIcon name="external"/></a>
+                  <dl>
+                    <div><dt>Published</dt><dd>{formatItemDate(definition.resource.item?.created)}</dd></div>
+                    <div><dt>Information updated</dt><dd>{formatItemDate(definition.resource.item?.modified)}</dd></div>
+                    <div><dt>Data updated</dt><dd>{formatItemDate(definition.layer.editingInfo?.lastEditDate)}</dd></div>
+                    <div><dt>Records</dt><dd>{count === undefined ? 'Loading…' : count.toLocaleString()}</dd></div>
+                    <div><dt>Sharing</dt><dd>{definition.resource.item?.access === 'public' ? 'Public' : 'DIEM community access'}</dd></div>
+                    <div><dt>License</dt><dd>{definition.resource.item?.licenseInfo ? 'See item terms' : 'Creative Commons Attribution 4.0'}</dd></div>
+                    <div><dt>Layer</dt><dd>{definition.layer.name}</dd></div>
+                    <div><dt>Attributes</dt><dd>{fields.length.toLocaleString()}</dd></div>
+                  </dl>
+                </section>
+                <div className="control-panel-heading"><span><ExplorerIcon name="filter"/></span><div><strong>Filters</strong><small>Start with country and survey round to create a focused extract.</small></div></div>
                 <div className="filter-builder">
-                  <label><span>Attribute</span><select value={draftField} onChange={(event) => { setDraftField(event.target.value); setDraftOperator('equals') }}>{fields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</select></label>
+                  <label><span>Attribute</span><select value={draftField} onChange={(event) => { setDraftField(event.target.value); setDraftOperator('equals') }}>{recommendedFields.length > 0 && <optgroup label="Recommended: country and round">{recommendedFields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</optgroup>}<optgroup label="All attributes">{remainingFields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</optgroup></select></label>
                   <label><span>Condition</span><select value={draftOperator} onChange={(event) => setDraftOperator(event.target.value as DatasetFilter['operator'])}>{operatorOptions(draftFieldDefinition).map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
                   <label><span>Value</span><input value={draftValue} onChange={(event) => setDraftValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') addFilter() }} placeholder={fieldIsText(draftFieldDefinition) ? 'Enter a value' : 'Enter a number'} /></label>
                   <button type="button" onClick={addFilter} disabled={!draftValue.trim()}>Add filter <ExplorerIcon name="arrow"/></button>
                 </div>
-                <div className="active-filters" aria-live="polite">{filters.length ? filters.map((filter) => <span key={filter.id}>{fieldLabel(fields.find((field) => field.name === filter.fieldName) || { name: filter.fieldName, alias: filter.fieldName, type: '' })} <em>{filter.operator === 'contains' ? 'contains' : filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='}</em> {filter.value}<button type="button" onClick={() => setFilters((current) => current.filter((candidate) => candidate.id !== filter.id))} aria-label={`Remove ${filter.fieldName} filter`}><ExplorerIcon name="close"/></button></span>) : <p>No filters applied. The complete dataset is being queried.</p>}</div>
+                <div className="active-filters" aria-live="polite">{filters.length ? filters.map((filter) => <span key={filter.id}>{fieldLabel(fields.find((field) => field.name === filter.fieldName) || { name: filter.fieldName, alias: filter.fieldName, type: '' })} <em>{filter.operator === 'contains' ? 'contains' : filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='}</em> {filter.value}<button type="button" onClick={() => setFilters((current) => current.filter((candidate) => candidate.id !== filter.id))} aria-label={`Remove ${filter.fieldName} filter`}><ExplorerIcon name="close"/></button></span>) : <p>No filters applied. Choose a country and round before downloading.</p>}</div>
                 {filters.length > 0 && <button className="clear-filters" type="button" onClick={() => setFilters([])}>Clear all filters</button>}
-                <div className="download-panel"><div><ExplorerIcon name="download"/><strong>Download filtered data</strong><p>CSV and GeoJSON are generated directly from the current authenticated query.</p></div><span className="download-group-label">Available now</span><div className="download-format-grid"><button type="button" onClick={() => void exportCsv()} disabled={count === undefined || isQuerying}>CSV</button>{!definition.isTable && <button type="button" onClick={() => void exportGeoJson()} disabled={count === undefined || isQuerying}>GeoJSON</button>}</div>{!definition.isTable && <><span className="download-group-label">Requires export service</span><div className="download-format-grid">{HUB_DOWNLOAD_FORMATS.filter((candidate) => !['csv', 'geojson'].includes(candidate.format) && candidate.spatial).map((candidate) => <span className="download-format-pending" key={candidate.format} title="Requires a configured server-side export service">{candidate.label}</span>)}</div><p className="download-export-note">These packaged formats will be enabled after the Hub export configuration or replacement export worker is validated.</p></>}{downloadState && <p className="download-status" role="status">{downloadState}</p>}</div>
+                <div className="download-panel" id="dataset-download">
+                  <div><ExplorerIcon name="download"/><strong>Download filtered data</strong><p>The portal prepares files only when the current result contains 20,000 records or fewer.</p></div>
+                  <div className={`download-limit ${overDownloadLimit ? 'is-over-limit' : 'is-ready'}`} role="status">
+                    <strong>{count === undefined ? 'Checking result size…' : overDownloadLimit ? `${count.toLocaleString()} records — filter required` : `${count.toLocaleString()} records — ready`}</strong>
+                    <span>{overDownloadLimit ? 'Add country and round filters, or use a bulk API script below.' : `Within the ${BROWSER_EXPORT_LIMIT.toLocaleString()}-record download limit.`}</span>
+                  </div>
+                  <span className="download-group-label">Direct downloads</span>
+                  <div className="download-format-grid"><button type="button" onClick={() => void exportCsv()} disabled={count === undefined || isQuerying || overDownloadLimit}>CSV</button>{!definition.isTable && <button type="button" onClick={() => void exportGeoJson()} disabled={count === undefined || isQuerying || overDownloadLimit}>GeoJSON</button>}</div>
+                  <span className="download-group-label">Packaged formats</span>
+                  <div className="download-format-grid">{HUB_DOWNLOAD_FORMATS.filter((candidate) => !['csv', 'geojson'].includes(candidate.format) && (!candidate.spatial || !definition.isTable)).map((candidate) => <button type="button" key={candidate.format} onClick={() => void exportServerFormat(candidate.format)} disabled={count === undefined || isQuerying || overDownloadLimit}>{candidate.label}</button>)}</div>
+                  {downloadState && <p className="download-status" role="status">{downloadState}</p>}
+                </div>
+                <details className="bulk-script-panel">
+                  <summary><ExplorerIcon name="code"/> Bulk API scripts <span>Python and R</span></summary>
+                  {scripts && <div><p>For larger extractions, run a script with your own short-lived ArcGIS token. The current filters are already included.</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
+                </details>
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{label === 'query' ? 'Filtered query' : label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>
               <div className="dataset-results-panel">
                 <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : `Previewing ${previewRows.length.toLocaleString()} records`}</span><span>{definition.layer.name}</span></div>
                 {!definition.isTable && (isMapLoading ? <div className="dataset-map-loading"><span className="loader"/><strong>Loading map geometry</strong><p>The data table remains available while spatial features load.</p></div> : geometry ? <DatasetGeometryMap collection={geometry} totalCount={count || 0} /> : <div className="dataset-map-unavailable"><strong>Map preview is temporarily unavailable.</strong><p>{mapError || 'The service did not return geometry for the current filters.'}</p></div>)}
-                <section className="dataset-table-section" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {fields.length.toLocaleString()} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <div className="dataset-table-scroll"><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</div>}</section>
+                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {fields.length.toLocaleString()} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <div className="dataset-table-scroll"><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</div>}</section>
               </div>
             </section>
           </>

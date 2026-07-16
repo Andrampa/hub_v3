@@ -23,7 +23,7 @@ The client ID is public application configuration. No client secret belongs in t
 6. A valid identity is retained in `sessionStorage` for reloads in the same browser tab.
 7. Sign-out revokes the ArcGIS session where possible and always removes local session data.
 
-The context exposes `requestProtected`, an authenticated request closure used by `/data`. It does not expose the identity manager or token to page components.
+The context exposes `requestProtected` for JSON requests and `downloadProtected` for binary export responses used by `/data`. Both closures retain the identity manager and token inside the provider; page components receive neither.
 
 ## Security Invariants
 

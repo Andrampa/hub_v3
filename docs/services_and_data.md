@@ -36,6 +36,8 @@ Authentication uses the separate community portal and OAuth client described in 
 - `authoritativeResourceUrl`: authenticated ArcGIS item details/download destination.
 - `fetchDatasetDefinition`, `fetchRecordCount`, `fetchTablePreview`, and `fetchGeometryPreview`: internal protected explorer requests.
 - `downloadCsv` and `downloadGeoJson`: browser-generated exports capped at 20,000 matching records.
+- `bulkDownloadScripts`: token-free Python/R templates that preserve the current filter and batch large ArcGIS queries by object ID.
+- `hubDownloadRequest`: authenticated bridge to the existing DIEM Hub packaged-download generator for formats that require server-side creation.
 - `itemThumbnail`: ArcGIS thumbnail URL.
 - `itemDestination`: published URL when present, otherwise ArcGIS item page.
 
@@ -56,5 +58,7 @@ Only React in-memory state. Browser and ArcGIS HTTP caches may apply. There is n
 - Country pages depend on publisher-maintained group categories, which can be missing, malformed, or multiply assigned.
 - A resource URL can fail while the ArcGIS item remains valid.
 - Item metadata may not expose a feature service, a service may have tables instead of geometry, and service field schemas can change without code changes.
+- Packaged formats depend on the existing Hub download generator and each item's export configuration; a format can fail independently even when live queries succeed.
+- The dataset map uses the public ArcGIS World Light Gray Canvas base and reference tile services. Failure of those tiles must not block filters, table previews, API links or downloads.
 
 Future thematic sections should define explicit item IDs, controlled categories, or reviewed query rules. Protected requests must pass the active ArcGIS authentication manager through the service boundary and rely on ArcGIS access responses.

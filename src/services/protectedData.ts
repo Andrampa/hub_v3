@@ -26,9 +26,15 @@ export interface ProtectedArcGISItem {
   title: string
   type: string
   owner: string
+  created?: number
   modified: number
   url?: string
   access: string
+  snippet?: string
+  description?: string
+  licenseInfo?: string
+  numViews?: number
+  size?: number
 }
 
 export interface ResolvedDataResource extends ProtectedDataResource {

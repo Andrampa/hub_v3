@@ -8,10 +8,12 @@ Browser
   -> ArcGIS OAuth with PKCE (optional community session)
   -> typed ArcGIS catalog service
   -> ArcGIS Online Portal REST API
+  -> public ArcGIS light-gray basemap tiles
+  -> existing DIEM Hub packaged-download generator (transitional)
   -> authoritative item/resource links
 ```
 
-The initial release is a static single-page app with no custom backend or database.
+The initial release is a static single-page app with no custom backend or database. Packaged dataset formats temporarily reuse the existing DIEM Hub download generator; this is an external runtime dependency, not a competing data store.
 
 ## Startup / Execution Sequence
 
@@ -36,7 +38,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
 - `src/pages/DatasetExplorer.tsx`: internal map, filter, preview, export and API experience for a protected data service.
-- `src/components/DatasetGeometryMap.tsx`: projected service geometry over a published world basemap.
+- `src/components/DatasetGeometryMap.tsx`: Leaflet map over the public ArcGIS light-gray basemap, with filtered service geometry, tooltips, popups and extent controls.
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
 - `src/data-access.css`: data workspace visual and responsive behavior.
@@ -55,9 +57,9 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - Theme and country inference never determines authorization.
 - ArcGIS errors produce an explicit retry state.
 - Authentication requires the exact community organization ID; authenticated status never replaces item-level ArcGIS authorization.
-- Tokens and the identity manager stay outside page components; protected resources are requested through `AuthContext.requestProtected`.
+- Tokens and the identity manager stay outside page components; protected JSON and binary resources are requested through `AuthContext.requestProtected` and `AuthContext.downloadProtected`.
 - Data explorer API links never embed a token; browser exports use in-memory authenticated requests with a bounded record limit.
 
 ## Infrastructure
 
-Any static host that supports the Vite `dist/` output and rewrites SPA routes to `index.html` is sufficient. Hosting and deployment are not yet selected.
+Any static host that supports the Vite `dist/` output and rewrites SPA routes to `index.html` is sufficient. Packaged downloads also require the existing DIEM Hub generator to remain reachable and the source items to retain their export configuration. Hosting and deployment are not yet selected.

@@ -18,6 +18,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>
   clearError: () => void
   requestProtected: <T>(url: string, params?: Record<string, unknown>) => Promise<T>
+  downloadProtected: (url: string, params?: Record<string, unknown>) => Promise<Blob>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -95,6 +96,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authentication: manager,
         params: { f: 'json', ...params },
       }) as Promise<T>
+    },
+    async downloadProtected(url: string, params: Record<string, unknown> = {}) {
+      if (!manager || status !== 'authenticated') {
+        throw new Error('Sign in with a DIEM community account to download this resource.')
+      }
+      const response = await request(url, {
+        authentication: manager,
+        httpMethod: 'GET',
+        params,
+        rawResponse: true,
+      }) as Response
+      if (!response.ok) throw new Error(`The export service responded with HTTP ${response.status}.`)
+      const contentType = response.headers.get('content-type') || ''
+      if (/application\/json/i.test(contentType)) {
+        const payload = await response.clone().json() as { error?: { message?: string }; message?: string }
+        const message = payload.error?.message || payload.message
+        if (message) throw new Error(message)
+      }
+      return response.blob()
     },
   }), [error, manager, status, user])
 

@@ -40,7 +40,7 @@ Stable item IDs are configuration. Titles and modified dates are read live after
 - `/data` anonymous state: purpose, protection rationale, sign-in and access-form links.
 - Authenticated hero: user identity and count of resources available to that account.
 - `/data/:datasetId`: internal dataset explorer for supported microdata, aggregated data and boundary resources.
-- Explorer: real ArcGIS service geometry where available, attribute filter builder, matching-record count, table preview, copyable service/query URLs, and current-filter CSV/GeoJSON downloads.
+- Explorer: real ArcGIS service geometry where available, interactive labelled basemap with selectable features and extent controls, live item/layer metadata, recommended country/round filters, matching-record count, table preview, copyable service/query URLs, and current-filter downloads.
 - Microdata: current versus archived structure, anonymization note and one-year renewable access pathway.
 - Aggregated data: switch between current and 2021–2022 archive across four thematic areas.
 - Guides and metadata: protected French/Spanish guides, field descriptions, codebook and questionnaires.
@@ -52,12 +52,20 @@ Stable item IDs are configuration. Titles and modified dates are read live after
 
 The application resolves the configured ArcGIS item to its feature service and layer after login. It uses the active identity for count, preview, geometry and export queries, while keeping the user inside Hub 3.0.
 
-- Map preview uses real GeoJSON geometry from up to 3,000 matching records.
+- Map preview converts native ArcGIS geometry from up to 250 matching records, preserves polygon ring direction and holes, and renders it through Leaflet over ArcGIS Online's public light-gray base and reference tiles. Users can pan, zoom, reset to the filtered extent, hover and select features.
 - Table preview returns the first 30 matching records.
 - CSV and GeoJSON are generated locally from authenticated filtered queries of up to 20,000 records.
 - API links expose the service, layer, filtered query, item and item-data endpoints without including a token. Users supply their own authenticated session or token in scripts and GIS tools.
 
-CSV and GeoJSON are generated directly in the browser from bounded, authenticated feature-service queries. ArcGIS Hub SaaS previously supplied a separate server-side download pipeline for cached and packaged formats. Shapefile, KML/KMZ, File Geodatabase, GeoPackage, SQLite and large exports therefore require either a validated Hub export configuration for these private items or a DIEM-owned export worker. They must not be presented as active controls until that server-side path passes an authenticated end-to-end test. Do not expose a token in a hand-built URL or attempt owner-only ArcGIS export operations from the browser.
+Every portal download format is disabled while the current filtered result exceeds 20,000 records. The filter selector prioritizes country and survey-round fields, and the download panel explains whether the current result is ready or needs further filtering. CSV and GeoJSON are generated directly in the browser from bounded, authenticated feature-service queries. Excel, Shapefile, KML/KMZ, File Geodatabase, GeoPackage and SQLite currently use the existing DIEM Hub `/api/download/v1/items/{itemId}/{format}` generator with the selected layer and current `where` clause. The request uses `AuthContext.downloadProtected`; tokens are never placed in hand-built links or exposed to page components. Availability still depends on the source item's ArcGIS Hub export settings, so every format requires an authenticated acceptance test and returns an explicit error when generation is unavailable.
+
+For bulk extraction, the explorer generates downloadable and copyable Python and R scripts. Each script includes the current filter, reads a user-supplied short-lived token from `ARCGIS_TOKEN`, requests object IDs first, queries records in 1,000-ID batches and writes a CSV. Tokens are never embedded by the portal.
+
+### Export-service decision (Phase 2)
+
+DIEM Hub 3.0 will ultimately remove this remaining ArcGIS Hub dependency through a DIEM-owned asynchronous export service. That service will authorize a request against ArcGIS Online, paginate large feature queries, generate server-side packages, store each file temporarily and return an expiring download URL. It requires API/worker hosting, a queue and temporary object storage, so it is explicitly deferred to Phase 2 rather than being bundled into the initial static web-app deployment.
+
+Until Phase 2 is delivered, all portal file formats are limited to filtered results of 20,000 features or fewer. Generated Python/R scripts, API links and the ArcGIS item/service pages are the routes for larger or specialist workflows. The legacy Hub generator is transitional only and must not be treated as the permanent download contract.
 
 ## Failure States
 

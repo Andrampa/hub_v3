@@ -19,5 +19,7 @@
 | Protected data item | `GET /sharing/rest/content/items/{itemId}` on the community portal | Active community identity; ArcGIS item/group sharing | Authenticated `/data` workspace |
 | Protected feature service and layer | `GET {item.url}` and `GET {item.url}/{layerId}` | Active community identity | Internal `/data/:datasetId` schema discovery |
 | Filtered layer query | `GET {item.url}/{layerId}/query` | Active community identity | Record count, map/table preview, CSV and GeoJSON export |
+| Packaged dataset export | `GET https://data-in-emergencies.fao.org/api/download/v1/items/{itemId}/{format}` with `layers` and `where` | Active community identity | Excel, Shapefile, KML/KMZ, File Geodatabase, GeoPackage and SQLite downloads |
+| Dataset basemap | `https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}` and `.../World_Light_Gray_Reference/...` | Public | Interactive geographic context and labels behind filtered DIEM features |
 
 Portal origin: `https://www.arcgis.com`.

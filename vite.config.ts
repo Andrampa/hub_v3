@@ -5,8 +5,8 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 export default defineConfig(({ mode }) => ({
   plugins: [react(), ...(mode === 'http-test' ? [] : [basicSsl()])],
   server: {
-    host: 'localhost',
-    port: 5173,
+    host: mode === 'http-test' ? '127.0.0.1' : 'localhost',
+    port: mode === 'http-test' ? 4174 : 5173,
     strictPort: true,
   },
   build: {

@@ -43,6 +43,7 @@ export interface FeatureLayerInfo {
   supportsStatistics?: boolean
   supportedQueryFormats?: string
   extent?: { spatialReference?: { wkid?: number } }
+  editingInfo?: { lastEditDate?: number }
 }
 
 export interface DatasetDefinition {
@@ -183,7 +184,14 @@ export async function fetchGeometryPreview(
   const response = await requester<EsriGeometryResponse>(`${definition.layerUrl}/query`, {
     f: 'json',
     where,
-    outFields: [definition.layer.objectIdField, definition.layer.displayField].filter(Boolean).join(',') || '*',
+    outFields: Array.from(new Set([
+      definition.layer.objectIdField,
+      definition.layer.displayField,
+      ...usableFields(definition.layer.fields)
+        .filter((field) => /^(adm[0-2]_(name|iso3)|adm_name|country|name)$/i.test(field.name))
+        .slice(0, 8)
+        .map((field) => field.name),
+    ].filter(Boolean))).join(',') || '*',
     returnGeometry: 'true',
     outSR: '4326',
     geometryPrecision: '4',
@@ -202,6 +210,46 @@ function normalizePosition(position: number[]) {
   return [longitude, latitude, ...rest]
 }
 
+function signedRingArea(ring: number[][]) {
+  let area = 0
+  for (let index = 0; index < ring.length - 1; index += 1) {
+    const current = ring[index]
+    const next = ring[index + 1]
+    area += (current[0] * next[1]) - (next[0] * current[1])
+  }
+  return area / 2
+}
+
+function pointInRing(point: number[], ring: number[][]) {
+  let inside = false
+  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+    const [x, y] = ring[index]
+    const [previousX, previousY] = ring[previous]
+    const crosses = ((y > point[1]) !== (previousY > point[1]))
+      && (point[0] < ((previousX - x) * (point[1] - y)) / ((previousY - y) || Number.EPSILON) + x)
+    if (crosses) inside = !inside
+  }
+  return inside
+}
+
+function arcgisRingsToGeoJson(rings: number[][][]) {
+  const normalized = rings.map((ring) => ring.map(normalizePosition))
+  const outerRings = normalized.filter((ring) => signedRingArea(ring) < 0)
+  const holeRings = normalized.filter((ring) => signedRingArea(ring) >= 0)
+
+  if (!outerRings.length) {
+    return normalized.map((ring) => [signedRingArea(ring) < 0 ? [...ring].reverse() : ring])
+  }
+
+  const polygons = outerRings.map((ring) => [[...ring].reverse()])
+  for (const hole of holeRings) {
+    const ownerIndex = outerRings.findIndex((outer) => pointInRing(hole[0], outer))
+    if (ownerIndex >= 0) polygons[ownerIndex].push([...hole].reverse())
+    else polygons.push([hole])
+  }
+  return polygons
+}
+
 function esriGeometryToGeoJson(
   geometryType: EsriGeometryResponse['geometryType'],
   geometry: EsriGeometryFeature['geometry'],
@@ -218,10 +266,10 @@ function esriGeometryToGeoJson(
       : { type: 'MultiLineString', coordinates: paths }
   }
   if (geometryType === 'esriGeometryPolygon' && geometry.rings) {
-    const rings = geometry.rings.map((ring) => ring.map(normalizePosition))
-    return rings.length === 1
-      ? { type: 'Polygon', coordinates: rings }
-      : { type: 'MultiPolygon', coordinates: rings.map((ring) => [ring]) }
+    const polygons = arcgisRingsToGeoJson(geometry.rings)
+    return polygons.length === 1
+      ? { type: 'Polygon', coordinates: polygons[0] }
+      : { type: 'MultiPolygon', coordinates: polygons }
   }
   return undefined
 }
@@ -317,16 +365,28 @@ export async function downloadGeoJson(
 
 export type HubDownloadFormat = 'csv' | 'shp' | 'geojson' | 'kml' | 'filegdb' | 'xlsx' | 'sqlite' | 'geopackage'
 
-export const HUB_DOWNLOAD_FORMATS: Array<{ format: HubDownloadFormat; label: string; spatial: boolean }> = [
-  { format: 'csv', label: 'CSV', spatial: false },
-  { format: 'xlsx', label: 'Excel', spatial: false },
-  { format: 'shp', label: 'Shapefile', spatial: true },
-  { format: 'geojson', label: 'GeoJSON', spatial: true },
-  { format: 'kml', label: 'KML / KMZ', spatial: true },
-  { format: 'filegdb', label: 'File Geodatabase', spatial: true },
-  { format: 'geopackage', label: 'GeoPackage', spatial: true },
-  { format: 'sqlite', label: 'SQLite', spatial: true },
+export const HUB_DOWNLOAD_FORMATS: Array<{ format: HubDownloadFormat; label: string; spatial: boolean; route: string; extension: string }> = [
+  { format: 'csv', label: 'CSV', spatial: false, route: 'csv', extension: 'csv' },
+  { format: 'xlsx', label: 'Excel', spatial: false, route: 'excel', extension: 'xlsx' },
+  { format: 'shp', label: 'Shapefile', spatial: true, route: 'shapefile', extension: 'zip' },
+  { format: 'geojson', label: 'GeoJSON', spatial: true, route: 'geojson', extension: 'geojson' },
+  { format: 'kml', label: 'KML / KMZ', spatial: true, route: 'kml', extension: 'kmz' },
+  { format: 'filegdb', label: 'File Geodatabase', spatial: true, route: 'filegdb', extension: 'zip' },
+  { format: 'geopackage', label: 'GeoPackage', spatial: true, route: 'geoPackage', extension: 'gpkg' },
+  { format: 'sqlite', label: 'SQLite', spatial: true, route: 'sqlite', extension: 'sqlite' },
 ]
+
+const DIEM_HUB_DOWNLOAD_API = 'https://data-in-emergencies.fao.org/api/download/v1/items'
+
+export function hubDownloadRequest(definition: DatasetDefinition, format: HubDownloadFormat, where: string) {
+  const descriptor = HUB_DOWNLOAD_FORMATS.find((candidate) => candidate.format === format)
+  if (!descriptor) throw new Error('This download format is not configured.')
+  return {
+    descriptor,
+    url: `${DIEM_HUB_DOWNLOAD_API}/${definition.resource.id}/${descriptor.route}`,
+    params: { layers: String(definition.layer.id), where },
+  }
+}
 
 export function apiLinks(definition: DatasetDefinition, where: string) {
   const query = new URLSearchParams({
@@ -342,4 +402,89 @@ export function apiLinks(definition: DatasetDefinition, where: string) {
     item: `${DATA_PORTAL}/home/item.html?id=${definition.resource.id}`,
     itemData: `${DATA_REST}/content/items/${definition.resource.id}/data?f=json`,
   }
+}
+
+export function bulkDownloadScripts(definition: DatasetDefinition, where: string) {
+  const queryUrl = `${definition.layerUrl}/query`
+  const filename = `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-bulk.csv`
+  const python = `# DIEM bulk attribute download (Python 3, standard library only)
+# Set a short-lived ArcGIS token before running:
+# Windows PowerShell: $env:ARCGIS_TOKEN="your-token"
+import csv
+import json
+import os
+import urllib.parse
+import urllib.request
+
+QUERY_URL = ${JSON.stringify(queryUrl)}
+WHERE = ${JSON.stringify(where)}
+OUTPUT = ${JSON.stringify(filename)}
+TOKEN = os.environ["ARCGIS_TOKEN"]
+
+def arcgis_post(parameters):
+    body = urllib.parse.urlencode({"f": "json", "token": TOKEN, **parameters}).encode()
+    with urllib.request.urlopen(QUERY_URL, body) as response:
+        payload = json.load(response)
+    if "error" in payload:
+        raise RuntimeError(payload["error"])
+    return payload
+
+id_result = arcgis_post({"where": WHERE, "returnIdsOnly": "true"})
+object_ids = id_result.get("objectIds", [])
+rows = []
+for start in range(0, len(object_ids), 1000):
+    page = arcgis_post({
+        "objectIds": ",".join(map(str, object_ids[start:start + 1000])),
+        "outFields": "*",
+        "returnGeometry": "false",
+    })
+    rows.extend(feature["attributes"] for feature in page.get("features", []))
+
+if rows:
+    with open(OUTPUT, "w", newline="", encoding="utf-8-sig") as target:
+        writer = csv.DictWriter(target, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+print(f"Saved {len(rows):,} records to {OUTPUT}")
+`
+  const r = `# DIEM bulk attribute download (R)
+# Packages: install.packages(c("httr", "jsonlite"))
+# Set a short-lived token before running:
+# Sys.setenv(ARCGIS_TOKEN="your-token")
+library(httr)
+library(jsonlite)
+
+query_url <- ${JSON.stringify(queryUrl)}
+where <- ${JSON.stringify(where)}
+output <- ${JSON.stringify(filename)}
+token <- Sys.getenv("ARCGIS_TOKEN")
+if (token == "") stop("Set ARCGIS_TOKEN before running this script.")
+
+arcgis_post <- function(parameters) {
+  response <- POST(query_url, body = c(list(f="json", token=token), parameters), encode="form")
+  stop_for_status(response)
+  payload <- fromJSON(content(response, as="text", encoding="UTF-8"), simplifyVector=TRUE)
+  if (!is.null(payload$error)) stop(toJSON(payload$error, auto_unbox=TRUE))
+  payload
+}
+
+id_result <- arcgis_post(list(where=where, returnIdsOnly="true"))
+object_ids <- unlist(id_result$objectIds)
+pages <- list()
+if (length(object_ids) > 0) {
+  for (start in seq(1, length(object_ids), by=1000)) {
+    batch <- object_ids[start:min(start + 999, length(object_ids))]
+    page <- arcgis_post(list(
+      objectIds=paste(batch, collapse=","),
+      outFields="*",
+      returnGeometry="false"
+    ))
+    pages[[length(pages) + 1]] <- page$features$attributes
+  }
+}
+result <- if (length(pages)) do.call(rbind, pages) else data.frame()
+write.csv(result, output, row.names=FALSE, fileEncoding="UTF-8")
+message(sprintf("Saved %s records to %s", format(nrow(result), big.mark=","), output))
+`
+  return { python, r }
 }
