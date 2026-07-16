@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
-export function SiteHeader({ active }: { active: 'home' | 'countries' }) {
+export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' }) {
   const auth = useAuth()
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
@@ -17,8 +17,9 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' }) {
           <span><strong>DIEM</strong><small>Hub 3.0</small></span>
         </Link>
         <div className="nav-links">
-          <a className={active === 'home' ? 'active' : ''} href="/#catalog">Explore data</a>
+          <a className={active === 'home' ? 'active' : ''} href="/#catalog">Public catalog</a>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
+          <Link className={active === 'data' ? 'active' : ''} to="/data">Data access</Link>
           <a href="/#about">About DIEM</a>
         </div>
         <div className="auth-actions">
@@ -64,4 +65,3 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' }) {
     </header>
   )
 }
-

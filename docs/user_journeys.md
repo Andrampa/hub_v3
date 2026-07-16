@@ -23,6 +23,23 @@
 
 Success means reaching relevant evidence with its original context and metadata intact.
 
+## Authenticated Data Journey
+
+1. Anonymous user opens `/data` and sees the collections, protection rationale and sign-in action without protected metadata.
+2. User signs in with an enabled DIEM community identity and returns to the workspace.
+3. The page checks each item against ArcGIS sharing and clearly distinguishes available and restricted resources.
+4. User opens current or archived microdata, aggregated thematic data, language guides or administrative boundaries.
+5. A user without microdata permission follows the renewable one-year access-request pathway.
+6. User can reach field descriptions, codebooks, questionnaires, API examples, labelling tools, citations and licensing from the same workspace.
+
+## Dataset Explorer Journey
+
+1. Authenticated user selects an available microdata, aggregated or boundary dataset.
+2. The internal `/data/:datasetId` route reads the permitted ArcGIS service and layer.
+3. User composes attribute filters, sees the matching record count and inspects the map or tabular preview.
+4. User downloads the current filtered result as CSV or GeoJSON, or copies a token-free service/query URL for scripted or GIS use.
+5. A large export explains the browser limit and directs the user to use the service API rather than silently truncating data.
+
 ## Country Discovery Journey
 
 1. User searches by country name or ISO3, selects a region, or explores the map.

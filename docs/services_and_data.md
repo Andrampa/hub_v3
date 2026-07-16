@@ -19,6 +19,10 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 - ISO3 and Item Type category parsing and normalization
 - Country summaries and cross-country (`XXX`) content
 
+`src/services/protectedData.ts` contains stable item IDs for the authenticated data workspace and resolves their metadata through the active community identity. The service preserves restricted and request-failure states per item instead of treating a successful login as blanket authorization.
+
+`src/services/dataExplorer.ts` resolves a permitted item to its feature service and first available layer or table. It only accepts configured item IDs, builds clauses from layer schema fields, and keeps client-side preview/export limits explicit.
+
 The first response provides `total`; remaining pages are fetched concurrently. No token is used in Phase 1.
 
 Authentication uses the separate community portal and OAuth client described in `docs/authentication.md`. The public catalog still uses anonymous requests. Protected catalog requests will receive the active user authentication manager only after their group IDs and product behavior are approved.
@@ -28,6 +32,10 @@ Authentication uses the separate community portal and OAuth client described in 
 - `fetchCatalog`: group plus complete paginated item inventory.
 - `fetchCountryCatalog`: complete country-group inventory with group categories.
 - `resourcesForCountry`: resources assigned to an ISO3 code.
+- `fetchProtectedDataWorkspace`: permission-aware protected item inventory.
+- `authoritativeResourceUrl`: authenticated ArcGIS item details/download destination.
+- `fetchDatasetDefinition`, `fetchRecordCount`, `fetchTablePreview`, and `fetchGeometryPreview`: internal protected explorer requests.
+- `downloadCsv` and `downloadGeoJson`: browser-generated exports capped at 20,000 matching records.
 - `itemThumbnail`: ArcGIS thumbnail URL.
 - `itemDestination`: published URL when present, otherwise ArcGIS item page.
 
@@ -37,7 +45,7 @@ The public group contains documents, files, StoryMaps, web maps, services, Hub p
 
 ## Caches
 
-Only React in-memory state. Browser and ArcGIS HTTP caches may apply. There is no service worker or persistent application cache.
+Only React in-memory state. Browser and ArcGIS HTTP caches may apply. There is no service worker or persistent application cache. Protected item metadata is removed when authentication is lost.
 
 ## Data Drift Risks
 
@@ -47,5 +55,6 @@ Only React in-memory state. Browser and ArcGIS HTTP caches may apply. There is n
 - Homepage country/theme classifications remain provisional inferences.
 - Country pages depend on publisher-maintained group categories, which can be missing, malformed, or multiply assigned.
 - A resource URL can fail while the ArcGIS item remains valid.
+- Item metadata may not expose a feature service, a service may have tables instead of geometry, and service field schemas can change without code changes.
 
 Future thematic sections should define explicit item IDs, controlled categories, or reviewed query rules. Protected requests must pass the active ArcGIS authentication manager through the service boundary and rely on ArcGIS access responses.

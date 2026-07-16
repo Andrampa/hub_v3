@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { ArcGISIdentityManager } from '@esri/arcgis-rest-request'
+import { request, type ArcGISIdentityManager } from '@esri/arcgis-rest-request'
 import {
   CommunityAccessError,
   restoreSession,
@@ -17,6 +17,7 @@ interface AuthContextValue {
   signIn: () => Promise<void>
   signOut: () => Promise<void>
   clearError: () => void
+  requestProtected: <T>(url: string, params?: Record<string, unknown>) => Promise<T>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -86,6 +87,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearError() {
       setError(null)
     },
+    async requestProtected<T>(url: string, params: Record<string, unknown> = {}) {
+      if (!manager || status !== 'authenticated') {
+        throw new Error('Sign in with a DIEM community account to access this resource.')
+      }
+      return request(url, {
+        authentication: manager,
+        params: { f: 'json', ...params },
+      }) as Promise<T>
+    },
   }), [error, manager, status, user])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -96,4 +106,3 @@ export function useAuth() {
   if (!context) throw new Error('useAuth must be used within AuthProvider')
   return context
 }
-

@@ -23,12 +23,15 @@ The client ID is public application configuration. No client secret belongs in t
 6. A valid identity is retained in `sessionStorage` for reloads in the same browser tab.
 7. Sign-out revokes the ArcGIS session where possible and always removes local session data.
 
+The context exposes `requestProtected`, an authenticated request closure used by `/data`. It does not expose the identity manager or token to page components.
+
 ## Security Invariants
 
 - Never accept a username, email domain, role, tag, or UI choice as proof of membership.
 - Never expose or request an ArcGIS password or client secret.
 - Reject accounts from FAO's employee organization and every unrelated ArcGIS organization.
 - Let ArcGIS sharing and group membership authorize protected items; successful login alone does not grant item access.
+- Do not request protected data metadata before authentication or render stale protected state after sign-out.
 - Do not log serialized sessions, access tokens, refresh tokens, or OAuth callback query parameters.
 - Account creation remains owned by the ArcGIS community organization.
 
@@ -48,4 +51,3 @@ Redirect URLs must match registered OAuth credential URLs. Add a separate HTTPS 
 - Expired session restoration.
 - Sign-out and reload.
 - Protected item shared and not shared with the active community member.
-

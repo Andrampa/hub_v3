@@ -4,11 +4,15 @@ All notable documentation and implementation changes. Most recent entry first.
 
 ## Current State
 
-- Status: public catalog, country explorer, and DIEM community authentication implemented
+- Status: public catalog, country explorer, protected data workspace, and DIEM community authentication implemented
 - Active branch/workflow: `main`, uncommitted initial setup
 - In progress: end-to-end community-account acceptance test; see `docs/handoff.md`
 
 ## Lessons Learned
+
+- 2026-07-16: The supplied microdata, aggregated, guide and boundary items reject anonymous metadata requests, so the data page must authenticate before inventory loading and preserve ArcGIS item/group authorization.
+- 2026-07-16: Large or heterogeneous ArcGIS datasets should initially use the authoritative item download workflow; native browser exports require service-by-service capability and size validation.
+- 2026-07-16: Protected feature services can power an internal explorer after ArcGIS has authorized the item; schema-driven filters and bounded browser exports avoid duplicating data or exposing credentials.
 
 - 2026-07-16: Group-specific category assignments are returned by `/content/groups/{groupId}/search`; global search is insufficient for the country experience.
 - 2026-07-16: Observed country assignments can be ahead of the group category schema, so the directory must derive from item assignments and normalize defensively.
@@ -26,6 +30,19 @@ All notable documentation and implementation changes. Most recent entry first.
 - Added strict enabled-user validation against community organization `D5aXW6TZFpeM2wke`.
 - Added sign-in, community account creation, same-tab session restoration, sign-out, and error states.
 - Added an HTTPS localhost callback and documented redirect/cutover safeguards.
+
+## 2026-07-16 - codex - Protected DIEM data workspace
+
+- Added a login-only `/data` route with an informative anonymous gate.
+- Added protected microdata, aggregated datasets, multilingual guides, boundaries, metadata, API/tooling, citation and licensing sections.
+- Added item-level ArcGIS permission checks and access-request states without exposing the identity manager or tokens to page components.
+- Added responsive layouts down to 320px and documented the access and download contracts.
+
+## 2026-07-16 - codex - Internal dataset explorer
+
+- Replaced protected dataset actions that opened ArcGIS Online with internal `/data/:datasetId` explore routes.
+- Added live feature-service map previews, table previews, safe attribute filters, matching counts and token-free API links.
+- Added bounded authenticated CSV and GeoJSON exports so users can download current filtered data from within Hub 3.0.
 
 ## 2026-07-16 - codex - Country explorer
 

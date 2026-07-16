@@ -11,13 +11,14 @@ DIEM Hub 3.0 is a React/TypeScript public catalog over FAO DIEM content held in 
 - Treat item IDs as stable identifiers. Titles, tags, URLs, and counts can change.
 - Never expose ArcGIS client secrets, credentials, or long-lived tokens in browser code.
 - Read `docs/authentication.md` before changing OAuth, sessions, redirect URLs, or protected requests.
+- Read `docs/data_access.md` before changing protected datasets, item IDs, access-request behavior, or download links.
 - Content visibility must eventually be enforced by ArcGIS sharing and the active user's token, not UI filters or tags.
 - Existing apps and dashboards are external resources unless a task explicitly adds an integration.
 - Preserve unrelated user changes and never commit unless explicitly requested.
 
 ## Architecture Short Form
 
-`main.tsx` owns routing; `App.tsx` owns the homepage; `pages/Country*.tsx` own country discovery. `services/arcgis.ts` owns shared remote utilities and `services/countries.ts` owns country category normalization. See `docs/architecture.md` before changing boundaries.
+`main.tsx` owns routing; `App.tsx` owns the homepage; `pages/Country*.tsx` own country discovery; `pages/DataAccess.tsx` owns the protected workspace. `services/arcgis.ts` owns shared remote utilities, `services/countries.ts` owns country category normalization, and `services/protectedData.ts` owns protected item configuration. See `docs/architecture.md` before changing boundaries.
 
 ## Design Style
 
@@ -29,6 +30,7 @@ Use FAO blue and deep blue as institutional anchors, orange sparingly for urgenc
 - Homepage country/theme values are inferred presentation aids; country pages instead rely on mutable group-category assignments.
 - Some items have missing summaries, thumbnails, tags, or repeated titles.
 - External thumbnails and resources can fail independently from the catalog.
+- Protected data items may be available to different ArcGIS groups; organization authentication is not proof of item access.
 
 ## Documentation
 

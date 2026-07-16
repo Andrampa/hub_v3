@@ -16,5 +16,8 @@
 | Item page | `/home/item.html?id={itemId}` | ArcGIS handles it | External fallback link |
 | OAuth authorize/token | `/sharing/rest/oauth2/*` on `hqfao-hub.maps.arcgis.com` | OAuth client + PKCE | Interactive sign-in/account creation |
 | Current user | `/sharing/rest/community/users/{username}` | Active user session | Post-login organization validation |
+| Protected data item | `GET /sharing/rest/content/items/{itemId}` on the community portal | Active community identity; ArcGIS item/group sharing | Authenticated `/data` workspace |
+| Protected feature service and layer | `GET {item.url}` and `GET {item.url}/{layerId}` | Active community identity | Internal `/data/:datasetId` schema discovery |
+| Filtered layer query | `GET {item.url}/{layerId}/query` | Active community identity | Record count, map/table preview, CSV and GeoJSON export |
 
 Portal origin: `https://www.arcgis.com`.

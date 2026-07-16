@@ -35,6 +35,8 @@ No automated test framework is configured yet. Add one when behavior is complex 
 - Confirm the live country total against ArcGIS and preserve directory access for countries without generalized map geometry.
 - Simulate request failure and confirm retry messaging when changing the service layer.
 - For authentication, follow the matrix in `docs/authentication.md`. Never use production administrator credentials for browser automation or store credentials in test files.
+- For `/data`, verify the anonymous gate and use separate approved/unapproved non-administrator community accounts to test resource sharing. Confirm that sign-out removes protected metadata and actions.
+- With an approved account, open each `/data/:datasetId` route, verify live service metadata, apply text and numeric filters, inspect both a spatial and table-only resource, export CSV/GeoJSON, and confirm copied API links contain no token.
 
 ## Documentation Workflow
 

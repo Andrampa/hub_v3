@@ -12,6 +12,7 @@
 | `docs/service_manifest.md` | Endpoint inventory |
 | `docs/authentication.md` | OAuth, community validation, sessions, and redirect safety |
 | `docs/country_explorer.md` | Country routes, ArcGIS category contract, normalization, and map behavior |
+| `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/user_journeys.md` | Public discovery behavior |
 | `docs/development_workflow.md` | Commands and verification |
 | `docs/handoff.md` | Active unfinished work |
@@ -21,6 +22,7 @@
 
 - Catalog request/filter change: `architecture.md`, then `services_and_data.md`.
 - Country page or category change: `country_explorer.md`, then `services_and_data.md`.
+- Microdata, aggregated downloads, guides, or protected items: `data_access.md`, then `authentication.md`.
 - ArcGIS endpoint work: `services_and_data.md`, then `service_manifest.md`.
 - Authentication or protected access: `authentication.md`, then `services_and_data.md`.
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.

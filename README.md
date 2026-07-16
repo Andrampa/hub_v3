@@ -11,6 +11,7 @@ DIEM Hub 3.0 is a custom public interface for discovering evidence published by 
 - Uses ArcGIS group categories for country and product organization, with shareable filter URLs.
 - Links every result to its authoritative ArcGIS item or published resource.
 - Supports ArcGIS PKCE sign-in and account creation for enabled DIEM community members.
+- Provides a login-only data workspace for microdata, aggregated indicators, boundaries, guides and analysis tools.
 
 Protected thematic sections and specialized data experiences are planned next. Existing ArcGIS apps and dashboards are listed, not recreated.
 
@@ -38,7 +39,7 @@ npm run build
 
 ## Documentation Index
 
-Start with [docs/context_index.md](docs/context_index.md). Product scope is in [docs/project_spec.md](docs/project_spec.md), implementation structure in [docs/architecture.md](docs/architecture.md), and country behavior in [docs/country_explorer.md](docs/country_explorer.md).
+Start with [docs/context_index.md](docs/context_index.md). Product scope is in [docs/project_spec.md](docs/project_spec.md), country behavior in [docs/country_explorer.md](docs/country_explorer.md), and protected downloads in [docs/data_access.md](docs/data_access.md).
 
 ## Licence
 

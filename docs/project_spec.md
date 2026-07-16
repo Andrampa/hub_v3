@@ -23,10 +23,11 @@ Public decision-makers, governments, partners, researchers, donors, practitioner
 - Responsive English interface.
 - Country-first discovery over group `c27d3dbba52343c6addfd61edaaa3e86`.
 - Searchable map and directory, country profiles, controlled product filters, and cross-country analysis.
+- Login-only data workspace for microdata, aggregated data, reference boundaries, guides, API examples and analysis tools.
 
 ## Next Confirmed Priority
 
-ArcGIS community authentication is implemented using authorization-code flow with PKCE. Country discovery is public. The next content decision is which protected groups and thematic catalogs authenticated community members should see after sign-in.
+ArcGIS community authentication is implemented using authorization-code flow with PKCE. Country discovery is public. The protected data workspace is implemented and defers item access to ArcGIS sharing. The next content decision is which additional thematic catalogs authenticated community members should see.
 
 ## What The Product Does Not Do
 
