@@ -7,6 +7,7 @@ export const COMMUNITY_PORTAL = 'https://hqfao-hub.maps.arcgis.com'
 export const COMMUNITY_PORTAL_REST = `${COMMUNITY_PORTAL}/sharing/rest`
 
 const SESSION_KEY = 'diem-hub-3.arcgis-session'
+const DEVELOPMENT_REDIRECT_URI = 'https://localhost:5173/oauth-callback.html'
 
 export interface CommunityUser {
   username: string
@@ -34,6 +35,7 @@ export class CommunityAccessError extends Error {
 }
 
 function redirectUri() {
+  if (import.meta.env.DEV) return DEVELOPMENT_REDIRECT_URI
   return `${window.location.origin}/oauth-callback.html`
 }
 

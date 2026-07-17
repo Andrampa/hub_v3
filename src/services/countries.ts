@@ -25,6 +25,7 @@ export type ProductType = (typeof PRODUCT_TYPES)[number] | 'Unclassified'
 interface AtlasCountry {
   name: string
   isoA3?: string
+  isoA2?: string
   adm0A3: string
   continent: string
   region: string
@@ -33,6 +34,7 @@ interface AtlasCountry {
 
 export interface CountryDefinition {
   iso3: string
+  iso2?: string
   name: string
   region: string
   continent: string
@@ -114,6 +116,7 @@ export function countryDefinition(iso3: string): CountryDefinition {
   const country = metadataByIso.get(metadataCode)
   return {
     iso3: code,
+    iso2: country?.isoA2 && /^[A-Z]{2}$/.test(country.isoA2) ? country.isoA2.toLowerCase() : undefined,
     name: country?.name || code,
     region: country ? regionFor(country) : 'Other',
     continent: country?.continent || 'Other',

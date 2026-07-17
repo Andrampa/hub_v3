@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CountryMap } from '../components/CountryMap'
+import { CountryFlag } from '../components/CountryFlag'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
@@ -23,13 +24,22 @@ export default function CountryExplorer() {
     [catalog],
   )
   const visibleCountries = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
     return (catalog?.countries || []).filter((country) => (
-      (region === 'All regions' || country.region === region) &&
-      (!normalized || country.name.toLowerCase().includes(normalized) || country.iso3.toLowerCase().includes(normalized))
+      region === 'All regions' || country.region === region
     ))
-  }, [catalog, query, region])
+  }, [catalog, region])
   const visibleIso = useMemo(() => new Set(visibleCountries.map((country) => country.iso3)), [visibleCountries])
+  const matchingProducts = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    if (!normalized || !catalog) return []
+    const countryByIso = new Map(catalog.countries.map((country) => [country.iso3, country]))
+    return catalog.items
+      .filter((item) => item.title.toLowerCase().includes(normalized))
+      .flatMap((item) => item.countries
+        .filter((iso3) => countryByIso.has(iso3))
+        .map((iso3) => ({ item, country: countryByIso.get(iso3)! })))
+      .slice(0, 8)
+  }, [catalog, query])
   const latestUpdate = Math.max(...(catalog?.countries.map((country) => country.latestModified) || [0]))
 
   return (
@@ -43,14 +53,32 @@ export default function CountryExplorer() {
             <p>Explore DIEM monitoring, assessments, survey materials and analysis organized around the countries they describe.</p>
             <label className="country-search">
               <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <span className="sr-only">Find a country</span>
+              <span className="sr-only">Find a product by name</span>
               <input
                 type="search"
-                placeholder="Search country name or ISO3…"
+                placeholder="Search product names…"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="product-search-results"
+                aria-expanded={Boolean(query.trim())}
               />
-              <span>{visibleCountries.length} countries</span>
+              <span>{query.trim() ? `${matchingProducts.length} matches` : 'Search resources'}</span>
+              {query.trim() && (
+                <div className="country-search-results" id="product-search-results" role="listbox" aria-label="Matching products">
+                  {matchingProducts.length ? matchingProducts.map(({ item, country }) => (
+                    <Link
+                      key={`${item.id}-${country.iso3}`}
+                      to={`/countries/${country.iso3.toLowerCase()}?q=${encodeURIComponent(item.title.trim())}`}
+                      role="option"
+                    >
+                      <span>{item.title.trim()}</span>
+                      <small><CountryFlag iso2={country.iso2} name={country.name} decorative />{country.name} · {item.productTypes[0] || 'DIEM resource'}</small>
+                    </Link>
+                  )) : <p>No products match “{query.trim()}”.</p>}
+                </div>
+              )}
             </label>
           </div>
         </section>
@@ -115,7 +143,7 @@ export default function CountryExplorer() {
                   {visibleCountries.map((country) => (
                     <Link className="country-card" to={`/countries/${country.iso3.toLowerCase()}`} key={country.iso3}>
                       <div className="country-card-top"><span>{country.iso3}</span><span>{country.region}</span></div>
-                      <h3>{country.name}</h3>
+                      <h3><CountryFlag iso2={country.iso2} name={country.name} className="country-flag" />{country.name}</h3>
                       <div className="country-card-count"><strong>{country.resourceCount}</strong><span>resources</span></div>
                       <div className="country-card-types">
                         {topTypes(country.typeCounts).map(([type, count]) => <span key={type}>{type} <b>{count}</b></span>)}
@@ -125,7 +153,7 @@ export default function CountryExplorer() {
                   ))}
                 </div>
               ) : (
-                <div className="empty-state"><strong>No countries match this search</strong><p>Try another name, ISO3 code, or region.</p></div>
+                <div className="empty-state"><strong>No countries are available for this region</strong><p>Select another region to see its country evidence.</p></div>
               )}
             </section>
           </>
@@ -135,4 +163,3 @@ export default function CountryExplorer() {
     </>
   )
 }
-

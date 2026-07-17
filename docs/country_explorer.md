@@ -6,7 +6,7 @@ The country explorer is the public, country-first entry point to DIEM material. 
 
 ## Routes
 
-- `/countries`: searchable map and country directory.
+- `/countries`: world map, country directory, and a live product-title search menu that links matching resources to their country library view.
 - `/countries/:iso3`: country profile, product filters, search, year, sort, and pagination.
 - `/countries/cross-country`: resources categorized as `XXX` for multi-country analysis.
 
@@ -41,7 +41,7 @@ On 2026-07-16 the group returned 970 items, 54 country codes, and 2 cross-countr
 
 ## Map Behavior
 
-The map uses published 110m world geometry and links available shapes by ISO3. Tiny island states omitted by that generalized geometry remain fully accessible in search and the country directory. The directory is the complete and accessible navigation surface; the map is an additional spatial entry point.
+The map uses published 110m world geometry and links available shapes by ISO3. Tiny island states omitted by that generalized geometry remain fully accessible in the country directory. The directory is the complete and accessible navigation surface; the map is an additional spatial entry point. Country cards use the local ISO metadata with FlagCDN images, hiding the image if that optional display asset fails.
 
 ## Filter State
 

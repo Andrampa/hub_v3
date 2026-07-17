@@ -2,6 +2,12 @@
 
 ## 2026-07-17
 
+- Restored country world and profile-map rendering by excluding those SVGs from the global icon dimensions.
+- Added image-based ISO flags to country-directory cards and changed the country explorer search to live product-title results.
+- Kept local OAuth redirects pinned to the registered `https://localhost:5173/oauth-callback.html` callback during development.
+
+## 2026-07-17
+
 - Hardened browser CSV and GeoJSON exports against silent ArcGIS pagination truncation; CSV now opens accented text reliably in Excel.
 - Implemented the documented asynchronous ArcGIS Hub v1 packaged-download flow inside the authentication boundary, including same-origin token handling, polling, error-response detection and file-signature validation.
 - Stabilized authentication request callbacks to avoid unrelated protected-data refreshes when UI error state changes.
