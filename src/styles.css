@@ -147,6 +147,13 @@ svg:not(.leaflet-zoom-animated):not(.leaflet-zoom-hide) { width: 1.15em; fill: n
 .error-state button { display: inline-flex; align-items: center; gap: 7px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.route-not-found { min-height: 62vh; padding-block: 100px; }
+.route-not-found h1 { max-width: 720px; margin: 12px 0; color: var(--deep-blue); font-size: clamp(36px, 5vw, 64px); line-height: 1.05; }
+.route-not-found > p { max-width: 650px; color: #647a83; line-height: 1.7; }
+.route-not-found > div { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.route-not-found a { padding: 12px 18px; border: 1px solid var(--fao-blue); color: var(--fao-blue); font-weight: 700; }
+.route-not-found a:first-child { background: var(--fao-blue); color: white; }
+
 footer { min-height: 150px; padding: 38px max(24px, calc((100% - 1180px) / 2)); display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 30px; align-items: center; background: #043753; color: #c2d5dc; font-size: 11px; }
 .footer-brand { display: flex; align-items: center; gap: 12px; }
 .footer-brand .brand-mark { border-color: white; color: white; }

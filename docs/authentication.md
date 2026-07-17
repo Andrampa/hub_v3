@@ -25,6 +25,8 @@ The client ID is public application configuration. No client secret belongs in t
 
 The context exposes `requestProtected` for JSON requests and `downloadProtected` for binary export responses used by `/data`. Both closures retain the identity manager and token inside the provider; page components receive neither.
 
+The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-service hostname, so `downloadProtected` does not pass it to ArcGIS REST JS authentication. It follows the Hub v1 contract inside the provider: adds the short-lived ArcGIS token to same-origin Hub requests, follows documented `202` job-status responses, and never forwards that token to a different origin. Phase 2 removes this query-token transport together with the legacy Hub export dependency.
+
 ## Security Invariants
 
 - Never accept a username, email domain, role, tag, or UI choice as proof of membership.

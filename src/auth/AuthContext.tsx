@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { request, type ArcGISIdentityManager } from '@esri/arcgis-rest-request'
 import {
   CommunityAccessError,
@@ -31,6 +31,32 @@ function authMessage(error: unknown) {
   return 'DIEM community sign-in could not be completed. Please try again.'
 }
 
+const EXPORT_POLL_INTERVAL_MS = 1500
+const EXPORT_POLL_LIMIT = 80
+
+interface ExportStatusResponse {
+  status?: string
+  resultUrl?: string
+  message?: string
+  error?: { message?: string }
+}
+
+function exportStatusMessage(payload: ExportStatusResponse) {
+  return payload.error?.message || payload.message || payload.status || 'The export service returned an unexpected response.'
+}
+
+function waitForExportPoll() {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, EXPORT_POLL_INTERVAL_MS))
+}
+
+async function readExportStatus(response: Response) {
+  try {
+    return await response.json() as ExportStatusResponse
+  } catch {
+    throw new Error('The export service returned an unreadable status response.')
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<CommunityUser | null>(null)
@@ -58,11 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value = useMemo<AuthContextValue>(() => ({
-    status,
-    user,
-    error,
-    async signIn() {
+  const signIn = useCallback(async () => {
       setError(null)
       setStatus('authenticating')
       try {
@@ -76,19 +98,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(authMessage(reason))
         setStatus('anonymous')
       }
-    },
-    async signOut() {
+  }, [])
+
+  const signOut = useCallback(async () => {
       const currentManager = manager
       setManager(null)
       setUser(null)
       setError(null)
       setStatus('anonymous')
       await endSession(currentManager)
-    },
-    clearError() {
-      setError(null)
-    },
-    async requestProtected<T>(url: string, params: Record<string, unknown> = {}) {
+  }, [manager])
+
+  const clearError = useCallback(() => setError(null), [])
+
+  const requestProtected = useCallback(async <T,>(url: string, params: Record<string, unknown> = {}) => {
       if (!manager || status !== 'authenticated') {
         throw new Error('Sign in with a DIEM community account to access this resource.')
       }
@@ -96,27 +119,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authentication: manager,
         params: { f: 'json', ...params },
       }) as Promise<T>
-    },
-    async downloadProtected(url: string, params: Record<string, unknown> = {}) {
+  }, [manager, status])
+
+  const downloadProtected = useCallback(async (url: string, params: Record<string, unknown> = {}) => {
       if (!manager || status !== 'authenticated') {
         throw new Error('Sign in with a DIEM community account to download this resource.')
       }
-      const response = await request(url, {
-        authentication: manager,
-        httpMethod: 'GET',
-        params,
-        rawResponse: true,
-      }) as Response
-      if (!response.ok) throw new Error(`The export service responded with HTTP ${response.status}.`)
-      const contentType = response.headers.get('content-type') || ''
-      if (/application\/json/i.test(contentType)) {
-        const payload = await response.clone().json() as { error?: { message?: string }; message?: string }
-        const message = payload.error?.message || payload.message
-        if (message) throw new Error(message)
+
+      const exportToken = await manager.getToken(manager.portal)
+
+      const exportOrigin = new URL(url).origin
+      const initialUrl = new URL(url)
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined && value !== null) initialUrl.searchParams.set(key, String(value))
       }
-      return response.blob()
-    },
-  }), [error, manager, status, user])
+      initialUrl.searchParams.set('redirect', 'true')
+      // Hub Download API v1 requires the ArcGIS token as a query parameter.
+      // Keep this construction inside the provider so page components never receive it.
+      initialUrl.searchParams.set('token', exportToken)
+
+      let nextUrl = initialUrl.toString()
+      for (let attempt = 0; attempt <= EXPORT_POLL_LIMIT; attempt += 1) {
+        const candidate = new URL(nextUrl, initialUrl)
+        if (candidate.origin === exportOrigin) candidate.searchParams.set('token', exportToken)
+        else candidate.searchParams.delete('token')
+        const response = await fetch(candidate, {
+          method: 'GET',
+          credentials: 'omit',
+          headers: { Accept: 'application/octet-stream, application/json;q=0.9, */*;q=0.8' },
+        })
+
+        if (!response.ok && response.status !== 202) {
+          const contentType = response.headers.get('content-type') || ''
+          if (/json/i.test(contentType)) {
+            const payload = await readExportStatus(response)
+            throw new Error(exportStatusMessage(payload))
+          }
+          throw new Error(`The export service responded with HTTP ${response.status}.`)
+        }
+
+        const contentType = response.headers.get('content-type') || ''
+        if (response.status === 202 || /json/i.test(contentType)) {
+          const payload = await readExportStatus(response)
+          if (/fail|error|cancel/i.test(payload.status || '')) throw new Error(exportStatusMessage(payload))
+          // Hub v1 omits resultUrl while the export job is still running; only a
+          // non-202 response with neither a pending status nor a resultUrl is an error.
+          const pending = response.status === 202 || /pending|creating|progress|processing|queue/i.test(payload.status || '')
+          if (!payload.resultUrl && !pending) throw new Error(exportStatusMessage(payload))
+          if (attempt === EXPORT_POLL_LIMIT) throw new Error('The export is still being prepared. Please try again in a few minutes.')
+          if (payload.resultUrl) nextUrl = payload.resultUrl
+          await waitForExportPoll()
+          continue
+        }
+
+        if (/text\/html/i.test(contentType)) throw new Error('The export service returned a web page instead of a data file.')
+        const blob = await response.blob()
+        if (!blob.size) throw new Error('The export service returned an empty file.')
+        return blob
+      }
+      throw new Error('The export could not be completed.')
+  }, [manager, status])
+
+  const value = useMemo<AuthContextValue>(() => ({
+    status,
+    user,
+    error,
+    signIn,
+    signOut,
+    clearError,
+    requestProtected,
+    downloadProtected,
+  }), [clearError, downloadProtected, error, requestProtected, signIn, signOut, status, user])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

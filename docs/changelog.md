@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-07-17
+
+- Hardened browser CSV and GeoJSON exports against silent ArcGIS pagination truncation; CSV now opens accented text reliably in Excel.
+- Implemented the documented asynchronous ArcGIS Hub v1 packaged-download flow inside the authentication boundary, including same-origin token handling, polling, error-response detection and file-signature validation.
+- Stabilized authentication request callbacks to avoid unrelated protected-data refreshes when UI error state changes.
+- Made text `contains` filters treat `%` and `_` as literal user input instead of unintended SQL wildcards.
+- Added a dedicated not-found route instead of sending unknown URLs to the country explorer.
+
 All notable documentation and implementation changes. Most recent entry first.
 
 ## Current State

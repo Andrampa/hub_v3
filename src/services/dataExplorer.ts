@@ -107,6 +107,13 @@ function escapeSql(value: string) {
   return value.replaceAll("'", "''")
 }
 
+function escapeSqlLike(value: string) {
+  return escapeSql(value)
+    .replaceAll('$', '$$$$')
+    .replaceAll('%', '$%')
+    .replaceAll('_', '$_')
+}
+
 export function buildWhere(filters: DatasetFilter[], fields: FeatureField[]) {
   const clauses = filters.flatMap((filter) => {
     const field = fields.find((candidate) => candidate.name === filter.fieldName)
@@ -119,7 +126,7 @@ export function buildWhere(filters: DatasetFilter[], fields: FeatureField[]) {
       const operator = filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='
       return [`${field.name} ${operator} ${parsed}`]
     }
-    if (filter.operator === 'contains') return [`UPPER(${field.name}) LIKE '%${escapeSql(value).toUpperCase()}%'`]
+    if (filter.operator === 'contains') return [`UPPER(${field.name}) LIKE '%${escapeSqlLike(value).toUpperCase()}%' ESCAPE '$'`]
     return [`${field.name} = '${escapeSql(value)}'`]
   })
   return clauses.length ? clauses.join(' AND ') : '1=1'
@@ -288,11 +295,13 @@ async function fetchEsriGeoJsonPages(
   definition: DatasetDefinition,
   where: string,
   requester: ProtectedRequester,
-  maximum: number,
+  expectedCount: number,
 ) {
   const features: Feature<Geometry, GeoJsonProperties>[] = []
   const pageSize = Math.min(definition.layer.maxRecordCount || 1000, 1000)
-  for (let offset = 0; offset < maximum; offset += pageSize) {
+  let offset = 0
+  while (offset < expectedCount) {
+    const requested = Math.min(pageSize, expectedCount - offset)
     const page = await requester<EsriGeometryResponse>(`${definition.layerUrl}/query`, {
       f: 'json',
       where,
@@ -300,13 +309,14 @@ async function fetchEsriGeoJsonPages(
       returnGeometry: 'true',
       outSR: '4326',
       resultOffset: String(offset),
-      resultRecordCount: String(Math.min(pageSize, maximum - offset)),
+      resultRecordCount: String(requested),
       orderByFields: definition.layer.objectIdField ? `${definition.layer.objectIdField} ASC` : undefined,
     })
     const converted = esriFeaturesToGeoJson(page)
     features.push(...converted.features)
     const returned = page.features?.length || 0
-    if (returned < pageSize || !page.exceededTransferLimit) break
+    if (!returned) throw new Error(`ArcGIS stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
+    offset += returned
   }
   return { type: 'FeatureCollection', features } as GeoJsonResponse
 }
@@ -315,21 +325,25 @@ async function fetchAllAttributes(
   definition: DatasetDefinition,
   where: string,
   requester: ProtectedRequester,
-  maximum = BROWSER_EXPORT_LIMIT,
+  expectedCount: number,
 ) {
   const rows: Record<string, unknown>[] = []
   const pageSize = Math.min(definition.layer.maxRecordCount || 1000, 1000)
-  for (let offset = 0; offset < maximum; offset += pageSize) {
+  let offset = 0
+  while (offset < expectedCount) {
+    const requested = Math.min(pageSize, expectedCount - offset)
     const page = await requester<QueryResponse>(`${definition.layerUrl}/query`, {
       where,
       outFields: '*',
       returnGeometry: 'false',
       resultOffset: String(offset),
-      resultRecordCount: String(pageSize),
+      resultRecordCount: String(requested),
+      orderByFields: definition.layer.objectIdField ? `${definition.layer.objectIdField} ASC` : undefined,
     })
     const pageRows = (page.features || []).map((feature) => feature.attributes)
     rows.push(...pageRows)
-    if (pageRows.length < pageSize || !page.exceededTransferLimit) break
+    if (!pageRows.length) throw new Error(`ArcGIS stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
+    offset += pageRows.length
   }
   return rows
 }
@@ -346,10 +360,10 @@ export async function downloadCsv(
   requester: ProtectedRequester,
 ) {
   if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${BROWSER_EXPORT_LIMIT.toLocaleString()} records. Use the service API for a larger automated extraction.`)
-  const rows = await fetchAllAttributes(definition, where, requester)
+  const rows = await fetchAllAttributes(definition, where, requester, count)
   const columns = usableFields(definition.layer.fields).map((field) => field.name)
   const lines = [columns.join(','), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
-  return new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
+  return new Blob(['\uFEFF', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
 }
 
 export async function downloadGeoJson(
@@ -359,7 +373,7 @@ export async function downloadGeoJson(
   requester: ProtectedRequester,
 ) {
   if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${BROWSER_EXPORT_LIMIT.toLocaleString()} records. Use the service API for a larger automated extraction.`)
-  const response = await fetchEsriGeoJsonPages(definition, where, requester, BROWSER_EXPORT_LIMIT)
+  const response = await fetchEsriGeoJsonPages(definition, where, requester, count)
   return new Blob([JSON.stringify(response)], { type: 'application/geo+json' })
 }
 
@@ -386,6 +400,32 @@ export function hubDownloadRequest(definition: DatasetDefinition, format: HubDow
     url: `${DIEM_HUB_DOWNLOAD_API}/${definition.resource.id}/${descriptor.route}`,
     params: { layers: String(definition.layer.id), where },
   }
+}
+
+function startsWithBytes(bytes: Uint8Array, signature: number[]) {
+  return signature.every((value, index) => bytes[index] === value)
+}
+
+export async function validatePackagedDownload(blob: Blob, format: HubDownloadFormat) {
+  const bytes = new Uint8Array(await blob.slice(0, 16).arrayBuffer())
+  const isZip = startsWithBytes(bytes, [0x50, 0x4b])
+  const isSqlite = new TextDecoder().decode(bytes).startsWith('SQLite format 3')
+  const beginning = new TextDecoder().decode(bytes).trimStart().toLowerCase()
+
+  if (['xlsx', 'shp', 'filegdb'].includes(format) && !isZip) {
+    throw new Error('The export service did not return the expected packaged file.')
+  }
+  if (['geopackage', 'sqlite'].includes(format) && !isSqlite) {
+    throw new Error('The export service did not return a valid SQLite-based file.')
+  }
+  if (format === 'kml') {
+    if (isZip) return { blob, extension: 'kmz' }
+    if (beginning.startsWith('<?xml') || beginning.startsWith('<kml')) return { blob, extension: 'kml' }
+    throw new Error('The export service did not return a valid KML or KMZ file.')
+  }
+
+  const descriptor = HUB_DOWNLOAD_FORMATS.find((candidate) => candidate.format === format)
+  return { blob, extension: descriptor?.extension || 'bin' }
 }
 
 export function apiLinks(definition: DatasetDefinition, where: string) {

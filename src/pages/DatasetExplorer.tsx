@@ -23,6 +23,7 @@ import {
   hubDownloadRequest,
   resourceForDataset,
   usableFields,
+  validatePackagedDownload,
   type DatasetDefinition,
   type DatasetFilter,
   type FeatureField,
@@ -245,7 +246,8 @@ export default function DatasetExplorer() {
     setDownloadState(`Requesting ${descriptor.label} from the DIEM export service...`)
     try {
       const blob = await auth.downloadProtected(url, params)
-      downloadBlob(blob, `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}.${descriptor.extension}`)
+      const validated = await validatePackagedDownload(blob, format)
+      downloadBlob(validated.blob, `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}.${validated.extension}`)
       setDownloadState(`${descriptor.label} download started.`)
     } catch (error) {
       const message = error instanceof Error ? error.message : ''
