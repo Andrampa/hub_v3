@@ -24,6 +24,11 @@ The initial release is a static single-page app with no custom backend or databa
 5. Search and filters operate locally over the loaded public catalog.
 6. Item cards open the authoritative resource URL or ArcGIS item page.
 
+The homepage derives its Latest evidence strip from the already-loaded public
+catalog. Programme carousel and popup configuration load independently through
+the promotion service. Failure retains the reviewed built-in carousel and
+omits the popup, without blocking catalog discovery.
+
 Authentication initializes independently. It restores a same-tab session when present; otherwise public catalog loading remains anonymous. Interactive sign-in uses a popup callback, then validates the returned ArcGIS user's community organization before exposing an authenticated state.
 
 The `/data` route requests no protected item metadata for anonymous visitors. After login it uses the context-owned authenticated request closure to resolve each configured item. ArcGIS responses determine available, restricted, and error states.
@@ -37,6 +42,10 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/services/countries.ts`: country-group pagination, category normalization, and summaries.
 - `src/services/countryEditorial.ts`: public editorial-view discovery, country introduction queries, and highlighted-item resolution.
 - `src/components/CountryEditorial.tsx`: sanitized rich text, country imagery, and curated evidence cards.
+- `src/services/hubPromotions.ts`: promotion channels, ArcGIS view contract, validation, compatibility fallback, and built-in carousel slides.
+- `src/components/LatestEvidenceBanner.tsx`: catalog-derived recent-evidence strip and motion controls.
+- `src/components/ProgrammeCarousel.tsx`: manual, responsive programme discovery carousel.
+- `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
 - `src/pages/MonitoringSystem.tsx`: the `/monitoring` shell, which embeds the live DIEM monitoring dashboard and provides a new-tab fallback.
@@ -63,6 +72,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - Item IDs are keys; title uniqueness is not assumed.
 - Country highlights store item IDs only and render only when the referenced item remains in the active country's catalog.
 - Theme and country inference never determines authorization.
+- Promotion status, channels and hidden UI are editorial controls, never authorization.
 - ArcGIS errors produce an explicit retry state.
 - Authentication requires the exact community organization ID; authenticated status never replaces item-level ArcGIS authorization.
 - Tokens and the identity manager stay outside page components; protected JSON and binary resources are requested through `AuthContext.requestProtected` and `AuthContext.downloadProtected`.

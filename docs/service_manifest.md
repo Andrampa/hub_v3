@@ -14,6 +14,9 @@
 | Country group items and categories | `GET /sharing/rest/content/groups/{groupId}/search` | None for public items | Country routes, paginated |
 | Country editorial view item | `GET /sharing/rest/content/items/bfabf1dc1d354b3c92a3c801b0376452` | None | Resolve the current public FeatureServer URL |
 | Country editorial tables | Public view tables `0` and `1` | None, query-only | Country introduction, imagery, and highlighted item IDs |
+| Hub promotion view item | `GET /sharing/rest/content/items/{configuredPromotionViewId}` | None for public view | Resolve the configured production or staging FeatureServer URL |
+| Hub promotion tables | Configured public view tables `0` and `1` | None, query-only | Programme slides and popup campaigns |
+| Legacy popup item | `GET /sharing/rest/content/items/015a1eabdb454d1c90fd9ad282e407e6`, service definition, and discovered table `20` | None while public | Compatibility campaign fallback until promotion views are configured |
 | Thumbnail | `GET /sharing/rest/content/items/{itemId}/info/{thumbnail}` | None for public item | Lazy card image |
 | Item page | `/home/item.html?id={itemId}` | ArcGIS handles it | External fallback link |
 | OAuth authorize/token | `/sharing/rest/oauth2/*` on `hqfao-hub.maps.arcgis.com` | OAuth client + PKCE | Interactive sign-in/account creation |

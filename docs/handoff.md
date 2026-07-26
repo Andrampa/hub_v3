@@ -2,6 +2,24 @@
 
 ## In Progress
 
+The homepage innovation code is complete: a catalog-derived Latest evidence
+strip, manual programme carousel, and native dwell/scroll-triggered campaign
+card are implemented and the production build passes. The carousel has reviewed
+built-in content and the campaign service temporarily reads legacy public popup
+item `015a1eabdb454d1c90fd9ad282e407e6`, so the code does not depend on immediate
+ArcGIS provisioning. The compatibility reader discovers the live table ID
+(`20`) from the service definition. Editors start with `docs/editor_guide.md`.
+
+Editorial deployment remains an external administrator step. Run
+`scripts/provision_hub_promotions.py` from an ArcGIS Pro Python environment,
+record the returned production/staging view item IDs in the corresponding
+deployment environments, and follow `docs/hub_promotions.md`. The exact next
+code/configuration file is `.env.example`; the exact verification command is
+`npm run build`. Before production deployment, manually verify `/` at desktop,
+tablet and mobile widths, including banner pause/focus, every carousel link,
+reduced motion, popup scroll/dwell timing, dismissal recurrence, and the
+staging-to-production content transition.
+
 The public catalog, country explorer, protected data workspace, internal dataset explorer, and OAuth with PKCE are implemented. End-to-end protected-data acceptance still requires human tests with one approved and one unapproved community account. The first required live check is `/data/499917f1518141209c2a6de55a79d991`: corrected polygon rendering, feature selection, zoom/reset, filters, CSV/GeoJSON, packaged Excel/Shapefile/KML/FileGDB/GeoPackage/SQLite downloads and token-free API links. Packaged downloads now follow the documented DIEM Hub v1 asynchronous generator contract, keep its required short-lived token inside the auth provider and reject status/error payloads or invalid file signatures. Verify that the current `where` clause is honored by every format and record any source item whose export configuration rejects a format.
 
 The decision is to defer the DIEM-owned large-export backend to Phase 2. Phase 1 remains a static React deployment with ArcGIS Online as the authoritative backend. Every portal download format is disabled above 20,000 matching records; the UI recommends country/round filters and generates Python/R object-ID batching scripts for bulk API extraction. Phase 2 must replace the legacy Hub generator with a DIEM API, job queue/worker, temporary object storage and expiring download URLs before Hub can be retired permanently.

@@ -23,12 +23,17 @@
 ## Public Discovery Journey
 
 1. User sees catalog scope and DIEM purpose.
-2. User searches a country, theme, or resource phrase.
-3. User narrows by broad content family, provisional theme, year, and sort order.
-4. User scans consistent cards with type, date, geography, and summary.
-5. User opens the authoritative resource in a new tab.
+2. User can scan recent tagged evidence and manually explore DIEM programme pathways.
+3. User searches a country, theme, or resource phrase.
+4. User narrows by broad content family, provisional theme, year, and sort order.
+5. User scans consistent cards with type, date, geography, and summary.
+6. User opens the authoritative resource in a new tab.
 
 Success means reaching relevant evidence with its original context and metadata intact.
+
+An eligible featured update may appear only after meaningful dwell and scroll.
+The visitor can dismiss it without interrupting browsing; dismissal is retained
+for the campaign's configured recurrence window.
 
 ## Authenticated Data Journey
 
@@ -64,6 +69,7 @@ Success means reaching relevant evidence with its original context and metadata 
 - No match: suggest broadening search or removing filters.
 - Missing summary/thumbnail: show a useful fallback without hiding the item.
 - Broken external resource: ArcGIS ownership remains visible through the source catalog link.
+- Promotion source unavailable: retain the built-in programme carousel and omit the popup.
 
 ## Key UX Principles
 

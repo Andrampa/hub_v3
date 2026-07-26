@@ -2,6 +2,19 @@
 
 ## 2026-07-26
 
+- Added a catalog-derived Latest evidence strip for current Impact assessment
+  and Country brief items, including pause, mobile and reduced-motion behaviour.
+- Added a manual, responsive Explore DIEM programme carousel without replacing
+  the homepage's search-led hero.
+- Rebuilt the legacy campaign iframe as a native dwell-and-scroll-triggered
+  popup with stable-campaign dismissal recurrence and a legacy ArcGIS fallback.
+- Added staging/production promotion channels, an ArcGIS Pro provisioning
+  script, separate read-only view contract and editor runbook.
+- Added one human-facing editor guide covering country introductions, country
+  highlights, popup campaigns, programme slides, latest evidence and catalog
+  metadata.
+- Corrected the legacy popup compatibility reader to discover ArcGIS table
+  `20` dynamically and moved its scroll trigger to the post-hero statistics.
 - Added editor-managed country introductions and highlighted evidence above the
   country-page Evidence collection.
 - Added safe optional HTML rendering, modern country-image panels, and

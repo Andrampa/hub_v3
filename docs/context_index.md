@@ -13,6 +13,8 @@
 | `docs/authentication.md` | OAuth, community validation, sessions, and redirect safety |
 | `docs/country_explorer.md` | Country routes, ArcGIS category contract, normalization, and map behavior |
 | `docs/country_editorial.md` | Editor-managed country introductions, highlights, HTML, images, and AGOL provisioning |
+| `docs/hub_promotions.md` | Homepage carousel, latest-evidence strip, popup campaigns, staging and editor workflow |
+| `docs/editor_guide.md` | Human-facing instructions for all country, popup, carousel, banner, and catalog curation |
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/user_journeys.md` | Public discovery behavior |
 | `docs/development_workflow.md` | Commands and verification |
@@ -27,6 +29,8 @@
 - ArcGIS endpoint work: `services_and_data.md`, then `service_manifest.md`.
 - Authentication or protected access: `authentication.md`, then `services_and_data.md`.
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.
+- Homepage promotion or campaign work: `hub_promotions.md`, then `user_journeys.md`.
+- Content-editor question or training: start with `editor_guide.md`.
 - Setup, scripts, or verification: `development_workflow.md`.
 - Resume work: `handoff.md`, then the file named there.
 

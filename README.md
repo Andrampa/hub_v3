@@ -7,6 +7,7 @@ DIEM Hub 3.0 is a custom public interface for discovering evidence published by 
 - Reads the complete public DIEM content group from ArcGIS Online.
 - Summarizes formats, country labels, update activity, and data services.
 - Provides client-side search, theme/content/year filters, sorting, and pagination.
+- Provides latest-evidence, programme-carousel and editor-managed campaign pathways on the homepage.
 - Adds a country-first explorer with a world map, searchable directory, and 54 live country pages.
 - Uses ArcGIS group categories for country and product organization, with shareable filter URLs.
 - Links every result to its authoritative ArcGIS item or published resource.
@@ -39,7 +40,12 @@ npm run build
 
 ## Documentation Index
 
-Start with [docs/context_index.md](docs/context_index.md). Product scope is in [docs/project_spec.md](docs/project_spec.md), country behavior in [docs/country_explorer.md](docs/country_explorer.md), and protected downloads in [docs/data_access.md](docs/data_access.md).
+Content editors should start with [docs/editor_guide.md](docs/editor_guide.md).
+Technical contributors should start with
+[docs/context_index.md](docs/context_index.md). Product scope is in
+[docs/project_spec.md](docs/project_spec.md), country behavior in
+[docs/country_explorer.md](docs/country_explorer.md), and protected downloads
+in [docs/data_access.md](docs/data_access.md).
 
 ## Licence
 

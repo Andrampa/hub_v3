@@ -28,6 +28,21 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 - Item-ID resolution against the active country catalog
 - HTTP(S)-only image URL validation
 
+`src/services/hubPromotions.ts` contains:
+
+- reviewed built-in programme slides used when no editorial view is configured;
+- production/staging channel selection from deployment configuration;
+- runtime discovery of a configured read-only promotion view;
+- HTTP(S) image and destination validation, optional Hub-relative destinations,
+  publication windows and stable campaign dismissal IDs;
+- a temporary read-only fallback to legacy popup item
+  `015a1eabdb454d1c90fd9ad282e407e6`.
+
+The Latest evidence strip does not make a second ArcGIS request. It derives up
+to six current items from the already-loaded catalog using exact,
+case-insensitive matches for publisher-provided tags `Impact assessment` and
+`Country brief`.
+
 `src/services/protectedData.ts` contains stable item IDs for the authenticated data workspace and resolves their metadata through the active community identity. The service preserves restricted and request-failure states per item instead of treating a successful login as blanket authorization.
 
 `src/services/dataExplorer.ts` resolves a permitted item to its feature service and first available layer or table. It only accepts configured item IDs, builds clauses from layer schema fields, and keeps client-side preview/export limits explicit.
@@ -50,6 +65,7 @@ Authentication uses the separate community portal and OAuth client described in 
 - `fetchCatalog`: group plus complete paginated item inventory.
 - `fetchCountryCatalog`: complete country-group inventory with group categories.
 - `fetchCountryEditorial`: published introduction, image fields, and valid highlighted items for one country.
+- `fetchHubPromotions`: validated programme slides and at most one active popup campaign for the configured publication channel.
 - `fetchCountryMonitoringCoverage`: public Monitoring-app coverage and latest visible round for one ISO3 country.
 - `resourcesForCountry`: resources assigned to an ISO3 code.
 - `fetchProtectedDataWorkspace`: permission-aware protected item inventory.

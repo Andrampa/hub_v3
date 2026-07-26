@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from './auth/AuthContext'
+import { EditorialPopup } from './components/EditorialPopup'
+import { LatestEvidenceBanner } from './components/LatestEvidenceBanner'
+import { ProgrammeCarousel } from './components/ProgrammeCarousel'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { cleanText, formatDate, itemCountry, itemTheme, itemYear } from './lib/catalog'
@@ -9,6 +12,12 @@ import {
   itemDestination,
   itemThumbnail,
 } from './services/arcgis'
+import {
+  defaultProgrammeSlides,
+  fetchHubPromotions,
+  promotionChannel,
+  type HubPromotions,
+} from './services/hubPromotions'
 import type { ArcGISItem, CatalogData, SortOption } from './types'
 
 const PAGE_SIZE = 12
@@ -98,6 +107,10 @@ export default function App() {
   const [year, setYear] = useState('All years')
   const [sort, setSort] = useState<SortOption>('newest')
   const [page, setPage] = useState(1)
+  const [promotions, setPromotions] = useState<HubPromotions>({
+    slides: defaultProgrammeSlides,
+    channel: promotionChannel,
+  })
 
   const loadCatalog = () => {
     setError(undefined)
@@ -111,6 +124,14 @@ export default function App() {
   }
 
   useEffect(loadCatalog, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchHubPromotions(controller.signal).then(setPromotions).catch((reason: Error) => {
+      if (reason.name !== 'AbortError') console.warn('Hub promotions could not be initialized.', reason)
+    })
+    return () => controller.abort()
+  }, [])
 
   const stats = useMemo(() => {
     const items = catalog?.items || []
@@ -197,12 +218,16 @@ export default function App() {
           </aside>
         </section>
 
-        <section className="stats-strip" aria-label="Catalog summary">
+        <section className="stats-strip" id="promotion-trigger" aria-label="Catalog summary">
           <div><strong>{stats.total.toLocaleString()}</strong><span>public resources</span></div>
           <div><strong>{stats.formats}</strong><span>content formats</span></div>
           <div><strong>{stats.themes}</strong><span>themes represented</span></div>
           <div><strong>{stats.services}</strong><span>data services</span></div>
         </section>
+
+        {catalog && <LatestEvidenceBanner items={catalog.items} />}
+
+        <ProgrammeCarousel slides={promotions.slides} />
 
         <section className="overview section-wrap" id="overview">
           <div className="section-heading">
@@ -277,6 +302,12 @@ export default function App() {
             )}
           </div>
         </section>
+
+        <EditorialPopup
+          campaign={promotions.campaign}
+          channel={promotions.channel}
+          triggerId="promotion-trigger"
+        />
       </main>
 
       <SiteFooter />
