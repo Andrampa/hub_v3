@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { CountryEditorial } from '../components/CountryEditorial'
 import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { cleanText, formatDate } from '../lib/catalog'
 import { itemDestination, itemThumbnail } from '../services/arcgis'
+import {
+  fetchCountryEditorial,
+  type CountryEditorialContent,
+} from '../services/countryEditorial'
 import {
   COUNTRY_GROUP_ID,
   CROSS_COUNTRY_CODE,
@@ -46,6 +51,8 @@ export default function CountryDetail() {
   const { catalog, error, retry } = useCountryCatalog()
   const [searchParams, setSearchParams] = useSearchParams()
   const [page, setPage] = useState(1)
+  const [editorial, setEditorial] = useState<CountryEditorialContent>()
+  const [editorialError, setEditorialError] = useState(false)
 
   const query = searchParams.get('q') || ''
   const selectedType = searchParams.get('type') || 'All products'
@@ -89,6 +96,19 @@ export default function CountryDetail() {
   }, [allResources, query, selectedType, selectedYear, sort])
 
   useEffect(() => setPage(1), [iso3, query, selectedType, selectedYear, sort])
+
+  useEffect(() => {
+    if (!catalog || !country) return
+    const controller = new AbortController()
+    setEditorial(undefined)
+    setEditorialError(false)
+    fetchCountryEditorial(iso3, allResources, controller.signal)
+      .then(setEditorial)
+      .catch((requestError) => {
+        if ((requestError as Error).name !== 'AbortError') setEditorialError(true)
+      })
+    return () => controller.abort()
+  }, [allResources, catalog, country, iso3])
 
   function setFilter(key: string, value: string, defaultValue: string) {
     const next = new URLSearchParams(searchParams)
@@ -139,6 +159,14 @@ export default function CountryDetail() {
                 </div>
               </div>
             </section>
+
+            {editorial && <CountryEditorial countryName={definition.name} content={editorial} />}
+            {editorialError && (
+              <aside className="country-editorial-status section-wrap" role="status">
+                <strong>Country introduction is temporarily unavailable.</strong>
+                <span>The evidence collection remains available below.</span>
+              </aside>
+            )}
 
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">

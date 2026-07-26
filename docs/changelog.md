@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-26
+
+- Added editor-managed country introductions and highlighted evidence above the
+  country-page Evidence collection.
+- Added safe optional HTML rendering, modern country-image panels, and
+  responsive curated-resource cards.
+- Provisioned a private two-table ArcGIS Online editorial source shared with the
+  DIEM editor group and a public query-only view for the website.
+- Seeded 55 country profiles from the legacy Hub country layer and 73
+  deterministic demonstration highlights from recent country catalog items.
+- Added the repeatable ArcGIS Pro provisioning script and editor runbook.
+- Replaced enlarged 140×41 legacy thumbnails with the full 920×275
+  `picture.jpg` attachments and redesigned the country narrative as a
+  proportional banner followed by a readable editorial panel.
+- Renamed the highlighted-resource section to **In evidence** and added optional
+  plain-text or safe-HTML introductions above each curated card.
+- Expanded the runbook with a non-technical editor quick guide and a
+  Draft/Published review recommendation.
+
 ## 2026-07-26 - Live monitoring URL bridge
 
 - Added versioned, origin-validated URL-state synchronization between the Hub `/monitoring` route and the embedded monitoring application without iframe reloads.

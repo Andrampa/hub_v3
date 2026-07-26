@@ -53,3 +53,15 @@ Country resource filters use query parameters so views can be shared:
 - `sort`: `latest`, `oldest`, or `title`
 
 All filtering is client-side after the public group has loaded. This presentation state never grants or removes ArcGIS access.
+
+## Editorial Country Context
+
+Country detail routes load a separate public, query-only ArcGIS table view for
+country introductions, image URLs, and highlighted evidence. This content
+appears above **Evidence collection** and does not alter country or product
+classification.
+
+Highlights reference stable ArcGIS item IDs and render only when the item is
+still present in the current country's group-category results. See
+`docs/country_editorial.md` for the table contract, editor workflow, HTML
+sanitization, sharing model, and provisioning process.

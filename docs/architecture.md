@@ -35,6 +35,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/pages/CountryExplorer.tsx`: map, region filters, search, and directory.
 - `src/pages/CountryDetail.tsx`: country profile and resource-library state.
 - `src/services/countries.ts`: country-group pagination, category normalization, and summaries.
+- `src/services/countryEditorial.ts`: public editorial-view discovery, country introduction queries, and highlighted-item resolution.
+- `src/components/CountryEditorial.tsx`: sanitized rich text, country imagery, and curated evidence cards.
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
 - `src/pages/MonitoringSystem.tsx`: the `/monitoring` shell, which embeds the live DIEM monitoring dashboard and provides a new-tab fallback.
@@ -59,6 +61,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - Public-group membership defines the current catalog boundary.
 - Country and product assignments come from the country group's `groupCategories`, never title inference.
 - Item IDs are keys; title uniqueness is not assumed.
+- Country highlights store item IDs only and render only when the referenced item remains in the active country's catalog.
 - Theme and country inference never determines authorization.
 - ArcGIS errors produce an explicit retry state.
 - Authentication requires the exact community organization ID; authenticated status never replaces item-level ArcGIS authorization.

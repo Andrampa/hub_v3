@@ -19,6 +19,15 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 - ISO3 and Item Type category parsing and normalization
 - Country summaries and cross-country (`XXX`) content
 
+`src/services/countryEditorial.ts` contains:
+
+- Stable public editorial-view item ID `bfabf1dc1d354b3c92a3c801b0376452`
+- Runtime discovery of the view's mutable FeatureServer URL
+- Published country-introduction and highlight queries
+- Optional per-highlight lead text displayed above each curated card
+- Item-ID resolution against the active country catalog
+- HTTP(S)-only image URL validation
+
 `src/services/protectedData.ts` contains stable item IDs for the authenticated data workspace and resolves their metadata through the active community identity. The service preserves restricted and request-failure states per item instead of treating a successful login as blanket authorization.
 
 `src/services/dataExplorer.ts` resolves a permitted item to its feature service and first available layer or table. It only accepts configured item IDs, builds clauses from layer schema fields, and keeps client-side preview/export limits explicit.
@@ -33,6 +42,7 @@ Authentication uses the separate community portal and OAuth client described in 
 
 - `fetchCatalog`: group plus complete paginated item inventory.
 - `fetchCountryCatalog`: complete country-group inventory with group categories.
+- `fetchCountryEditorial`: published introduction, image fields, and valid highlighted items for one country.
 - `resourcesForCountry`: resources assigned to an ISO3 code.
 - `fetchProtectedDataWorkspace`: permission-aware protected item inventory.
 - `authoritativeResourceUrl`: authenticated ArcGIS item details/download destination.

@@ -12,6 +12,8 @@
 | Group metadata | `GET /sharing/rest/community/groups/{groupId}` | None for public group | Initial load |
 | Group items | `GET /sharing/rest/search?q=group:{groupId}` | None for public items | Initial load, paginated |
 | Country group items and categories | `GET /sharing/rest/content/groups/{groupId}/search` | None for public items | Country routes, paginated |
+| Country editorial view item | `GET /sharing/rest/content/items/bfabf1dc1d354b3c92a3c801b0376452` | None | Resolve the current public FeatureServer URL |
+| Country editorial tables | Public view tables `0` and `1` | None, query-only | Country introduction, imagery, and highlighted item IDs |
 | Thumbnail | `GET /sharing/rest/content/items/{itemId}/info/{thumbnail}` | None for public item | Lazy card image |
 | Item page | `/home/item.html?id={itemId}` | ArcGIS handles it | External fallback link |
 | OAuth authorize/token | `/sharing/rest/oauth2/*` on `hqfao-hub.maps.arcgis.com` | OAuth client + PKCE | Interactive sign-in/account creation |
