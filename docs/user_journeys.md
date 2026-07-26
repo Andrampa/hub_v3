@@ -12,6 +12,13 @@
 - Catalog filters.
 - Overview format chart.
 - Country explorer and direct `/countries/:iso3` links.
+- Household monitoring, flood services, and contact navigation links.
+
+## Programme Pages
+
+1. A visitor opens `/monitoring`, understands the household-monitoring system, sees current progress figures, and scans one live survey pipeline with forthcoming releases first and published products below. The visitor can search, filter by status, progressively reveal older releases, and open the available survey explorer, brief, findings, questionnaire, report, or charts.
+2. A visitor opens `/flood-services`, reaches EVE 2.0 or Floodex, or follows the clear contact path for internal field-reporting applications.
+3. A visitor opens `/contact` and completes the embedded ArcGIS contact form or opens it in a new tab.
 
 ## Public Discovery Journey
 

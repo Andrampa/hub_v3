@@ -108,7 +108,7 @@ export async function restoreSession(): Promise<AuthSession | null> {
 
 export async function signIn(): Promise<AuthSession> {
   const manager = await ArcGISIdentityManager.beginOAuth2(oauthOptions())
-  if (!manager) throw new Error('ArcGIS did not return an authenticated session.')
+  if (!manager) throw new Error('The identity service did not return an authenticated session.')
   const user = await validateCommunityUser(manager)
   saveSession(manager)
   return { manager, user }

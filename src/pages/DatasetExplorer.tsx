@@ -100,7 +100,7 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
       <main className="dataset-explorer-gate section-wrap">
         <span className="kicker">Protected data explorer</span>
         <h1>Sign in to explore {resourceName}.</h1>
-        <p>Filters, preview records, API links and downloads are available only to enabled DIEM community members with access to this ArcGIS dataset.</p>
+        <p>Filters, preview records, API links and downloads are available only to enabled DIEM community members with access to this dataset.</p>
         <button type="button" onClick={() => void auth.signIn()}>Sign in to explore data <ExplorerIcon name="arrow"/></button>
         <Link to="/data">Return to data access</Link>
       </main>
@@ -267,12 +267,12 @@ export default function DatasetExplorer() {
         <header className="dataset-explorer-header">
           <div className="section-wrap">
             <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><span>Dataset explorer</span></nav>
-            <div className="dataset-title-row"><div><span className="kicker">Live ArcGIS data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">Authenticated access</span></div>
+            <div className="dataset-title-row"><div><span className="kicker">Live data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">Authenticated access</span></div>
           </div>
         </header>
 
         {definitionError && <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened for your account.</strong><p>{definitionError}</p><Link to="/data">Return to data access</Link></section>}
-        {!definition && !definitionError && <main className="dataset-explorer-loading"><span className="loader"/><strong>Opening the data service</strong><p>Reading the layer schema and access permissions from ArcGIS Online...</p></main>}
+        {!definition && !definitionError && <main className="dataset-explorer-loading"><span className="loader"/><strong>Opening the data service</strong><p>Reading the layer schema and access permissions...</p></main>}
         {definition && (
           <>
             <section className="dataset-command-bar">
@@ -290,7 +290,7 @@ export default function DatasetExplorer() {
                   <p className="dataset-info-owner">Published by <strong>{definition.resource.item?.owner || 'FAO DIEM'}</strong></p>
                   <p>{definition.resource.item?.snippet || definition.resource.description}</p>
                   <div className="dataset-info-actions"><a href="#dataset-table">View data table</a><a href="#dataset-download">Download options</a></div>
-                  <a className="dataset-arcgis-link" href={links?.item} target="_blank" rel="noreferrer">View full ArcGIS details <ExplorerIcon name="external"/></a>
+                  <a className="dataset-arcgis-link" href={links?.item} target="_blank" rel="noreferrer">View full dataset details <ExplorerIcon name="external"/></a>
                   <dl>
                     <div><dt>Published</dt><dd>{formatItemDate(definition.resource.item?.created)}</dd></div>
                     <div><dt>Information updated</dt><dd>{formatItemDate(definition.resource.item?.modified)}</dd></div>
@@ -325,7 +325,7 @@ export default function DatasetExplorer() {
                 </div>
                 <details className="bulk-script-panel">
                   <summary><ExplorerIcon name="code"/> Bulk API scripts <span>Python and R</span></summary>
-                  {scripts && <div><p>For larger extractions, run a script with your own short-lived ArcGIS token. The current filters are already included.</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
+                  {scripts && <div><p>For larger extractions, run a script with your own short-lived access token. The current filters are already included.</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
                 </details>
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{label === 'query' ? 'Filtered query' : label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>

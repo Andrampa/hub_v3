@@ -87,7 +87,7 @@ export default function CountryExplorer() {
           <section className="country-loading section-wrap" role="status">
             <span className="loader" />
             <strong>Building the country evidence index</strong>
-            <p>Reading the latest country and product classifications from ArcGIS Online…</p>
+            <p>Reading the latest country and product classifications…</p>
           </section>
         )}
 

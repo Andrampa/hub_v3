@@ -144,7 +144,7 @@ export async function fetchDatasetDefinition(
   if (!resource) throw new Error('This dataset is not configured in the DIEM data workspace.')
   const resolved = await resolveProtectedResource(resource, requester)
   if (resolved.access === 'restricted') throw new Error('Your community account does not have access to this dataset.')
-  if (resolved.access !== 'available' || !resolved.item) throw new Error('The dataset details could not be read from ArcGIS Online.')
+  if (resolved.access !== 'available' || !resolved.item) throw new Error('The dataset details could not be read from the content platform.')
   if (!resolved.item.url) throw new Error('This item does not expose a queryable data service yet.')
 
   const serviceUrl = normalizedServiceUrl(resolved.item.url)
@@ -315,7 +315,7 @@ async function fetchEsriGeoJsonPages(
     const converted = esriFeaturesToGeoJson(page)
     features.push(...converted.features)
     const returned = page.features?.length || 0
-    if (!returned) throw new Error(`ArcGIS stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
+    if (!returned) throw new Error(`The data service stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
     offset += returned
   }
   return { type: 'FeatureCollection', features } as GeoJsonResponse
@@ -342,7 +342,7 @@ async function fetchAllAttributes(
     })
     const pageRows = (page.features || []).map((feature) => feature.attributes)
     rows.push(...pageRows)
-    if (!pageRows.length) throw new Error(`ArcGIS stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
+    if (!pageRows.length) throw new Error(`The data service stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
     offset += pageRows.length
   }
   return rows
@@ -448,8 +448,8 @@ export function bulkDownloadScripts(definition: DatasetDefinition, where: string
   const queryUrl = `${definition.layerUrl}/query`
   const filename = `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-bulk.csv`
   const python = `# DIEM bulk attribute download (Python 3, standard library only)
-# Set a short-lived ArcGIS token before running:
-# Windows PowerShell: $env:ARCGIS_TOKEN="your-token"
+# Set a short-lived access token before running:
+# Windows PowerShell: $env:DIEM_ACCESS_TOKEN="your-token"
 import csv
 import json
 import os
@@ -459,9 +459,9 @@ import urllib.request
 QUERY_URL = ${JSON.stringify(queryUrl)}
 WHERE = ${JSON.stringify(where)}
 OUTPUT = ${JSON.stringify(filename)}
-TOKEN = os.environ["ARCGIS_TOKEN"]
+TOKEN = os.environ["DIEM_ACCESS_TOKEN"]
 
-def arcgis_post(parameters):
+def service_post(parameters):
     body = urllib.parse.urlencode({"f": "json", "token": TOKEN, **parameters}).encode()
     with urllib.request.urlopen(QUERY_URL, body) as response:
         payload = json.load(response)
@@ -469,11 +469,11 @@ def arcgis_post(parameters):
         raise RuntimeError(payload["error"])
     return payload
 
-id_result = arcgis_post({"where": WHERE, "returnIdsOnly": "true"})
+id_result = service_post({"where": WHERE, "returnIdsOnly": "true"})
 object_ids = id_result.get("objectIds", [])
 rows = []
 for start in range(0, len(object_ids), 1000):
-    page = arcgis_post({
+    page = service_post({
         "objectIds": ",".join(map(str, object_ids[start:start + 1000])),
         "outFields": "*",
         "returnGeometry": "false",
@@ -490,17 +490,17 @@ print(f"Saved {len(rows):,} records to {OUTPUT}")
   const r = `# DIEM bulk attribute download (R)
 # Packages: install.packages(c("httr", "jsonlite"))
 # Set a short-lived token before running:
-# Sys.setenv(ARCGIS_TOKEN="your-token")
+# Sys.setenv(DIEM_ACCESS_TOKEN="your-token")
 library(httr)
 library(jsonlite)
 
 query_url <- ${JSON.stringify(queryUrl)}
 where <- ${JSON.stringify(where)}
 output <- ${JSON.stringify(filename)}
-token <- Sys.getenv("ARCGIS_TOKEN")
-if (token == "") stop("Set ARCGIS_TOKEN before running this script.")
+token <- Sys.getenv("DIEM_ACCESS_TOKEN")
+if (token == "") stop("Set DIEM_ACCESS_TOKEN before running this script.")
 
-arcgis_post <- function(parameters) {
+service_post <- function(parameters) {
   response <- POST(query_url, body = c(list(f="json", token=token), parameters), encode="form")
   stop_for_status(response)
   payload <- fromJSON(content(response, as="text", encoding="UTF-8"), simplifyVector=TRUE)
@@ -508,13 +508,13 @@ arcgis_post <- function(parameters) {
   payload
 }
 
-id_result <- arcgis_post(list(where=where, returnIdsOnly="true"))
+id_result <- service_post(list(where=where, returnIdsOnly="true"))
 object_ids <- unlist(id_result$objectIds)
 pages <- list()
 if (length(object_ids) > 0) {
   for (start in seq(1, length(object_ids), by=1000)) {
     batch <- object_ids[start:min(start + 999, length(object_ids))]
-    page <- arcgis_post(list(
+    page <- service_post(list(
       objectIds=paste(batch, collapse=","),
       outFields="*",
       returnGeometry="false"

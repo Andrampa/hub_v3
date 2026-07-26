@@ -83,7 +83,7 @@ function LoadingState() {
     <div className="loading-state" role="status">
       <span className="loader" />
       <strong>Connecting to the public DIEM catalog</strong>
-      <p>Gathering the latest resources from ArcGIS Online…</p>
+      <p>Gathering the latest resources from the DIEM content platform…</p>
     </div>
   )
 }
@@ -114,12 +114,10 @@ export default function App() {
 
   const stats = useMemo(() => {
     const items = catalog?.items || []
-    const latestYear = Math.max(...items.map(itemYear), new Date().getUTCFullYear())
     return {
       total: items.length,
       formats: new Set(items.map((item) => item.type)).size,
-      latestYear,
-      recent: items.filter((item) => itemYear(item) === latestYear).length,
+      themes: new Set(items.map(itemTheme)).size,
       services: items.filter((item) => item.type === 'Feature Service').length,
     }
   }, [catalog])
@@ -174,8 +172,8 @@ export default function App() {
             <div className="eyebrow"><span /> Live public evidence catalog</div>
             <h1>Evidence where<br />decisions <em>can’t wait.</em></h1>
             <p>
-              Timely data and analysis for food-security decisions in fragile and
-              crisis-affected contexts.
+              Regularly collected and analysed data on how shocks affect agricultural
+              livelihoods in fragile and risk-prone contexts.
             </p>
             <label className="hero-search">
               <Icon name="search" />
@@ -189,8 +187,7 @@ export default function App() {
               <a href="#catalog" aria-label="Go to catalog results"><Icon name="arrow" /></a>
             </label>
             <div className="hero-meta">
-              <span><i className="status-dot" /> {auth.status === 'authenticated' ? 'Signed in to the DIEM community' : 'Sourced live from ArcGIS Online'}</span>
-              <span>Updated {catalog ? formatDate(catalog.fetchedAt.getTime()) : 'on every visit'}</span>
+              <span><i className="status-dot" /> {auth.status === 'authenticated' ? 'Signed in to the DIEM community' : 'Sourced live from the DIEM content platform'}</span>
             </div>
           </div>
           <aside className="hero-callout">
@@ -203,14 +200,14 @@ export default function App() {
         <section className="stats-strip" aria-label="Catalog summary">
           <div><strong>{stats.total.toLocaleString()}</strong><span>public resources</span></div>
           <div><strong>{stats.formats}</strong><span>content formats</span></div>
-          <div><strong>{stats.recent}</strong><span>updated in {stats.latestYear}</span></div>
+          <div><strong>{stats.themes}</strong><span>themes represented</span></div>
           <div><strong>{stats.services}</strong><span>data services</span></div>
         </section>
 
         <section className="overview section-wrap" id="overview">
           <div className="section-heading">
             <div><span className="kicker">At a glance</span><h2>A living evidence base</h2></div>
-            <p>Explore survey instruments, briefs, analytical products, maps and applications shared through the DIEM public catalog.</p>
+            <p>Explore resources shared through the DIEM public catalog.</p>
           </div>
           <div className="overview-grid">
             <article className="chart-panel">
@@ -228,7 +225,7 @@ export default function App() {
             <article className="principles-panel" id="about">
               <span className="kicker kicker--light">Why DIEM</span>
               <h3>From field evidence to informed action.</h3>
-              <p>DIEM brings together regularly updated evidence on food security, agricultural livelihoods and shocks in fragile environments.</p>
+              <p>DIEM examines the impact of shocks in food-crisis contexts, helping identify agricultural households and areas most in need.</p>
               <ul>
                 <li><span>01</span>Monitor changing conditions</li>
                 <li><span>02</span>Assess impacts on livelihoods</li>

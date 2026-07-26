@@ -62,7 +62,7 @@ export function DatasetGeometryMap({
       attributionControl: true,
     })
     L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Basemap © Esri, HERE, Garmin, FAO, NOAA, USGS',
+      attribution: 'Basemap contributors',
       maxZoom: 16,
     }).addTo(map)
     const referencePane = map.createPane('diemReferencePane')

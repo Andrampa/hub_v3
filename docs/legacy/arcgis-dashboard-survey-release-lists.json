@@ -1,0 +1,340 @@
+{
+    "version": "4.31.0",
+    "authoringApp": "ArcGIS Dashboards",
+    "authoringAppVersion": "4.31.0+739cf83728",
+    "maxPaginationRecords": 50000,
+    "maxChartRecords": 10000,
+    "timeZone": "system",
+    "theme": {
+        "id": "user",
+        "type": "resource"
+    },
+    "numberPrefixOverrides": [
+        {
+            "key": "yotta",
+            "symbol": "Y",
+            "enabled": true
+        },
+        {
+            "key": "zeta",
+            "symbol": "Z",
+            "enabled": true
+        },
+        {
+            "key": "exa",
+            "symbol": "E",
+            "enabled": true
+        },
+        {
+            "key": "peta",
+            "symbol": "P",
+            "enabled": true
+        },
+        {
+            "key": "tera",
+            "symbol": "T",
+            "enabled": true
+        },
+        {
+            "key": "giga",
+            "symbol": "G",
+            "enabled": true
+        },
+        {
+            "key": "mega",
+            "symbol": "M",
+            "enabled": true
+        },
+        {
+            "key": "kilo",
+            "symbol": "k",
+            "enabled": true
+        },
+        {
+            "key": "base",
+            "symbol": "",
+            "enabled": true
+        },
+        {
+            "key": "deci",
+            "symbol": "d",
+            "enabled": false
+        },
+        {
+            "key": "centi",
+            "symbol": "c",
+            "enabled": false
+        },
+        {
+            "key": "milli",
+            "symbol": "m",
+            "enabled": false
+        },
+        {
+            "key": "micro",
+            "symbol": "µ",
+            "enabled": false
+        },
+        {
+            "key": "nano",
+            "symbol": "n",
+            "enabled": false
+        }
+    ],
+    "desktopView": {
+        "layout": {
+            "type": "dockingLayout",
+            "rootElement": {
+                "width": 1,
+                "height": 1,
+                "id": "0a25c3d5-1a58-4c79-bcad-b71de8aa248d",
+                "elements": [
+                    {
+                        "width": 1,
+                        "height": 0.6940399169924465,
+                        "type": "itemLayoutElement",
+                        "id": "9170a492-2075-4b6c-a26c-190cb66a0827"
+                    },
+                    {
+                        "width": 1,
+                        "height": 0.30596008300755323,
+                        "type": "itemLayoutElement",
+                        "id": "620562b2-4e52-4766-9e63-6c8c580fb5a5"
+                    }
+                ],
+                "type": "stackLayoutElement",
+                "orientation": "row"
+            }
+        },
+        "type": "desktop",
+        "widgets": [
+            {
+                "id": "620562b2-4e52-4766-9e63-6c8c580fb5a5",
+                "name": "List (2)",
+                "caption": "<h3 style=\"text-align:center\"><strong>Next releases</strong></h3>\n",
+                "showLastUpdate": false,
+                "noDataState": {
+                    "text": "",
+                    "verticalAlignment": "middle",
+                    "showCaption": true,
+                    "showDescription": true
+                },
+                "noFilterState": {
+                    "verticalAlignment": "middle",
+                    "showCaption": true,
+                    "showDescription": true
+                },
+                "datasets": [
+                    {
+                        "type": "serviceDataset",
+                        "name": "main",
+                        "dataSource": {
+                            "type": "itemDataSource",
+                            "itemId": "9a548eaacfb34089b21e0b28685955db",
+                            "layerId": 0
+                        },
+                        "filter": {
+                            "type": "filterGroup",
+                            "condition": "OR",
+                            "rules": [
+                                {
+                                    "type": "filterGroup",
+                                    "condition": "AND",
+                                    "rules": [
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "round_validated",
+                                                "type": "string"
+                                            },
+                                            "operator": "equal",
+                                            "constraint": {
+                                                "type": "value",
+                                                "value": "No"
+                                            }
+                                        },
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "admin0_isocode",
+                                                "type": "string"
+                                            },
+                                            "operator": "not_equal",
+                                            "constraint": {
+                                                "type": "value",
+                                                "value": "UGA"
+                                            }
+                                        },
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "round",
+                                                "type": "string"
+                                            },
+                                            "operator": "is_not_in",
+                                            "constraint": {
+                                                "type": "values",
+                                                "values": [
+                                                    "Round 98",
+                                                    "Round 99"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "survey_outdated",
+                                                "type": "string"
+                                            },
+                                            "operator": "equal",
+                                            "constraint": {
+                                                "type": "value",
+                                                "value": "No"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "groupByFields": [],
+                        "orderByFields": [
+                            "staging_date ASC"
+                        ],
+                        "statisticDefinitions": [],
+                        "maxFeatures": 25,
+                        "clientSideStatistics": false,
+                        "outFields": [
+                            "*"
+                        ],
+                        "returnDistinctValues": false,
+                        "allowSourceDownload": false,
+                        "allowSummaryDownload": false
+                    }
+                ],
+                "arcadeEnabled": true,
+                "expression": "var validation_date = Text($datapoint[\"validation_date\"], 'D MMM Y')\nvar coll_start_date = Text($datapoint[\"coll_start_date\"], 'D MMM')\nvar coll_end_date = Text($datapoint[\"coll_end_date\"], 'D MMM Y')\nvar staging_date = Date($datapoint[\"staging_date\"]);\nvar exp_pub = DateAdd(staging_date, 28, 'days');\nvar exp_pub_text = Text(exp_pub, 'D MMM Y')\n\nreturn {\n  textColor: '',\n  backgroundColor: '',\n  separatorColor:'',\n  selectionColor: '',\n  selectionTextColor: '',\n  attributes: {\n    validation_date: validation_date,\n    coll_start_date: coll_start_date,\n    coll_end_date : coll_end_date,\n    exp_pub_text : exp_pub_text\n  }\n}",
+                "type": "listWidget",
+                "selectionMode": "single",
+                "iconType": "none",
+                "text": "<p><span style=\"font-size:18px\"><strong>{field/admin0_name_en}</strong> survey&nbsp;<strong>{field/round}</strong></span></p>\n",
+                "showFilter": false
+            },
+            {
+                "id": "9170a492-2075-4b6c-a26c-190cb66a0827",
+                "name": "List (3)",
+                "caption": "<h3 style=\"text-align:center\"><strong>Recent releases</strong></h3>\n",
+                "showLastUpdate": false,
+                "noDataState": {
+                    "verticalAlignment": "middle",
+                    "showCaption": true,
+                    "showDescription": true
+                },
+                "noFilterState": {
+                    "verticalAlignment": "middle",
+                    "showCaption": true,
+                    "showDescription": true
+                },
+                "datasets": [
+                    {
+                        "type": "serviceDataset",
+                        "name": "main",
+                        "dataSource": {
+                            "type": "itemDataSource",
+                            "itemId": "9a548eaacfb34089b21e0b28685955db",
+                            "layerId": 0
+                        },
+                        "filter": {
+                            "type": "filterGroup",
+                            "condition": "OR",
+                            "rules": [
+                                {
+                                    "type": "filterGroup",
+                                    "condition": "AND",
+                                    "rules": [
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "validation_date",
+                                                "type": "date"
+                                            },
+                                            "operator": "is_not_null",
+                                            "constraint": {
+                                                "type": "nil"
+                                            }
+                                        },
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "round_validated",
+                                                "type": "string"
+                                            },
+                                            "operator": "equal",
+                                            "constraint": {
+                                                "type": "value",
+                                                "value": "Yes"
+                                            }
+                                        },
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "round",
+                                                "type": "string"
+                                            },
+                                            "operator": "is_not_in",
+                                            "constraint": {
+                                                "type": "values",
+                                                "values": [
+                                                    "Round 98",
+                                                    "Round 99"
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            "type": "filterRule",
+                                            "field": {
+                                                "name": "admin0_name_en",
+                                                "type": "string"
+                                            },
+                                            "operator": "not_equal",
+                                            "constraint": {
+                                                "type": "value",
+                                                "value": "Uganda"
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "groupByFields": [],
+                        "orderByFields": [
+                            "validation_date DESC"
+                        ],
+                        "statisticDefinitions": [],
+                        "maxFeatures": 2000,
+                        "clientSideStatistics": false,
+                        "outFields": [
+                            "*"
+                        ],
+                        "returnDistinctValues": false,
+                        "allowSourceDownload": false,
+                        "allowSummaryDownload": false
+                    }
+                ],
+                "arcadeEnabled": true,
+                "expression": "var validation_date = Text($datapoint[\"validation_date\"], 'D MMM Y')\nvar coll_start_date = Text($datapoint[\"coll_start_date\"], 'D MMM')\nvar coll_end_date = Text($datapoint[\"coll_end_date\"], 'D MMM Y')\n//var hyperlink = 'https://experience.arcgis.com/experience/62f76787daf4454daffd92f238cf809c/page/Indicators/?data_filter=dataSource_20-0%3Aadmin0_isocode%3D%27' + $datapoint[\"admin0_isocode\"] + '%27&views=English' \nvar hyperlink = 'https://data-in-emergencies-hqfao.hub.arcgis.com/pages/monitoring-country-specific/?id:c46alxin9:query:page=Indicators&id:c46alxin9:query:data_filter=dataSource_20-0:admin0_isocode%3D%27' + $datapoint[\"admin0_isocode\"] + '%27'\n\nvar brief_id = $datapoint[\"country_brief_link\"]\n\nvar brief_url = IIf(IsEmpty(brief_id), \"\", Concatenate([\"https://data-in-emergencies.fao.org/datasets/\",brief_id, '/explore' ],\"\"))\nvar brief_hypertext = IIf(IsEmpty(brief_id), \"\", \" - Brief Available!\")\n\n\nreturn {\n  textColor: '',\n  backgroundColor: '',\n  separatorColor:'',\n  selectionColor: '',\n  selectionTextColor: '',\n  attributes: {\n    validation_date: validation_date,\n    coll_start_date: coll_start_date,\n    coll_end_date : coll_end_date,\n    hyperlink: hyperlink,\n    brief_url: brief_url,\n    brief_hypertext: brief_hypertext\n  }\n}",
+                "arcadeRefreshEnabled": false,
+                "type": "listWidget",
+                "selectionMode": "single",
+                "iconType": "none",
+                "text": "<p><span style=\"font-size:18px\"><strong>{field/admin0_name_en}</strong> survey&nbsp;<strong>{field/round}</strong> has been published on<strong>&nbsp;{expression/validation_date}</strong>. <a href=\"{expression/hyperlink}\">Click to explore the survey</a>&nbsp;<a href=\"{expression/brief_url}\"><span style=\"color:#ff0000\">{expression/brief_hypertext}</span></a></span></p>\n\n<p>&nbsp;</p>\n",
+                "showFilter": false
+            }
+        ],
+        "settings": {
+            "allowElementResizing": false,
+            "allowElementExpansion": true,
+            "allowReset": false
+        }
+    },
+    "elementMappings": {}
+}

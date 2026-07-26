@@ -87,7 +87,7 @@ function SupportingLink({ resource }: { resource: ResolvedDataResource }) {
 }
 
 function LoadingWorkspace() {
-  return <main className="data-page data-page-loading"><span className="loader"/><strong>Checking your DIEM data access</strong><p>Reading protected resource permissions from ArcGIS Online...</p></main>
+  return <main className="data-page data-page-loading"><span className="loader"/><strong>Checking your DIEM data access</strong><p>Reading protected resource permissions...</p></main>
 }
 
 function SignInGate() {
@@ -106,7 +106,7 @@ function SignInGate() {
               </button>
               <a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">How microdata access works <Icon name="arrow" /></a>
             </div>
-            <p className="data-gate-note"><Icon name="shield"/> Protected datasets remain governed by their ArcGIS sharing permissions.</p>
+            <p className="data-gate-note"><Icon name="shield"/> Protected datasets remain governed by their assigned sharing permissions.</p>
           </div>
           <div className="data-gate-preview" aria-label="Available data collections">
             <div><span>01</span><Icon name="download"/><strong>Household microdata</strong><small>Current and archived</small></div>
@@ -205,7 +205,7 @@ export default function DataAccess() {
             <aside className="access-pathway">
               <span className="access-pathway-number">ACCESS</span>
               <h3>Need household microdata?</h3>
-              <ol><li><span>1</span><div><strong>Create or sign in to your DIEM account</strong><p>Your community identity is already connected to this workspace.</p></div></li><li><span>2</span><div><strong>Request microdata access</strong><p>Complete the short access form. Access is free for one year and renewable.</p></div></li><li><span>3</span><div><strong>Return and download</strong><p>ArcGIS permissions update this page automatically after approval.</p></div></li></ol>
+              <ol><li><span>1</span><div><strong>Create or sign in to your DIEM account</strong><p>Your community identity is already connected to this workspace.</p></div></li><li><span>2</span><div><strong>Request microdata access</strong><p>Complete the short access form. Access is free for one year and renewable.</p></div></li><li><span>3</span><div><strong>Return and download</strong><p>Your access permissions update this page automatically after approval.</p></div></li></ol>
               <a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">Open the access form <Icon name="external"/></a>
             </aside>
           </div>

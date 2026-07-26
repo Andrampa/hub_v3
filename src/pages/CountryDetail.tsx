@@ -107,7 +107,7 @@ export default function CountryDetail() {
       <main id="top" className="country-detail-main">
         {!catalog && !error && (
           <section className="country-loading section-wrap" role="status">
-            <span className="loader" /><strong>Opening the country evidence page</strong><p>Loading curated resources from ArcGIS Online…</p>
+            <span className="loader" /><strong>Opening the country evidence page</strong><p>Loading curated resources from the DIEM content platform…</p>
           </section>
         )}
         {error && (
@@ -143,7 +143,7 @@ export default function CountryDetail() {
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">
                 <div><span className="kicker">Evidence collection</span><h2 id="products-heading">Choose a product</h2></div>
-                <p>Product classifications are maintained in the DIEM ArcGIS country group.</p>
+                <p>Product classifications are maintained in the DIEM country group.</p>
               </div>
               <div className="product-filter-grid">
                 <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{allResources.length}</strong><span>All products</span></button>

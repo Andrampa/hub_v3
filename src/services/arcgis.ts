@@ -16,7 +16,7 @@ interface SearchResponse {
 
 async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(url, { signal })
-  if (!response.ok) throw new Error(`ArcGIS request failed (${response.status})`)
+  if (!response.ok) throw new Error(`Content service request failed (${response.status})`)
   const data = (await response.json()) as T & { error?: { message: string } }
   if (data.error) throw new Error(data.error.message)
   return data
@@ -65,4 +65,3 @@ export function itemThumbnail(item: ArcGISItem) {
 export function itemDestination(item: ArcGISItem) {
   return item.url || `${ARCGIS_PORTAL}/home/item.html?id=${item.id}`
 }
-

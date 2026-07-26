@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-26 - Live monitoring URL bridge
+
+- Added versioned, origin-validated URL-state synchronization between the Hub `/monitoring` route and the embedded monitoring application without iframe reloads.
+- Kept standalone monitoring query/hash links independent and made the monitoring deployment URL configurable with `VITE_MONITORING_DASHBOARD_URL`.
+- Documented the shared embed contract, verification matrix, and smooth Hub/monitoring domain-transition procedure.
+
+## 2026-07-19 - Unified monitoring survey pipeline
+
+- Replaced the monitoring page's forthcoming-dashboard placeholder with a live, merged survey release feed sourced from the public `OER_Monitoring_System_View` ArcGIS layer.
+- Preserved the legacy upcoming/published record rules, expected-publication estimate, exclusions, and established survey explorer/country brief links.
+- Added search, status filters, live counts, progressive loading, responsive timeline cards, clear loading/error/empty states, and links for available survey products.
+- Archived the supplied ArcGIS Dashboards definition as `docs/legacy/arcgis-dashboard-survey-release-lists.json` for reference.
+
+## 2026-07-19
+
+- Added public household-monitoring, flood-services and contact routes, with navigation and responsive layouts.
+- Monitoring progress figures are read live from the public ArcGIS statistics table; the not-yet-hosted dashboard is explicitly marked as forthcoming.
+- Added direct public access to EVE 2.0 and Floodex, clear internal-access labeling for Madagascar and Mozambique field-reporting applications, and the ArcGIS contact form.
+
 ## 2026-07-17
 
 - Restored country world and profile-map rendering by excluding those SVGs from the global icon dimensions.
@@ -79,3 +98,8 @@ All notable documentation and implementation changes. Most recent entry first.
 - Added the live paginated ArcGIS Online catalog service.
 - Added overview statistics, format visualization, search, filters, sorting, cards, and responsive states.
 - Added focused project, architecture, service, workflow, journey, and agent-context documentation.
+## 2026-07-24 - Embedded monitoring dashboard
+
+- Made the live DIEM monitoring dashboard the core of `/monitoring`, while preserving the Hub URL and adding a new-tab fallback.
+- Expanded the site footer with the requested FAO legacy navigation links and copyright line.
+- Added a runtime monitoring-link contract so dashboard visualization URLs round-trip through `/monitoring` without hard-coded production addresses.
