@@ -150,6 +150,15 @@ export default function DataAccess() {
     return () => { active = false }
   }, [auth.requestProtected, auth.status, loadVersion])
 
+  useEffect(() => {
+    if (!resources || !window.location.hash) return
+    const targetId = window.location.hash.slice(1)
+    if (!['microdata', 'aggregated'].includes(targetId)) return
+    window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView({ block: 'start' })
+    })
+  }, [resources])
+
   const resolved = useMemo(() => {
     const byId = new Map(resources?.map((resource) => [resource.id, resource]))
     return (resource: ProtectedDataResource): ResolvedDataResource => byId.get(resource.id) || { ...resource, access: 'checking' }

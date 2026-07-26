@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { CountryEditorial } from '../components/CountryEditorial'
+import { CountryMonitoring } from '../components/CountryMonitoring'
 import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
@@ -19,6 +20,10 @@ import {
   resourcesForCountry,
   type CountryResource,
 } from '../services/countries'
+import {
+  fetchCountryMonitoringCoverage,
+  type CountryMonitoringCoverage,
+} from '../services/monitoring'
 
 const PAGE_SIZE = 12
 
@@ -53,6 +58,7 @@ export default function CountryDetail() {
   const [page, setPage] = useState(1)
   const [editorial, setEditorial] = useState<CountryEditorialContent>()
   const [editorialError, setEditorialError] = useState(false)
+  const [monitoringCoverage, setMonitoringCoverage] = useState<CountryMonitoringCoverage>()
 
   const query = searchParams.get('q') || ''
   const selectedType = searchParams.get('type') || 'All products'
@@ -110,6 +116,21 @@ export default function CountryDetail() {
     return () => controller.abort()
   }, [allResources, catalog, country, iso3])
 
+  useEffect(() => {
+    if (!catalog || !country || iso3 === CROSS_COUNTRY_CODE) {
+      setMonitoringCoverage(undefined)
+      return
+    }
+    const controller = new AbortController()
+    setMonitoringCoverage(undefined)
+    fetchCountryMonitoringCoverage(iso3, controller.signal)
+      .then(setMonitoringCoverage)
+      .catch((requestError) => {
+        if ((requestError as Error).name !== 'AbortError') setMonitoringCoverage(undefined)
+      })
+    return () => controller.abort()
+  }, [catalog, country, iso3])
+
   function setFilter(key: string, value: string, defaultValue: string) {
     const next = new URLSearchParams(searchParams)
     if (!value || value === defaultValue) next.delete(key)
@@ -120,6 +141,11 @@ export default function CountryDetail() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const definition = country || countryDefinition(iso3)
+  const latestUpdate = Math.max(
+    country?.latestModified || 0,
+    editorial?.updatedAt || 0,
+    monitoringCoverage?.latest.publicationDate || 0,
+  )
 
   return (
     <>
@@ -150,7 +176,7 @@ export default function CountryDetail() {
                   <div className="country-profile-stats">
                     <div><strong>{country.resourceCount}</strong><span>resources</span></div>
                     <div><strong>{Object.keys(country.typeCounts).filter((type) => type !== 'Unclassified').length}</strong><span>product types</span></div>
-                    <div><strong>{formatDate(country.latestModified)}</strong><span>latest update</span></div>
+                    <div><strong>{formatDate(latestUpdate)}</strong><span>latest update</span></div>
                   </div>
                 </div>
                 <div className="country-profile-map">
@@ -166,6 +192,10 @@ export default function CountryDetail() {
                 <strong>Country introduction is temporarily unavailable.</strong>
                 <span>The evidence collection remains available below.</span>
               </aside>
+            )}
+
+            {monitoringCoverage && (
+              <CountryMonitoring countryName={definition.name} coverage={monitoringCoverage} />
             )}
 
             <section className="country-products section-wrap" aria-labelledby="products-heading">

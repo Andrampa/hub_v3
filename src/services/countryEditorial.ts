@@ -27,6 +27,7 @@ export interface CountryEditorialContent {
   profile?: CountryEditorialProfile
   highlights: CountryEditorialHighlight[]
   isPreview: boolean
+  updatedAt?: number
 }
 
 interface ArcGISFeature<T> {
@@ -45,6 +46,7 @@ interface ProfileRow {
   content_format?: string
   hero_image_url?: string
   thumbnail_url?: string
+  updated_at?: number
 }
 
 interface HighlightRow {
@@ -55,6 +57,7 @@ interface HighlightRow {
   description?: string
   cta_label?: string
   is_demo?: number
+  updated_at?: number
 }
 
 function safeHttpUrl(value?: string) {
@@ -116,12 +119,12 @@ async function fetchPublishedEditorial(
   const [profiles, rows] = await Promise.all([
     queryTable<ProfileRow>(`${serviceUrl}/0`, {
       where: whereIso(iso3),
-      outFields: 'iso3,name,intro_content,content_format,hero_image_url,thumbnail_url',
+      outFields: 'iso3,name,intro_content,content_format,hero_image_url,thumbnail_url,updated_at',
       resultRecordCount: '1',
     }, signal),
     queryTable<HighlightRow>(`${serviceUrl}/1`, {
       where: whereIso(iso3),
-      outFields: 'item_id,lead_content,lead_format,headline,description,cta_label,is_demo,sort_order',
+      outFields: 'item_id,lead_content,lead_format,headline,description,cta_label,is_demo,sort_order,updated_at',
       orderByFields: 'sort_order ASC,OBJECTID ASC',
     }, signal),
   ])
@@ -154,6 +157,10 @@ async function fetchPublishedEditorial(
     } : undefined,
     highlights,
     isPreview: false,
+    updatedAt: Math.max(
+      Number.isFinite(profileRow?.updated_at) ? profileRow!.updated_at! : 0,
+      ...rows.map((row) => Number.isFinite(row.updated_at) ? row.updated_at! : 0),
+    ) || undefined,
   }
 }
 

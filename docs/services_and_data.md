@@ -34,6 +34,13 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 
 `src/services/monitoring.ts` reads the public monitoring statistics service and the public `OER_Monitoring_System_View` item (`9a548eaacfb34089b21e0b28685955db`, layer `0`). The survey pipeline preserves the reviewed legacy dashboard rules: upcoming surveys are unvalidated, current, non-Uganda rounds; published surveys are validated records with a publication date. Placeholder rounds 98 and 99 remain excluded. Product item IDs are linked to their authoritative ArcGIS item pages, while the country brief and survey explorer retain their established DIEM Hub routes.
 
+Country pages use `fetchCountryMonitoringCoverage` from the same service. The
+request is filtered server-side by ISO3, validated status, and non-outdated
+status, returns no geometry, and requests only the small set of fields needed
+for the coverage panel. The panel links to `/monitoring?iso={ISO3}&round={n}`
+or the same state with `mode=trends`. Anonymous visibility is enforced again
+inside the Monitoring application; the Hub link does not grant access.
+
 The first response provides `total`; remaining pages are fetched concurrently. No token is used in Phase 1.
 
 Authentication uses the separate community portal and OAuth client described in `docs/authentication.md`. The public catalog still uses anonymous requests. Protected catalog requests will receive the active user authentication manager only after their group IDs and product behavior are approved.
@@ -43,6 +50,7 @@ Authentication uses the separate community portal and OAuth client described in 
 - `fetchCatalog`: group plus complete paginated item inventory.
 - `fetchCountryCatalog`: complete country-group inventory with group categories.
 - `fetchCountryEditorial`: published introduction, image fields, and valid highlighted items for one country.
+- `fetchCountryMonitoringCoverage`: public Monitoring-app coverage and latest visible round for one ISO3 country.
 - `resourcesForCountry`: resources assigned to an ISO3 code.
 - `fetchProtectedDataWorkspace`: permission-aware protected item inventory.
 - `authoritativeResourceUrl`: authenticated ArcGIS item details/download destination.

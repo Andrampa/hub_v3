@@ -33,6 +33,18 @@ export function monitoringDashboardUrl() {
   }
 }
 
+export function monitoringCountryPath(
+  iso3: string,
+  round: string,
+  mode: 'explore' | 'trends' | 'anomalies' = 'explore',
+) {
+  const normalizedIso = iso3.trim().toUpperCase()
+  if (!/^[A-Z]{3}$/.test(normalizedIso) || !round.trim()) return '/monitoring'
+  const params = new URLSearchParams({ iso: normalizedIso, round: round.trim() })
+  if (mode !== 'explore') params.set('mode', mode)
+  return `/monitoring?${params}`
+}
+
 export function normalizeVisualizationSearch(search: string) {
   if (typeof search !== 'string' || search.length > MAX_STATE_LENGTH) return null
 
@@ -70,4 +82,3 @@ export function hubUrlWithVisualizationState(currentHref: string, search: string
   hubUrl.search = normalized
   return hubUrl.toString()
 }
-

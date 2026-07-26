@@ -65,3 +65,44 @@ Highlights reference stable ArcGIS item IDs and render only when the item is
 still present in the current country's group-category results. See
 `docs/country_editorial.md` for the table contract, editor workflow, HTML
 sanitization, sharing model, and provisioning process.
+
+## Monitoring Coverage
+
+Standard country routes also make one ISO-filtered request to the public
+`OER_Monitoring_System_View`. A compact **Household monitoring** panel appears
+only when the Monitoring application has at least one public round for that
+country. Public eligibility follows the Monitoring application contract:
+
+- `round_validated = Yes`;
+- `survey_outdated` is not `Yes`;
+- placeholder rounds 98 and 99 are excluded.
+
+The panel shows the number of public rounds and the latest public release. Its
+main action deep-links through the Hub `/monitoring` route using the Monitoring
+application's stable `iso` and `round` URL state. Signed-in users receive
+additional actions according to their recognized ArcGIS groups:
+
+- aggregate-data members can open the aggregated dataset workspace;
+- household-data members can open the microdata workspace;
+- Contributors can open `mode=trends` and `mode=anomalies`.
+
+Contributors inherit both dataset capabilities. The destination application
+and protected items independently apply their own access checks, so these
+navigation controls are never treated as authorization.
+
+Cross-country routes and countries without a public monitoring round do not
+render the panel. A failed monitoring-coverage request is non-blocking and does
+not affect the country editorial or Evidence collection.
+
+## Latest Update
+
+The country hero's **Latest update** is the most recent timestamp among:
+
+1. the latest modified resource currently assigned to the country;
+2. the edit timestamp of the published country introduction or highlighted
+   editorial content;
+3. the publication date of the latest public monitoring round.
+
+Draft editorial rows are excluded because they are not part of the rendered
+country page. This date is recalculated from live ArcGIS responses on each
+page load.

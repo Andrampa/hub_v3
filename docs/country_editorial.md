@@ -31,6 +31,11 @@ can read published content.
 Changes normally appear on the website after saving and reloading the country
 page. No code change or website deployment is needed.
 
+Saving published editorial content also updates the **Latest update** date in
+the country-page header. ArcGIS fills the editor name and edit time
+automatically; editors should not change the Created by, Created at, Updated by,
+or Updated at fields.
+
 ### Country introduction
 
 1. Open the editable source item.
@@ -160,7 +165,9 @@ Run with the ArcGIS Pro Python environment while signed in:
 The script verifies the shared-update group, preserves existing rows, adds
 profiles only for missing country codes, and adds demo highlights only for
 countries that have no highlight rows. It does not overwrite reviewed editorial
-work.
+work. It also verifies service-level editor tracking and fills missing edit
+dates on older rows so published editorial changes can contribute to the
+country page's Latest update date.
 
 On first creation, omit both item-ID arguments. The resulting IDs must be
 reviewed and the public view ID recorded in

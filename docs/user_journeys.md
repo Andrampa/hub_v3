@@ -52,8 +52,11 @@ Success means reaching relevant evidence with its original context and metadata 
 1. User searches by country name or ISO3, selects a region, or explores the map.
 2. The complete directory remains available when generalized map geometry omits a small island state.
 3. User opens a country profile and sees its resource count, product coverage, and latest update.
-4. User filters by publisher-maintained product category, text, or year and can share the resulting URL.
-5. User opens the authoritative resource; cross-country products follow the same library pattern.
+4. Where published household-monitoring rounds exist, the user can open the
+   latest public round or compare public rounds in the embedded Monitoring
+   application.
+5. User filters by publisher-maintained product category, text, or year and can share the resulting URL.
+6. User opens the authoritative resource; cross-country products follow the same library pattern.
 
 ## Failure / Empty States
 

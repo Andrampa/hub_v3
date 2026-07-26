@@ -96,6 +96,21 @@ export interface SurveyRelease {
   products: SurveyProduct[]
 }
 
+export interface CountryMonitoringRound {
+  id: number
+  round: string
+  roundValue: string
+  collectionEnd?: number
+  publicationDate?: number
+}
+
+export interface CountryMonitoringCoverage {
+  iso3: string
+  country: string
+  rounds: CountryMonitoringRound[]
+  latest: CountryMonitoringRound
+}
+
 function text(value: unknown) {
   return typeof value === 'string' ? value.trim() : ''
 }
@@ -209,6 +224,80 @@ export async function fetchSurveyReleases(signal?: AbortSignal): Promise<SurveyR
       if (a.status === 'upcoming') return (a.expectedPublicationDate || Number.MAX_SAFE_INTEGER) - (b.expectedPublicationDate || Number.MAX_SAFE_INTEGER)
       return (b.publicationDate || 0) - (a.publicationDate || 0)
     })
+}
+
+function normalizedRoundValue(value: string) {
+  const match = value.match(/^round\s*0*(\d+)$/i) || value.match(/^0*(\d+)$/)
+  return match ? String(Number(match[1])) : value
+}
+
+/**
+ * Returns only rounds that the Monitoring application exposes to anonymous
+ * visitors. The country page intentionally uses a small ISO-filtered request
+ * instead of downloading the complete monitoring release catalogue.
+ */
+export async function fetchCountryMonitoringCoverage(
+  iso3: string,
+  signal?: AbortSignal,
+): Promise<CountryMonitoringCoverage | undefined> {
+  const normalizedIso = iso3.trim().toUpperCase()
+  if (!/^[A-Z]{3}$/.test(normalizedIso)) return undefined
+
+  const params = new URLSearchParams({
+    f: 'json',
+    where: [
+      `admin0_isocode = '${normalizedIso}'`,
+      `round_validated = 'Yes'`,
+      `(survey_outdated IS NULL OR survey_outdated <> 'Yes')`,
+    ].join(' AND '),
+    outFields: [
+      'ObjectId', 'admin0_isocode', 'admin0_name_en', 'round', 'round_validated',
+      'coll_end_date', 'validation_date', 'survey_outdated',
+    ].join(','),
+    returnGeometry: 'false',
+    orderByFields: 'validation_date DESC,ObjectId DESC',
+    resultRecordCount: '100',
+  })
+  const response = await fetch(`${SURVEY_RELEASE_QUERY_URL}?${params}`, { signal })
+  if (!response.ok) throw new Error(`Country monitoring coverage request failed (${response.status})`)
+  const data = await response.json() as SurveyReleaseResponse
+  if (data.error) throw new Error(data.error.message || 'Country monitoring coverage could not be read.')
+
+  const visibleRows = (data.features || [])
+    .flatMap((feature) => feature.attributes ? [feature.attributes] : [])
+    .filter((attributes) => (
+      text(attributes.admin0_isocode).toUpperCase() === normalizedIso
+      && text(attributes.round_validated).toLowerCase() === 'yes'
+      && text(attributes.survey_outdated).toLowerCase() !== 'yes'
+      && !excludedRound(text(attributes.round))
+    ))
+
+  const seen = new Set<string>()
+  const rounds = visibleRows.flatMap((attributes) => {
+    const round = text(attributes.round)
+    const roundValue = normalizedRoundValue(round)
+    if (!Number.isFinite(attributes.ObjectId) || !round || !roundValue || seen.has(roundValue)) return []
+    seen.add(roundValue)
+    return [{
+      id: attributes.ObjectId!,
+      round,
+      roundValue,
+      collectionEnd: Number.isFinite(attributes.coll_end_date) ? attributes.coll_end_date : undefined,
+      publicationDate: Number.isFinite(attributes.validation_date) ? attributes.validation_date : undefined,
+    }]
+  }).sort((a, b) => {
+    const dateDifference = (b.publicationDate || 0) - (a.publicationDate || 0)
+    if (dateDifference) return dateDifference
+    return (Number(b.roundValue) || 0) - (Number(a.roundValue) || 0)
+  })
+
+  if (!rounds.length) return undefined
+  return {
+    iso3: normalizedIso,
+    country: text(visibleRows[0]?.admin0_name_en) || normalizedIso,
+    rounds,
+    latest: rounds[0],
+  }
 }
 
 export const SURVEY_RELEASE_SOURCE_URL = SURVEY_RELEASE_LAYER_URL

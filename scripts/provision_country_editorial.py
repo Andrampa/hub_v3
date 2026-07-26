@@ -138,6 +138,13 @@ EDIT_FIELDS_INFO = {
     "editorField": "updated_by",
 }
 
+EDITOR_TRACKING_INFO = {
+    "enableEditorTracking": True,
+    "enableOwnershipAccessControl": False,
+    "allowOthersToUpdate": True,
+    "allowOthersToDelete": True,
+}
+
 TABLE_DEFINITIONS = [
     {
         "id": 0,
@@ -179,6 +186,7 @@ TABLE_DEFINITIONS = [
         ],
         "capabilities": "Create,Delete,Query,Update,Editing",
         "editFieldsInfo": EDIT_FIELDS_INFO,
+        "editorTrackingInfo": EDITOR_TRACKING_INFO,
     },
     {
         "id": 1,
@@ -228,6 +236,7 @@ TABLE_DEFINITIONS = [
         ],
         "capabilities": "Create,Delete,Query,Update,Editing",
         "editFieldsInfo": EDIT_FIELDS_INFO,
+        "editorTrackingInfo": EDITOR_TRACKING_INFO,
     },
 ]
 
@@ -470,6 +479,66 @@ def ensure_source_schema(source_item: Item) -> int:
     return added
 
 
+def enable_editor_tracking(source_item: Item) -> int:
+    collection = FeatureLayerCollection.fromitem(source_item)
+    if len(collection.tables) != len(TABLE_DEFINITIONS):
+        raise RuntimeError("Unexpected editorial source table count")
+    service_result = collection.manager.update_definition(
+        {"editorTrackingInfo": EDITOR_TRACKING_INFO}
+    )
+    if not service_result.get("success"):
+        raise RuntimeError(
+            f"Could not enable service-level editor tracking: {service_result}"
+        )
+    enabled = 0
+    for table in collection.tables:
+        result = table.manager.update_definition(
+            {"editFieldsInfo": EDIT_FIELDS_INFO}
+        )
+        if not result.get("success"):
+            raise RuntimeError(
+                f"Could not enable editor tracking on {table.properties.name}: {result}"
+            )
+        enabled += 1
+    return enabled
+
+
+def backfill_editor_dates(source_item: Item) -> int:
+    collection = FeatureLayerCollection.fromitem(source_item)
+    touched = 0
+    for table in collection.tables:
+        features = table.query(
+            where="updated_at IS NULL",
+            out_fields="OBJECTID,published",
+            return_geometry=False,
+        ).features
+        updates = [
+            {
+                "attributes": {
+                    "OBJECTID": feature.attributes["OBJECTID"],
+                    "published": feature.attributes.get("published"),
+                }
+            }
+            for feature in features
+        ]
+        for batch in batched(updates):
+            ensure_edit_success(
+                table.edit_features(updates=batch),
+                f"Editor-date backfill for {table.properties.name}",
+            )
+            touched += len(batch)
+        remaining = table.query(
+            where="updated_at IS NULL",
+            return_count_only=True,
+        )
+        if remaining:
+            raise RuntimeError(
+                f"Editor tracking did not populate updated_at for "
+                f"{remaining} rows in {table.properties.name}"
+            )
+    return touched
+
+
 def verify_public_view_schema(view_item: Item) -> None:
     collection = FeatureLayerCollection.fromitem(view_item)
     if len(collection.tables) != len(TABLE_DEFINITIONS):
@@ -699,11 +768,15 @@ def main() -> int:
         allow_view_schema_changes(view_item)
 
     fields_added = ensure_source_schema(source_item)
+    tracked_tables = enable_editor_tracking(source_item)
     profiles_added, highlights_added, profiles_repaired, highlight_leads_added = seed_tables(source_item)
+    editor_dates_backfilled = backfill_editor_dates(source_item)
     print(
         f"Seeded {profiles_added} country profiles and {highlights_added} demo "
         f"highlights; added {fields_added} schema fields; repaired "
-        f"{profiles_repaired} seeded profile rows and {highlight_leads_added} demo leads"
+        f"{profiles_repaired} seeded profile rows and {highlight_leads_added} demo leads; "
+        f"enabled editor tracking on {tracked_tables} tables and backfilled "
+        f"{editor_dates_backfilled} edit dates"
     )
 
     if not view_item:
@@ -727,6 +800,8 @@ def main() -> int:
         "public_fields_exposed": public_fields_exposed,
         "seeded_profiles_repaired": profiles_repaired,
         "demo_highlight_leads_added": highlight_leads_added,
+        "editor_tracking_tables": tracked_tables,
+        "editor_dates_backfilled": editor_dates_backfilled,
     }
     print(json.dumps(result, indent=2))
     return 0

@@ -25,6 +25,19 @@ The client ID is public application configuration. No client secret belongs in t
 
 The context exposes `requestProtected` for JSON requests and `downloadProtected` for binary export responses used by `/data`. Both closures retain the identity manager and token inside the provider; page components receive neither.
 
+After organization validation, the Hub also derives the same cumulative access
+capabilities used by the Monitoring application:
+
+- Contributors (`ad13b87919464cb6b9bb6cd8defa0257`) receive analysis tools,
+  aggregated-data access, and household-data access.
+- Aggregated data (`c8ae74a0f2de480abe6f72876a52b0cc`) enables aggregate
+  dataset entry points.
+- Household data (`3f1e99b44e3e4107957de001a1242a70`) enables household
+  microdata entry points.
+
+These capabilities govern navigation visibility only. The destination dataset
+still has to accept the active identity through its ArcGIS sharing settings.
+
 The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-service hostname, so `downloadProtected` does not pass it to ArcGIS REST JS authentication. It follows the Hub v1 contract inside the provider: adds the short-lived ArcGIS token to same-origin Hub requests, follows documented `202` job-status responses, and never forwards that token to a different origin. Phase 2 removes this query-token transport together with the legacy Hub export dependency.
 
 ## Security Invariants
@@ -33,6 +46,8 @@ The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-serv
 - Never expose or request an ArcGIS password or client secret.
 - Reject accounts from FAO's employee organization and every unrelated ArcGIS organization.
 - Let ArcGIS sharing and group membership authorize protected items; successful login alone does not grant item access.
+- Never infer Monitoring analysis or dataset capabilities from organization
+  membership alone; use the recognized group memberships.
 - Do not request protected data metadata before authentication or render stale protected state after sign-out.
 - Do not log serialized sessions, access tokens, refresh tokens, or OAuth callback query parameters.
 - Account creation remains owned by the ArcGIS community organization.

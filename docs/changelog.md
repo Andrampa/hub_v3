@@ -18,6 +18,18 @@
   plain-text or safe-HTML introductions above each curated card.
 - Expanded the runbook with a non-technical editor quick guide and a
   Draft/Published review recommendation.
+- Added a responsive Household monitoring panel to covered country pages,
+  backed by an efficient ISO-filtered public-round query.
+- Added latest-round and trends deep links into the Monitoring application,
+  while retaining its anonymous validated/non-outdated visibility rules.
+- Refined the panel copy to **Household monitoring system in {country}** and
+  removed instructional public-access wording.
+- Made Trends, Anomaly Detection, aggregated-data, and household-microdata
+  actions conditional on the same ArcGIS access groups used by the Monitoring
+  application.
+- Expanded the country hero's Latest update calculation to include published
+  editorial edits and newly published monitoring rounds as well as catalog
+  resource modifications.
 
 ## 2026-07-26 - Live monitoring URL bridge
 

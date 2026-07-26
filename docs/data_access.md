@@ -15,6 +15,12 @@ The current production Hub remains unchanged. ArcGIS Online remains authoritativ
 5. ArcGIS item and group sharing determines whether the resource is available.
 6. A signed-in user without microdata permission receives the access-request pathway rather than a download link.
 
+Country-page Monitoring panels provide shortcuts into the relevant workspace
+sections. Aggregated-data group members see the aggregate shortcut;
+household-data group members see the microdata shortcut; Contributors inherit
+both. The workspace still resolves every item with the active identity before
+showing an explorer or download action.
+
 The UI must never infer protected access from login alone. Organization login opens the workspace; ArcGIS sharing authorizes each resource.
 
 ## Request Boundary

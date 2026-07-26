@@ -151,6 +151,32 @@
 .country-editorial-status { margin-top: 48px; padding: 16px 20px; display: flex; justify-content: space-between; gap: 20px; background: #fff8ef; border-left: 3px solid var(--orange); color: #6c584c; font-size: 11px; }
 .country-editorial-status strong { color: #734324; }
 
+.country-monitoring { padding-top: 54px; }
+.country-monitoring-card { position: relative; overflow: hidden; min-height: 290px; display: grid; grid-template-columns: 220px minmax(0, 1fr) 305px; background: white; border: 1px solid #d8e4e2; box-shadow: 0 18px 44px rgba(17, 58, 69, .09); }
+.country-monitoring-signal { position: relative; overflow: hidden; padding: 34px 30px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(145deg, #043f61 0%, #075f79 100%); color: white; }
+.country-monitoring-signal::before { content: ''; position: absolute; width: 220px; height: 220px; right: -105px; top: -120px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 34px rgba(255,255,255,.025), 0 0 0 68px rgba(255,255,255,.018); }
+.country-monitoring-signal > span { position: relative; color: #b8dce4; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+.country-monitoring-signal > small { position: relative; color: #a9cbd3; font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.country-monitoring-pulse { position: relative; height: 78px; display: flex; align-items: end; gap: 11px; }
+.country-monitoring-pulse::before { content: ''; position: absolute; inset: auto 0 12px; height: 1px; background: rgba(255,255,255,.22); }
+.country-monitoring-pulse i { --pulse-index: 0; position: relative; z-index: 1; width: 13px; height: calc(22px + var(--pulse-index) * 7px); display: block; background: #62b8c8; border-radius: 8px 8px 1px 1px; box-shadow: 0 0 0 4px rgba(98,184,200,.08); }
+.country-monitoring-pulse i.is-latest { background: var(--orange); box-shadow: 0 0 0 5px rgba(239,125,57,.14); }
+.country-monitoring-copy { min-width: 0; padding: 42px 45px 38px; }
+.country-monitoring-copy h2 { margin: 8px 0 13px; color: var(--deep-blue); font-size: clamp(28px, 3.2vw, 39px); line-height: 1.08; letter-spacing: -.045em; }
+.country-monitoring-copy > p { max-width: 610px; margin: 0; color: #62777e; font-size: 13px; line-height: 1.7; }
+.country-monitoring-facts { display: flex; gap: 34px; margin-top: 25px; }
+.country-monitoring-facts div { display: flex; flex-direction: column; }
+.country-monitoring-facts div + div { padding-left: 34px; border-left: 1px solid #e1e9e7; }
+.country-monitoring-facts strong { color: #174a5f; font-size: 20px; letter-spacing: -.02em; }
+.country-monitoring-facts span { margin-top: 3px; color: #829297; font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.country-monitoring-actions { padding: 36px 31px; display: flex; flex-direction: column; justify-content: center; background: #edf4f3; border-left: 1px solid #dce6e4; }
+.country-monitoring-actions > span { margin-bottom: 12px; color: #6d8187; font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.country-monitoring-actions a { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 10px; font-weight: 800; }
+.country-monitoring-primary { min-height: 48px; padding: 0 16px; background: var(--fao-blue); color: white; transition: background .18s ease, transform .18s ease; }
+.country-monitoring-primary:hover { background: var(--deep-blue); transform: translateY(-1px); }
+.country-monitoring-primary span { color: #f4a574; font-size: 18px; }
+.country-monitoring-secondary { margin-top: 3px; padding: 8px 2px 6px; color: var(--fao-blue); border-bottom: 1px solid #cddbd8; }
+
 .country-products { padding-block: 82px 75px; }
 .product-filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .product-filter-grid button { min-height: 78px; padding: 15px; display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid #dce4e2; background: white; color: #4f6269; cursor: pointer; }
@@ -197,6 +223,11 @@
   .country-profile-inner { grid-template-columns: 1.25fr .75fr; gap: 25px; }
   .country-editorial-story-copy { width: min(850px, 100%); }
   .country-highlight-grid--2 { grid-template-columns: 1fr; }
+  .country-monitoring-card { grid-template-columns: 170px minmax(0, 1fr); }
+  .country-monitoring-actions { grid-column: 1 / -1; padding: 24px 28px; flex-flow: row wrap; align-items: center; justify-content: flex-start; gap: 8px 20px; border-left: 0; border-top: 1px solid #dce6e4; }
+  .country-monitoring-actions > span { width: 100%; margin: 0; }
+  .country-monitoring-primary { min-width: 210px; }
+  .country-monitoring-secondary { margin: 0; padding: 9px 0; border: 0; }
   .country-filter-bar { grid-template-columns: 1.4fr .7fr .9fr; }
   .country-filter-bar > button { grid-column: 1 / -1; min-height: 38px; }
 }
@@ -232,6 +263,18 @@
   .country-highlight-card { grid-template-columns: 1fr; }
   .country-highlight-image { min-height: 190px; max-height: 230px; }
   .country-editorial-status { flex-direction: column; gap: 5px; }
+  .country-monitoring { width: 100%; padding-top: 38px; }
+  .country-monitoring-card { grid-template-columns: 1fr; border-inline: 0; }
+  .country-monitoring-signal { min-height: 150px; padding: 25px; }
+  .country-monitoring-pulse { position: absolute; right: 24px; bottom: 26px; width: 145px; height: 65px; }
+  .country-monitoring-signal > small { max-width: 90px; line-height: 1.5; }
+  .country-monitoring-copy { padding: 30px 25px; }
+  .country-monitoring-copy h2 { font-size: 30px; }
+  .country-monitoring-facts { gap: 20px; }
+  .country-monitoring-facts div + div { padding-left: 20px; }
+  .country-monitoring-actions { grid-column: auto; padding: 25px; display: flex; align-items: stretch; }
+  .country-monitoring-actions > span { margin-bottom: 10px; }
+  .country-monitoring-primary { min-width: 0; }
   .country-products { padding-block: 65px; }
   .product-filter-grid { grid-template-columns: 1fr 1fr; }
   .product-filter-grid button { min-height: 70px; }
