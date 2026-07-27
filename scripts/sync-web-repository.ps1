@@ -9,7 +9,6 @@ $ErrorActionPreference = 'Stop'
 $sourceRepository = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $expectedRemote = 'https://github.com/un-fao/fao-oer-diem-hub.git'
 $allowedPaths = @(
-  '.github',
   'src',
   '.gitignore',
   'index.html',
