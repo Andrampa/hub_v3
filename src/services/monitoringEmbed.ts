@@ -2,6 +2,11 @@ export const DEFAULT_MONITORING_DASHBOARD_URL = 'https://diem-monitoring-review.
 export const MONITORING_BRIDGE_VERSION = 1
 export const MONITORING_STATE_MESSAGE = 'diem-monitoring:url-state'
 export const HUB_STATE_MESSAGE = 'diem-hub:url-state'
+// Identity handoff. The dashboard is a different registrable domain, so no
+// cookie or storage can be shared with it; the embedded dashboard learns about
+// the Hub sign-in only through this channel.
+export const MONITORING_AUTH_READY_MESSAGE = 'diem-monitoring:auth-ready'
+export const HUB_AUTH_MESSAGE = 'diem-hub:auth'
 
 const EMBED_MODE_PARAM = 'diemEmbed'
 const HUB_SHARE_URL_PARAM = 'diemHubShareUrl'
@@ -17,6 +22,18 @@ export interface HubStateMessage {
   type: typeof HUB_STATE_MESSAGE
   version: typeof MONITORING_BRIDGE_VERSION
   search: string
+}
+
+// `token: null` is a meaningful value, not an absence: it tells the dashboard to
+// drop its credential when the Hub signs out. No username, role, or capability
+// travels in this message - the dashboard re-derives all of those from
+// /community/self with the token, so a forged message cannot grant access.
+export interface HubAuthMessage {
+  type: typeof HUB_AUTH_MESSAGE
+  version: typeof MONITORING_BRIDGE_VERSION
+  portal: string
+  token: string | null
+  expires: number | null
 }
 
 export function monitoringDashboardUrl() {
@@ -73,6 +90,13 @@ export function isMonitoringStateMessage(value: unknown): value is MonitoringSta
     && candidate.version === MONITORING_BRIDGE_VERSION
     && typeof candidate.search === 'string'
     && normalizeVisualizationSearch(candidate.search) !== null
+}
+
+export function isMonitoringAuthReadyMessage(value: unknown) {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Partial<{ type: string; version: number }>
+  return candidate.type === MONITORING_AUTH_READY_MESSAGE
+    && candidate.version === MONITORING_BRIDGE_VERSION
 }
 
 export function hubUrlWithVisualizationState(currentHref: string, search: string) {

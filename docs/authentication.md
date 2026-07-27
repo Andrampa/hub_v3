@@ -40,6 +40,32 @@ still has to accept the active identity through its ArcGIS sharing settings.
 
 The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-service hostname, so `downloadProtected` does not pass it to ArcGIS REST JS authentication. It follows the Hub v1 contract inside the provider: adds the short-lived ArcGIS token to same-origin Hub requests, follows documented `202` job-status responses, and never forwards that token to a different origin. Phase 2 removes this query-token transport together with the legacy Hub export dependency.
 
+## Embedded Monitoring Dashboard Handoff
+
+The Monitoring dashboard is served from a different registrable domain, so it
+cannot see this Hub's `sessionStorage` session. Cookies are not a usable
+transport: there is no shared parent domain, an iframe cookie would be a
+third-party cookie (blocked or partitioned by current browsers), and the ArcGIS
+SDK needs JavaScript read access so it could not be `HttpOnly`.
+
+`MonitoringSystem` therefore hands the dashboard an ArcGIS token over the
+origin-pinned `postMessage` bridge: the dashboard announces
+`diem-monitoring:auth-ready`, the Hub replies with `diem-hub:auth` carrying
+`{ portal, token, expires }`, and re-sends on every auth change and shortly
+before expiry. `token: null` signals sign-out.
+
+`embedCredential` on the auth context is a deliberate, narrow exception to the
+rule that components never receive the token. Only `MonitoringSystem` may call
+it, and only to feed this bridge.
+
+- The target origin is derived from the configured dashboard URL and is always
+  explicit, never `*`.
+- The iframe's `contentWindow` is re-checked after the token is minted, so a
+  frame that was replaced mid-flight never receives it.
+- Only the token travels. The dashboard re-derives organization membership and
+  group capabilities from `/community/self` itself; the Hub does not assert
+  identity or capabilities to it.
+
 ## Security Invariants
 
 - Never accept a username, email domain, role, tag, or UI choice as proof of membership.
@@ -50,6 +76,8 @@ The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-serv
   membership alone; use the recognized group memberships.
 - Do not request protected data metadata before authentication or render stale protected state after sign-out.
 - Do not log serialized sessions, access tokens, refresh tokens, or OAuth callback query parameters.
+- Never place the ArcGIS token in the embedded dashboard's iframe URL, a cookie, or `localStorage`; the `postMessage` bridge is its only transport.
+- Never let the embedded dashboard assert who the user is; it receives a credential, not a claim.
 - Account creation remains owned by the ArcGIS community organization.
 
 ## Deployment And Redirects

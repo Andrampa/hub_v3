@@ -19,6 +19,16 @@ interface AuthContextValue {
   clearError: () => void
   requestProtected: <T>(url: string, params?: Record<string, unknown>) => Promise<T>
   downloadProtected: (url: string, params?: Record<string, unknown>) => Promise<Blob>
+  // Deliberate, narrow exception to "components never receive the token": the
+  // embedded Monitoring dashboard is a separate origin that cannot read this
+  // session, so MonitoringSystem hands it the raw token over an origin-pinned
+  // postMessage channel. No other component may call this.
+  embedCredential: () => Promise<EmbedCredential | null>
+}
+
+export interface EmbedCredential {
+  token: string
+  expires: number | null
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -180,6 +190,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('The export could not be completed.')
   }, [manager, status])
 
+  const embedCredential = useCallback(async (): Promise<EmbedCredential | null> => {
+      if (!manager || status !== 'authenticated') return null
+      // getToken refreshes through the stored refresh token when the access
+      // token has already expired, so the dashboard never receives a dead one.
+      const token = await manager.getToken(manager.portal)
+      const expires = manager.tokenExpires ? manager.tokenExpires.getTime() : null
+      return { token, expires }
+  }, [manager, status])
+
   const value = useMemo<AuthContextValue>(() => ({
     status,
     user,
@@ -189,7 +208,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearError,
     requestProtected,
     downloadProtected,
-  }), [clearError, downloadProtected, error, requestProtected, signIn, signOut, status, user])
+    embedCredential,
+  }), [clearError, downloadProtected, embedCredential, error, requestProtected, signIn, signOut, status, user])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
