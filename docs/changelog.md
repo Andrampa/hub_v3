@@ -4,6 +4,8 @@
 
 - Added the guarded source-only synchronization workflow for the FAO Firebase
   deployment repository, excluding AI/agent context and internal materials.
+- Pinned the transitive `react-router` dependency to the Dependabot-patched
+  8.3.0 release through the npm override contract.
 
 ## 2026-07-26
 
