@@ -42,6 +42,21 @@ The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-serv
 
 ## Embedded Monitoring Dashboard Handoff
 
+### Related repositories, domains, and release boundary
+
+| Role | Local checkout / GitHub repository | Review origin |
+|---|---|---|
+| Hub source | `C:\git\hub_v3` / `Andrampa/hub_v3` | `https://fao-oer-review.web.app/` |
+| Hub Firebase source | `C:\git\fao-oer-diem-hub` / `un-fao/fao-oer-diem-hub` | `https://fao-oer-review.web.app/` |
+| Monitoring source | `C:\git\hh_survey_v3` / `Andrampa/hh_survey_v3` | n/a |
+| Monitoring Firebase source | `C:\git\fao-oer-diem-monitoring-app` / `un-fao/fao-oer-diem-monitoring-app` | `https://diem-monitoring-review.web.app/` |
+
+`https://data-in-emergencies.fao.org/` is the Hub production origin. A push to
+either FAO Firebase repository updates review source only; it does not deploy.
+The user manually runs each repository's **Manual Deploy** GitHub Actions
+workflow on `main` with environment `fao-oer-review`. Do not trigger it unless
+explicitly asked.
+
 The Monitoring dashboard is served from a different registrable domain, so it
 cannot see this Hub's `sessionStorage` session. Cookies are not a usable
 transport: there is no shared parent domain, an iframe cookie would be a

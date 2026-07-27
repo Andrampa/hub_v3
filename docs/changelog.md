@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-27 - Cross-repository web and authentication context
+
+- Documented the Hub/Monitoring source and Firebase repositories, review and
+  production origins, manual-deploy boundary, and embedded ArcGIS credential
+  handoff in the authoritative authentication and publishing context.
+
 ## 2026-07-27
 
 - Added the guarded source-only synchronization workflow for the FAO Firebase

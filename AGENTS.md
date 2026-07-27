@@ -66,6 +66,17 @@ The deployment workflow builds the app in GitHub Actions and Firebase publishes
 explicitly authorized production GitHub Actions deployment after the push; a
 push alone must not be represented as production deployment.
 
+Pushing either deployment repository does **not** deploy it. Both FAO deployment
+repositories use the GitHub Actions **Manual Deploy** (`workflow_dispatch`)
+workflow; the user runs it manually on `main` with environment
+`fao-oer-review`. Do not trigger that workflow unless the user explicitly asks.
+
+The embedded monitoring dashboard is at
+`https://diem-monitoring-review.web.app/`; the Hub review origin is
+`https://fao-oer-review.web.app/`, while `https://data-in-emergencies.fao.org/`
+is the production Hub origin. For the cross-domain ArcGIS token handoff, read
+`docs/authentication.md` before changing either iframe or authentication code.
+
 ## Agent Handoff Protocol
 
 Record unfinished work in `docs/handoff.md` with status, exact next file, and exact verification command.
