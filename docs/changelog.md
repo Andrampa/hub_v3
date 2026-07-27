@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-27
+
+- Added the guarded source-only synchronization workflow for the FAO Firebase
+  deployment repository, excluding AI/agent context and internal materials.
+
 ## 2026-07-26
 
 - Added a catalog-derived Latest evidence strip for current Impact assessment

@@ -50,3 +50,19 @@ No automated test framework is configured yet. Add one when behavior is complex 
 Update the focused contract document and `docs/changelog.md` whenever behavior changes. Use `docs/handoff.md` only for unfinished work.
 
 Production hosts must provide an SPA fallback to `index.html` for direct country-route navigation.
+
+## Web Publishing
+
+The FAO deployment repository is a deliberately minimal source-only checkout at
+`C:\git\fao-oer-diem-hub`; it is not a second development workspace. To prepare
+it after an approved change, run:
+
+```powershell
+.\scripts\sync-web-repository.ps1
+```
+
+The script validates the target path and Git remote, then copies an explicit
+allowlist of the React source and build configuration. It excludes agent/AI
+context, internal documentation, local environment files, and `dist/`. Inspect
+the target repository’s diff, then commit and push it independently. Use
+`-AllowDirtyDeploymentRepository` only for an intentional, reviewed migration.

@@ -43,6 +43,29 @@ Use `docs/context_index.md` to select focused references. Update `docs/changelog
 3. Update focused docs if behavior or contracts changed.
 4. Report changed files, verification, and remaining risks.
 
+## Web Publishing Contract
+
+`C:\git\hub_v3` is the complete development repository. The separate checkout
+`C:\git\fao-oer-diem-hub`, whose `origin` must be
+`https://github.com/un-fao/fao-oer-diem-hub.git`, is the public deployment
+repository for Firebase Hosting.
+
+When the user says “commit and push to web”, “commit and push to colleagues”,
+or “commit and push to prod”, first commit/push any explicitly requested
+development changes here, then run `scripts/sync-web-repository.ps1` to prepare
+the deployment checkout. The deployment repository receives only the minimal
+source required to build and deploy the React app: `src/`, the Vite entry HTML,
+TypeScript/Vite configuration, package manifests, Firebase configuration, and
+the deployment GitHub Actions workflow. Do not copy AI/agent context,
+`.agents/`, `AGENTS.md`, `CLAUDE.md`, `CODEX.md`, internal documentation,
+handoff material, local environment files, or generated `dist/` output.
+
+The deployment workflow builds the app in GitHub Actions and Firebase publishes
+`dist/`. Before committing there, inspect the diff and verify `npm run build`.
+“Web” and “colleagues” mean the review/staging environment. “Prod” requires an
+explicitly authorized production GitHub Actions deployment after the push; a
+push alone must not be represented as production deployment.
+
 ## Agent Handoff Protocol
 
 Record unfinished work in `docs/handoff.md` with status, exact next file, and exact verification command.
