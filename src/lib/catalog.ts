@@ -20,7 +20,6 @@ export function itemTheme(item: ArcGISItem) {
   const haystack = [item.title, ...(item.tags || [])].join(' ')
   return themeMatchers.find(([, pattern]) => pattern.test(haystack))?.[0] || 'Other'
 }
-
 export function itemCountry(item: ArcGISItem) {
   const prefix = item.title.trim().split(/\s+-\s+/)[0]?.trim()
   if (!prefix || prefix.length > 45 || genericPrefixes.has(prefix.toLowerCase())) return undefined
@@ -45,4 +44,3 @@ export function formatDate(timestamp: number) {
     timeZone: 'UTC',
   }).format(new Date(timestamp))
 }
-

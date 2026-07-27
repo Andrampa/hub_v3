@@ -24,4 +24,3 @@ export function useCountryCatalog() {
   const retry = useCallback(() => setAttempt((value) => value + 1), [])
   return { catalog, error, retry }
 }
-
