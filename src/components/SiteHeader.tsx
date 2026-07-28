@@ -26,14 +26,14 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
         </div>
         <div className="auth-actions">
           {auth.status !== 'authenticated' && (
-            <button
+            <a
               className="join-button"
-              type="button"
-              disabled={auth.status === 'loading' || auth.status === 'authenticating'}
-              onClick={() => void auth.signIn()}
+              href="https://hqfao.maps.arcgis.com/sharing/rest/oauth2/signup?client_id=aEXLMtXxljlIrgPN&response_type=token&redirect_uri=https%3A%2F%2Fdata-in-emergencies.fao.org%2Ftorii-provider-arcgis%2Fhub-redirect.html"
+              target="_blank"
+              rel="noreferrer"
             >
               Create account
-            </button>
+            </a>
           )}
           {auth.status === 'authenticated' && auth.user ? (
             <div className="member-session">
