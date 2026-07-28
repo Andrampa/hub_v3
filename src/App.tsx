@@ -3,10 +3,22 @@ import { useAuth } from './auth/AuthContext'
 import { EditorialPopup } from './components/EditorialPopup'
 import { LatestEvidenceBanner } from './components/LatestEvidenceBanner'
 import { ProgrammeCarousel } from './components/ProgrammeCarousel'
+import { ProgrammeNumbers } from './components/ProgrammeNumbers'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { SurveyReleases } from './components/SurveyReleases'
-import { cleanText, formatDate, itemCountry, itemTheme, itemYear } from './lib/catalog'
+import {
+  cleanText,
+  formatDate,
+  isHazardImpactAssessment,
+  itemCountry,
+  itemTheme,
+  itemYear,
+} from './lib/catalog'
+import {
+  fetchMonitoringStatistics,
+  type MonitoringStatistics,
+} from './services/monitoring'
 import {
   CONTENT_GROUP_ID,
   fetchCatalog,
@@ -112,6 +124,8 @@ export default function App() {
     slides: defaultProgrammeSlides,
     channel: promotionChannel,
   })
+  const [monitoringStatistics, setMonitoringStatistics] = useState<MonitoringStatistics | null>(null)
+  const [monitoringStatisticsFailed, setMonitoringStatisticsFailed] = useState(false)
 
   const loadCatalog = () => {
     setError(undefined)
@@ -134,20 +148,32 @@ export default function App() {
     return () => controller.abort()
   }, [])
 
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchMonitoringStatistics(controller.signal)
+      .then(setMonitoringStatistics)
+      .catch((reason: Error) => {
+        if (reason.name === 'AbortError') return
+        // The card degrades to its remaining tiers rather than disappearing,
+        // so a monitoring outage never blanks the homepage numbers.
+        console.warn('Monitoring statistics could not be loaded.', reason)
+        setMonitoringStatisticsFailed(true)
+      })
+    return () => controller.abort()
+  }, [])
+
+  /**
+   * Both figures are derived from the catalogue that is already loaded, so the
+   * card costs no additional request. Counting hazard impact assessments from
+   * group members is also what keeps the figure accurate: ArcGIS tag search is
+   * stemmed, and only the Hub group is free of near-miss tag variants.
+   */
   const stats = useMemo(() => {
     const items = catalog?.items || []
     return {
       total: items.length,
-      formats: new Set(items.map((item) => item.type)).size,
-      themes: new Set(items.map(itemTheme)).size,
-      services: items.filter((item) => item.type === 'Feature Service').length,
+      hazardImpactAssessments: items.filter(isHazardImpactAssessment).length,
     }
-  }, [catalog])
-
-  const typeCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    catalog?.items.forEach((item) => counts.set(item.type, (counts.get(item.type) || 0) + 1))
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
   }, [catalog])
 
   const themes = useMemo(
@@ -219,12 +245,13 @@ export default function App() {
           </aside>
         </section>
 
-        <section className="stats-strip" id="promotion-trigger" aria-label="Catalog summary">
-          <div><strong>{stats.total.toLocaleString()}</strong><span>public resources</span></div>
-          <div><strong>{stats.formats}</strong><span>content formats</span></div>
-          <div><strong>{stats.themes}</strong><span>themes represented</span></div>
-          <div><strong>{stats.services}</strong><span>data services</span></div>
-        </section>
+        <ProgrammeNumbers
+          statistics={monitoringStatistics}
+          statisticsFailed={monitoringStatisticsFailed}
+          hazardImpactAssessments={stats.hazardImpactAssessments}
+          publicResources={stats.total}
+          catalogReady={Boolean(catalog)}
+        />
 
         {catalog && <LatestEvidenceBanner items={catalog.items} />}
 
@@ -237,19 +264,7 @@ export default function App() {
             <div><span className="kicker">At a glance</span><h2>A living evidence base</h2></div>
             <p>Explore resources shared through the DIEM public catalog.</p>
           </div>
-          <div className="overview-grid">
-            <article className="chart-panel">
-              <div className="panel-heading"><h3>Resources by format</h3><span>Top six formats</span></div>
-              <div className="bar-chart">
-                {typeCounts.map(([type, count]) => (
-                  <div className="bar-row" key={type}>
-                    <span>{type}</span>
-                    <div><i style={{ width: `${(count / (typeCounts[0]?.[1] || 1)) * 100}%` }} /></div>
-                    <strong>{count}</strong>
-                  </div>
-                ))}
-              </div>
-            </article>
+          <div>
             <article className="principles-panel" id="about">
               <span className="kicker kicker--light">Why DIEM</span>
               <h3>From field evidence to informed action.</h3>

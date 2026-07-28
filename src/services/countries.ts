@@ -1,5 +1,6 @@
 import countryMetadata from '@d3-maps/atlas/metadata/countries'
 import type { ArcGISItem } from '../types'
+import { CONTENT_GROUP_ID } from './arcgis'
 
 export const COUNTRY_GROUP_ID = 'c27d3dbba52343c6addfd61edaaa3e86'
 export const CROSS_COUNTRY_CODE = 'XXX'
@@ -61,6 +62,8 @@ export interface CountryCatalog {
     withoutCountry: number
     withoutType: number
     malformedTypes: number
+    /** Countries-group products hidden because they are not in the Hub group. */
+    outsideHubGroup: number
   }
 }
 
@@ -203,18 +206,50 @@ function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummar
   }
 }
 
+/**
+ * The Hub only shows products that belong to the Hub content group, so a
+ * Countries-group item that is missing that membership must stay hidden.
+ *
+ * Rather than verify 800+ items, this asks ArcGIS for the difference between
+ * the two groups. The response is the size of the curation gap, not of the
+ * catalogue, so the request costs nothing once the groups agree.
+ */
+async function fetchItemsOutsideHubGroup(): Promise<Set<string>> {
+  const excluded = new Set<string>()
+  let start = 1
+  while (start > 0) {
+    const params = new URLSearchParams({
+      f: 'json',
+      q: `group:${COUNTRY_GROUP_ID} -group:${CONTENT_GROUP_ID}`,
+      num: String(PAGE_SIZE),
+      start: String(start),
+    })
+    const response = await fetch(`${REST_ROOT}/search?${params}`)
+    if (!response.ok) throw new Error(`Hub group membership request failed (${response.status})`)
+    const data = await response.json() as GroupSearchResponse
+    if (data.error) throw new Error(data.error.message)
+    data.results.forEach((item) => excluded.add(item.id))
+    start = data.nextStart
+  }
+  return excluded
+}
+
 let catalogPromise: Promise<CountryCatalog> | undefined
 
 export function fetchCountryCatalog(): Promise<CountryCatalog> {
   if (catalogPromise) return catalogPromise
 
   catalogPromise = (async () => {
-    const firstPage = await fetchPage(1)
+    const [firstPage, outsideHubGroup] = await Promise.all([
+      fetchPage(1),
+      fetchItemsOutsideHubGroup(),
+    ])
     const starts: number[] = []
     for (let start = PAGE_SIZE + 1; start <= firstPage.total; start += PAGE_SIZE) starts.push(start)
     const remaining = await Promise.all(starts.map(fetchPage))
     const normalized = [firstPage, ...remaining]
       .flatMap((page) => page.results)
+      .filter((item) => !outsideHubGroup.has(item.id))
       .map(normalizeItem)
     const items = normalized.map((entry) => entry.item)
     const countryCodes = [...new Set(items.flatMap((item) => item.countries))]
@@ -234,6 +269,7 @@ export function fetchCountryCatalog(): Promise<CountryCatalog> {
         withoutCountry: items.filter((item) => !item.countries.length).length,
         withoutType: items.filter((item) => item.productTypes.includes('Unclassified')).length,
         malformedTypes: normalized.filter((entry) => entry.malformed).length,
+        outsideHubGroup: outsideHubGroup.size,
       },
     }
   })().catch((error) => {

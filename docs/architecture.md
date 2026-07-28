@@ -68,6 +68,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 ## Important Invariants
 
 - Public-group membership defines the current catalog boundary.
+- Hub content-group membership is the visibility boundary for every public product surface. The country catalog subtracts the Countries-group items that are absent from the Hub group, so a curation gap hides a product instead of leaking it. `CountryCatalog.diagnostics.outsideHubGroup` reports the size of that gap; `scripts/share-orphans-to-hub-group.ps1` closes it.
+- Hazard impact assessments are counted from Hub-group members carrying the exact `impact assessment` tag, excluding service, web map and image types. Counting from the group rather than the organization is what makes the figure exact: ArcGIS tag search is stemmed, so an organization-wide query also matches variants such as "Rapid Impact Assessment".
 - Country and product assignments come from the country group's `groupCategories`, never title inference.
 - Item IDs are keys; title uniqueness is not assumed.
 - Country highlights store item IDs only and render only when the referenced item remains in the active country's catalog.

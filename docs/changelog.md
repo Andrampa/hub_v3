@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-07-28 - DIEM in numbers and the Hub-group visibility rule
+
+- Replaced the catalog stats strip and the Resources by format bar chart with a
+  two-tier DIEM in numbers card: the monitoring operation (surveyed households,
+  surveys, countries covered) above evidence published (hazard impact
+  assessments, public resources), dated "Since June 2020".
+- Consumed the previously orphaned `fetchMonitoringStatistics` pipeline, which
+  already read the legacy homepage statistics table without any caller.
+- Dropped "content formats" and "themes represented": both counted taxonomy
+  values rather than programme results. Provinces covered is not reproduced
+  because the statistics table no longer carries the field.
+- Named the product family "Hazard impact assessments" everywhere on the Hub,
+  since "impact" alone does not say impact of what.
+- Counted hazard impact assessments from the already-loaded catalog, so the
+  card adds one request in total, for the live monitoring figures only.
+- Established the Hub-group visibility rule: a product outside the Hub content
+  group is never shown. The country catalog now subtracts Countries-group items
+  missing from the Hub group, reported as `diagnostics.outsideHubGroup`.
+- Added `scripts/share-orphans-to-hub-group.ps1` to close the curation gap; it
+  found eight legitimate products (EVE flood analyses, monitoring briefs, a
+  questionnaire and reports) that the rule would otherwise hide.
+- Held the countries-covered figure as a documented constant rather than a
+  live distinct-value query, because it changes only when the programme starts
+  monitoring a new country.
+- Kept the card resilient: each tier fails independently, figures reveal once on
+  scroll with a fallback so they never rest at zero, and animation is skipped
+  under `prefers-reduced-motion` or in a hidden tab.
+
 ## 2026-07-28 - Arrival and departure board
 
 - Restored the survey release list on the homepage as the arrival and departure

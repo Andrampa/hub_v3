@@ -20,6 +20,36 @@ export function itemTheme(item: ArcGISItem) {
   const haystack = [item.title, ...(item.tags || [])].join(' ')
   return themeMatchers.find(([, pattern]) => pattern.test(haystack))?.[0] || 'Other'
 }
+
+const HAZARD_IMPACT_ASSESSMENT_TAG = 'impact assessment'
+
+/**
+ * Web maps, services and images tagged as impact assessments are the layers a
+ * product is built from, not the published product itself. Counting them would
+ * inflate the headline figure with components a reader never opens.
+ */
+const SUPPORTING_ITEM_TYPES = new Set([
+  'Feature Service',
+  'Map Service',
+  'Image Service',
+  'Web Map',
+  'Image',
+  'Table',
+  'CSV',
+  'Service Definition',
+  'Code Attachment',
+])
+
+/**
+ * A published hazard impact assessment. Callers must only pass items that are
+ * already known to be in the Hub content group; ArcGIS tag search is stemmed,
+ * so `tags:"impact assessment"` also matches variants such as
+ * "Rapid Impact Assessment" that exist elsewhere in the organization.
+ */
+export function isHazardImpactAssessment(item: ArcGISItem) {
+  if (SUPPORTING_ITEM_TYPES.has(item.type)) return false
+  return (item.tags || []).some((tag) => tag.trim().toLowerCase() === HAZARD_IMPACT_ASSESSMENT_TAG)
+}
 export function itemCountry(item: ArcGISItem) {
   const prefix = item.title.trim().split(/\s+-\s+/)[0]?.trim()
   if (!prefix || prefix.length > 45 || genericPrefixes.has(prefix.toLowerCase())) return undefined

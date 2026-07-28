@@ -9,6 +9,7 @@ DIEM Hub 3.0 is a React/TypeScript public catalog over FAO DIEM content held in 
 - ArcGIS Online is authoritative; do not copy catalog records into a competing source of truth.
 - Keep general catalog endpoints in `src/services/arcgis.ts` and country-group contracts in `src/services/countries.ts`.
 - Treat item IDs as stable identifiers. Titles, tags, URLs, and counts can change.
+- A product that is not in the DIEM Hub content group (`CONTENT_GROUP_ID`) is never visible on the Hub. Any public discovery surface must gate on that membership. Protected `/data` resources and editorial image assets are the only exemptions, because they are authorization-gated or are not products.
 - Never expose ArcGIS client secrets, credentials, or long-lived tokens in browser code.
 - Read `docs/authentication.md` before changing OAuth, sessions, redirect URLs, or protected requests.
 - Read `docs/data_access.md` before changing protected datasets, item IDs, access-request behavior, or download links.

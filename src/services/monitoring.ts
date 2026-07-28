@@ -46,6 +46,25 @@ export async function fetchMonitoringStatistics(signal?: AbortSignal): Promise<M
 
 export const MONITORING_STATISTICS_SOURCE_URL = 'https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/monitoring_system_sde_diem_statistics_for_homepage/FeatureServer'
 
+/**
+ * Countries ever covered by the monitoring system: the number of distinct
+ * `admin0_isocode` values in the monitoring configuration table.
+ *
+ * This is deliberately a constant rather than a live query. The value changes
+ * only when the programme starts monitoring a new country, which is rare, and
+ * the homepage should not pay for a request on every visit to learn it.
+ *
+ * Verified 28 July 2026 (42 countries). Re-run to confirm:
+ *   GET https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/
+ *       OER_Monitoring_System_View/FeatureServer/0/query
+ *       ?where=1%3D1&outFields=admin0_isocode&returnDistinctValues=true
+ *       &returnGeometry=false&f=json
+ */
+export const MONITORING_COUNTRIES_COVERED = 42
+
+/** Programme start, used to date every cumulative figure on the homepage. */
+export const MONITORING_SINCE_LABEL = 'Since June 2020'
+
 const SURVEY_RELEASE_LAYER_URL = 'https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/OER_Monitoring_System_View/FeatureServer/0'
 const SURVEY_RELEASE_QUERY_URL = `${SURVEY_RELEASE_LAYER_URL}/query`
 const ARCGIS_ITEM_URL = 'https://www.arcgis.com/home/item.html?id='
