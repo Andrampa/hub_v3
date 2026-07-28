@@ -24,7 +24,8 @@ Public decision-makers, governments, partners, researchers, donors, practitioner
 - Country-first discovery over group `c27d3dbba52343c6addfd61edaaa3e86`.
 - Searchable map and directory, country profiles, controlled product filters, and cross-country analysis.
 - Login-only data workspace for microdata, aggregated data, reference boundaries, guides, API examples and analysis tools.
-- Public `/monitoring` page with the live DIEM monitoring dashboard as its primary content surface.
+- Public household-survey pathway with a `/monitoring-system` survey release
+  board and the live full-screen Explorer at `/monitoring`.
 - Public DIEM flood-services page linking EVE 2.0 and Floodex, plus internal field-reporting applications and their access-request pathway.
 - Public contact page with the DIEM ArcGIS contact form.
 

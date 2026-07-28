@@ -16,7 +16,17 @@
 
 ## Programme Pages
 
-1. A visitor opens `/monitoring` and works inside the embedded monitoring application, whose state stays synchronized with the Hub URL. The survey pipeline itself is read on the homepage arrival and departure board: one live table of rounds ordered by arrival, inbound first and released below, where the visitor can switch between Arrivals, Departures and the full board, progressively reveal older rounds, open the whole board full screen and scroll the complete list before returning home, and open the brief, findings, questionnaire, report, or charts. Explore survey asks which thematic area to open and then deep links that country, round and area into the embedded monitoring application.
+1. A visitor opens the Household Surveys navigation menu and chooses either
+   Monitoring System or Household Survey Explorer. `/monitoring-system` leads
+   with an invitation to open the Explorer, followed by the live arrival and
+   departure board: one table of rounds ordered by arrival, inbound first and
+   released below, where the visitor can switch between Arrivals, Departures
+   and the full board, progressively reveal older rounds, open the whole board
+   full screen, and open the brief, findings, questionnaire, report, or charts.
+   Explore survey asks which thematic area to open and then deep links that
+   country, round and area into `/monitoring`. The `/monitoring` route remains
+   the full-screen embedded application and synchronizes its state with the Hub
+   URL.
 2. A visitor opens `/flood-services`, reaches EVE 2.0 or Floodex, or follows the clear contact path for internal field-reporting applications.
 3. A visitor opens `/contact` and completes the embedded ArcGIS contact form or opens it in a new tab.
 

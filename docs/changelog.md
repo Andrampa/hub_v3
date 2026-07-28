@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-07-28 - Household Surveys navigation
+
+- Replaced the primary Monitoring link with a Household Surveys dropdown
+  offering Monitoring System and Household Survey Explorer.
+- Moved the arrival and departure board off the homepage and onto the new
+  `/monitoring-system` page, preceded by a prominent Explorer invitation.
+- Preserved `/monitoring` as the full-screen embedded Explorer so existing
+  country, round, theme, URL-state and authentication handoffs remain intact.
+
 ## 2026-07-28 - DIEM in numbers and the Hub-group visibility rule
 
 - Replaced the catalog stats strip and the Resources by format bar chart with a

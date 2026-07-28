@@ -17,7 +17,9 @@ The initial release is a static single-page app with no custom backend or databa
 
 ## Startup / Execution Sequence
 
-1. The router selects the homepage, monitoring-system page, flood-services page, contact page, country explorer, country detail, or protected data page.
+1. The router selects the homepage, household monitoring release board,
+   full-screen survey Explorer, flood-services page, contact page, country
+   explorer, country detail, or protected data page.
 2. The selected screen starts its group requests; country routes share a cached country-catalog promise.
 3. The service reads the total and requests remaining 100-item pages.
 4. The UI derives overview counts or authoritative group-category assignments.
@@ -48,7 +50,10 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
-- `src/pages/MonitoringSystem.tsx`: the `/monitoring` shell, which embeds the live DIEM monitoring dashboard and provides a new-tab fallback.
+- `src/pages/HouseholdMonitoring.tsx`: the `/monitoring-system` survey release
+  board and call to open the Household Survey Explorer.
+- `src/pages/MonitoringSystem.tsx`: the `/monitoring` shell, which embeds the
+  live DIEM monitoring dashboard full screen.
 - `src/services/monitoringEmbed.ts`: monitoring-app URL configuration, bridge message validation, visualization-state normalization, and Hub URL construction.
 - `src/services/monitoring.ts`: public monitoring-statistics and survey-schedule queries, legacy rule normalization, pagination and response validation.
 - `src/pages/FloodServices.tsx`: public DIEM flood-service access and internal field-reporting access pathway.

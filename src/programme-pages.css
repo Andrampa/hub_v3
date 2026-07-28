@@ -2,6 +2,16 @@
 .monitoring-page { background: #f6f7f4; }
 .monitoring-dashboard { width: 100%; }
 .monitoring-dashboard-frame { display: block; width: 100%; height: calc(100vh - 107px); min-height: 700px; border: 0; background: white; }
+.household-monitoring-page { background: #f6f7f4; }
+.household-explorer-banner { padding: 50px 0; color: white; background: linear-gradient(120deg, #043753, #116aab); }
+.household-explorer-banner .section-wrap { display: flex; align-items: center; justify-content: space-between; gap: 52px; }
+.household-explorer-banner div > span { color: #f5a776; font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.household-explorer-banner h1 { max-width: 690px; margin: 10px 0 9px; font-size: clamp(29px, 3.7vw, 44px); line-height: 1.05; letter-spacing: -.045em; }
+.household-explorer-banner p { max-width: 700px; margin: 0; color: #d4e5ea; font-size: 14px; line-height: 1.65; }
+.household-explorer-banner a { flex: 0 0 275px; min-height: 58px; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid rgba(255,255,255,.5); background: white; color: var(--deep-blue); font-size: 12px; font-weight: 800; line-height: 1.35; transition: transform .18s ease, box-shadow .18s ease; }
+.household-explorer-banner a span { color: var(--orange); font-size: 21px; }
+.household-explorer-banner a:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(2, 34, 50, .25); }
+.household-monitoring-page .survey-board { padding-top: 76px; }
 .programme-hero, .contact-hero { position: relative; overflow: hidden; padding: 96px 0 105px; color: white; background: var(--deep-blue); }
 .programme-hero::after, .contact-hero::after { content: ''; position: absolute; width: 520px; height: 520px; right: -100px; top: -260px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 70px rgba(255,255,255,.025), 0 0 0 140px rgba(255,255,255,.025); }
 .programme-hero--monitoring { background: linear-gradient(120deg, #043753, #116aab); }
@@ -122,6 +132,8 @@
   .contact-form-section { gap: 35px; padding: 64px 0 80px; }
   .release-toolbar { align-items: stretch; flex-direction: column; }
   .release-search { width: 100%; }
+  .household-explorer-banner .section-wrap { align-items: flex-start; flex-direction: column; gap: 25px; }
+  .household-explorer-banner a { flex-basis: auto; width: min(100%, 330px); }
 }
 
 @media (max-width: 620px) {

@@ -18,7 +18,22 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
         </Link>
         <div className="nav-links">
           <a className={active === 'home' ? 'active' : ''} href="/#catalog">Public catalog</a>
-          <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring">Monitoring</Link>
+          <div className={`nav-dropdown${active === 'monitoring' ? ' active' : ''}`}>
+            <button type="button" aria-haspopup="true">
+              Household Surveys
+              <span aria-hidden="true">⌄</span>
+            </button>
+            <div className="nav-dropdown-menu">
+              <Link to="/monitoring-system">
+                <strong>Monitoring System</strong>
+                <small>Survey arrivals, departures and products</small>
+              </Link>
+              <Link to="/monitoring">
+                <strong>Household Survey Explorer</strong>
+                <small>Explore survey results in the full-screen app</small>
+              </Link>
+            </div>
+          </div>
           <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
           <Link className={active === 'data' ? 'active' : ''} to="/data">Data access</Link>
