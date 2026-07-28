@@ -54,11 +54,14 @@ export function monitoringCountryPath(
   iso3: string,
   round: string,
   mode: 'explore' | 'trends' | 'anomalies' = 'explore',
+  theme?: string,
 ) {
   const normalizedIso = iso3.trim().toUpperCase()
   if (!/^[A-Z]{3}$/.test(normalizedIso) || !round.trim()) return '/monitoring'
   const params = new URLSearchParams({ iso: normalizedIso, round: round.trim() })
   if (mode !== 'explore') params.set('mode', mode)
+  // The Monitoring application lowercases the theme it reads from the URL.
+  if (theme?.trim()) params.set('theme', theme.trim().toLowerCase())
   return `/monitoring?${params}`
 }
 

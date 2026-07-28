@@ -5,6 +5,7 @@ import { LatestEvidenceBanner } from './components/LatestEvidenceBanner'
 import { ProgrammeCarousel } from './components/ProgrammeCarousel'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
+import { SurveyReleases } from './components/SurveyReleases'
 import { cleanText, formatDate, itemCountry, itemTheme, itemYear } from './lib/catalog'
 import {
   CONTENT_GROUP_ID,
@@ -228,6 +229,8 @@ export default function App() {
         {catalog && <LatestEvidenceBanner items={catalog.items} />}
 
         <ProgrammeCarousel slides={promotions.slides} />
+
+        <SurveyReleases />
 
         <section className="overview section-wrap" id="overview">
           <div className="section-heading">

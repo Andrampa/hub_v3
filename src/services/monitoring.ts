@@ -48,7 +48,6 @@ export const MONITORING_STATISTICS_SOURCE_URL = 'https://services5.arcgis.com/sj
 
 const SURVEY_RELEASE_LAYER_URL = 'https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/OER_Monitoring_System_View/FeatureServer/0'
 const SURVEY_RELEASE_QUERY_URL = `${SURVEY_RELEASE_LAYER_URL}/query`
-const SURVEY_EXPLORER_URL = 'https://data-in-emergencies-hqfao.hub.arcgis.com/pages/monitoring-country-specific/'
 const ARCGIS_ITEM_URL = 'https://www.arcgis.com/home/item.html?id='
 const PAGE_SIZE = 2000
 
@@ -68,7 +67,23 @@ interface SurveyReleaseAttributes {
   questionn_link?: string
   report_link?: string
   charts_link?: string
+  shocks_dashboard?: string
+  crop_dashboard?: string
+  livestock_dashboard?: string
+  fsl_dashboard?: string
+  needs_dashboard?: string
 }
+
+// Legacy per-theme dashboards, keyed by the Monitoring application's theme ids.
+// For pre-V2 surveys the application still renders these dashboards, so a theme
+// is offered only where the survey row carries one.
+const LEGACY_THEME_FIELDS = {
+  shocks: 'shocks_dashboard',
+  crop: 'crop_dashboard',
+  livestock: 'livestock_dashboard',
+  food_security: 'fsl_dashboard',
+  needs: 'needs_dashboard',
+} as const satisfies Record<string, keyof SurveyReleaseAttributes>
 
 interface SurveyReleaseResponse {
   features?: Array<{ attributes?: SurveyReleaseAttributes }>
@@ -88,12 +103,16 @@ export interface SurveyRelease {
   iso3: string
   country: string
   round: string
+  /** Round as the Monitoring application addresses it: "Round 07" becomes "7". */
+  roundValue: string
   status: SurveyReleaseStatus
   collectionStart?: number
   collectionEnd?: number
   publicationDate?: number
   expectedPublicationDate?: number
   products: SurveyProduct[]
+  /** Monitoring theme ids that this survey carries a legacy dashboard for. */
+  legacyThemes: string[]
 }
 
 export interface CountryMonitoringRound {
@@ -129,18 +148,22 @@ function countryBriefUrl(value: unknown) {
   return `https://data-in-emergencies.fao.org/datasets/${encodeURIComponent(idOrUrl)}/explore`
 }
 
-function explorerUrl(iso3: string) {
-  const filter = `dataSource_20-0:admin0_isocode='${iso3}'`
-  const query = new URLSearchParams({
-    'id:c46alxin9:query:page': 'Indicators',
-    'id:c46alxin9:query:data_filter': filter,
+// Only the Monitoring application may host a dashboard link, so an unexpected
+// host is dropped rather than rendered.
+function legacyThemes(attributes: SurveyReleaseAttributes) {
+  return Object.entries(LEGACY_THEME_FIELDS).flatMap(([theme, field]) => {
+    try {
+      const url = new URL(text(attributes[field]))
+      const trusted = url.protocol === 'https:' && url.hostname.toLowerCase() === 'hqfao.maps.arcgis.com'
+      return trusted ? [theme] : []
+    } catch {
+      return []
+    }
   })
-  return `${SURVEY_EXPLORER_URL}?${query}`
 }
 
-function surveyProducts(attributes: SurveyReleaseAttributes, iso3: string): SurveyProduct[] {
+function surveyProducts(attributes: SurveyReleaseAttributes): SurveyProduct[] {
   const candidates: Array<[string, string | undefined]> = [
-    ['Explore survey', explorerUrl(iso3)],
     ['Country brief', countryBriefUrl(attributes.country_brief_link)],
     ['Findings', itemUrl(attributes.findings_present_link)],
     ['Questionnaire', itemUrl(attributes.questionn_link)],
@@ -173,12 +196,14 @@ function normalizeSurvey(attributes: SurveyReleaseAttributes): SurveyRelease | u
     iso3,
     country,
     round,
+    roundValue: normalizedRoundValue(round),
     status: isUpcoming ? 'upcoming' : 'published',
     collectionStart: Number.isFinite(attributes.coll_start_date) ? attributes.coll_start_date : undefined,
     collectionEnd: Number.isFinite(attributes.coll_end_date) ? attributes.coll_end_date : undefined,
     publicationDate,
     expectedPublicationDate: isUpcoming && stagingDate ? stagingDate + 28 * 24 * 60 * 60 * 1000 : undefined,
-    products: isPublished ? surveyProducts(attributes, iso3) : [],
+    products: isPublished ? surveyProducts(attributes) : [],
+    legacyThemes: isPublished ? legacyThemes(attributes) : [],
   }
 }
 
@@ -190,6 +215,7 @@ async function fetchSurveyPage(offset: number, signal?: AbortSignal) {
       'ObjectId', 'admin0_isocode', 'admin0_name_en', 'round', 'round_validated',
       'coll_start_date', 'coll_end_date', 'staging_date', 'validation_date', 'survey_outdated',
       'country_brief_link', 'findings_present_link', 'questionn_link', 'report_link', 'charts_link',
+      ...Object.values(LEGACY_THEME_FIELDS),
     ].join(','),
     returnGeometry: 'false',
     orderByFields: 'ObjectId ASC',

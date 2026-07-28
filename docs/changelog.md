@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-07-28 - Arrival and departure board
+
+- Restored the survey release list on the homepage as the arrival and departure
+  board: household monitoring rounds ordered by arrival, above At a glance.
+- Consumed the previously orphaned `fetchSurveyReleases` pipeline, which had
+  survived the monitoring embed without any component rendering it.
+- Presented the rounds as a split-flap terminal display with a live UTC board
+  clock, staggered flap reveal, and Arrivals/Departures/Full board views with
+  live counts, progressive row loading, and per-round product links including
+  country briefs where the layer supplies them.
+- Kept the display accessible: real table semantics, AA contrast on every board
+  colour, and no motion under `prefers-reduced-motion`.
+- Added Show all rounds beside Show more rounds, opening the board full screen
+  with every round, a pinned bezel and column header, and Back to home plus
+  Escape as the way out.
+- Replaced the legacy Explore survey dashboard link with a thematic-area
+  chooser that deep links into the embedded monitoring application at
+  `/monitoring?iso=&round=&theme=`.
+- Resolved offered thematic areas the way the monitoring application resolves
+  them: native V2 rounds are probed against the same public V2 microdata and
+  histogram layers, older rounds fall back to the per-theme legacy dashboards
+  recorded on the survey row, and fisheries is never offered for legacy rounds.
+
 ## 2026-07-27 - Cross-repository web and authentication context
 
 - Documented the Hub/Monitoring source and Firebase repositories, review and

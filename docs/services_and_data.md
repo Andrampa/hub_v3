@@ -49,6 +49,33 @@ case-insensitive matches for publisher-provided tags `Impact assessment` and
 
 `src/services/monitoring.ts` reads the public monitoring statistics service and the public `OER_Monitoring_System_View` item (`9a548eaacfb34089b21e0b28685955db`, layer `0`). The survey pipeline preserves the reviewed legacy dashboard rules: upcoming surveys are unvalidated, current, non-Uganda rounds; published surveys are validated records with a publication date. Placeholder rounds 98 and 99 remain excluded. Product item IDs are linked to their authoritative ArcGIS item pages, while the country brief and survey explorer retain their established DIEM Hub routes.
 
+The homepage renders that pipeline as the arrival and departure board through
+`src/components/SurveyReleases.tsx`. The component pages the whole layer once,
+keeps the service ordering (inbound rounds first by expected publication, then
+published rounds most recent first), and filters by status client-side. Arrivals
+are rounds still inbound and Departures are rounds already released; the status
+column keeps the literal Incoming/Published wording so the board framing never
+changes what a row asserts. When the layer holds no unvalidated, non-outdated
+rounds the Arrivals count is legitimately zero; this is a data state, not a
+failure, and the board says so.
+
+`src/services/monitoringThemes.ts` resolves which thematic areas the Monitoring
+application can open for one survey, mirroring that application's own
+`resolveTheme` rule so a deep link is never offered for an area it would refuse
+to enter. Native V2 rounds - validated legacy rounds collected on or after
+2022-10-01 that appear in both public V2 services - are probed with the same
+statistics and rollup queries the application runs. Older iframe-legacy rounds
+have no probeable data, so availability is the set of per-theme legacy
+dashboards recorded on the survey row. Fisheries is never offered because the
+application excludes it for every legacy survey, and every board round is
+legacy. The theme registry and its probe fields are vendored from the
+application's `question-metadata-v2.json`: that file is served without CORS
+headers and cannot be read cross-origin. The V2 questionnaire is frozen, so the
+copy is stable, but it must be regenerated if the application regenerates its
+metadata. The shared native-V2 key set is deliberately not cancellable; binding
+it to one caller's AbortSignal would poison the cached promise for every later
+caller.
+
 Country pages use `fetchCountryMonitoringCoverage` from the same service. The
 request is filtered server-side by ISO3, validated status, and non-outdated
 status, returns no geometry, and requests only the small set of fields needed
@@ -67,6 +94,8 @@ Authentication uses the separate community portal and OAuth client described in 
 - `fetchCountryEditorial`: published introduction, image fields, and valid highlighted items for one country.
 - `fetchHubPromotions`: validated programme slides and at most one active popup campaign for the configured publication channel.
 - `fetchCountryMonitoringCoverage`: public Monitoring-app coverage and latest visible round for one ISO3 country.
+- `fetchSurveyReleases`: complete forthcoming and published survey round list, ordered by arrival, with linked survey products.
+- `fetchSurveyThemes`: thematic areas the Monitoring application can open for one survey round.
 - `resourcesForCountry`: resources assigned to an ISO3 code.
 - `fetchProtectedDataWorkspace`: permission-aware protected item inventory.
 - `authoritativeResourceUrl`: authenticated ArcGIS item details/download destination.
