@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAO Intake Form</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./css/fao-theme.min.css">
+  <style>
+    .form-shell {
+      background: linear-gradient(135deg, #116BAC 0%, #1C4767 100%);
+      color: #fff;
+      padding: 2.5rem 0 3rem;
+      /* No negative margin. main below gets its own top margin so any content
+         (form card, sidebar, multi-column layouts) sits cleanly clear of the band. */
+    }
+    /* Override FAO theme's explicit h1/p color rules inside the blue shell. */
+    .form-shell,
+    .form-shell h1, .form-shell h2, .form-shell h3, .form-shell h4, .form-shell h5, .form-shell h6,
+    .form-shell p, .form-shell .lead,
+    .form-shell a { color: #fff; }
+    .form-shell .title-category { color: rgba(255,255,255,0.8); }
+    .form-shell h1 {
+      font-family: 'Montserrat', 'Open Sans', sans-serif;
+      font-weight: 700; letter-spacing: -0.02em;
+    }
+    .form-shell p { opacity: 0.95; margin-bottom: 0; }
+    .form-card {
+      background: #fff; border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(17,107,172,0.08);
+      padding: 0.5rem 2rem 2rem;
+    }
+    /* Multi-step progress */
+    .form-steps ol { display: flex; gap: 0; list-style: none; padding: 0; margin: 0 0 1.5rem; }
+    .form-steps li {
+      flex: 1; display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 3px solid #e0e0e0;
+      color: #999; font-size: 0.9rem;
+    }
+    .form-steps li .num {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: #F2F2F2; color: #999;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .form-steps li.done    { color: #2a7a2a; border-bottom-color: #2a7a2a; }
+    .form-steps li.done .num { background: #2a7a2a; color: #fff; }
+    .form-steps li.current { color: #116BAC; border-bottom-color: #116BAC; font-weight: 600; }
+    .form-steps li.current .num { background: #116BAC; color: #fff; }
+    .form-section-title {
+      font-size: 1.1rem; font-weight: 600;
+      border-bottom: 1px solid var(--border, #dee2e6);
+      padding-bottom: 0.5rem; margin-bottom: 1.25rem;
+      color: #116BAC;
+    }
+    .required-marker { color: #980000; margin-left: 0.15rem; }
+    .form-label { font-weight: 600; font-size: 0.9rem; }
+    .form-text { font-size: 0.8rem; color: #999; }
+    .toast-inline {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 1rem; border-radius: 6px;
+      border-left: 4px solid #116BAC;
+      background: #E5ECF4; color: #116BAC;
+    }
+    .toast-inline .bi { font-size: 1.25rem; }
+  </style>
+</head>
+<body>
+
+<!-- FAO App navbar (required) -->
+<header class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand p-0 d-flex align-items-center" href="/" aria-label="FAO Intake">
+      <img height="40" src="./logos/fao-logo-three-lines.svg" alt="FAO">
+      <p class="d-none d-lg-block ms-3 mb-0 ps-3 fw-semibold text-uppercase text-gray">Project Intake</p>
+    </a>
+    <div class="d-flex ms-auto align-items-center">
+      <span class="small text-color-gray-medium me-3">Signed in as <strong>m.diaz</strong></span>
+      <button class="btn btn-link btn-icon btn-icon-s btn-sm text-decoration-none text-color-gray-dark" aria-label="Help">
+        <i class="bi bi-question-circle"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Gradient shell -->
+<section class="form-shell">
+  <div class="container">
+    <h6 class="title-category text-white opacity-75">Intake</h6>
+    <h1 class="mb-1">New project submission</h1>
+    <p>Submit a new FAO project record for review. Your draft auto-saves every 30 seconds.</p>
+  </div>
+</section>
+
+<main class="container" style="margin-top:1rem; margin-bottom:3rem;">
+  <div class="form-card">
+
+    <!-- Multi-step progress -->
+    <nav class="form-steps" aria-label="Form progress">
+      <ol>
+        <li class="done"><span class="num">✓</span> Project info</li>
+        <li class="current"><span class="num">2</span> Activities</li>
+        <li><span class="num">3</span> Outcomes</li>
+        <li><span class="num">4</span> Review</li>
+      </ol>
+    </nav>
+
+    <!-- Status toast -->
+    <div class="toast-inline mb-4">
+      <i class="bi bi-info-circle-fill"></i>
+      <div class="flex-grow-1">
+        <strong>Draft saved</strong> · Last autosave 12 seconds ago.
+      </div>
+    </div>
+
+    <form>
+
+      <!-- Section 1 -->
+      <h3 class="form-section-title">Activity details</h3>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="actTitle" class="form-label">Activity title <span class="required-marker">*</span></label>
+          <input type="text" class="form-control" id="actTitle" required placeholder="e.g. Capacity building workshop in Dar es Salaam">
+        </div>
+        <div class="col-md-3">
+          <label for="actType" class="form-label">Type <span class="required-marker">*</span></label>
+          <select class="form-select" id="actType" required>
+            <option value="">Select...</option>
+            <option>Training</option>
+            <option>Field visit</option>
+            <option>Policy dialogue</option>
+            <option>Research output</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label for="actDate" class="form-label">Start date <span class="required-marker">*</span></label>
+          <input type="date" class="form-control" id="actDate" required>
+        </div>
+        <div class="col-md-6">
+          <label for="actCountry" class="form-label">Country <span class="required-marker">*</span></label>
+          <select class="form-select" id="actCountry" required>
+            <option value="">Select country...</option>
+            <option>Ethiopia</option>
+            <option>Bangladesh</option>
+            <option>Kenya</option>
+            <option>Colombia</option>
+            <option>Indonesia</option>
+          </select>
+          <div class="form-text">ISO-3 codes; add multiple by separating with commas if relevant.</div>
+        </div>
+        <div class="col-md-6">
+          <label for="actBudget" class="form-label">Budget (USD)</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control" id="actBudget" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2 -->
+      <h3 class="form-section-title mt-4">Beneficiaries</h3>
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label for="benTotal" class="form-label">Total beneficiaries</label>
+          <input type="number" class="form-control" id="benTotal" placeholder="0">
+        </div>
+        <div class="col-md-4">
+          <label for="benWomen" class="form-label">Of which women (%)</label>
+          <input type="number" class="form-control" id="benWomen" min="0" max="100">
+        </div>
+        <div class="col-md-4">
+          <label for="benYouth" class="form-label">Of which youth (%)</label>
+          <input type="number" class="form-control" id="benYouth" min="0" max="100">
+        </div>
+      </div>
+
+      <!-- Section 3 -->
+      <h3 class="form-section-title mt-4">SDG alignment</h3>
+      <p class="small text-color-gray-medium">Tick all SDGs this activity contributes to.</p>
+      <div class="row g-2">
+        <div class="col-auto"><div class="form-check"><input class="form-check-input" type="checkbox" id="sdg1"><label class="form-check-label" for="sdg1"><span class="sdg-small sdg-1 me-1"></span>No poverty</label></div></div>
+        <div class="col-auto"><div class="form-check"><input class="form-check-input" type="checkbox" id="sdg2" checked><label class="form-check-label" for="sdg2"><span class="sdg-small sdg-2 me-1"></span>Zero hunger</label></div></div>
+        <div class="col-auto"><div class="form-check"><input class="form-check-input" type="checkbox" id="sdg5"><label class="form-check-label" for="sdg5"><span class="sdg-small sdg-5 me-1"></span>Gender</label></div></div>
+        <div class="col-auto"><div class="form-check"><input class="form-check-input" type="checkbox" id="sdg13" checked><label class="form-check-label" for="sdg13"><span class="sdg-small sdg-13 me-1"></span>Climate</label></div></div>
+        <div class="col-auto"><div class="form-check"><input class="form-check-input" type="checkbox" id="sdg15"><label class="form-check-label" for="sdg15"><span class="sdg-small sdg-15 me-1"></span>Life on land</label></div></div>
+      </div>
+
+      <!-- Section 4 -->
+      <h3 class="form-section-title mt-4">Narrative</h3>
+      <div class="row g-3">
+        <div class="col-md-12">
+          <label for="narrative" class="form-label">Short summary <span class="required-marker">*</span></label>
+          <textarea class="form-control" id="narrative" rows="5" required placeholder="Describe the activity in 2–3 paragraphs..."></textarea>
+          <div class="form-text">0 / 500 words</div>
+        </div>
+      </div>
+
+      <!-- Upload attachments -->
+      <h3 class="form-section-title mt-4">Attachments</h3>
+      <label style="display:flex; flex-direction:column; align-items:center; gap:0.5rem; padding:1.5rem; border:2px dashed #116BAC; border-radius:8px; background:#E5ECF4; color:#116BAC; cursor:pointer; text-align:center;">
+        <input type="file" multiple hidden>
+        <i class="bi bi-cloud-arrow-up" style="font-size:2rem;"></i>
+        <div><strong>Attach supporting files</strong> or click to browse</div>
+        <p class="small text-color-gray-medium mb-0">PDF, DOC, XLSX, JPG · max 20 MB per file</p>
+      </label>
+
+      <!-- Nav buttons -->
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+        <a href="#" class="btn btn-secondary"><i class="bi bi-chevron-left me-1"></i> Back</a>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-link text-color-gray-dark">Save draft</button>
+          <button type="submit" class="btn btn-primary">Continue <i class="bi bi-chevron-right ms-1"></i></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</main>
+
+<!-- App footer (mandatory) -->
+<footer class="footer footer-app">
+  <div class="container pt-0">
+    <div class="row">
+      <div class="footer-links col-lg-8">
+        <ul class="list-inline">
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/en/" target="_blank" rel="noreferrer">Contact us</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/terms/en/" target="_blank" rel="noreferrer">Terms and Conditions</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/data-protection-and-privacy/en/" target="_blank" rel="noreferrer">Data protection and privacy</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/scam-alert/en/" target="_blank" rel="noreferrer">Scam Alert</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/audit-and-investigations/reporting-misconduct/en/" target="_blank" rel="noreferrer">Report Misconduct</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/transparency/en" target="_blank" rel="noreferrer">Transparency and accountability</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4 text-end">
+        <a class="copyright" href="https://www.fao.org/contact-us/terms/en/" target="_blank" rel="noreferrer">© FAO&nbsp;2026</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -214,9 +214,9 @@ export default function App() {
 
       <main id="top">
         <section className="hero">
-          <div className="hero-grid" aria-hidden="true" />
+          <img className="hero-image" src={defaultProgrammeSlides[0].imageUrl} alt="" />
           <div className="hero-content">
-            <div className="eyebrow"><span /> Live public evidence catalog</div>
+            <div className="eyebrow">Data in Emergencies</div>
             <h1>Evidence where<br />decisions <em>can’t wait.</em></h1>
             <p>
               Regularly collected and analysed data on how shocks affect agricultural

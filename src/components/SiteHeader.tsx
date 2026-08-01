@@ -1,21 +1,26 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 
 export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' | 'monitoring' | 'flood' | 'contact' }) {
   const auth = useAuth()
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
   return (
-    <header className="site-header">
+    <header className="fao-header subsite-header site-header">
       <div className="utility-bar">
         <span>Food and Agriculture Organization of the United Nations</span>
         <a href="https://www.fao.org/emergencies/" target="_blank" rel="noreferrer">FAO emergencies and resilience</a>
       </div>
       <nav className="main-nav" aria-label="Primary navigation">
-        <Link className="brand" to="/" aria-label="DIEM Hub 3.0 home">
-          <span className="brand-mark">FAO</span>
-          <span><strong>DIEM</strong><small>Hub 3.0</small></span>
-        </Link>
+        <div className="brand-group">
+          <a className="fao-brand" href="https://www.fao.org/home/en/" aria-label="Food and Agriculture Organization of the United Nations">
+            <img src={faoLogo} alt="Food and Agriculture Organization of the United Nations" className="header-fao-logo" />
+          </a>
+          <Link className="brand" to="/" aria-label="DIEM Hub 3.0 home">
+            <strong>DIEM Hub</strong><small>Data in Emergencies</small>
+          </Link>
+        </div>
         <div className="nav-links">
           <a className={active === 'home' ? 'active' : ''} href="/#catalog">Public catalog</a>
           <div className={`nav-dropdown${active === 'monitoring' ? ' active' : ''}`}>
@@ -71,6 +76,14 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
             </button>
           )}
         </div>
+      </nav>
+      <nav className="mobile-nav" aria-label="Mobile navigation">
+        <a className={active === 'home' ? 'active' : ''} href="/#catalog">Catalog</a>
+        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system">Surveys</Link>
+        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood</Link>
+        <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
+        <Link className={active === 'data' ? 'active' : ''} to="/data">Data</Link>
+        <Link className={active === 'contact' ? 'active' : ''} to="/contact">Contact</Link>
       </nav>
       {auth.error && (
         <div className="auth-notice" role="alert">

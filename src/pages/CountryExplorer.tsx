@@ -48,8 +48,8 @@ export default function CountryExplorer() {
       <main id="top" className="countries-main">
         <section className="countries-hero">
           <div className="countries-hero-inner">
-            <div className="eyebrow"><span /> Country evidence</div>
-            <h1>Start with a place.<br /><em>Find the evidence.</em></h1>
+            <div className="eyebrow">Country evidence</div>
+            <h1>Start with a place. Find the evidence.</h1>
             <p>Explore DIEM monitoring, assessments, survey materials and analysis organized around the countries they describe.</p>
             <label className="country-search">
               <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>

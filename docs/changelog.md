@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-08-01 - FAO Design System 3.6.8 adaptation
+
+- Added the supplied FAO Design System reference package under
+  `.agents/skills/fao-design-system` and integrated its official theme and
+  approved English three-line logo as application assets.
+- Added the Bootstrap 5 and Bootstrap Icons peer dependencies required by the
+  FAO theme, and standardized the public Hub on Open Sans, FAO Blue, caption
+  blue, restrained orange, square controls, flatter surfaces and conventional
+  public-subsite spacing.
+- Rebuilt the header and footer around the corporate FAO patterns, including a
+  direct FAO home link, accessible mobile navigation, all six required policy
+  links and a current-year copyright.
+- Retained the auto-scrolling Latest evidence ticker, programme carousel and
+  animated count-up metrics as deliberate modern interaction patterns within
+  the more institutional FAO visual frame.
+- Reduced gradients, decorative geometry, oversized display typography,
+  shadows and hover lifts across homepage, country and data-access surfaces
+  while preserving ArcGIS catalog, authentication, filter, map and resource
+  behavior.
+
 ## 2026-07-28 - Household Surveys navigation
 
 - Replaced the primary Monitoring link with a Household Surveys dropdown

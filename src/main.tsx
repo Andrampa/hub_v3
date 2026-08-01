@@ -3,10 +3,13 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './auth/AuthContext'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import './assets/fao/fao-theme.min.css'
 import './styles.css'
 import './promotions.css'
 import './countries.css'
 import './programme-pages.css'
+import './fao-adaptation.css'
 
 const CountryExplorer = lazy(() => import('./pages/CountryExplorer'))
 const CountryDetail = lazy(() => import('./pages/CountryDetail'))

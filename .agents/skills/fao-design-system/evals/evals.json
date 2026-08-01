@@ -1,0 +1,83 @@
+{
+  "skill_name": "fao-design-system",
+  "evals": [
+    {
+      "id": 0,
+      "name": "dashboard",
+      "prompt": "Build me a simple FAO dashboard as a single self-contained HTML file. It should display 4 KPI cards at the top (e.g. Countries, Projects active, Budget committed, Alerts), a placeholder for a line chart showing an indicator trend over 12 months, and a table listing the top 5 countries by project count. Make it look professional and branded.",
+      "files": [],
+      "assertions": [
+        {"name": "loads-fao-theme-css", "type": "contains_any", "needles": ["fao-theme.min.css", "fao-theme.css"]},
+        {"name": "loads-bootstrap-5", "type": "contains_any", "needles": ["bootstrap@5", "bootstrap/5", "bootstrap-5"]},
+        {"name": "includes-fao-logo-image", "type": "contains_any", "needles": ["fao-logo", "FAO logo", "alt=\"FAO", "alt=\"Food and Agriculture"]},
+        {"name": "uses-fao-blue-token", "type": "contains_any", "needles": ["#116BAC", "#116bac", "--primary", "bg-primary", "text-color-primary"]},
+        {"name": "uses-card-component", "type": "contains", "needle": "class=\"card"},
+        {"name": "uses-title-category-kicker", "type": "contains", "needle": "title-category"},
+        {"name": "four-kpi-cards", "type": "min_occurrences", "needle": "card-body", "min": 4},
+        {"name": "has-table", "type": "contains", "needle": "<table"},
+        {"name": "footer-contact-us", "type": "contains_case_insensitive", "needle": "contact us"},
+        {"name": "footer-terms", "type": "contains_case_insensitive", "needle": "terms and conditions"},
+        {"name": "footer-scam-alert", "type": "contains_case_insensitive", "needle": "scam alert"},
+        {"name": "footer-report-misconduct", "type": "contains_case_insensitive", "needle": "report misconduct"},
+        {"name": "footer-data-protection", "type": "contains_case_insensitive", "needle": "data protection"},
+        {"name": "footer-transparency", "type": "contains_case_insensitive", "needle": "transparency"},
+        {"name": "copyright-fao", "type": "regex", "pattern": "©\\s*FAO"},
+        {"name": "html-lang-attr", "type": "regex", "pattern": "<html[^>]+lang="},
+        {"name": "single-h1", "type": "exact_occurrences", "needle": "<h1", "count_min": 1, "count_max": 2}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "landing",
+      "prompt": "Create a single-page FAO landing page for a campaign called 'Food Systems Summit 2027'. I need a hero banner with the campaign title, 3 feature cards describing pillars of the campaign (Sustainability, Nutrition, Resilience), a call-to-action to register, and the standard FAO corporate header and footer. Output one HTML file.",
+      "files": [],
+      "assertions": [
+        {"name": "loads-fao-theme-css", "type": "contains_any", "needles": ["fao-theme.min.css", "fao-theme.css"]},
+        {"name": "loads-bootstrap-5", "type": "contains_any", "needles": ["bootstrap@5", "bootstrap/5", "bootstrap-5"]},
+        {"name": "uses-fao-corporate-header", "type": "contains_any", "needles": ["fao-header", "subsite-header"]},
+        {"name": "uses-hero-banner", "type": "contains", "needle": "hero-banner"},
+        {"name": "uses-hero-caption", "type": "contains", "needle": "hero-caption"},
+        {"name": "three-feature-cards", "type": "min_occurrences", "needle": "class=\"card", "min": 3},
+        {"name": "includes-campaign-title", "type": "contains_case_insensitive", "needle": "Food Systems Summit 2027"},
+        {"name": "includes-sustainability-pillar", "type": "contains_case_insensitive", "needle": "Sustainability"},
+        {"name": "includes-nutrition-pillar", "type": "contains_case_insensitive", "needle": "Nutrition"},
+        {"name": "includes-resilience-pillar", "type": "contains_case_insensitive", "needle": "Resilience"},
+        {"name": "has-primary-cta-button", "type": "contains_any", "needles": ["btn btn-primary", "btn-primary"]},
+        {"name": "footer-contact-us", "type": "contains_case_insensitive", "needle": "contact us"},
+        {"name": "footer-terms", "type": "contains_case_insensitive", "needle": "terms and conditions"},
+        {"name": "footer-scam-alert", "type": "contains_case_insensitive", "needle": "scam alert"},
+        {"name": "footer-report-misconduct", "type": "contains_case_insensitive", "needle": "report misconduct"},
+        {"name": "footer-data-protection", "type": "contains_case_insensitive", "needle": "data protection"},
+        {"name": "footer-transparency", "type": "contains_case_insensitive", "needle": "transparency"},
+        {"name": "copyright-fao", "type": "regex", "pattern": "©\\s*FAO"},
+        {"name": "includes-fao-logo-image", "type": "contains_any", "needles": ["fao-logo", "alt=\"FAO", "alt=\"Food and Agriculture"]}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "admin",
+      "prompt": "Build an FAO internal admin panel for managing project records. I want a left sidebar with navigation (Overview, Projects, Countries, Reports), a top navbar with the FAO brand and a language switcher, a main area containing a search bar with an advanced-filter collapse, two tabs (Active projects / Archived), and a bordered sortable-looking table with columns for Code, Title, Country, Start date, Budget. Single HTML file.",
+      "files": [],
+      "assertions": [
+        {"name": "loads-fao-theme-css", "type": "contains_any", "needles": ["fao-theme.min.css", "fao-theme.css"]},
+        {"name": "loads-bootstrap-5", "type": "contains_any", "needles": ["bootstrap@5", "bootstrap/5", "bootstrap-5"]},
+        {"name": "uses-app-navbar", "type": "contains", "needle": "app-navbar"},
+        {"name": "uses-app-layout", "type": "contains_any", "needles": ["app-layout", "app-main"]},
+        {"name": "uses-app-sidebar", "type": "contains", "needle": "app-sidebar"},
+        {"name": "sidebar-has-four-items", "type": "all_contain_case_insensitive", "needles": ["Overview", "Projects", "Countries", "Reports"]},
+        {"name": "has-language-switcher", "type": "contains_any", "needles": ["language-switch", "ENGLISH", "Español", "Français", "中文"]},
+        {"name": "has-dynamic-search-or-advanced-filter", "type": "contains_any", "needles": ["dynamic-search", "advanced-search", "btn-adv-search", "Advanced Search"]},
+        {"name": "has-collapse-for-advanced-filters", "type": "contains_any", "needles": ["data-bs-toggle=\"collapse\"", "class=\"collapse"]},
+        {"name": "has-tabs", "type": "contains_any", "needles": ["nav-tabs", "tabbed-content", "data-bs-toggle=\"tab\""]},
+        {"name": "has-bordered-table", "type": "contains_any", "needles": ["table table-bordered", "table-bordered"]},
+        {"name": "table-columns", "type": "all_contain_case_insensitive", "needles": ["Code", "Title", "Country", "Start", "Budget"]},
+        {"name": "footer-contact-us", "type": "contains_case_insensitive", "needle": "contact us"},
+        {"name": "footer-terms", "type": "contains_case_insensitive", "needle": "terms and conditions"},
+        {"name": "footer-scam-alert", "type": "contains_case_insensitive", "needle": "scam alert"},
+        {"name": "footer-report-misconduct", "type": "contains_case_insensitive", "needle": "report misconduct"},
+        {"name": "copyright-fao", "type": "regex", "pattern": "©\\s*FAO"},
+        {"name": "uses-fao-blue-token", "type": "contains_any", "needles": ["#116BAC", "#116bac", "bg-primary", "btn-primary", "text-color-primary"]}
+      ]
+    }
+  ]
+}

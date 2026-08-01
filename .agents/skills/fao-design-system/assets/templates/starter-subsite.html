@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAO Subsite</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./css/fao-theme.min.css">
+</head>
+<body>
+
+<!-- FAO corporate header -->
+<header class="fao-header subsite-header">
+  <div class="container">
+    <div class="row">
+      <div class="header-wrapper col-12">
+        <div class="fao-header-left">
+          <a href="https://www.fao.org/home/en/">
+            <img src="./logos/fao-logo-blue-3lines-en.svg"
+                 alt="Food and Agriculture Organization of the United Nations"
+                 title="Food and Agriculture Organization of the United Nations"
+                 class="header-fao-logo">
+          </a>
+        </div>
+        <div class="fao-header-right">
+          <div class="dropdown language-switch" aria-label="Change Language" role="menu">
+            <button class="btn btn-secondary dropdown-toggle" type="button"
+                    id="dropdownLanguageMenu" data-bs-toggle="dropdown"
+                    aria-haspopup="true" aria-expanded="false">English</button>
+            <div class="dropdown-menu" aria-labelledby="dropdownLanguageMenu">
+              <a class="dropdown-item" href="?lang=ar" role="menuitem" aria-label="Arabic">العربية</a>
+              <a class="dropdown-item" href="?lang=zh" role="menuitem" aria-label="Chinese">中文</a>
+              <a class="dropdown-item" href="?lang=fr" role="menuitem" aria-label="French">Français</a>
+              <a class="dropdown-item" href="?lang=ru" role="menuitem" aria-label="Russian">Русский</a>
+              <a class="dropdown-item" href="?lang=es" role="menuitem" aria-label="Spanish">Español</a>
+            </div>
+          </div>
+          <div class="header-icons">
+            <a data-bs-toggle="collapse" href="#headerSearch" role="button"
+               aria-expanded="false" aria-controls="headerSearch" aria-label="Search">
+              <i class="bi bi-search"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="collapse" id="headerSearch">
+          <div class="input-group my-3">
+            <input type="text" class="form-control" placeholder="Search" aria-label="Search">
+            <div class="input-group-append">
+              <button type="button" class="btn btn-primary btn-icon"><i class="bi bi-search"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Hero banner with background image — ALWAYS supply a real image URL -->
+<div class="hero-banner" style="background-image: url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=1600');">
+  <div class="hero-caption">
+    <h6 class="title-category">Campaign</h6>
+    <h1 class="title-link"><a href="#">Campaign headline goes here</a></h1>
+    <p>Lede paragraph introducing the initiative.</p>
+    <a href="#register" class="btn btn-primary btn-lg">Register<i class="bi bi-chevron-right"></i></a>
+  </div>
+</div>
+
+<!-- Main content -->
+<main>
+
+  <!-- Feature / pillar cards — ALWAYS with real images, not icon tiles -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row mb-4">
+        <div class="col-md-8">
+          <h2 class="page-title">Our three pillars</h2>
+          <p class="text-color-gray-medium">Short lede describing the pillars.</p>
+        </div>
+      </div>
+      <div class="row g-4">
+
+        <!-- Pillar 1 — default white card with image -->
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-image ratio ratio-3x2">
+              <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800"
+                   alt="Smallholder farmer tending crops in the field">
+            </div>
+            <div class="card-body">
+              <h6 class="title-category">Pillar 01</h6>
+              <h5 class="card-title"><a href="#sustainability" class="title-link">Sustainability</a></h5>
+              <p class="card-text">Short description of the pillar.</p>
+              <a href="#sustainability" class="link-icon">Explore<i class="bi bi-chevron-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 2 — primary-light tinted surface for rhythm -->
+        <div class="col-md-4">
+          <div class="card h-100 bg-primary-light">
+            <div class="card-image ratio ratio-3x2">
+              <img src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=800"
+                   alt="Diverse fresh produce laid out at a market">
+            </div>
+            <div class="card-body">
+              <h6 class="title-category">Pillar 02</h6>
+              <h5 class="card-title"><a href="#nutrition" class="title-link">Nutrition</a></h5>
+              <p class="card-text">Short description of the pillar.</p>
+              <a href="#nutrition" class="link-icon">Explore<i class="bi bi-chevron-right"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pillar 3 — overlay card for drama -->
+        <div class="col-md-4">
+          <div class="card card-overlay h-100">
+            <div class="card-image ratio ratio-3x2">
+              <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800"
+                   alt="Sun-dappled forest canopy supporting biodiversity">
+            </div>
+            <div class="card-img-overlay d-flex flex-column justify-content-end">
+              <h6 class="title-category">Pillar 03</h6>
+              <h5 class="card-title"><a href="#resilience" class="title-link stretched-link">Resilience</a></h5>
+              <p class="card-text">Short description of the pillar.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Dark accent band — .bg-caption gives the page visual rhythm -->
+  <section class="py-5 bg-caption text-white">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h6 class="title-category text-white">Join us</h6>
+          <h3 class="mb-2">Call to action headline</h3>
+          <p class="mb-0">Supporting copy explaining the ask.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <a href="#register" class="btn btn-primary btn-lg">Register now<i class="bi bi-chevron-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Content with sidebar -->
+  <section class="py-5">
+    <div class="container">
+
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="#">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Page</li>
+        </ol>
+      </nav>
+
+      <div class="row g-4">
+        <div class="col-md-8">
+          <article>
+            <h2>Section heading</h2>
+            <p>Body copy goes here.</p>
+          </article>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-gray-light">
+            <div class="card-body">
+              <h6 class="title-category">Aside</h6>
+              <h5 class="card-title">Related</h5>
+              <p class="card-text">Sidebar content.</p>
+              <div class="sdg-list mb-2">
+                <span class="sdg-small sdg-2"></span>
+                <span class="sdg-small sdg-12"></span>
+                <span class="sdg-small sdg-15"></span>
+              </div>
+              <a href="#" class="link-icon">Learn more<i class="bi bi-chevron-right"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- Full corporate footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="row">
+      <div class="footer-logo col-md-7">
+        <a href="https://www.fao.org/home/en/">
+          <img src="./logos/fao-logo-blue-3lines-en.svg" alt="Food and Agriculture Organization of the United Nations">
+        </a>
+      </div>
+      <div class="footer-social col-md-5">
+        <h6 class="title-category">Follow us on</h6>
+        <!-- Fill with the social icon block as needed (see references/components.md § Footers) -->
+      </div>
+    </div>
+    <div class="row">
+      <div class="footer-links col-md-7">
+        <div class="footer-links-bottom">
+          <ul class="list-inline">
+            <li class="list-inline-item"><a href="https://www.fao.org/employment/home/en/">Jobs</a></li>
+            <li class="list-inline-item"><a href="https://www.fao.org/contact-us/en/">Contact us</a></li>
+            <li class="list-inline-item"><a href="https://www.fao.org/contact-us/terms/en/">Terms and Conditions</a></li>
+            <li class="list-inline-item"><a href="https://www.fao.org/contact-us/data-protection-and-privacy/en/">Data protection and privacy</a></li>
+            <li class="list-inline-item"><a href="https://www.fao.org/contact-us/scam-alert/en/">Scam Alert</a></li>
+            <li class="list-inline-item"><a href="https://www.fao.org/audit-and-investigations/reporting-misconduct/en/">Report Misconduct</a></li>
+            <li class="list-inline-item"><a href="https://www.fao.org/transparency/en">Transparency and accountability</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-download col-md-5">
+        <a class="copyright" href="https://www.fao.org/contact-us/terms/en/">© FAO&nbsp;2026</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

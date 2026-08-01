@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAO Internal Tool</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="./css/fao-theme.min.css">
+  <style>
+    /* Internal-expressive additions — scoped to this page */
+    .internal-hero {
+      background: linear-gradient(135deg, #116BAC 0%, #1C4767 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      padding: 2.5rem 2rem 2rem;
+      margin-bottom: 1.5rem;
+      border-radius: 0 0 12px 12px;
+    }
+    /* FAO theme CSS sets explicit colors on h1/h2/p — override them inside the hero
+       so text stays readable on the blue gradient. */
+    .internal-hero,
+    .internal-hero h1, .internal-hero h2, .internal-hero h3,
+    .internal-hero h4, .internal-hero h5, .internal-hero h6,
+    .internal-hero p, .internal-hero .lead,
+    .internal-hero a { color: #fff; }
+    .internal-hero .title-category { color: rgba(255,255,255,0.8); }
+    .internal-hero::after {
+      content: ""; position: absolute;
+      top: -40%; right: -10%;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(87,146,202,0.35) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .internal-hero > * { position: relative; z-index: 1; }
+    .internal-hero h1 {
+      font-family: 'Montserrat', 'Open Sans', sans-serif;
+      font-weight: 700; letter-spacing: -0.02em;
+      font-size: 2.25rem; margin-bottom: 0.25rem;
+    }
+    .kpi-card { border-left: 4px solid var(--primary); transition: transform .15s, box-shadow .15s; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(17,107,172,0.10); }
+    .kpi-info    { border-left-color: #116BAC; }
+    .kpi-success { border-left-color: #2a7a2a; }
+    .kpi-warning { border-left-color: #F58320; }
+    .kpi-danger  { border-left-color: #980000; }
+    .kpi-value {
+      font-family: 'Montserrat', 'Open Sans', sans-serif; font-weight: 700;
+      font-size: 2.25rem; letter-spacing: -0.02em; line-height: 1.1;
+      color: #545454; margin: 0.25rem 0;
+    }
+    .live-dot {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: #2a7a2a; margin-right: 0.35rem;
+      animation: live-pulse 1.6s ease-in-out infinite;
+    }
+    @keyframes live-pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(42,122,42,0.6); }
+      50%     { box-shadow: 0 0 0 6px rgba(42,122,42,0); }
+    }
+    /* Brighter on dark backgrounds — the default dark green disappears into .app-navbar navy. */
+    .app-navbar .live-dot,
+    .bg-caption .live-dot,
+    .internal-hero .live-dot,
+    .live-dot-bright {
+      background: #22c55e;
+      animation-name: live-pulse-bright;
+    }
+    @keyframes live-pulse-bright {
+      0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.85); }
+      50%     { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.2rem 0.65rem; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 600;
+      background: #F2F2F2; color: #545454;
+    }
+    .status-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .status-active { background: #E5ECF4; color: #116BAC; }
+    .status-review { background: #fff3e0; color: #F58320; }
+    .status-done   { background: #e8f2e8; color: #2a7a2a; }
+    .status-hold   { background: #fbebea; color: #980000; }
+    .dropzone {
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      padding: 2rem; border: 2px dashed #116BAC; border-radius: 8px;
+      background: #E5ECF4; color: #116BAC; cursor: pointer;
+      transition: background .15s, border-color .15s; text-align: center;
+    }
+    .dropzone:hover { background: #d9e4ef; border-color: #0e5d95; }
+    .dropzone .bi { font-size: 2.5rem; }
+    .dropzone strong { color: #116BAC; }
+    .activity-feed { position: relative; margin: 0; padding-left: 1.25rem; }
+    .activity-feed::before {
+      content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px;
+      width: 2px; background: #F2F2F2;
+    }
+    .activity-feed li { position: relative; padding: 0.5rem 0 0.5rem 1rem; }
+    .activity-feed .dot {
+      position: absolute; left: -1.25rem; top: 0.85rem;
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid #fff; box-shadow: 0 0 0 1px #F2F2F2;
+    }
+    .dot-success { background: #2a7a2a; }
+    .dot-warn    { background: #F58320; }
+    .dot-info    { background: #116BAC; }
+    .dot-danger  { background: #980000; }
+    .empty-state-icon {
+      width: 96px; height: 96px; border-radius: 50%;
+      background: #E5ECF4; color: #116BAC;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 2.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- FAO App navbar (required) -->
+<header class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top">
+  <div class="container-fluid flex-wrap flex-lg-nowrap">
+    <button class="navbar-toggler p-2 border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#appSidebar" aria-controls="appSidebar" aria-label="Toggle navigation">
+      <i class="bi bi-list fs-3"></i>
+    </button>
+    <a class="navbar-brand p-0 d-flex align-items-center" href="/" aria-label="FAO Internal Tool">
+      <img height="40" src="./logos/fao-logo-three-lines.svg" alt="FAO">
+      <p class="d-none d-lg-block ms-3 mb-0 ps-3 fw-semibold text-uppercase text-gray">Data Validator</p>
+    </a>
+    <div class="d-flex ms-auto align-items-center gap-2">
+      <span class="small text-color-gray-medium me-2"><span class="live-dot"></span> All systems operational</span>
+      <button class="btn btn-link btn-icon btn-icon-s btn-sm text-decoration-none text-color-gray-dark" aria-label="Notifications">
+        <i class="bi bi-bell"></i>
+      </button>
+      <div class="dropdown">
+        <button class="btn bg-gray-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">M. Diaz</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#">Profile</a></li>
+          <li><a class="dropdown-item" href="#">Preferences</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#">Sign out</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="app-layout">
+
+  <aside class="app-sidebar offcanvas-lg offcanvas-start" id="appSidebar" tabindex="-1">
+    <nav>
+      <h6 class="app-sidebar-route-title">Tool</h6>
+      <ul class="list-unstyled">
+        <li class="app-sidebar-item"><a class="app-sidebar-link active" href="#"><i class="bi bi-speedometer2 me-2"></i>Overview</a></li>
+        <li class="app-sidebar-item"><a class="app-sidebar-link" href="#"><i class="bi bi-cloud-arrow-up me-2"></i>New job</a></li>
+        <li class="app-sidebar-item"><a class="app-sidebar-link" href="#"><i class="bi bi-clock-history me-2"></i>History</a></li>
+        <li class="app-sidebar-item"><a class="app-sidebar-link" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="app-main">
+    <div class="container-fluid p-4">
+
+      <!-- Gradient hero — expressive pattern -->
+      <section class="internal-hero">
+        <h6 class="title-category text-white opacity-75">Overview</h6>
+        <h1>Data validation pipeline</h1>
+        <p class="lead mb-0 opacity-90">Upload structured datasets and we'll validate, transform, and queue them for ingestion.</p>
+      </section>
+
+      <!-- Left-accent KPI row -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card kpi-card kpi-info h-100"><div class="card-body">
+            <h6 class="title-category">Jobs this month</h6>
+            <div class="kpi-value">284</div>
+            <p class="mb-0 small text-color-gray-medium"><i class="bi bi-arrow-up-right me-1" style="color:#2a7a2a"></i> +12% vs last month</p>
+          </div></div>
+        </div>
+        <div class="col-md-3">
+          <div class="card kpi-card kpi-success h-100"><div class="card-body">
+            <h6 class="title-category">Success rate</h6>
+            <div class="kpi-value">97.4%</div>
+            <p class="mb-0 small text-color-gray-medium">Above target</p>
+          </div></div>
+        </div>
+        <div class="col-md-3">
+          <div class="card kpi-card kpi-warning h-100"><div class="card-body">
+            <h6 class="title-category">Warnings</h6>
+            <div class="kpi-value">37</div>
+            <p class="mb-0 small text-color-gray-medium">Review recommended</p>
+          </div></div>
+        </div>
+        <div class="col-md-3">
+          <div class="card kpi-card kpi-danger h-100"><div class="card-body">
+            <h6 class="title-category">Failures</h6>
+            <div class="kpi-value text-color-emergency">4</div>
+            <p class="mb-0 small text-color-gray-medium"><span class="live-dot"></span>1 running now</p>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- Upload + activity -->
+      <div class="row g-3 mb-4">
+        <div class="col-lg-7">
+          <div class="card h-100"><div class="card-body">
+            <h6 class="title-category">New job</h6>
+            <h5 class="card-title">Upload a dataset</h5>
+            <label class="dropzone mt-3">
+              <input type="file" multiple hidden>
+              <i class="bi bi-cloud-arrow-up"></i>
+              <div>
+                <strong>Drop files here</strong> or click to browse
+                <p class="small text-color-gray-medium mb-0">CSV, XLSX, or JSON · up to 50 MB</p>
+              </div>
+            </label>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <span class="small text-color-gray-medium">Validation runs automatically after upload.</span>
+              <a href="#" class="link-icon">View schema<i class="bi bi-chevron-right"></i></a>
+            </div>
+          </div></div>
+        </div>
+        <div class="col-lg-5">
+          <div class="card h-100"><div class="card-body">
+            <h6 class="title-category">Recent activity</h6>
+            <h5 class="card-title">Last 24 hours</h5>
+            <ul class="activity-feed list-unstyled mt-3">
+              <li>
+                <span class="dot dot-success"></span>
+                <div><strong>intake-q2.csv</strong> completed
+                  <span class="text-color-gray-medium small d-block">8 min ago · 1,284 rows · 0 errors</span></div>
+              </li>
+              <li>
+                <span class="dot dot-warn"></span>
+                <div><strong>countries.xlsx</strong> finished with 3 warnings
+                  <span class="text-color-gray-medium small d-block">42 min ago · 194 rows</span></div>
+              </li>
+              <li>
+                <span class="dot dot-info"></span>
+                <div>New job submitted by <strong>a.silva</strong>
+                  <span class="text-color-gray-medium small d-block">1 hour ago</span></div>
+              </li>
+              <li>
+                <span class="dot dot-danger"></span>
+                <div><strong>rollup-2025.json</strong> failed at schema check
+                  <span class="text-color-gray-medium small d-block">3 hours ago · aborted</span></div>
+              </li>
+            </ul>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- Job history table with status pills -->
+      <div class="card mb-4"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h6 class="title-category">Job queue</h6>
+            <h5 class="card-title mb-0">All recent validation runs</h5>
+          </div>
+          <a href="#" class="btn btn-secondary btn-sm"><i class="bi bi-download me-1"></i>Export CSV</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr class="bg-gray-light">
+                <th>Job ID</th><th>File</th><th>Submitted by</th><th>Rows</th><th>Progress</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>J-8421</code></td>
+                <td>intake-q2.csv</td>
+                <td>m.diaz</td>
+                <td>1,284</td>
+                <td style="min-width:180px;">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar bg-primary" style="width:100%"></div></div>
+                    <span class="small text-color-gray-medium">100%</span>
+                  </div>
+                </td>
+                <td><span class="status-pill status-done"><span class="dot"></span>Completed</span></td>
+                <td><a href="#" class="link-icon small">Open<i class="bi bi-chevron-right"></i></a></td>
+              </tr>
+              <tr>
+                <td><code>J-8420</code></td>
+                <td>countries.xlsx</td>
+                <td>a.silva</td>
+                <td>194</td>
+                <td><div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar" style="width:100%;background:#F58320"></div></div>
+                  <span class="small text-color-gray-medium">3 warn</span></div></td>
+                <td><span class="status-pill status-review"><span class="dot"></span>Under review</span></td>
+                <td><a href="#" class="link-icon small">Open<i class="bi bi-chevron-right"></i></a></td>
+              </tr>
+              <tr>
+                <td><code>J-8419</code></td>
+                <td>budget-rollup.xlsx</td>
+                <td>j.khan</td>
+                <td>—</td>
+                <td><div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width:58%"></div></div>
+                  <span class="small text-color-gray-medium">58%</span></div></td>
+                <td><span class="status-pill status-active"><span class="dot"></span>Running</span></td>
+                <td><a href="#" class="link-icon small">Watch<i class="bi bi-chevron-right"></i></a></td>
+              </tr>
+              <tr>
+                <td><code>J-8418</code></td>
+                <td>rollup-2025.json</td>
+                <td>n.okafor</td>
+                <td>0</td>
+                <td><div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar" style="width:18%;background:#980000"></div></div>
+                  <span class="small text-color-gray-medium">Aborted</span></div></td>
+                <td><span class="status-pill status-hold"><span class="dot"></span>Failed</span></td>
+                <td><a href="#" class="link-icon small">Details<i class="bi bi-chevron-right"></i></a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div></div>
+
+    </div>
+  </main>
+</div>
+
+<!-- App footer (mandatory) -->
+<footer class="footer footer-app">
+  <div class="container pt-0">
+    <div class="row">
+      <div class="footer-links col-lg-8">
+        <ul class="list-inline">
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/en/" target="_blank" rel="noreferrer">Contact us</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/terms/en/" target="_blank" rel="noreferrer">Terms and Conditions</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/data-protection-and-privacy/en/" target="_blank" rel="noreferrer">Data protection and privacy</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/contact-us/scam-alert/en/" target="_blank" rel="noreferrer">Scam Alert</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/audit-and-investigations/reporting-misconduct/en/" target="_blank" rel="noreferrer">Report Misconduct</a></li>
+          <li class="list-inline-item"><a href="https://www.fao.org/transparency/en" target="_blank" rel="noreferrer">Transparency and accountability</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4 text-end">
+        <a class="copyright" href="https://www.fao.org/contact-us/terms/en/" target="_blank" rel="noreferrer">© FAO&nbsp;2026</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
