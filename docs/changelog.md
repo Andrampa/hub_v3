@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-09 - Impact-assessment taxonomy and contrast repair
+
+- Added a controlled ArcGIS group-category schema covering countries, shock
+  types, content roles, geographic scope, languages and the four DIEM pillars.
+- Added guarded ArcGIS Pro scripts to create the schema, infer categories for
+  exact `Impact Assessment` tag matches, apply assignments in batches and
+  verify them through the group-scoped search endpoint.
+- Categorized and verified 141 impact-assessment items and recorded the final
+  assignments, confidence and review notes in
+  `impact_assessment_category_review.csv`.
+- Corrected FAO-theme heading and label contrast across the Hub's dark surfaces.
+
 ## 2026-08-01 - FAO Design System 3.6.8 adaptation
 
 - Added the supplied FAO Design System reference package under

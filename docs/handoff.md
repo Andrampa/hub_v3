@@ -2,6 +2,15 @@
 
 ## In Progress
 
+Impact-assessment group categorization is complete for the 141 items carrying
+the exact `Impact Assessment` tag in group
+`ab8a43038b6347ac93507988f7e2a90b`. The live category schema includes the
+reviewed country, shock, role, scope, language and DIEM-pillar branches.
+`scripts/categorize_impact_assessments.py` assigned and group-scoped verification
+confirmed every item; `impact_assessment_category_review.csv` records all 141
+rows with `verified` status. Both provisioning scripts have safe dry-run
+defaults for future reuse.
+
 The homepage innovation code is complete: a catalog-derived Latest evidence
 strip, manual programme carousel, and native dwell/scroll-triggered campaign
 card are implemented and the production build passes. The carousel has reviewed

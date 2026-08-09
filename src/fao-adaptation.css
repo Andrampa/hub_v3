@@ -48,6 +48,60 @@ h1, h2, h3, h4, h5, h6,
   text-transform: uppercase;
 }
 
+/*
+ * The FAO theme assigns a gray color directly to headings.  That is correct on
+ * light surfaces, but it overrides inherited text color inside Hub's dark
+ * panels.  Keep all heading and label text on those surfaces at accessible
+ * contrast, rather than relying on inheritance.
+ */
+:where(
+  .hero,
+  .countries-hero,
+  .country-profile-hero,
+  .cross-country-strip,
+  .principles-panel,
+  .programme-hero,
+  .contact-hero,
+  .programme-slide,
+  .field-services,
+  .data-gate-hero,
+  .data-workspace-hero,
+  .data-section--deep,
+  .access-pathway,
+  .dataset-explorer-header,
+  .country-editorial-story--no-image,
+  .country-monitoring-signal,
+  .service-card--internal,
+  .boundary-grid .dataset-card,
+  .editorial-popup
+) :is(h1, h2, h3, h4, h5, h6) {
+  color: #fff;
+}
+
+:where(
+  .hero,
+  .countries-hero,
+  .country-profile-hero,
+  .cross-country-strip,
+  .principles-panel,
+  .programme-hero,
+  .contact-hero,
+  .programme-slide,
+  .field-services,
+  .data-gate-hero,
+  .data-workspace-hero,
+  .data-section--deep,
+  .access-pathway,
+  .dataset-explorer-header,
+  .country-editorial-story--no-image,
+  .country-monitoring-signal,
+  .service-card--internal,
+  .boundary-grid .dataset-card,
+  .editorial-popup
+) :is(.kicker, .eyebrow, .title-category) {
+  color: #fff;
+}
+
 /* Corporate header */
 .fao-header.site-header { padding: 0; background: #fff; border: 0; }
 .utility-bar {
