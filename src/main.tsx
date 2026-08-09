@@ -9,6 +9,7 @@ import './styles.css'
 import './promotions.css'
 import './countries.css'
 import './programme-pages.css'
+import './impact-assessments.css'
 import './fao-adaptation.css'
 
 const CountryExplorer = lazy(() => import('./pages/CountryExplorer'))
@@ -18,6 +19,7 @@ const DatasetExplorer = lazy(() => import('./pages/DatasetExplorer'))
 const HouseholdMonitoring = lazy(() => import('./pages/HouseholdMonitoring'))
 const MonitoringSystem = lazy(() => import('./pages/MonitoringSystem'))
 const FloodServices = lazy(() => import('./pages/FloodServices'))
+const HazardImpactAssessments = lazy(() => import('./pages/HazardImpactAssessments'))
 const Contact = lazy(() => import('./pages/Contact'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
@@ -39,6 +41,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/monitoring-system" element={<HouseholdMonitoring />} />
             <Route path="/monitoring" element={<MonitoringSystem />} />
             <Route path="/flood-services" element={<FloodServices />} />
+            <Route path="/hazard-impact-assessments" element={<HazardImpactAssessments />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

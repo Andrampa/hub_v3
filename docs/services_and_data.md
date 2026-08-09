@@ -19,6 +19,12 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 - ISO3 and Item Type category parsing and normalization
 - Country summaries and cross-country (`XXX`) content
 
+`src/services/impactAssessments.ts` contains:
+
+- Exact, case-insensitive `Impact Assessment` tag eligibility within the Hub content group
+- Normalization of the Countries, Shock type, Content role, Geographic scope, Languages and DIEM pillars category branches
+- Public assessment-type filtering, country summaries and filter vocabularies for the Living Shock Atlas and dossier/timeline views
+
 `src/services/countryEditorial.ts` contains:
 
 - Stable public editorial-view item ID `bfabf1dc1d354b3c92a3c801b0376452`
@@ -90,6 +96,7 @@ Authentication uses the separate community portal and OAuth client described in 
 ## Shared Service Utilities
 
 - `fetchCatalog`: group plus complete paginated item inventory.
+- `fetchImpactAssessmentCatalog`: exact-tag assessment inventory and normalized Hub group-category facets.
 - `fetchCountryCatalog`: complete country-group inventory with group categories.
 - `fetchCountryEditorial`: published introduction, image fields, and valid highlighted items for one country.
 - `fetchHubPromotions`: validated programme slides and at most one active popup campaign for the configured publication channel.

@@ -18,8 +18,8 @@ The initial release is a static single-page app with no custom backend or databa
 ## Startup / Execution Sequence
 
 1. The router selects the homepage, household monitoring release board,
-   full-screen survey Explorer, flood-services page, contact page, country
-   explorer, country detail, or protected data page.
+   full-screen survey Explorer, hazard-impact assessment page, flood-services
+   page, contact page, country explorer, country detail, or protected data page.
 2. The selected screen starts its group requests; country routes share a cached country-catalog promise.
 3. The service reads the total and requests remaining 100-item pages.
 4. The UI derives overview counts or authoritative group-category assignments.
@@ -41,6 +41,9 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/main.tsx`: browser routing and lazy-loaded country screens.
 - `src/pages/CountryExplorer.tsx`: map, region filters, search, and directory.
 - `src/pages/CountryDetail.tsx`: country profile and resource-library state.
+- `src/pages/HazardImpactAssessments.tsx`: hybrid Living Shock Atlas, latest-assessment row, dossier library and evidence timeline.
+- `src/services/impactAssessments.ts`: exact-tag eligibility, group-category normalization and assessment summaries.
+- `src/components/ImpactAtlasMap.tsx`: category-driven map selection for the hazard-impact catalog.
 - `src/services/countries.ts`: country-group pagination, category normalization, and summaries.
 - `src/services/countryEditorial.ts`: public editorial-view discovery, country introduction queries, and highlighted-item resolution.
 - `src/components/CountryEditorial.tsx`: sanitized rich text, country imagery, and curated evidence cards.
@@ -74,7 +77,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 
 - Public-group membership defines the current catalog boundary.
 - Hub content-group membership is the visibility boundary for every public product surface. The country catalog subtracts the Countries-group items that are absent from the Hub group, so a curation gap hides a product instead of leaking it. `CountryCatalog.diagnostics.outsideHubGroup` reports the size of that gap; `scripts/share-orphans-to-hub-group.ps1` closes it.
-- Hazard impact assessments are counted from Hub-group members carrying the exact `impact assessment` tag, excluding service, web map and image types. Counting from the group rather than the organization is what makes the figure exact: ArcGIS tag search is stemmed, so an organization-wide query also matches variants such as "Rapid Impact Assessment".
+- Hazard impact assessments are selected from Hub-group members carrying the exact `impact assessment` tag, excluding supporting service, web map and image types. Country, shock, role, scope and language facets come from that group's categories. The page does not infer multi-item event dossiers until a stable assessment/event identifier is published.
 - Country and product assignments come from the country group's `groupCategories`, never title inference.
 - Item IDs are keys; title uniqueness is not assumed.
 - Country highlights store item IDs only and render only when the referenced item remains in the active country's catalog.

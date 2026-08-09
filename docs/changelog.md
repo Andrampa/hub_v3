@@ -11,6 +11,13 @@
   assignments, confidence and review notes in
   `impact_assessment_category_review.csv`.
 - Corrected FAO-theme heading and label contrast across the Hub's dark surfaces.
+- Added the header-accessible Hazard Impact Assessments page: a live Living
+  Shock Atlas, latest-assessments editorial row, category filters, assessment
+  dossiers and evidence timeline backed by the Hub content group.
+- Switched shared Hub inventory pagination to the group-scoped ArcGIS endpoint
+  so public pages receive the group's category assignments reliably.
+- Exempted the Living Shock Atlas from the legacy global icon-SVG sizing rule,
+  restoring the world geometry at its intended responsive width.
 
 ## 2026-08-01 - FAO Design System 3.6.8 adaptation
 

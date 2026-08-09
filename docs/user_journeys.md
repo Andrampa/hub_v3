@@ -12,7 +12,7 @@
 - Catalog filters.
 - Overview format chart.
 - Country explorer and direct `/countries/:iso3` links.
-- Household monitoring, flood services, and contact navigation links.
+- Household monitoring, hazard impacts, flood services, and contact navigation links.
 
 ## Programme Pages
 
@@ -27,8 +27,11 @@
    country, round and area into `/monitoring`. The `/monitoring` route remains
    the full-screen embedded application and synchronizes its state with the Hub
    URL.
-2. A visitor opens `/flood-services`, reaches EVE 2.0 or Floodex, or follows the clear contact path for internal field-reporting applications.
-3. A visitor opens `/contact` and completes the embedded ArcGIS contact form or opens it in a new tab.
+2. A visitor opens `/hazard-impact-assessments`, scans the latest assessments,
+   selects a country in the Living Shock Atlas, and explores the same live
+   collection as filterable dossiers or a chronological evidence timeline.
+3. A visitor opens `/flood-services`, reaches EVE 2.0 or Floodex, or follows the clear contact path for internal field-reporting applications.
+4. A visitor opens `/contact` and completes the embedded ArcGIS contact form or opens it in a new tab.
 
 ## Public Discovery Journey
 

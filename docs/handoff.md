@@ -11,6 +11,18 @@ confirmed every item; `impact_assessment_category_review.csv` records all 141
 rows with `verified` status. Both provisioning scripts have safe dry-run
 defaults for future reuse.
 
+The first public Hazard Impact Assessments page is implemented at
+`/hazard-impact-assessments`. It combines the Living Shock Atlas, a latest
+editorial row, category-driven filters, individual assessment dossiers and an
+alternate evidence timeline. Live anonymous verification returned 124 public
+assessment resources, 45 represented countries and nine shock types; Nigeria
+filtered to eight resources and the timeline grouped them by year. Desktop and
+390 px mobile layouts were checked with no console warnings or errors. Related
+resources remain individual dossiers until publishers add a stable
+assessment/event identifier that can support explicit multi-item grouping.
+The atlas SVG must remain excluded from the icon-only SVG rule in
+`src/styles.css`; otherwise it collapses to `1.15em` at the map's top-left.
+
 The homepage innovation code is complete: a catalog-derived Latest evidence
 strip, manual programme carousel, and native dwell/scroll-triggered campaign
 card are implemented and the production build passes. The carousel has reviewed

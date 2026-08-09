@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 
-export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' | 'monitoring' | 'flood' | 'contact' }) {
+export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'contact' }) {
   const auth = useAuth()
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
@@ -39,6 +39,7 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
               </Link>
             </div>
           </div>
+          <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
           <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
           <Link className={active === 'data' ? 'active' : ''} to="/data">Data access</Link>
@@ -80,6 +81,7 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
       <nav className="mobile-nav" aria-label="Mobile navigation">
         <a className={active === 'home' ? 'active' : ''} href="/#catalog">Catalog</a>
         <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system">Surveys</Link>
+        <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Impacts</Link>
         <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood</Link>
         <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
         <Link className={active === 'data' ? 'active' : ''} to="/data">Data</Link>

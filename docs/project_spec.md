@@ -26,12 +26,14 @@ Public decision-makers, governments, partners, researchers, donors, practitioner
 - Login-only data workspace for microdata, aggregated data, reference boundaries, guides, API examples and analysis tools.
 - Public household-survey pathway with a `/monitoring-system` survey release
   board and the live full-screen Explorer at `/monitoring`.
+- Public `/hazard-impact-assessments` pathway combining a Living Shock Atlas,
+  latest-assessments editorial row, filterable dossiers and an evidence timeline.
 - Public DIEM flood-services page linking EVE 2.0 and Floodex, plus internal field-reporting applications and their access-request pathway.
 - Public contact page with the DIEM ArcGIS contact form.
 
 ## Next Confirmed Priority
 
-ArcGIS community authentication is implemented using authorization-code flow with PKCE. Country discovery is public. The protected data workspace is implemented and defers item access to ArcGIS sharing. The next content decision is which additional thematic catalogs authenticated community members should see.
+ArcGIS community authentication is implemented using authorization-code flow with PKCE. Country and hazard-impact discovery are public. The protected data workspace is implemented and defers item access to ArcGIS sharing. A future assessment/event identifier can consolidate related reports, applications and stories into explicit multi-item event dossiers.
 
 ## What The Product Does Not Do
 

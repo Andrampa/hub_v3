@@ -25,13 +25,12 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
 function searchUrl(start: number) {
   const params = new URLSearchParams({
     f: 'json',
-    q: `group:${CONTENT_GROUP_ID}`,
     num: String(PAGE_SIZE),
     start: String(start),
     sortField: 'modified',
     sortOrder: 'desc',
   })
-  return `${REST_ROOT}/search?${params}`
+  return `${REST_ROOT}/content/groups/${CONTENT_GROUP_ID}/search?${params}`
 }
 
 export async function fetchCatalog(signal?: AbortSignal): Promise<CatalogData> {
