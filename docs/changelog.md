@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-08-10 - Household monitoring product library
+
+- Added a Hub-group-gated household monitoring product library below the
+  arrival and departure board, grouped by the authoritative country and survey
+  round relationships in the monitoring service.
+- Added search and controlled country, product type, year and language filters;
+  interactive charts remain available from the release board but are not a
+  product category or library filter.
+- Added a `Monitoring products` group-category branch and a guarded ArcGIS Pro
+  categorization script that writes a review CSV, preserves unrelated category
+  assignments, applies in batches and verifies group-scoped readback.
+- Changed the schema script to an additive-only merge: it copies the live
+  impact-assessment schema unchanged and appends `Monitoring products` plus
+  only the missing monitoring-country leaves (`KHM`, `PSE`); a conflicting
+  branch stops the script without writing.
+- Excluded exact `Impact Assessment` tag matches from the monitoring library
+  when legacy monitoring links conflict with the product's published identity.
+- Added Contributor-aware product visibility using the existing stable group
+  capability: public/non-Contributor sessions see published-round products;
+  Contributors also see current incoming-round links and categorized unlinked
+  resources. The public arrival/departure board remains unchanged.
+
 ## 2026-08-09 - Impact-assessment taxonomy and contrast repair
 
 - Added a controlled ArcGIS group-category schema covering countries, shock
@@ -259,3 +281,6 @@ All notable documentation and implementation changes. Most recent entry first.
 - Made the live DIEM monitoring dashboard the core of `/monitoring`, while preserving the Hub URL and adding a new-tab fallback.
 - Expanded the site footer with the requested FAO legacy navigation links and copyright line.
 - Added a runtime monitoring-link contract so dashboard visualization URLs round-trip through `/monitoring` without hard-coded production addresses.
+# 2026-08-10
+
+- Added a same-origin Household Survey Explorer action to each linked monitoring survey header. The action preselects the survey country and round while leaving thematic-area selection to the Explorer landing step.

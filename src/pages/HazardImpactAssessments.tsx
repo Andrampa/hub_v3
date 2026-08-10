@@ -11,7 +11,7 @@ import {
 } from '../services/impactAssessments'
 import { itemDestination, itemThumbnail } from '../services/arcgis'
 
-type ResultsView = 'dossiers' | 'timeline'
+type ResultsView = 'details' | 'timeline'
 const RESULTS_STEP = 18
 const FEATURED_TAG = 'featured impact assessment'
 
@@ -54,6 +54,16 @@ function DossierCard({ item, compact = false }: { item: ImpactAssessmentResource
         </div>
         <h3>{item.title.trim()}</h3>
         {!compact && <p>{summary || 'Open the assessment to view its complete evidence and methodology.'}</p>}
+        {!compact && (
+          <dl className="impact-dossier-details">
+            <div><dt>Assessment type</dt><dd>{item.contentRoles.join(', ') || item.type}</dd></div>
+            <div><dt>Geographic scope</dt><dd>{item.geographicScopes.join(', ') || countryLabel(item)}</dd></div>
+            <div><dt>Language</dt><dd>{item.languages.join(', ') || 'Not specified'}</dd></div>
+            <div><dt>DIEM pillar</dt><dd>{item.pillars.join(', ') || 'Not specified'}</dd></div>
+            <div><dt>Format</dt><dd>{item.type}</dd></div>
+            <div><dt>Updated</dt><dd>{formatDate(item.modified)}</dd></div>
+          </dl>
+        )}
         <div className="impact-dossier-tags" aria-label="Assessment metadata">
           {(item.contentRoles.length ? item.contentRoles : [item.type]).slice(0, 2).map((role) => (
             <span key={role}>{role}</span>
@@ -87,7 +97,7 @@ export default function HazardImpactAssessments() {
   const [shock, setShock] = useState('All shocks')
   const [year, setYear] = useState('All years')
   const [language, setLanguage] = useState('All languages')
-  const [view, setView] = useState<ResultsView>('dossiers')
+  const [view, setView] = useState<ResultsView>('timeline')
   const [visibleCount, setVisibleCount] = useState(RESULTS_STEP)
 
   useEffect(() => {
@@ -216,10 +226,10 @@ export default function HazardImpactAssessments() {
             <section className="impact-library" id="impact-results" aria-labelledby="impact-library-title">
               <div className="section-wrap">
                 <div className="impact-section-heading">
-                  <div><span className="kicker">Assessment dossiers</span><h2 id="impact-library-title">Explore the evidence</h2></div>
+                  <div><span className="kicker">Assessment library</span><h2 id="impact-library-title">Explore the evidence</h2></div>
                   <div className="impact-view-switch" aria-label="Results view">
-                    <button type="button" aria-pressed={view === 'dossiers'} onClick={() => setView('dossiers')}>Dossiers</button>
                     <button type="button" aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Timeline</button>
+                    <button type="button" aria-pressed={view === 'details'} onClick={() => setView('details')}>Details</button>
                   </div>
                 </div>
 
@@ -237,12 +247,11 @@ export default function HazardImpactAssessments() {
 
                 <div className="impact-results-meta" aria-live="polite">
                   <p><strong>{filtered.length}</strong> assessments match the current view.</p>
-                  <span>Categories are maintained in the DIEM Hub ArcGIS group.</span>
                 </div>
 
                 {!filtered.length ? (
                   <div className="empty-state"><strong>No assessments match these filters.</strong><p>Clear one or more filters to broaden the evidence view.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>
-                ) : view === 'dossiers' ? (
+                ) : view === 'details' ? (
                   <div className="impact-dossier-grid">
                     {visible.map((item) => <DossierCard item={item} key={item.id} />)}
                   </div>

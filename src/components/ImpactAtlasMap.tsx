@@ -6,6 +6,7 @@ import countryMetadata from '@d3-maps/atlas/metadata/countries'
 import type { Feature, FeatureCollection, Geometry } from 'geojson'
 import type { GeometryCollection, Topology } from 'topojson-specification'
 import type { ImpactCountrySummary } from '../services/impactAssessments'
+import { MapDisclaimer } from './MapDisclaimer'
 
 interface WorldProperties {
   id?: string
@@ -64,13 +65,14 @@ export function ImpactAtlasMap({
   const highlighted = hoveredIso ? countryByIso.get(hoveredIso) : undefined
 
   return (
-    <div className="impact-map-wrap">
-      <svg
-        className="impact-map"
-        viewBox="0 0 960 480"
-        role="img"
-        aria-label={`Living Shock Atlas showing ${countries.length} countries with hazard impact assessments`}
-      >
+    <>
+      <div className="impact-map-wrap">
+        <svg
+          className="impact-map"
+          viewBox="0 0 960 480"
+          role="img"
+          aria-label={`Living Shock Atlas showing ${countries.length} countries with hazard impact assessments`}
+        >
         <title>Living Shock Atlas</title>
         <desc>Select a highlighted country to filter the assessment dossiers below.</desc>
         {paths.map(({ iso3, d }) => {
@@ -95,8 +97,8 @@ export function ImpactAtlasMap({
             </a>
           )
         })}
-      </svg>
-      <div className="impact-map-caption" aria-live="polite">
+        </svg>
+        <div className="impact-map-caption" aria-live="polite">
         {highlighted ? (
           <>
             <strong>{highlighted.name}</strong>
@@ -115,7 +117,9 @@ export function ImpactAtlasMap({
             <span>Choose a highlighted country or use the filters below.</span>
           </>
         )}
+        </div>
       </div>
-    </div>
+      <MapDisclaimer />
+    </>
   )
 }

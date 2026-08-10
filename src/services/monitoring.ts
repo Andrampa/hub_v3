@@ -115,6 +115,8 @@ export type SurveyReleaseStatus = 'upcoming' | 'published'
 export interface SurveyProduct {
   label: string
   url: string
+  /** Stable ArcGIS item identifier when the monitoring table links to one. */
+  itemId?: string
 }
 
 export interface SurveyRelease {
@@ -160,6 +162,12 @@ function itemUrl(value: unknown) {
   return `${ARCGIS_ITEM_URL}${encodeURIComponent(idOrUrl)}`
 }
 
+function arcgisItemId(value: unknown) {
+  const idOrUrl = text(value)
+  const match = idOrUrl.match(/(?:\bid=|\/datasets\/|\/items\/)?([a-f0-9]{32})(?:\b|\/)/i)
+  return match?.[1]?.toLowerCase()
+}
+
 function countryBriefUrl(value: unknown) {
   const idOrUrl = text(value)
   if (!idOrUrl) return undefined
@@ -182,21 +190,28 @@ function legacyThemes(attributes: SurveyReleaseAttributes) {
 }
 
 function surveyProducts(attributes: SurveyReleaseAttributes): SurveyProduct[] {
-  const candidates: Array<[string, string | undefined]> = [
-    ['Country brief', countryBriefUrl(attributes.country_brief_link)],
-    ['Findings', itemUrl(attributes.findings_present_link)],
-    ['Questionnaire', itemUrl(attributes.questionn_link)],
-    ['Report', itemUrl(attributes.report_link)],
-    ['Interactive charts', itemUrl(attributes.charts_link)],
+  const candidates: Array<[string, unknown, string | undefined]> = [
+    ['Country brief', attributes.country_brief_link, countryBriefUrl(attributes.country_brief_link)],
+    ['Findings', attributes.findings_present_link, itemUrl(attributes.findings_present_link)],
+    ['Questionnaire', attributes.questionn_link, itemUrl(attributes.questionn_link)],
+    ['Report', attributes.report_link, itemUrl(attributes.report_link)],
+    ['Interactive charts', attributes.charts_link, itemUrl(attributes.charts_link)],
   ]
-  return candidates.flatMap(([label, url]) => url ? [{ label, url }] : [])
+  return candidates.flatMap(([label, source, url]) => url ? [{
+    label,
+    url,
+    itemId: arcgisItemId(source) || arcgisItemId(url),
+  }] : [])
 }
 
 function excludedRound(round: string) {
   return round === 'Round 98' || round === 'Round 99'
 }
 
-function normalizeSurvey(attributes: SurveyReleaseAttributes): SurveyRelease | undefined {
+function normalizeSurvey(
+  attributes: SurveyReleaseAttributes,
+  includeUpcomingProducts = false,
+): SurveyRelease | undefined {
   const iso3 = text(attributes.admin0_isocode).toUpperCase()
   const country = text(attributes.admin0_name_en)
   const round = text(attributes.round)
@@ -221,7 +236,7 @@ function normalizeSurvey(attributes: SurveyReleaseAttributes): SurveyRelease | u
     collectionEnd: Number.isFinite(attributes.coll_end_date) ? attributes.coll_end_date : undefined,
     publicationDate,
     expectedPublicationDate: isUpcoming && stagingDate ? stagingDate + 28 * 24 * 60 * 60 * 1000 : undefined,
-    products: isPublished ? surveyProducts(attributes) : [],
+    products: isPublished || includeUpcomingProducts ? surveyProducts(attributes) : [],
     legacyThemes: isPublished ? legacyThemes(attributes) : [],
   }
 }
@@ -248,7 +263,10 @@ async function fetchSurveyPage(offset: number, signal?: AbortSignal) {
   return data
 }
 
-export async function fetchSurveyReleases(signal?: AbortSignal): Promise<SurveyRelease[]> {
+export async function fetchSurveyReleases(
+  signal?: AbortSignal,
+  options: { includeUpcomingProducts?: boolean } = {},
+): Promise<SurveyRelease[]> {
   const rows: SurveyReleaseAttributes[] = []
   let offset = 0
   while (true) {
@@ -261,7 +279,7 @@ export async function fetchSurveyReleases(signal?: AbortSignal): Promise<SurveyR
 
   return rows
     .flatMap((attributes) => {
-      const survey = normalizeSurvey(attributes)
+      const survey = normalizeSurvey(attributes, options.includeUpcomingProducts)
       return survey ? [survey] : []
     })
     .sort((a, b) => {

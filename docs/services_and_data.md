@@ -55,6 +55,25 @@ case-insensitive matches for publisher-provided tags `Impact assessment` and
 
 `src/services/monitoring.ts` reads the public monitoring statistics service and the public `OER_Monitoring_System_View` item (`9a548eaacfb34089b21e0b28685955db`, layer `0`). The survey pipeline preserves the reviewed legacy dashboard rules: upcoming surveys are unvalidated, current, non-Uganda rounds; published surveys are validated records with a publication date. Placeholder rounds 98 and 99 remain excluded. Product item IDs are linked to their authoritative ArcGIS item pages, while the country brief and survey explorer retain their established DIEM Hub routes.
 
+`src/services/monitoringProducts.ts` joins those authoritative survey-round
+product item IDs to the Hub content-group inventory. The join makes group
+membership a prerequisite for discovery and supplies stable country/round
+relationships. Unlinked items are eligible only through the Household
+monitoring system pillar, the Monitoring products category branch, or a small
+set of exact publisher tags. Exact `Impact Assessment` tag matches are excluded
+when a legacy round-table link conflicts with the item's published identity.
+The controlled monitoring product taxonomy omits Interactive charts; chart
+links remain available on the release board.
+
+Product-library visibility is audience-aware without changing the release
+board: public and non-Contributor sessions receive only products linked to
+validated/published rows, while recognized Contributors may also receive
+product links on current incoming rows and categorized unlinked monitoring
+resources. `fetchSurveyReleases` keeps its original default behavior for the
+public board; its opt-in option exposes incoming-row product links only to the
+Contributor library caller. Obsolete rows, placeholder rounds 98/99 and the
+existing reviewed exclusions remain filtered by `src/services/monitoring.ts`.
+
 The homepage renders that pipeline as the arrival and departure board through
 `src/components/SurveyReleases.tsx`. The component pages the whole layer once,
 keeps the service ordering (inbound rounds first by expected publication, then

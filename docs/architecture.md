@@ -54,7 +54,11 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
 - `src/pages/HouseholdMonitoring.tsx`: the `/monitoring-system` survey release
-  board and call to open the Household Survey Explorer.
+  board and household monitoring product library.
+- `src/components/MonitoringProducts.tsx`: country-and-round product discovery,
+  controlled filters and product links below the release board.
+- `src/services/monitoringProducts.ts`: Hub-group eligibility, monitoring-round
+  item-ID matching and product-category normalization.
 - `src/pages/MonitoringSystem.tsx`: the `/monitoring` shell, which embeds the
   live DIEM monitoring dashboard full screen.
 - `src/services/monitoringEmbed.ts`: monitoring-app URL configuration, bridge message validation, visualization-state normalization, and Hub URL construction.

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { MonitoringProducts } from '../components/MonitoringProducts'
 import { SurveyReleases } from '../components/SurveyReleases'
 
 export default function HouseholdMonitoring() {
@@ -25,6 +26,7 @@ export default function HouseholdMonitoring() {
           </div>
         </section>
         <SurveyReleases />
+        <MonitoringProducts />
       </main>
       <SiteFooter />
     </>

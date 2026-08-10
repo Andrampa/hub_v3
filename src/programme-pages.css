@@ -116,6 +116,10 @@
 .service-card--internal h3 { color: white; }
 .service-card--internal p { color: #c5dce2; }
 .service-card--internal a, .field-contact-link { color: #f6ad76; }
+.service-card--internal a:hover,
+.service-card--internal a:focus-visible,
+.field-contact-link:hover,
+.field-contact-link:focus-visible { color: white; text-decoration: underline; text-underline-offset: 3px; }
 .field-contact-link { display: inline-block; margin-top: 26px; }
 .contact-form-section { padding: 80px 0 100px; display: grid; grid-template-columns: .7fr 1.3fr; gap: 55px; }
 .contact-form-intro p { color: #64777d; line-height: 1.7; font-size: 14px; }

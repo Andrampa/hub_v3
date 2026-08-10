@@ -1,11 +1,13 @@
-"""Create the DIEM Hub content-group category schema in ArcGIS Online.
+"""Add only the monitoring extensions to the DIEM Hub category schema.
 
 Run this script from PyCharm with the ArcGIS Pro Python environment. It uses
 GIS("home") to reuse the portal and licensed account currently signed in through
 ArcGIS Pro. It only prints the proposed schema while DRY_RUN is set to "true".
 
-This script creates the category hierarchy only. It does not assign categories
-to individual items.
+This script is intentionally additive: it preserves the live schema byte for
+byte except for appending the Monitoring products branch and any explicitly
+listed missing monitoring-country leaves. It never replaces, reorders,
+removes, or edits the impact-assessment branches or their assigned item paths.
 """
 
 from __future__ import annotations
@@ -25,41 +27,24 @@ GROUP_ID = "ab8a43038b6347ac93507988f7e2a90b"
 EXPECTED_GROUP_TITLE = "FAO Data in Emergencies Hub Content"
 
 # Safety switches. Change DRY_RUN to "false" only after reviewing the output.
-DRY_RUN = "true"
-ALLOW_REPLACE_EXISTING_SCHEMA = "false"
-# Number of leaf categories to include, in the order below. Set to "1" for a
-# live permission test; set to "0" to create the complete taxonomy.
+DRY_RUN = "false"
+# Number of monitoring-product leaf categories to include, in the order below.
+# Set to "1" for a live permission test; set to "0" to add the complete branch.
 MAX_CATEGORIES_TO_CREATE = "0"
 
 # ArcGIS recommends one comprehensive category tree for group-content pages.
 CATEGORY_TREE_TITLE = "Categories"
 VALUE_SEPARATOR = "|"
 
-COUNTRY_CODES = (
-    "AFG|AGO|BDI|BFA|BGD|BWA|CAF|CMR|COD|COG|COL|GHA|GIN|GTM|HTI|HND|"
-    "IRQ|LBN|LBR|LBY|LKA|MAR|MDG|MLI|MMR|MOZ|MRT|MWI|NAM|NER|NGA|NPL|"
-    "PAK|PHL|SDN|SEN|SLE|SLV|SOM|SSD|SYR|TCD|TGO|TLS|TON|TUR|TZA|UKR|"
-    "VCT|VEN|VNM|YEM|ZMB|ZWE"
+MONITORING_PRODUCTS = (
+    "Country brief|Findings presentation|Questionnaire|Report|Public dataset|"
+    "Supporting material|Methodology or guidance"
 )
 
-SHOCK_TYPES = (
-    "Conflict and displacement|Drought and climatic anomaly|Earthquake|"
-    "Economic shock|Flood|Multiple shocks|Pest and disease|"
-    "Tropical cyclone and storm|Volcanic eruption|Wildfire"
-)
-
-CONTENT_ROLES = (
-    "Primary assessment|Executive summary|StoryMap|Interactive application|"
-    "Supporting map or data|Update|Translation"
-)
-
-GEOGRAPHIC_SCOPES = "Country|Multi-country|Regional|Global"
-LANGUAGES = "English|French|Spanish|Other"
-
-DIEM_PILLARS = (
-    "Household monitoring system|Hazard impact assessment|Research|Risk analysis"
-)
-
+# These countries occur in the authoritative monitoring-round service but are
+# not present in the existing impact-assessment Countries branch. Appending the
+# leaves keeps all existing country paths unchanged.
+MONITORING_COUNTRY_CODES = "KHM|PSE"
 
 def configured_boolean(name: str, value: str) -> bool:
     normalized = value.strip().lower()
@@ -103,82 +88,18 @@ def category_branch(
     }
 
 
-def build_schema() -> list[dict[str, Any]]:
-    return [
-        {
-            "title": CATEGORY_TREE_TITLE,
-            "description": (
-                "Controlled discovery categories for the FAO Data in Emergencies Hub."
-            ),
-            "categories": [
-                category_branch(
-                    "Countries",
-                    "ISO 3166-1 alpha-3 country codes represented by the resource.",
-                    configured_values("COUNTRY_CODES", COUNTRY_CODES),
-                ),
-                category_branch(
-                    "Shock types",
-                    "Hazards or crises addressed by the resource.",
-                    configured_values("SHOCK_TYPES", SHOCK_TYPES),
-                ),
-                category_branch(
-                    "Content roles",
-                    "The resource's role within an assessment or evidence package.",
-                    configured_values("CONTENT_ROLES", CONTENT_ROLES),
-                ),
-                category_branch(
-                    "Geographic scope",
-                    "The geographic scope represented by the resource.",
-                    configured_values("GEOGRAPHIC_SCOPES", GEOGRAPHIC_SCOPES),
-                ),
-                category_branch(
-                    "Languages",
-                    "Languages in which the resource is published.",
-                    configured_values("LANGUAGES", LANGUAGES),
-                ),
-                category_branch(
-                    "DIEM pillars",
-                    "The DIEM programme pillar represented by the resource.",
-                    configured_values("DIEM_PILLARS", DIEM_PILLARS),
-                ),
-            ],
-        }
-    ]
-
-
-def limit_leaf_categories(
-    schema: list[dict[str, Any]], limit: int
-) -> list[dict[str, Any]]:
-    """Keep the first N leaf categories and the branches needed to reach them."""
+def monitoring_product_branch(limit: int) -> dict[str, Any]:
+    """Build only the one branch this script is authorized to add."""
+    products = configured_values("MONITORING_PRODUCTS", MONITORING_PRODUCTS)
     if limit == 0:
-        return schema
-
-    remaining = limit
-
-    def prune(node: dict[str, Any]) -> dict[str, Any] | None:
-        nonlocal remaining
-        children = node.get("categories", [])
-        if not children:
-            if remaining == 0:
-                return None
-            remaining -= 1
-            return {key: value for key, value in node.items() if key != "categories"}
-
-        retained_children = [
-            retained for child in children if (retained := prune(child)) is not None
-        ]
-        if not retained_children:
-            return None
-        retained_node = {key: value for key, value in node.items() if key != "categories"}
-        retained_node["categories"] = retained_children
-        return retained_node
-
-    limited_schema = [
-        retained for tree in schema if (retained := prune(tree)) is not None
-    ]
-    if not limited_schema:
-        raise ValueError("MAX_CATEGORIES_TO_CREATE must be at least 1 or 0 for all")
-    return limited_schema
+        selected = products
+    else:
+        selected = products[:limit]
+    return category_branch(
+        "Monitoring products",
+        "Controlled product types published by the household monitoring system.",
+        selected,
+    )
 
 
 def validate_schema(schema: list[dict[str, Any]]) -> None:
@@ -234,14 +155,66 @@ def schemas_match(left: list[dict[str, Any]], right: list[dict[str, Any]]) -> bo
     return json.dumps(left, sort_keys=True) == json.dumps(right, sort_keys=True)
 
 
+def merge_monitoring_extensions(
+    existing_schema: list[dict[str, Any]],
+    branch: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Append approved monitoring nodes without changing any existing node.
+
+    A pre-existing Monitoring products branch must match exactly. A mismatch is
+    a manual editorial decision, never a reason for this script to overwrite it.
+    """
+    merged = json.loads(json.dumps(existing_schema))
+    root = next(
+        (tree for tree in merged if tree.get("title") == CATEGORY_TREE_TITLE),
+        None,
+    )
+    if not root:
+        raise RuntimeError(
+            f'The live schema has no "{CATEGORY_TREE_TITLE}" tree; refusing to create '
+            "or replace category trees automatically."
+        )
+    categories = root.get("categories")
+    if not isinstance(categories, list):
+        raise RuntimeError(
+            f'The "{CATEGORY_TREE_TITLE}" tree has no readable category list; refusing to modify it.'
+        )
+    changes: list[str] = []
+    existing_branch = next(
+        (value for value in categories if value.get("title") == branch["title"]),
+        None,
+    )
+    if existing_branch:
+        if json.dumps(existing_branch, sort_keys=True) != json.dumps(branch, sort_keys=True):
+            raise RuntimeError(
+                'A "Monitoring products" branch already exists but differs from this '
+                "script's controlled values. Inspect it manually; no changes were made."
+            )
+    else:
+        categories.append(branch)
+        changes.append("Monitoring products branch")
+
+    countries_branch = next(
+        (value for value in categories if value.get("title") == "Countries"),
+        None,
+    )
+    if not countries_branch or not isinstance(countries_branch.get("categories"), list):
+        raise RuntimeError(
+            'The existing "Countries" branch is missing or unreadable; refusing to modify it.'
+        )
+    country_leaves = countries_branch["categories"]
+    existing_country_codes = {str(value.get("title") or "") for value in country_leaves}
+    for code in configured_values("MONITORING_COUNTRY_CODES", MONITORING_COUNTRY_CODES):
+        if code not in existing_country_codes:
+            country_leaves.append({"title": code})
+            changes.append(f"Countries/{code}")
+    return merged, changes
+
+
 def main() -> int:
     dry_run = configured_boolean("DRY_RUN", DRY_RUN)
-    allow_replace = configured_boolean(
-        "ALLOW_REPLACE_EXISTING_SCHEMA", ALLOW_REPLACE_EXISTING_SCHEMA
-    )
     category_limit = configured_category_limit(MAX_CATEGORIES_TO_CREATE)
-    desired_schema = limit_leaf_categories(build_schema(), category_limit)
-    validate_schema(desired_schema)
+    branch = monitoring_product_branch(category_limit)
 
     gis = connect()
     group = gis.groups.get(GROUP_ID.strip())
@@ -254,7 +227,8 @@ def main() -> int:
         )
 
     existing_schema = schema_trees(group.categories.schema)
-    already_current = schemas_match(existing_schema, desired_schema)
+    desired_schema, changes = merge_monitoring_extensions(existing_schema, branch)
+    validate_schema(desired_schema)
 
     print(f"Portal: {gis.url}")
     print(f"Group: {group.title} ({group.id})")
@@ -265,24 +239,15 @@ def main() -> int:
         + ("all" if category_limit == 0 else str(category_limit))
     )
     print(f"Existing category trees: {len(existing_schema)}")
-    print("\nProposed category schema:\n")
+    print("Existing impact-assessment paths are preserved exactly.")
+    print("\nProposed additive category schema:\n")
     print(json.dumps({"categorySchema": desired_schema}, indent=2, ensure_ascii=False))
 
-    if already_current:
-        print("\nThe group already has this exact category schema. Nothing to do.")
+    if not changes:
+        print("\nAll monitoring schema extensions already exist exactly as configured. Nothing to do.")
         return 0
 
-    if existing_schema and not allow_replace:
-        print("\nExisting category schema:\n")
-        print(json.dumps({"categorySchema": existing_schema}, indent=2, ensure_ascii=False))
-        message = (
-            "The group already has a different category schema. The script will not "
-            "replace it while ALLOW_REPLACE_EXISTING_SCHEMA is \"false\"."
-        )
-        if dry_run:
-            print(f"\nWARNING: {message}")
-            return 0
-        raise RuntimeError(message)
+    print("\nAdditive changes only: " + ", ".join(changes))
 
     if dry_run:
         print(
@@ -294,8 +259,8 @@ def main() -> int:
     if not gis.users.me:
         raise RuntimeError("An authenticated ArcGIS session is required to apply changes")
 
-    # CategorySchemaManager is the ArcGIS API for Python's public interface for
-    # assigning a hierarchical category schema to a group.
+    # This assigns the merged schema. All existing nodes were copied verbatim;
+    # only the explicitly reported monitoring extensions were appended.
     group.categories.schema = desired_schema
 
     updated_schema = schema_trees(group.categories.schema)
@@ -305,7 +270,7 @@ def main() -> int:
             "the proposed schema. Inspect the group before retrying."
         )
 
-    print("\nSUCCESS: the group category schema was created and verified.")
+    print("\nSUCCESS: the monitoring schema extensions were added and verified.")
     print("No categories were assigned to individual items.")
     return 0
 

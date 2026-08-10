@@ -2,6 +2,40 @@
 
 ## In Progress
 
+The household monitoring product library is implemented below the arrival and
+departure board. It joins Hub-group items to authoritative monitoring-round
+item IDs and offers country, product type, year, language and search filters;
+Interactive charts are intentionally not a product category. The live category
+schema and item assignments still require an ArcGIS Pro session with an
+initialized license. From that session, run
+`scripts/configure_hub_group_categories.py` in dry-run mode and review the new
+Monitoring products branch, then run
+`scripts/categorize_monitoring_products.py` with its default `DRY_RUN = "true"`
+and review `monitoring_product_category_review.csv`. The existing review CSV
+has been prepared with `review_decision`: 364 high-confidence rows default to
+`apply`, while 38 medium/low rows remain `review`. Resolve each remaining row
+to `apply` or `exclude`; use the `override_*` columns only to correct a
+proposed country, product type, language or scope. The categorization script
+will refuse to assign anything while any row remains `review`. Only after
+review, apply the schema first and the item categories second by changing the
+corresponding safety switches. The exact application verification command remains
+`npm run build`; category verification is also built into the assignment
+script. The schema script is additive-only: it copies all existing
+impact-assessment paths unchanged, adds the Monitoring products branch and
+only the missing monitoring-country leaves `KHM` and `PSE`, and refuses to
+write if a conflicting Monitoring products branch already exists. Attempts from the shell made no ArcGIS changes because the clone has a
+broken `lxml` native dependency and the standard environment has no initialized
+product license.
+
+The product library now uses the existing Contributor capability
+(`ad13b87919464cb6b9bb6cd8defa0257`) without changing the public release
+board. Anonymous QA returned published-round products only, no unlinked “Other
+resources,” preserved Full board/Arrivals/Departures, produced no browser
+errors, and showed no page overflow at 375, 768, 1024 or 1440 px. A real
+signed-in acceptance test remains: confirm a Contributor sees current incoming
+product links and categorized unlinked resources, then sign out and confirm
+they disappear immediately.
+
 Impact-assessment group categorization is complete for the 141 items carrying
 the exact `Impact Assessment` tag in group
 `ab8a43038b6347ac93507988f7e2a90b`. The live category schema includes the

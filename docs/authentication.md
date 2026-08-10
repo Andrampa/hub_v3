@@ -38,6 +38,15 @@ capabilities used by the Monitoring application:
 These capabilities govern navigation visibility only. The destination dataset
 still has to accept the active identity through its ArcGIS sharing settings.
 
+On `/monitoring-system`, Contributor capability also expands only the survey
+product library. Anonymous visitors and authenticated non-Contributors see
+products explicitly linked to validated/published survey rows. Contributors
+see links from published and current incoming rows and categorized monitoring
+resources not yet linked from the survey configuration table. The arrival and
+departure board remains public for every audience so forthcoming surveys stay
+visible. Contributor catalog reads use the authenticated request boundary;
+page components never receive the token.
+
 The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-service hostname, so `downloadProtected` does not pass it to ArcGIS REST JS authentication. It follows the Hub v1 contract inside the provider: adds the short-lived ArcGIS token to same-origin Hub requests, follows documented `202` job-status responses, and never forwards that token to a different origin. Phase 2 removes this query-token transport together with the legacy Hub export dependency.
 
 ## Embedded Monitoring Dashboard Handoff

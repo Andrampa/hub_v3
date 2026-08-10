@@ -23,10 +23,10 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
         </div>
         <div className="nav-links">
           <a className={active === 'home' ? 'active' : ''} href="/#catalog">Public catalog</a>
-          <div className={`nav-dropdown${active === 'monitoring' ? ' active' : ''}`}>
+          <div className={`nav-dropdown${active === 'monitoring' || active === 'data' ? ' active' : ''}`}>
             <button type="button" aria-haspopup="true">
               Household Surveys
-              <span aria-hidden="true">⌄</span>
+              <span aria-hidden="true" />
             </button>
             <div className="nav-dropdown-menu">
               <Link to="/monitoring-system">
@@ -37,12 +37,15 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
                 <strong>Household Survey Explorer</strong>
                 <small>Explore survey results in the full-screen app</small>
               </Link>
+              <Link to="/data">
+                <strong>Data access</strong>
+                <small>Access household survey data and related resources</small>
+              </Link>
             </div>
           </div>
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
           <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
-          <Link className={active === 'data' ? 'active' : ''} to="/data">Data access</Link>
           <Link className={active === 'contact' ? 'active' : ''} to="/contact">Contact</Link>
         </div>
         <div className="auth-actions">
@@ -84,7 +87,6 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
         <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Impacts</Link>
         <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood</Link>
         <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
-        <Link className={active === 'data' ? 'active' : ''} to="/data">Data</Link>
         <Link className={active === 'contact' ? 'active' : ''} to="/contact">Contact</Link>
       </nav>
       {auth.error && (

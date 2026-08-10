@@ -7,6 +7,7 @@ import countryMetadata from '@d3-maps/atlas/metadata/countries'
 import type { Feature, FeatureCollection, Geometry } from 'geojson'
 import type { GeometryCollection, Topology } from 'topojson-specification'
 import type { CountrySummary } from '../services/countries'
+import { MapDisclaimer } from './MapDisclaimer'
 
 interface WorldProperties {
   id?: string
@@ -62,13 +63,14 @@ export function CountryMap({
   const mappedCount = paths.filter(({ iso3 }) => summaryByIso.has(iso3)).length
 
   return (
-    <div className="country-map-wrap">
-      <svg
-        className="country-map"
-        viewBox="0 0 960 480"
-        role="img"
-        aria-label={`World map showing ${mappedCount} of ${countries.length} countries with DIEM resources`}
-      >
+    <>
+      <div className="country-map-wrap">
+        <svg
+          className="country-map"
+          viewBox="0 0 960 480"
+          role="img"
+          aria-label={`World map showing ${mappedCount} of ${countries.length} countries with DIEM resources`}
+        >
         <title>Countries covered by DIEM</title>
         <desc>Covered countries with geometry at this map scale are highlighted. Use the complete country directory below for keyboard navigation and small island states.</desc>
         {paths.map(({ iso3, d }) => {
@@ -89,15 +91,17 @@ export function CountryMap({
             </Link>
           )
         })}
-      </svg>
-      <div className="map-selection" aria-live="polite">
+        </svg>
+        <div className="map-selection" aria-live="polite">
         {hovered ? (
           <><strong>{hovered.name}</strong><span>{hovered.resourceCount} resources · Updated {new Date(hovered.latestModified).getUTCFullYear()}</span></>
         ) : (
           <><strong>Explore the map</strong><span>Select a highlighted country or use the directory below.</span></>
         )}
+        </div>
       </div>
-    </div>
+      <MapDisclaimer />
+    </>
   )
 }
 
