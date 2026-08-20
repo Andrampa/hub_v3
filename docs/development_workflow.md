@@ -31,6 +31,31 @@ The build performs TypeScript project checking before producing `dist/`.
 
 No automated test framework is configured yet. Add one when behavior is complex enough to justify the dependency; do not treat build success as UI verification.
 
+## Hub Catalog Category Audit
+
+Run `scripts/categorize_hub_catalog.py` from an authenticated ArcGIS Pro Python
+environment to prepare the complete Hub catalog review. The script is
+audit-only: it reads the Hub and Countries groups, preserves every existing Hub
+category path, proposes additions only for empty branches, and writes
+`hub_catalog_category_review.csv`. It has no ArcGIS assignment operation.
+The authenticated audit can include non-public editor-visible item metadata, so
+this CSV is intentionally ignored by Git and must remain local.
+
+The first run must keep `AUDIT_ONLY = "true"` and
+`OVERWRITE_REVIEW_CSV = "false"`. Review conflicts and taxonomy suggestions in
+the CSV before authorizing any separate application phase. Never overwrite a
+CSV containing editorial decisions without preserving it first.
+
+For every row, the required preservation invariant is:
+
+```text
+existing_hub_categories is a subset of final_expected_categories
+```
+
+Countries-group assignments are migration evidence only. When the Hub already
+has a value in the same branch, the script preserves the Hub value and records
+any disagreement for human review.
+
 ## Manual Verification Expectations
 
 - Load the live public catalog and compare the total with ArcGIS.

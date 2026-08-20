@@ -2,6 +2,22 @@
 
 ## In Progress
 
+The additive whole-catalog category audit is implemented in
+`scripts/categorize_hub_catalog.py` and has been run once from the authenticated
+ArcGIS Pro environment. It is intentionally incapable of writing to ArcGIS.
+The resulting `hub_catalog_category_review.csv` contains 1,084 editor-visible
+Hub items, 316 additive proposals and 11 conflicts; all 1,084 rows remain
+marked `review`, and every preservation check passed. The CSV is intentionally
+Git-ignored because this repository is public while the authenticated audit can
+include non-public item metadata. The exact next local file is
+`hub_catalog_category_review.csv`: review its additions, conflicts,
+catalog-role suggestions and product-type suggestions before designing a
+separate application phase. Existing Hub category paths are authoritative;
+the required invariant is that each row's `existing_hub_categories` remains a
+subset of `final_expected_categories`. Re-run the audit only after preserving
+editorial decisions and explicitly setting `OVERWRITE_REVIEW_CSV = "true"`.
+The exact verification command remains `npm run build` in the repository.
+
 The household monitoring product library is implemented below the arrival and
 departure board. It joins Hub-group items to authoritative monitoring-round
 item IDs and offers country, product type, year, language and search filters;

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-20 - Additive Hub catalog category audit
+
+- Added an audit-only full-catalog categorization script that compares the Hub
+  and legacy Countries groups and generates an editor review CSV without any
+  ArcGIS write capability.
+- Made existing Hub category paths immutable in every proposal, limited
+  automatic additions to empty branches, and surfaced country/scope conflicts
+  rather than replacing established assignments.
+- Added catalog-role and unified-product-type suggestions as review evidence;
+  these proposed taxonomy branches are not provisioned or assigned by the
+  audit script.
+
 ## 2026-08-20 - Timeline completeness
 
 - The hazard-impact timeline now previews up to three assessments for every
