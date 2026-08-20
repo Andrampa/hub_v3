@@ -13,6 +13,7 @@ import { itemDestination, itemThumbnail } from '../services/arcgis'
 
 type ResultsView = 'details' | 'timeline'
 const RESULTS_STEP = 18
+const TIMELINE_PREVIEW_PER_YEAR = 3
 const FEATURED_TAG = 'featured impact assessment'
 
 function ExternalIcon() {
@@ -99,6 +100,7 @@ export default function HazardImpactAssessments() {
   const [language, setLanguage] = useState('All languages')
   const [view, setView] = useState<ResultsView>('timeline')
   const [visibleCount, setVisibleCount] = useState(RESULTS_STEP)
+  const [expandedTimelineYears, setExpandedTimelineYears] = useState<Set<number>>(() => new Set())
 
   useEffect(() => {
     const controller = new AbortController()
@@ -133,17 +135,20 @@ export default function HazardImpactAssessments() {
     })
   }, [catalog, country, language, query, shock, year])
 
-  useEffect(() => setVisibleCount(RESULTS_STEP), [country, language, query, shock, year, view])
+  useEffect(() => {
+    setVisibleCount(RESULTS_STEP)
+    setExpandedTimelineYears(new Set())
+  }, [country, language, query, shock, year, view])
 
   const visible = filtered.slice(0, visibleCount)
   const timeline = useMemo(() => {
     const grouped = new Map<number, ImpactAssessmentResource[]>()
-    visible.forEach((item) => grouped.set(
+    filtered.forEach((item) => grouped.set(
       item.assessmentYear,
       [...grouped.get(item.assessmentYear) || [], item],
     ))
     return [...grouped.entries()].sort((a, b) => b[0] - a[0])
-  }, [visible])
+  }, [filtered])
   const latest = useMemo(() => latestAssessments(catalog?.items || []), [catalog])
   const heroImage = latest[0] ? itemThumbnail(latest[0]) : undefined
   const latestModified = Math.max(...(catalog?.items.map((item) => item.modified) || [0]))
@@ -258,17 +263,49 @@ export default function HazardImpactAssessments() {
                 ) : (
                   <div className="impact-timeline">
                     {timeline.map(([timelineYear, items]) => (
-                      <section className="impact-timeline-year" key={timelineYear} aria-labelledby={`impact-year-${timelineYear}`}>
-                        <div className="impact-timeline-marker"><span /><h3 id={`impact-year-${timelineYear}`}>{timelineYear}</h3><small>{items.length} shown</small></div>
-                        <div className="impact-timeline-items">
-                          {items.map((item) => <DossierCard item={item} compact key={item.id} />)}
-                        </div>
-                      </section>
+                      (() => {
+                        const expanded = expandedTimelineYears.has(timelineYear)
+                        const shownItems = expanded ? items : items.slice(0, TIMELINE_PREVIEW_PER_YEAR)
+                        const remaining = items.length - shownItems.length
+                        return (
+                          <section className="impact-timeline-year" key={timelineYear} aria-labelledby={`impact-year-${timelineYear}`}>
+                            <div className="impact-timeline-marker"><span /><h3 id={`impact-year-${timelineYear}`}>{timelineYear}</h3><small>{shownItems.length} of {items.length} shown</small></div>
+                            <div className="impact-timeline-items">
+                              {shownItems.map((item) => <DossierCard item={item} compact key={item.id} />)}
+                              {remaining > 0 && (
+                                <div className="impact-timeline-year-action">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedTimelineYears((current) => new Set([...current, timelineYear]))}
+                                  >
+                                    Show all {items.length} assessments from {timelineYear}
+                                  </button>
+                                  <span>{remaining} more {remaining === 1 ? 'assessment' : 'assessments'} in this year</span>
+                                </div>
+                              )}
+                              {expanded && items.length > TIMELINE_PREVIEW_PER_YEAR && (
+                                <div className="impact-timeline-year-action is-expanded">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedTimelineYears((current) => {
+                                      const next = new Set(current)
+                                      next.delete(timelineYear)
+                                      return next
+                                    })}
+                                  >
+                                    Show fewer assessments from {timelineYear}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </section>
+                        )
+                      })()
                     ))}
                   </div>
                 )}
 
-                {visibleCount < filtered.length && (
+                {view === 'details' && visibleCount < filtered.length && (
                   <div className="impact-load-more">
                     <button type="button" onClick={() => setVisibleCount((value) => value + RESULTS_STEP)}>
                       Show more assessments

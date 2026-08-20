@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-20 - Timeline completeness
+
+- The hazard-impact timeline now previews up to three assessments for every
+  matching year and provides a per-year action to reveal the complete year,
+  preventing preview cards from being mistaken for the full annual collection.
+
 ## 2026-08-10 - Household monitoring product library
 
 - Added a Hub-group-gated household monitoring product library below the

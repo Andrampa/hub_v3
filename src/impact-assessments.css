@@ -95,6 +95,12 @@
 .impact-timeline-marker h3 { margin: 0; color: #1c4767; font-size: 25px; letter-spacing: -.04em; }
 .impact-timeline-marker small { display: block; margin-top: 4px; color: #74858a; font-size: 9px; }
 .impact-timeline-items { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
+.impact-timeline-year-action { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 18px; border: 1px dashed #a9c0c0; background: rgba(255,255,255,.64); }
+.impact-timeline-year-action button { min-height: 40px; padding: 0 15px; border: 1px solid #116bac; background: white; color: #0b5f9e; font-size: 10px; font-weight: 800; cursor: pointer; }
+.impact-timeline-year-action button:hover, .impact-timeline-year-action button:focus-visible { background: #116bac; color: white; }
+.impact-timeline-year-action button:focus-visible { outline: 3px solid rgba(17,107,172,.25); outline-offset: 2px; }
+.impact-timeline-year-action span { color: #64787d; font-size: 10px; font-weight: 600; }
+.impact-timeline-year-action.is-expanded { justify-content: flex-start; padding-top: 2px; border: 0; background: transparent; }
 
 @media (max-width: 1050px) {
   .impact-latest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -112,6 +118,7 @@
   .impact-dossier-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .impact-map-wrap { min-height: 380px; }
   .impact-timeline-items { grid-template-columns: 1fr; }
+  .impact-timeline-year-action { align-items: flex-start; flex-direction: column; gap: 10px; }
 }
 
 @media (max-width: 600px) {
