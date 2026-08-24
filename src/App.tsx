@@ -233,9 +233,11 @@ export default function App() {
               />
               <a href="#catalog" aria-label="Go to catalog results"><Icon name="arrow" /></a>
             </label>
-            <div className="hero-meta">
-              <span><i className="status-dot" /> {auth.status === 'authenticated' ? 'Signed in to the DIEM community' : 'Sourced live from the DIEM content platform'}</span>
-            </div>
+            {auth.status === 'authenticated' && (
+              <div className="hero-meta">
+                <span><i className="status-dot" /> Signed in to the DIEM community</span>
+              </div>
+            )}
           </div>
           <aside className="hero-callout">
             <span>Data in Emergencies</span>

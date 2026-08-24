@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-08-24 - Homepage caption and dark-panel contrast
+
+- Removed the anonymous "Sourced live from the DIEM content platform" caption
+  below the homepage search field while preserving the signed-in session status.
+- Replaced orange text with a high-contrast light-orange variant on dark-blue
+  panels, including the homepage principles, country headers and selected
+  product filters.
+
 ## 2026-08-20 - Additive Hub catalog category audit
 
 - Added an audit-only full-catalog categorization script that compares the Hub

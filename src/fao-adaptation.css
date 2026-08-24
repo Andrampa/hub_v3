@@ -13,6 +13,9 @@
   --deep-blue: #1c4767;
   --ink: #545454;
   --orange: #f58320;
+  /* Orange is reserved for accents on light surfaces. This tint preserves
+     contrast for readable text when an accent is needed on deep blue. */
+  --orange-on-dark: #ffd6b4;
   --mist: #e5ecf4;
   --line: #d9d9d9;
   --paper: #fff;
@@ -266,7 +269,7 @@ h1, h2, h3, h4, h5, h6,
 .principles-panel { padding: 32px; background: #1c4767; }
 .principles-panel h3 { font-size: 1.65rem; letter-spacing: 0; }
 .principles-panel > p { color: #fff; }
-.principles-panel li span { color: #f58320; }
+.principles-panel li span { color: var(--orange-on-dark); }
 .catalog-section, .country-library { padding-block: 72px; background: #f2f2f2; }
 .filter-bar, .country-filter-bar {
   gap: 12px;
