@@ -6,6 +6,7 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
+import { familySearchText, groupProductFamilies } from '../lib/productFamilies'
 
 function topTypes(typeCounts: Record<string, number>) {
   return Object.entries(typeCounts)
@@ -33,11 +34,11 @@ export default function CountryExplorer() {
     const normalized = query.trim().toLowerCase()
     if (!normalized || !catalog) return []
     const countryByIso = new Map(catalog.countries.map((country) => [country.iso3, country]))
-    return catalog.items
-      .filter((item) => item.title.toLowerCase().includes(normalized))
-      .flatMap((item) => item.countries
+    return groupProductFamilies(catalog.items)
+      .filter((family) => familySearchText(family).includes(normalized))
+      .flatMap((family) => [...new Set(family.variants.flatMap((item) => item.countries))]
         .filter((iso3) => countryByIso.has(iso3))
-        .map((iso3) => ({ item, country: countryByIso.get(iso3)! })))
+        .map((iso3) => ({ item: family.primary, country: countryByIso.get(iso3)! })))
       .slice(0, 8)
   }, [catalog, query])
   const latestUpdate = Math.max(...(catalog?.countries.map((country) => country.latestModified) || [0]))
@@ -103,7 +104,7 @@ export default function CountryExplorer() {
           <>
             <section className="country-facts" aria-label="Country catalog summary">
               <div><strong>{catalog.countries.length}</strong><span>countries with evidence</span></div>
-              <div><strong>{catalog.items.length.toLocaleString()}</strong><span>curated resources</span></div>
+              <div><strong>{groupProductFamilies(catalog.items).length.toLocaleString()}</strong><span>curated products</span></div>
               <div><strong>{latestUpdate ? formatDate(latestUpdate) : '—'}</strong><span>latest update</span></div>
             </section>
 
@@ -128,7 +129,7 @@ export default function CountryExplorer() {
             {catalog.crossCountry && (
               <section className="cross-country-strip section-wrap">
                 <div><span className="kicker">Beyond borders</span><h2>Cross-country analysis</h2><p>Research and analytical products that compare experiences across multiple contexts.</p></div>
-                <div><strong>{catalog.crossCountry.resourceCount}</strong><span>resources</span></div>
+                <div><strong>{catalog.crossCountry.resourceCount}</strong><span>products</span></div>
                 <Link to="/countries/cross-country">Explore analysis <span aria-hidden="true">→</span></Link>
               </section>
             )}
@@ -144,7 +145,7 @@ export default function CountryExplorer() {
                     <Link className="country-card" to={`/countries/${country.iso3.toLowerCase()}`} key={country.iso3}>
                       <div className="country-card-top"><span>{country.iso3}</span><span>{country.region}</span></div>
                       <h3><CountryFlag iso2={country.iso2} name={country.name} className="country-flag" />{country.name}</h3>
-                      <div className="country-card-count"><strong>{country.resourceCount}</strong><span>resources</span></div>
+                      <div className="country-card-count"><strong>{country.resourceCount}</strong><span>products</span></div>
                       <div className="country-card-types">
                         {topTypes(country.typeCounts).map(([type, count]) => <span key={type}>{type} <b>{count}</b></span>)}
                       </div>

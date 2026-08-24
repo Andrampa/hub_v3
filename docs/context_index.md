@@ -15,6 +15,7 @@
 | `docs/country_editorial.md` | Editor-managed country introductions, highlights, HTML, images, and AGOL provisioning |
 | `docs/hub_promotions.md` | Homepage carousel, latest-evidence strip, popup campaigns, staging and editor workflow |
 | `docs/editor_guide.md` | Human-facing instructions for all country, popup, carousel, banner, and catalog curation |
+| `docs/catalog_categorization.md` | Whole-catalog category audit, Excel review, additive application and verification |
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/user_journeys.md` | Public discovery behavior |
 | `docs/development_workflow.md` | Commands and verification |
@@ -31,6 +32,7 @@
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.
 - Homepage promotion or campaign work: `hub_promotions.md`, then `user_journeys.md`.
 - Content-editor question or training: start with `editor_guide.md`.
+- Whole-catalog category migration: `catalog_categorization.md`, then `country_explorer.md`.
 - Setup, scripts, or verification: `development_workflow.md`.
 - Resume work: `handoff.md`, then the file named there.
 

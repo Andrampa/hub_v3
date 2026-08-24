@@ -13,4 +13,4 @@ coverage/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
-hub_catalog_category_review.csv
+hub_catalog_category_review*.csv

@@ -1,4 +1,5 @@
 import countryMetadata from '@d3-maps/atlas/metadata/countries'
+import { groupProductFamilies } from '../lib/productFamilies'
 import type { ArcGISItem } from '../types'
 import { CONTENT_GROUP_ID } from './arcgis'
 
@@ -194,13 +195,14 @@ async function fetchPage(start: number): Promise<GroupSearchResponse> {
 }
 
 function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummary {
+  const families = groupProductFamilies(items)
   const typeCounts: Record<string, number> = {}
-  items.forEach((item) => item.productTypes.forEach((type) => {
+  families.forEach((family) => [...new Set(family.variants.flatMap((item) => item.productTypes))].forEach((type) => {
     typeCounts[type] = (typeCounts[type] || 0) + 1
   }))
   return {
     ...countryDefinition(iso3),
-    resourceCount: items.length,
+    resourceCount: families.length,
     latestModified: Math.max(...items.map((item) => item.modified), 0),
     typeCounts,
   }

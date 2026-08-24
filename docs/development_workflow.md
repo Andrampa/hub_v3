@@ -34,17 +34,25 @@ No automated test framework is configured yet. Add one when behavior is complex 
 ## Hub Catalog Category Audit
 
 Run `scripts/categorize_hub_catalog.py` from an authenticated ArcGIS Pro Python
-environment to prepare the complete Hub catalog review. The script is
-audit-only: it reads the Hub and Countries groups, preserves every existing Hub
-category path, proposes additions only for empty branches, and writes
-`hub_catalog_category_review.csv`. It has no ArcGIS assignment operation.
+environment to prepare and apply the complete Hub catalog review. It defaults
+to safe audit mode: it reads the Hub and Countries groups, preserves every
+existing Hub category path, proposes additions only for empty branches, and
+writes `hub_catalog_category_review.csv`.
 The authenticated audit can include non-public editor-visible item metadata, so
 this CSV is intentionally ignored by Git and must remain local.
 
-The first run must keep `AUDIT_ONLY = "true"` and
-`OVERWRITE_REVIEW_CSV = "false"`. Review conflicts and taxonomy suggestions in
-the CSV before authorizing any separate application phase. Never overwrite a
-CSV containing editorial decisions without preserving it first.
+Keep `MODE = "audit"` and `OVERWRITE_AUDIT_CSV = "false"` until any earlier
+review has been preserved. Use `MODE = "prepare"` to add current editable
+columns to an existing review CSV. Apply mode requires an exact positive count,
+has a ten-item default ceiling, rejects stale live categories and verifies every
+write through the group-scoped endpoint. See `docs/catalog_categorization.md`
+for the Excel workflow, taxonomy review and pilot procedure.
+
+The licensed interpreter configured on this workstation is
+`C:\Users\Amparore\AppData\Local\anaconda3\envs\env202409\python.exe`.
+Use preflight mode before every application wave. Reconcile mode only recovers
+local verification status from exact live state after an interrupted client;
+it never writes ArcGIS categories.
 
 For every row, the required preservation invariant is:
 

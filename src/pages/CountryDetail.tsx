@@ -7,6 +7,11 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { cleanText, formatDate } from '../lib/catalog'
+import {
+  familySearchText,
+  groupProductFamilies,
+  type ProductFamily,
+} from '../lib/productFamilies'
 import { itemDestination, itemThumbnail } from '../services/arcgis'
 import {
   fetchCountryEditorial,
@@ -19,6 +24,7 @@ import {
   countryDefinition,
   resourcesForCountry,
   type CountryResource,
+  type ProductType,
 } from '../services/countries'
 import {
   fetchCountryMonitoringCoverage,
@@ -27,7 +33,8 @@ import {
 
 const PAGE_SIZE = 12
 
-function ResourceCard({ item }: { item: CountryResource }) {
+function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
+  const item = family.primary
   const summary = cleanText(item.snippet || item.description)
   const thumbnail = itemThumbnail(item)
   const product = item.productTypes[0] || 'Unclassified'
@@ -45,6 +52,16 @@ function ResourceCard({ item }: { item: CountryResource }) {
           <span>{item.productTypes.slice(1).join(' · ') || 'DIEM resource'}</span>
           <a href={itemDestination(item)} target="_blank" rel="noreferrer">Open resource <span aria-hidden="true">↗</span></a>
         </div>
+        {family.variants.length > 1 && (
+          <nav className="country-resource-languages" aria-label={`Available languages for ${item.title.trim()}`}>
+            <span>Available in</span>
+            <div>
+              {family.languages.map(({ language, item: variant }) => (
+                <a href={itemDestination(variant)} target="_blank" rel="noreferrer" key={variant.id}>{language}</a>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
     </article>
   )
@@ -74,32 +91,39 @@ export default function CountryDetail() {
     () => catalog ? resourcesForCountry(catalog, iso3) : [],
     [catalog, iso3],
   )
+  const allResourceFamilies = useMemo(
+    () => groupProductFamilies(allResources),
+    [allResources],
+  )
   const productCounts = useMemo(() => {
     const counts = new Map<string, number>()
-    allResources.forEach((item) => item.productTypes.forEach((type) => counts.set(type, (counts.get(type) || 0) + 1)))
+    allResourceFamilies.forEach((family) => {
+      const types = new Set(family.variants.flatMap((item) => item.productTypes))
+      types.forEach((type) => counts.set(type, (counts.get(type) || 0) + 1))
+    })
     return counts
-  }, [allResources])
+  }, [allResourceFamilies])
   const years = useMemo(
-    () => [...new Set(allResources.map((item) => new Date(item.modified).getUTCFullYear()))].sort((a, b) => b - a),
-    [allResources],
+    () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map((item) => new Date(item.modified).getUTCFullYear())))].sort((a, b) => b - a),
+    [allResourceFamilies],
   )
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase()
-    return allResources
-      .filter((item) => {
-        const haystack = [item.title, item.snippet, item.type, ...item.productTypes, ...(item.tags || [])].join(' ').toLowerCase()
+    return allResourceFamilies
+      .filter((family) => {
+        const productTypes = new Set(family.variants.flatMap((item) => item.productTypes))
         return (
-          (!normalized || haystack.includes(normalized)) &&
-          (selectedType === 'All products' || item.productTypes.some((type) => type === selectedType)) &&
-          (selectedYear === 'All years' || String(new Date(item.modified).getUTCFullYear()) === selectedYear)
+          (!normalized || familySearchText(family).includes(normalized)) &&
+          (selectedType === 'All products' || productTypes.has(selectedType as ProductType)) &&
+          (selectedYear === 'All years' || family.variants.some((item) => String(new Date(item.modified).getUTCFullYear()) === selectedYear))
         )
       })
       .sort((a, b) => {
-        if (sort === 'title') return a.title.localeCompare(b.title)
-        if (sort === 'oldest') return a.modified - b.modified
-        return b.modified - a.modified
+        if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
+        if (sort === 'oldest') return a.latestModified - b.latestModified
+        return b.latestModified - a.latestModified
       })
-  }, [allResources, query, selectedType, selectedYear, sort])
+  }, [allResourceFamilies, query, selectedType, selectedYear, sort])
 
   useEffect(() => setPage(1), [iso3, query, selectedType, selectedYear, sort])
 
@@ -174,7 +198,7 @@ export default function CountryDetail() {
                   <h1>{definition.name}</h1>
                   <p>{definition.iso3 === CROSS_COUNTRY_CODE ? 'Evidence and analysis that connect findings across multiple countries and crisis contexts.' : `Monitoring, assessments and practical evidence concerning food security and agricultural livelihoods in ${definition.name}.`}</p>
                   <div className="country-profile-stats">
-                    <div><strong>{country.resourceCount}</strong><span>resources</span></div>
+                    <div><strong>{country.resourceCount}</strong><span>products</span></div>
                     <div><strong>{Object.keys(country.typeCounts).filter((type) => type !== 'Unclassified').length}</strong><span>product types</span></div>
                     <div><strong>{formatDate(latestUpdate)}</strong><span>latest update</span></div>
                   </div>
@@ -204,7 +228,7 @@ export default function CountryDetail() {
                 <p>Product classifications are maintained in the DIEM country group.</p>
               </div>
               <div className="product-filter-grid">
-                <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{allResources.length}</strong><span>All products</span></button>
+                <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{allResourceFamilies.length}</strong><span>All products</span></button>
                 {PRODUCT_TYPES.filter((type) => productCounts.has(type)).map((type) => (
                   <button type="button" key={type} aria-pressed={selectedType === type} onClick={() => setFilter('type', type, 'All products')}><strong>{productCounts.get(type)}</strong><span>{type}</span></button>
                 ))}
@@ -223,8 +247,8 @@ export default function CountryDetail() {
                   <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently updated</option><option value="oldest">Oldest updated</option><option value="title">Title A–Z</option></select></label>
                   {(query || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
                 </div>
-                <div className="country-results-meta"><p><strong>{filtered.length}</strong> resources found{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
-                {visible.length ? <div className="country-resource-grid">{visible.map((item) => <ResourceCard item={item} key={item.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
+                <div className="country-results-meta"><p><strong>{filtered.length}</strong> products found{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
+                {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
                 {pageCount > 1 && <nav className="pagination" aria-label="Country resource pages"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>Page <strong>{page}</strong> of {pageCount}</span><button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button></nav>}
               </div>
             </section>

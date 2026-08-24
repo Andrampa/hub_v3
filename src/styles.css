@@ -156,6 +156,11 @@ svg:not(.leaflet-zoom-animated):not(.leaflet-zoom-hide):not(.country-map):not(.i
 .card-body > p { height: 52px; margin: 0 0 18px; overflow: hidden; color: #708086; font-size: 11px; line-height: 1.55; }
 .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid #edf0ef; color: #7d8d91; font-size: 10px; }
 .card-footer > span { max-width: 43%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.card-languages { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #edf0ef; }
+.card-languages > span { color: #65777c; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.card-languages div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.card-languages a { padding: 3px 7px; border: 1px solid #bfd8e5; border-radius: 2px; color: var(--fao-blue); font-size: 9px; font-weight: 700; }
+.card-languages a:hover, .card-languages a:focus-visible { background: var(--fao-blue); color: white; }
 .pagination { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 38px; }
 .pagination button, .error-state button { padding: 10px 16px; border: 1px solid #b9c8c8; background: white; color: var(--deep-blue); cursor: pointer; }
 .pagination button:disabled { opacity: .45; cursor: default; }

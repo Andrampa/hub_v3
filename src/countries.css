@@ -213,6 +213,11 @@
 .country-resource-footer { min-height: 31px; padding-top: 13px; display: flex; justify-content: space-between; align-items: end; gap: 10px; border-top: 1px solid #edf0ef; color: #87969a; font-size: 9px; }
 .country-resource-footer > span { max-width: 44%; }
 .country-resource-footer a { color: var(--fao-blue); font-size: 10px; font-weight: 700; white-space: nowrap; }
+.country-resource-languages { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #edf0ef; }
+.country-resource-languages > span { color: #65777c; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.country-resource-languages div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.country-resource-languages a { padding: 3px 7px; border: 1px solid #bfd8e5; border-radius: 2px; color: var(--fao-blue); font-size: 9px; font-weight: 700; }
+.country-resource-languages a:hover, .country-resource-languages a:focus-visible { background: var(--fao-blue); color: white; }
 .country-not-found { min-height: 520px; padding-block: 120px; }
 .country-not-found h1 { max-width: 720px; color: var(--deep-blue); font-size: 45px; }
 .country-not-found p { color: #66797f; }

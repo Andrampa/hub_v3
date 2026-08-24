@@ -4,7 +4,7 @@
 
 The additive whole-catalog category audit is implemented in
 `scripts/categorize_hub_catalog.py` and has been run once from the authenticated
-ArcGIS Pro environment. It is intentionally incapable of writing to ArcGIS.
+ArcGIS Pro environment. That run was audit-only and made no ArcGIS changes.
 The resulting `hub_catalog_category_review.csv` contains 1,084 editor-visible
 Hub items, 316 additive proposals and 11 conflicts; all 1,084 rows remain
 marked `review`, and every preservation check passed. The CSV is intentionally
@@ -15,8 +15,46 @@ catalog-role suggestions and product-type suggestions before designing a
 separate application phase. Existing Hub category paths are authoritative;
 the required invariant is that each row's `existing_hub_categories` remains a
 subset of `final_expected_categories`. Re-run the audit only after preserving
-editorial decisions and explicitly setting `OVERWRITE_REVIEW_CSV = "true"`.
+editorial decisions and explicitly setting `OVERWRITE_AUDIT_CSV = "true"`.
 The exact verification command remains `npm run build` in the repository.
+
+The script now also contains guarded `prepare` and `apply` modes. Prepare mode
+was run successfully on 2026-08-24: all 1,084 rows and their order were
+preserved, the editable override/approval fields and audit signatures were
+added, and a dated local backup was created. The review preparation was then
+expanded with multilingual product-family proposals; these are presentation
+relationships only and do not change ArcGIS categories or merge item IDs.
+On 2026-08-24 the editor confirmed all proposed families: the CSV now records
+39 approved families across 78 variant rows, with one canonical variant per
+family. Conservative editorial pre-approval also populated 996 catalog roles,
+829 normalized legacy product-type decisions and 996 `apply` decisions. All 11
+conflict rows explicitly reject automatic country/scope additions so existing
+Hub assignments remain unchanged; 88 low-evidence rows remain `review`.
+The editor subsequently changed those 88 rows to `exclude` and corrected 82
+product-type decisions. Excel converted all `modified` timestamps to scientific
+notation; the local CSV was repaired from the trusted pre-Excel backup without
+changing editorial fields. All 1,084 audit signatures now validate, with 996
+`apply`, 88 `exclude` and zero `review` rows.
+The reviewed Catalog role and Product types branches were added to the live Hub
+schema with an exact 14-node guard. A representative ten-item pilot succeeded,
+and all remaining approved rows were then assigned. The client process ended
+before recording its final local status, so reconcile mode compared exact live
+sets and marked them verified without another ArcGIS write. Final live preflight
+reports 996 verified, zero pending and 88 editor-excluded rows unchanged. Every
+original Hub category is preserved. The licensed interpreter is
+`C:\Users\Amparore\AppData\Local\anaconda3\envs\env202409\python.exe`.
+
+Multilingual family application is complete. The guarded
+`scripts/apply_product_family_tags.py` workflow appended and group-scoped
+verified exact `DIEM-FAMILY:<canonical-item-id>` and
+`DIEM-LANGUAGE:<language>` tags on all 78 reviewed variants across 39 families;
+zero variants remain pending and every pre-existing tag was preserved. The
+homepage and country discovery surfaces now count, search, filter, sort and
+paginate families while showing direct links for each reviewed language.
+Anonymous browser QA returned 950 homepage products, 42 Niger products, no
+unspecified visible language labels, successful French-variant search, no
+console errors and no horizontal overflow at 390 x 844. Build verification
+passes. This implementation is included in the current development change set.
 
 The household monitoring product library is implemented below the arrival and
 departure board. It joins Hub-group items to authoritative monitoring-round

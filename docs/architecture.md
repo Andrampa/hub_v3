@@ -74,6 +74,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/services/auth.ts`: OAuth configuration, session lifecycle, and community validation.
 - `src/auth/AuthContext.tsx`: React authentication states and actions.
 - `src/lib/catalog.ts`: metadata cleanup, dates, and provisional classification.
+- `src/lib/productFamilies.ts`: exact family/language tag parsing, canonical
+  variant selection, family-wide search text and language-link ordering.
 - `src/types.ts`: remote and application types.
 - `src/styles.css`: visual system and responsive behavior.
 
@@ -84,6 +86,11 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - Hazard impact assessments are selected from Hub-group members carrying the exact `impact assessment` tag, excluding supporting service, web map and image types. Country, shock, role, scope and language facets come from that group's categories. The page does not infer multi-item event dossiers until a stable assessment/event identifier is published.
 - Country and product assignments come from the country group's `groupCategories`, never title inference.
 - Item IDs are keys; title uniqueness is not assumed.
+- Reviewed `DIEM-FAMILY:<canonical-item-id>` tags collapse translations into
+  one public product on homepage and country discovery surfaces. Each variant
+  remains independently linked, and untagged items remain one-item families.
+- Reviewed `DIEM-LANGUAGE:<language>` tags are authoritative for variant link
+  labels; title/category inference is only a compatibility fallback.
 - Country highlights store item IDs only and render only when the referenced item remains in the active country's catalog.
 - Theme and country inference never determines authorization.
 - Promotion status, channels and hidden UI are editorial controls, never authorization.

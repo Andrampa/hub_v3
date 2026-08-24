@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-08-24 - Guarded catalog category review and application
+
+- Expanded the whole-catalog categorization script with separate audit,
+  local-review preparation and explicit application modes.
+- Added Excel override fields for additive paths, catalog role and unified
+  product type, while keeping existing Hub category paths immutable.
+- Added stale-audit detection, exact approved-count and pilot limits, managed
+  branch/schema validation, dated local backups, bounded batches and exact
+  group-scoped read-back verification.
+- Documented the conflict, proposal, catalog-role and product-taxonomy review
+  workflow and kept all authenticated review/backup CSVs out of the public
+  repository.
+- Added conservative multilingual product-family proposals using explicit
+  family tags, normalized language-marked titles, or matching country/product
+  series/round evidence; all inferred relationships require editorial approval.
+- Provisioned and verified the reviewed Catalog role and Product types schema
+  branches, then assigned and group-scoped verified all 996 approved additive
+  item-category decisions; 88 editor-excluded rows remained unchanged.
+- Added live preflight, explicit pilot allowlisting and interrupted-run
+  reconciliation while retaining audit-only defaults and exact preservation
+  checks.
+- Applied and group-scoped verified the 39 reviewed multilingual families (78
+  variants) using exact family and reviewed-language tags while preserving all
+  existing item tags.
+- Collapsed tagged translations into one product across homepage and country
+  discovery counts, search, filters, sorting, pagination and cards, with direct
+  English, French and Spanish variant links.
+
 ## 2026-08-24 - Homepage caption and dark-panel contrast
 
 - Removed the anonymous "Sourced live from the DIEM content platform" caption

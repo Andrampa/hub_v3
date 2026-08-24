@@ -15,6 +15,11 @@ import {
   itemYear,
 } from './lib/catalog'
 import {
+  familySearchText,
+  groupProductFamilies,
+  type ProductFamily,
+} from './lib/productFamilies'
+import {
   fetchMonitoringStatistics,
   type MonitoringStatistics,
 } from './services/monitoring'
@@ -63,7 +68,8 @@ function categoryFor(item: ArcGISItem) {
   return Object.entries(typeGroups).find(([, types]) => types.includes(item.type))?.[0] || 'Other'
 }
 
-function ContentCard({ item }: { item: ArcGISItem }) {
+function ContentCard({ family }: { family: ProductFamily }) {
+  const item = family.primary
   const thumbnail = itemThumbnail(item)
   const summary = cleanText(item.snippet || item.description)
   const theme = itemTheme(item)
@@ -94,6 +100,18 @@ function ContentCard({ item }: { item: ArcGISItem }) {
             View resource <Icon name="external" />
           </a>
         </div>
+        {family.variants.length > 1 && (
+          <nav className="card-languages" aria-label={`Available languages for ${item.title.trim()}`}>
+            <span>Available in</span>
+            <div>
+              {family.languages.map(({ language, item: variant }) => (
+                <a href={itemDestination(variant)} target="_blank" rel="noreferrer" key={variant.id}>
+                  {language}
+                </a>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
     </article>
   )
@@ -168,12 +186,19 @@ export default function App() {
    * stemmed, and only the Hub group is free of near-miss tag variants.
    */
   const stats = useMemo(() => {
-    const items = catalog?.items || []
+    const families = groupProductFamilies(catalog?.items || [])
     return {
-      total: items.length,
-      hazardImpactAssessments: items.filter(isHazardImpactAssessment).length,
+      total: families.length,
+      hazardImpactAssessments: families.filter((family) => (
+        family.variants.some(isHazardImpactAssessment)
+      )).length,
     }
   }, [catalog])
+
+  const families = useMemo(
+    () => groupProductFamilies(catalog?.items || []),
+    [catalog],
+  )
 
   const themes = useMemo(
     () => [...new Set(catalog?.items.map(itemTheme) || [])].sort(),
@@ -184,29 +209,28 @@ export default function App() {
     [catalog],
   )
 
-  const filteredItems = useMemo(() => {
+  const filteredFamilies = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
-    const items = (catalog?.items || []).filter((item) => {
-      const haystack = [item.title, item.snippet, item.type, ...(item.tags || [])]
-        .join(' ')
-        .toLowerCase()
+    const visible = families.filter((family) => {
       return (
-        (!normalizedQuery || haystack.includes(normalizedQuery)) &&
-        (category === 'All content' || categoryFor(item) === category) &&
-        (theme === 'All themes' || itemTheme(item) === theme) &&
-        (year === 'All years' || String(itemYear(item)) === year)
+        (!normalizedQuery || familySearchText(family).includes(normalizedQuery)) &&
+        (category === 'All content' || family.variants.some((item) => categoryFor(item) === category)) &&
+        (theme === 'All themes' || family.variants.some((item) => itemTheme(item) === theme)) &&
+        (year === 'All years' || family.variants.some((item) => String(itemYear(item)) === year))
       )
     })
-    return items.sort((a, b) => {
-      if (sort === 'title') return a.title.localeCompare(b.title)
-      return sort === 'oldest' ? a.modified - b.modified : b.modified - a.modified
+    return visible.sort((a, b) => {
+      if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
+      return sort === 'oldest'
+        ? a.latestModified - b.latestModified
+        : b.latestModified - a.latestModified
     })
-  }, [catalog, category, query, sort, theme, year])
+  }, [category, families, query, sort, theme, year])
 
   useEffect(() => setPage(1), [category, query, sort, theme, year])
 
-  const pageCount = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE))
-  const visibleItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const pageCount = Math.max(1, Math.ceil(filteredFamilies.length / PAGE_SIZE))
+  const visibleFamilies = filteredFamilies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (
     <>
@@ -254,7 +278,7 @@ export default function App() {
           catalogReady={Boolean(catalog)}
         />
 
-        {catalog && <LatestEvidenceBanner items={catalog.items} />}
+        {catalog && <LatestEvidenceBanner items={families.map((family) => family.primary)} />}
 
         <ProgrammeCarousel slides={promotions.slides} />
 
@@ -301,13 +325,13 @@ export default function App() {
             ) : !catalog ? <LoadingState /> : (
               <>
                 <div className="results-meta">
-                  <p><strong>{filteredItems.length.toLocaleString()}</strong> resources found</p>
+                  <p><strong>{filteredFamilies.length.toLocaleString()}</strong> products found</p>
                   <a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <Icon name="external" /></a>
                 </div>
                 <div className="card-grid">
-                  {visibleItems.map((item) => <ContentCard item={item} key={item.id} />)}
+                  {visibleFamilies.map((family) => <ContentCard family={family} key={family.id} />)}
                 </div>
-                {!visibleItems.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p></div>}
+                {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p></div>}
                 {pageCount > 1 && (
                   <nav className="pagination" aria-label="Catalog pages">
                     <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button>
