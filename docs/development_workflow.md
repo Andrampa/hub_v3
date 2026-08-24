@@ -13,9 +13,10 @@ npm run dev
 
 The development server uses `https://localhost:5173` because that exact OAuth callback origin is registered with ArcGIS. A browser may require local certificate acceptance on first use. Do not substitute `127.0.0.1` for authentication testing unless its callback is separately registered.
 
-The monitoring iframe defaults to the colleague-review deployment. Set
-`VITE_MONITORING_DASHBOARD_URL` from `.env.example` when validating another
-monitoring-app origin; never put credentials in this setting.
+The monitoring iframe defaults to the production deployment at
+`https://diem-monitoring.apps.fao.org/`. Set `VITE_MONITORING_DASHBOARD_URL`
+when validating another monitoring-app origin, such as
+`https://diem-monitoring-review.web.app/`; never put credentials in this setting.
 
 For anonymous visual checks in automated browsers that reject the local certificate, `npx vite --mode http-test` starts an HTTP-only server on `127.0.0.1:4174`. This mode is not valid for OAuth acceptance testing.
 

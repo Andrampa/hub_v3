@@ -60,6 +60,11 @@ The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-serv
 | Monitoring source | `C:\git\hh_survey_v3` / `Andrampa/hh_survey_v3` | n/a |
 | Monitoring Firebase source | `C:\git\fao-oer-diem-monitoring-app` / `un-fao/fao-oer-diem-monitoring-app` | `https://diem-monitoring-review.web.app/` |
 
+The Hub embeds the Monitoring production origin,
+`https://diem-monitoring.apps.fao.org/`, by default. Review builds may opt into
+the Firebase review origin with `VITE_MONITORING_DASHBOARD_URL`; the
+origin-pinned handoff below automatically trusts only the configured iframe.
+
 `https://data-in-emergencies.fao.org/` is the Hub production origin. A push to
 either FAO Firebase repository updates review source only; it does not deploy.
 The user manually runs each repository's **Manual Deploy** GitHub Actions

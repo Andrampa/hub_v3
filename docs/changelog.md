@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-24 - Production monitoring embed
+
+- Switched the Hub's default embedded Monitoring application from the Firebase
+  review origin to `https://diem-monitoring.apps.fao.org/` while retaining an
+  explicit environment override for review-origin testing.
+
 ## 2026-08-24 - Guarded catalog category review and application
 
 - Expanded the whole-catalog categorization script with separate audit,

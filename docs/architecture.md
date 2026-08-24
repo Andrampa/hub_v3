@@ -107,7 +107,7 @@ Any static host that supports the Vite `dist/` output and rewrites SPA routes to
 
 The Hub treats the query string on `/monitoring` as dashboard visualization state and forwards it to the iframe. It adds only two reserved bridge parameters: `diemEmbed=hub` and `diemHubShareUrl`, the canonical Hub `/monitoring` URL calculated from the current browser origin and pathname. The dashboard must exclude those bridge parameters from its visualization state.
 
-Current monitoring deployment: `https://diem-monitoring-review.web.app/`. A deployment may override it with `VITE_MONITORING_DASHBOARD_URL`; the value must be a complete HTTP(S) base URL. Standalone Hub and dashboard sessions remain separate, but an embedded dashboard receives the active Hub's short-lived ArcGIS portal credential through the authenticated `postMessage` handoff documented in `docs/authentication.md`.
+Current monitoring deployment: `https://diem-monitoring.apps.fao.org/`. This production origin is the application default. A deployment may override it with `VITE_MONITORING_DASHBOARD_URL`; the value must be a complete HTTP(S) base URL. Standalone Hub and dashboard sessions remain separate, but an embedded dashboard receives the active Hub's short-lived ArcGIS portal credential through the authenticated `postMessage` handoff documented in `docs/authentication.md`.
 
 When embedded, the dashboard's **Copy link** action must use `diemHubShareUrl` as its base and append the current visualization parameters. When standalone, it must retain its own URL as the base. Neither application may hard-code a development or production Hub URL: the Hub supplies the value at runtime so a future production domain or route change needs no dashboard source edit.
 

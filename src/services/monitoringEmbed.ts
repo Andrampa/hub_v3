@@ -1,4 +1,4 @@
-export const DEFAULT_MONITORING_DASHBOARD_URL = 'https://diem-monitoring-review.web.app/'
+export const DEFAULT_MONITORING_DASHBOARD_URL = 'https://diem-monitoring.apps.fao.org/'
 export const MONITORING_BRIDGE_VERSION = 1
 export const MONITORING_STATE_MESSAGE = 'diem-monitoring:url-state'
 export const HUB_STATE_MESSAGE = 'diem-hub:url-state'
@@ -45,7 +45,7 @@ export function monitoringDashboardUrl() {
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Unsupported protocol')
     return url.toString()
   } catch {
-    console.warn('Ignoring invalid VITE_MONITORING_DASHBOARD_URL; using the review deployment.')
+    console.warn('Ignoring invalid VITE_MONITORING_DASHBOARD_URL; using the production deployment.')
     return DEFAULT_MONITORING_DASHBOARD_URL
   }
 }

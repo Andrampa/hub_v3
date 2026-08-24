@@ -200,7 +200,7 @@ Do not add agent instructions, AI context, internal handoff material, local envi
 ```mermaid
 graph LR
     Hub["fao-oer-diem-hub (this repo)"]
-    Hub -->|"/monitoring/**"| Monitoring["fao-oer-diem-monitoring-app<br/>diem-monitoring-review.web.app"]
+    Hub -->|"/monitoring/**"| Monitoring["fao-oer-diem-monitoring-app<br/>diem-monitoring.apps.fao.org"]
     Hub -->|"/eve-webapp/**"| Eve["fao-oer-eve-webapp<br/>diem-eve-review.web.app"]
     Hub -->|"/risk-explorer/**"| Floodex["fao-oer-diem-floodex-app<br/>diem-floodex-review.web.app"]
     Hub -->|"/vista/**"| Vista["fao-vista-app<br/>vista-review.web.app"]
