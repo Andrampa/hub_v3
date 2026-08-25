@@ -67,7 +67,7 @@ h1, h2, h3, h4, h5, h6,
   .programme-hero,
   .contact-hero,
   .programme-slide,
-  .field-services,
+  .flood-reference,
   .data-gate-hero,
   .data-workspace-hero,
   .data-section--deep,
@@ -92,7 +92,7 @@ h1, h2, h3, h4, h5, h6,
   .programme-hero,
   .contact-hero,
   .programme-slide,
-  .field-services,
+  .flood-reference,
   .data-gate-hero,
   .data-workspace-hero,
   .data-section--deep,
@@ -269,6 +269,7 @@ h1, h2, h3, h4, h5, h6,
 .principles-panel { padding: 32px; background: #1c4767; }
 .principles-panel h3 { font-size: 1.65rem; letter-spacing: 0; }
 .principles-panel > p { color: #fff; }
+.principles-panel li { color: #fff; }
 .principles-panel li span { color: var(--orange-on-dark); }
 .catalog-section, .country-library { padding-block: 72px; background: #f2f2f2; }
 .filter-bar, .country-filter-bar {

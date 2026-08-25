@@ -65,8 +65,8 @@ export const defaultProgrammeSlides: ProgrammeSlide[] = [
   {
     id: 'eve',
     eyebrow: 'Flood monitoring',
-    title: 'EVE',
-    description: 'Track floods in near real time and monitor impacts on land cover, with a focus on agriculture.',
+    title: 'EVE 2.0',
+    description: 'Track floods dekad by dekad, separate exceptional flooding from the normal season, and map impacts on agriculture.',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/1155b4e0339641458d8aac5e294d81d4/data',
     imageAlt: 'Flooded agricultural landscape',
     ctaLabel: 'Explore flood services',
@@ -74,9 +74,9 @@ export const defaultProgrammeSlides: ProgrammeSlide[] = [
     sortOrder: 20,
   },
   {
-    id: 'floodex',
+    id: 'exposure',
     eyebrow: 'Exposure analysis',
-    title: 'FloodEx',
+    title: 'Flood exposure',
     description: 'Estimate potential exposure of cropland and population to flood events for rapid prioritization.',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/9103febede744492ae43ebae1c5e3826/data',
     imageAlt: 'Flood exposure analysis landscape',

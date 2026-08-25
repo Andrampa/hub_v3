@@ -63,7 +63,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
   live DIEM monitoring dashboard full screen.
 - `src/services/monitoringEmbed.ts`: monitoring-app URL configuration, bridge message validation, visualization-state normalization, and Hub URL construction.
 - `src/services/monitoring.ts`: public monitoring-statistics and survey-schedule queries, legacy rule normalization, pagination and response validation.
-- `src/pages/FloodServices.tsx`: public DIEM flood-service access and internal field-reporting access pathway.
+- `src/pages/FloodServices.tsx`: public DIEM flood-service pathway, EVE 2.0 capability presentation, VISTA reference access, catalog-driven flood assessments filtered on the `Shock types/Flood` category, and the DIEM Community access route.
 - `src/pages/Contact.tsx`: embedded and direct DIEM contact-form access.
 - `src/pages/DatasetExplorer.tsx`: internal map, filter, preview, export and API experience for a protected data service.
 - `src/components/DatasetGeometryMap.tsx`: Leaflet map over the public ArcGIS light-gray basemap, with filtered service geometry, tooltips, popups and extent controls.

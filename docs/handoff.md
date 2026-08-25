@@ -2,6 +2,37 @@
 
 ## In Progress
 
+The `/flood-services` page was restructured on 2026-08-25 to match the
+consolidated EVE 2.0 platform in `C:\gitao-oer-eve-app`. Floodex and both
+ArcGIS attachment-viewer field-reporting applications are retired; their
+capabilities are now the EVE Exposure Model and Field Data modes. EVE 2.0 is
+published at `https://diem-eve.apps.fao.org/`. The page presents a four-step
+pathway, all eight EVE capabilities grouped, the VISTA reference with its
+public Earth Engine comparison explorer
+(`https://fao-oer.projects.earthengine.app/view/vistaproductscomparisonapp`)
+and bucket browser (`https://diem.fao.org/vista/vista_bucket_browser.html`),
+a catalog-driven assessment list and a DIEM Community access block.
+
+Four EVE/VISTA interface figures were added on 2026-08-25 under
+`src/assets/eve/`. The Field Data figure shows the Madagascar Cyclones Fytia
+and Gezani workspace with real submissions; it was inspected before use and
+contains no identifiable people, no reporter names and no precise addresses,
+and its map points sit at country scale. Data-owner clearance for publishing
+Madagascar and Mozambique field submissions on a public page was not
+explicitly recorded; the editor authorized publication directly. Screenshots
+age with the application, so recapture them when EVE's interface changes.
+
+The assessment list reuses `fetchImpactAssessmentCatalog` and filters on the
+reviewed `Shock types/Flood` category, which currently returns 37 items. That
+category is only populated for items carrying the exact `impact assessment`
+tag, so a flood product without that tag will not appear here; extending the
+tag is an editorial decision, not a code change. `npm run build` passes and
+anonymous verification at 375, 768 and 1280 px returned the live 37-item count,
+no console errors and no horizontal overflow. Remaining: confirm with the
+content owners that the VISTA bucket browser is an acceptable public link on
+the Hub, and that `docs/DIEM_Flood_Package_Two_Pager.docx` should be reissued,
+since it still presents Floodex and VISTA as standalone applications.
+
 Country discovery has been cut over from the former Countries group to the
 authoritative Hub content group. The final missing `COD` and `LBY` assignments
 were applied and verified additively on 2026-08-25. Runtime country eligibility

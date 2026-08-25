@@ -1,5 +1,59 @@
 # Changelog
 
+## 2026-08-25 - Restructure flood services around the consolidated EVE 2.0
+
+- Rebuilt `/flood-services` around one platform, one reference and one decision
+  product, replacing the previous four-application presentation.
+- Retired the standalone Floodex link and both ArcGIS attachment-viewer
+  field-reporting links; those capabilities now live inside EVE 2.0 as its
+  Exposure Model and Field Data modes.
+- Repointed EVE 2.0 to `https://diem-eve.apps.fao.org/`.
+- Added a four-step evidence pathway and a grouped EVE capability presentation
+  covering all eight modes under Observe, Contextualize, Anticipate, Verify and
+  Deliver, marking Field Data restricted and Exposure Model country-conditional.
+- Added a VISTA section describing the seasonal reference behind EVE's
+  exceptional-flood separation, with the public Earth Engine comparison explorer
+  and the VISTA product bucket browser.
+- Added a catalog-driven flood impact assessment list that reuses
+  `fetchImpactAssessmentCatalog` and filters on the reviewed `Shock types/Flood`
+  category, so the page carries no second discovery contract.
+- Replaced the internal-applications section with a single access block routing
+  DIEM Community requests to the public Survey123 form, noting that the same
+  approval covers the Hub's contributor surfaces.
+- Added four interface figures captured on 2026-08-25 and stored in
+  `src/assets/eve/`: the EVE Overview for Mozambique (first dekad February
+  2026) as a full-width anchor, the Exposure model and Field Data views inset
+  within their capability groups, and the VISTA comparison explorer inside the
+  dark reference section. All are lazy-loaded with explicit dimensions and
+  descriptive alt text; browser chrome was cropped from the Overview capture
+  and the Google Earth Engine shell header from the VISTA capture.
+- Extended the capability-group model with an optional `figure`, so a mode
+  screenshot is a data change rather than a layout change.
+- Added a third VISTA card linking the published user guide at
+  `https://diem.fao.org/vista/user_guide.html`, verified live before wiring.
+- Added the VISTA consortium inside the VISTA section, on a white panel so the
+  eight marks sit on a light ground within the deep-blue band. The consortium is
+  scoped to VISTA alone: FAO and the European Commission's Joint Research Centre
+  coordinate, with NOAA, RWTH Aachen University, the Dartmouth Flood Observatory,
+  Columbia Climate School, WFP and Google contributing. Other flood-service
+  components reuse open data such as the JRC RP20 scenario without that being a
+  partnership, so no page-wide partnership claim is made.
+- Added seven partner marks to `src/assets/partners/`, trimmed of surrounding
+  whitespace and normalized to 120px tall for retina; the existing FAO SVG is
+  reused. Emblem marks (NOAA, DFO, WFP) render taller than wordmarks so the row
+  reads as optically even.
+- Audited the finished page and fixed what the audit found: the renamed dark
+  section had fallen out of the `fao-adaptation.css` dark-context selector
+  lists, leaving its kicker at 1.73:1 on deep blue; a lone capability shrank to
+  one auto-fit track whenever its group also carried a figure; and eight muted
+  or accent colours failed WCAG AA. All page text now meets AA.
+- Replaced the dead `.field-services` entry in both dark-context lists with
+  `.flood-reference`, and darkened `.programme-section-heading > p` from
+  `#6b7c82` to `#5d7077`, which also lifts the monitoring and contact pages.
+- Renamed the homepage `floodex` programme slide to a flood-exposure slide and
+  refreshed the EVE slide copy; removed the flood-intro, flood-services,
+  field-services and field-contact-link styles that no longer had markup.
+
 ## 2026-08-25 - Retire the separate Countries content group
 
 - Switched country discovery to the authoritative DIEM Hub content group and
