@@ -30,8 +30,8 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
             </button>
             <div className="nav-dropdown-menu">
               <Link to="/monitoring-system">
-                <strong>Monitoring System</strong>
-                <small>Survey arrivals, departures and products</small>
+                <strong>Surveys catalogue</strong>
+                <small>Browse surveys and products</small>
               </Link>
               <Link to="/monitoring">
                 <strong>Household Survey Explorer</strong>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-25 - Household surveys navigation and release-board copy
+
+- Renamed the first Household Surveys menu option to Surveys catalogue and
+  clarified that it provides access to surveys and products.
+- Renamed the release board to Incoming and published surveys and clarified
+  that country briefs and other products are added when they become available.
+
 ## 2026-08-24 - Production monitoring embed
 
 - Switched the Hub's default embedded Monitoring application from the Firebase

@@ -279,11 +279,11 @@ export function SurveyReleases() {
       <div className="section-heading">
         <div>
           <span className="kicker">Survey pipeline</span>
-          <h2 id="survey-board-heading">Arrival &amp; departure board</h2>
+          <h2 id="survey-board-heading">Incoming and published surveys</h2>
         </div>
         <p>
           Every household monitoring round in order of arrival. Country briefs and
-          survey products light up the moment a round is released.
+          other survey products are added as they become available.
         </p>
       </div>
 
@@ -292,7 +292,7 @@ export function SurveyReleases() {
           className="board-fullscreen"
           role="dialog"
           aria-modal="true"
-          aria-label="Arrival and departure board, every round"
+          aria-label="Incoming and published surveys, every round"
         >
           {boardPanel}
         </div>
