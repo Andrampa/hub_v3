@@ -13,11 +13,15 @@
 .household-explorer-banner a:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(2, 34, 50, .25); }
 .household-monitoring-page .survey-board { padding-top: 76px; }
 .programme-hero, .contact-hero { position: relative; overflow: hidden; padding: 96px 0 105px; color: white; background: var(--deep-blue); }
+.programme-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .programme-hero::after, .contact-hero::after { content: ''; position: absolute; width: 520px; height: 520px; right: -100px; top: -260px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 70px rgba(255,255,255,.025), 0 0 0 140px rgba(255,255,255,.025); }
 .programme-hero--monitoring { background: linear-gradient(120deg, #043753, #116aab); }
-.programme-hero--flood { background: linear-gradient(120deg, #05466c, #2a748e); }
+.programme-hero--flood { background: #05466c; }
+.programme-hero--flood::before { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(90deg, rgba(3, 48, 73, .94) 0%, rgba(3, 48, 73, .78) 55%, rgba(3, 48, 73, .42) 100%); }
+.programme-hero-credit { position: absolute; z-index: 3; right: 16px; bottom: 12px; color: rgba(255,255,255,.78); font-size: 10px; text-decoration: none; }
+.programme-hero-credit:hover, .programme-hero-credit:focus-visible { color: white; text-decoration: underline; }
 .contact-hero { padding-bottom: 82px; background: linear-gradient(120deg, #05466c, #116aab); }
-.programme-hero .section-wrap, .contact-hero .section-wrap { position: relative; z-index: 1; }
+.programme-hero .section-wrap, .contact-hero .section-wrap { position: relative; z-index: 2; }
 .programme-hero h1, .contact-hero h1 { max-width: 780px; margin: 18px 0; font-size: clamp(42px, 5.8vw, 70px); line-height: 1; letter-spacing: -.055em; }
 .programme-hero h1 em, .contact-hero h1 em { font-family: 'Source Serif 4', Georgia, serif; color: #a8d5df; font-weight: 600; }
 .programme-hero p, .contact-hero p { max-width: 680px; margin: 0; color: #d5e5ea; font-size: 16px; line-height: 1.7; }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ImpactAtlasMap } from '../components/ImpactAtlasMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import hazardHeroImage from '../assets/heroes/zambia-drought-2024.jpg'
 import { cleanText, formatDate } from '../lib/catalog'
 import { countryDefinition } from '../services/countries'
 import {
@@ -150,7 +151,6 @@ export default function HazardImpactAssessments() {
     return [...grouped.entries()].sort((a, b) => b[0] - a[0])
   }, [filtered])
   const latest = useMemo(() => latestAssessments(catalog?.items || []), [catalog])
-  const heroImage = latest[0] ? itemThumbnail(latest[0]) : undefined
   const latestModified = Math.max(...(catalog?.items.map((item) => item.modified) || [0]))
 
   const clearFilters = () => {
@@ -166,8 +166,16 @@ export default function HazardImpactAssessments() {
       <SiteHeader active="impact" />
       <main id="top" className="impact-page">
         <section className="impact-hero">
-          {heroImage && <img className="impact-hero-image" src={heroImage} alt="" />}
+          <img className="impact-hero-image" src={hazardHeroImage} alt="" />
           <div className="impact-hero-overlay" />
+          <a
+            className="impact-hero-credit"
+            href="https://commons.wikimedia.org/wiki/File:Dry_fields_in_Lusaka_03.jpg"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Photo: Icem4k / CC BY 4.0
+          </a>
           <div className="impact-hero-content section-wrap">
             <span className="eyebrow">DIEM pillar · Hazard impact assessment</span>
             <h1>Living evidence from <em>shocks and crises.</em></h1>

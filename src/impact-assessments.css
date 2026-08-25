@@ -3,6 +3,8 @@
 .impact-hero { position: relative; min-height: 520px; overflow: hidden; display: flex; align-items: end; background: #1c4767; color: white; }
 .impact-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .impact-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(3, 48, 73, .96) 0%, rgba(3, 48, 73, .82) 48%, rgba(3, 48, 73, .4) 100%); }
+.impact-hero-credit { position: absolute; z-index: 2; right: 16px; bottom: 12px; color: rgba(255,255,255,.78); font-size: 10px; text-decoration: none; }
+.impact-hero-credit:hover, .impact-hero-credit:focus-visible { color: white; text-decoration: underline; }
 .impact-hero-content { position: relative; z-index: 1; padding-block: 88px 82px; }
 .impact-hero-content h1 { max-width: 760px; margin: 18px 0; color: white; font-size: clamp(44px, 6vw, 72px); line-height: 1; letter-spacing: -.055em; }
 .impact-hero-content h1 em { color: #b9e0e9; font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; }

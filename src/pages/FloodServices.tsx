@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import floodHeroImage from '../assets/heroes/bangladesh-flood-2020.jpg'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 
@@ -34,6 +35,15 @@ export default function FloodServices() {
       <SiteHeader active="flood" />
       <main className="programme-page">
         <section className="programme-hero programme-hero--flood">
+          <img className="programme-hero-image" src={floodHeroImage} alt="" />
+          <a
+            className="programme-hero-credit"
+            href="https://commons.wikimedia.org/wiki/File:Flood_of_Bangladesh_01.jpg"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Photo: Frameofashik / CC BY-SA 4.0
+          </a>
           <div className="section-wrap">
             <span className="eyebrow"><span /> DIEM flood services</span>
             <h1>From flood hazard to <em>evidence for action.</em></h1>

@@ -22,7 +22,7 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
           </Link>
         </div>
         <div className="nav-links">
-          <a className={active === 'home' ? 'active' : ''} href="/#catalog">Public catalog</a>
+          <a className={active === 'home' ? 'active' : ''} href="/#catalog">Home</a>
           <div className={`nav-dropdown${active === 'monitoring' || active === 'data' ? ' active' : ''}`}>
             <button type="button" aria-haspopup="true">
               Household Surveys
@@ -82,7 +82,7 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
         </div>
       </nav>
       <nav className="mobile-nav" aria-label="Mobile navigation">
-        <a className={active === 'home' ? 'active' : ''} href="/#catalog">Catalog</a>
+        <a className={active === 'home' ? 'active' : ''} href="/#catalog">Home</a>
         <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system">Surveys</Link>
         <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Impacts</Link>
         <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood</Link>

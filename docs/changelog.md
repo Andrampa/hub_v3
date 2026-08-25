@@ -293,6 +293,14 @@
 
 All notable documentation and implementation changes. Most recent entry first.
 
+## 2026-08-25 - Programme hero photography
+
+- Replaced the hazard-impact hero's mutable ArcGIS item thumbnail with a locally bundled photograph of the 2024 Zambian drought.
+- Replaced the Cross-country analysis page's abstract global mark with a locally bundled NASA satellite image of Cyclone Freddy approaching Madagascar.
+- Added a locally bundled Bangladesh flood photograph to the Flood Services hero, retaining a FAO deep-blue overlay for accessible text contrast.
+- Kept both image imports inside the Vite asset pipeline so their URLs are generated correctly for local development and deployed builds.
+- Renamed the homepage catalog navigation entry to **Home** in both desktop and mobile headers.
+
 ## Current State
 
 - Status: public catalog, country explorer, protected data workspace, and DIEM community authentication implemented

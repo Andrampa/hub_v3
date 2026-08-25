@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import crossCountryHeroImage from '../assets/heroes/cyclone-freddy-madagascar-2023.jpg'
 import { CountryEditorial } from '../components/CountryEditorial'
 import { CountryMonitoring } from '../components/CountryMonitoring'
 import { CountryShape } from '../components/CountryMap'
@@ -189,7 +190,21 @@ export default function CountryDetail() {
         )}
         {catalog && country && (
           <>
-            <section className="country-profile-hero">
+            <section className={`country-profile-hero${iso3 === CROSS_COUNTRY_CODE ? ' country-profile-hero--cross-country' : ''}`}>
+              {iso3 === CROSS_COUNTRY_CODE && (
+                <>
+                  <img className="country-profile-hero-image" src={crossCountryHeroImage} alt="" />
+                  <div className="country-profile-hero-overlay" />
+                  <a
+                    className="country-profile-hero-credit"
+                    href="https://commons.wikimedia.org/wiki/File:Tropical_Cyclone_Freddy_Slams_Madagascar_(MODIS).jpg"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Image: NASA MODIS / Public domain
+                  </a>
+                </>
+              )}
               <div className="country-profile-inner section-wrap">
                 <div className="country-profile-copy">
                   <nav className="breadcrumbs" aria-label="Breadcrumb"><Link to="/countries">Countries</Link><span>/</span><span>{definition.name}</span></nav>
@@ -202,10 +217,12 @@ export default function CountryDetail() {
                     <div><strong>{formatDate(latestUpdate)}</strong><span>latest update</span></div>
                   </div>
                 </div>
-                <div className="country-profile-map">
-                  {definition.iso3 === CROSS_COUNTRY_CODE ? <div className="global-mark" aria-hidden="true"><span>DIEM</span><strong>GLOBAL</strong></div> : <CountryShape iso3={definition.iso3} name={definition.name} />}
-                  <span>{definition.region}</span>
-                </div>
+                {definition.iso3 !== CROSS_COUNTRY_CODE && (
+                  <div className="country-profile-map">
+                    <CountryShape iso3={definition.iso3} name={definition.name} />
+                    <span>{definition.region}</span>
+                  </div>
+                )}
               </div>
             </section>
 
