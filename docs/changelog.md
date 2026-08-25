@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-25 - Compress programme hero photography
+
+- Recompressed the three hero background photographs to a maximum width of
+  2400px as progressive JPEGs at quality 82, cutting the bundled hero image
+  payload from 9.0 MB to 1.6 MB.
+- Kept the original aspect ratios, stripped camera metadata and left the
+  filenames and imports unchanged, so no page or credit link needed editing.
+- Confirmed the flood, cross-country and hazard-impact heroes are visually
+  unchanged behind their gradient overlays at desktop and 390px mobile widths.
+
 ## 2026-08-25 - Retire the separate Countries content group
 
 - Switched country discovery to the authoritative DIEM Hub content group and
