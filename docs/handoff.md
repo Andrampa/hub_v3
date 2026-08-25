@@ -2,6 +2,21 @@
 
 ## In Progress
 
+Country discovery has been cut over from the former Countries group to the
+authoritative Hub content group. The final missing `COD` and `LBY` assignments
+were applied and verified additively on 2026-08-25. Runtime country eligibility
+now requires exact `Catalog role/Discoverable product`; country and product
+facets use the Hub `Countries` and `Product types` branches, while the
+cross-country route derives from `Geographic scope/Multi-country`.
+`scripts/provision_country_editorial.py` follows the same contract and the
+obsolete orphan-sharing script was removed. The former ArcGIS group has not
+been deleted or unshared; that remains a separate owner decision after review.
+Anonymous acceptance QA returned 54 countries and 815 public discoverable
+product families; both multi-country products, the corrected DRC and Libya
+questionnaires, supporting-component exclusion, Hub source links, singular
+result copy and the 390 x 844 layout were verified with no console errors or
+horizontal overflow.
+
 The additive whole-catalog category audit is implemented in
 `scripts/categorize_hub_catalog.py` and has been run once from the authenticated
 ArcGIS Pro environment. That run was audit-only and made no ArcGIS changes.

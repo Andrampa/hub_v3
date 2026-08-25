@@ -34,11 +34,9 @@ No automated test framework is configured yet. Add one when behavior is complex 
 
 ## Hub Catalog Category Audit
 
-Run `scripts/categorize_hub_catalog.py` from an authenticated ArcGIS Pro Python
-environment to prepare and apply the complete Hub catalog review. It defaults
-to safe audit mode: it reads the Hub and Countries groups, preserves every
-existing Hub category path, proposes additions only for empty branches, and
-writes `hub_catalog_category_review.csv`.
+`scripts/categorize_hub_catalog.py` records the completed one-time migration
+from the former Countries group into the Hub group. It is retained for audit
+history and reconciliation, not as an ongoing country-page dependency.
 The authenticated audit can include non-public editor-visible item metadata, so
 this CSV is intentionally ignored by Git and must remain local.
 
@@ -61,9 +59,10 @@ For every row, the required preservation invariant is:
 existing_hub_categories is a subset of final_expected_categories
 ```
 
-Countries-group assignments are migration evidence only. When the Hub already
-has a value in the same branch, the script preserves the Hub value and records
-any disagreement for human review.
+The former Countries-group assignments are historical migration evidence only.
+All ongoing country and product-type curation belongs in the Hub content group.
+`scripts/complete_country_group_retirement.py` documents and verifies the final
+two additive assignments applied before the runtime cutover.
 
 ## Manual Verification Expectations
 

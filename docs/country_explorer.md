@@ -2,7 +2,10 @@
 
 ## Purpose
 
-The country explorer is the public, country-first entry point to DIEM material. It reads the curated **Data in Emergencies Hub - Countries** ArcGIS group and does not copy or modify its content.
+The country explorer is the public, country-first entry point to DIEM material.
+It reads discoverable products directly from the authoritative **FAO Data in
+Emergencies Hub Content** ArcGIS group. The former Countries group is not a
+runtime or editorial dependency.
 
 ## Routes
 
@@ -14,11 +17,15 @@ Static hosting must rewrite unknown application paths to `index.html`; otherwise
 
 ## ArcGIS Contract
 
-- Group ID: `c27d3dbba52343c6addfd61edaaa3e86`
+- Group ID: `ab8a43038b6347ac93507988f7e2a90b`
 - Group content endpoint: `GET https://www.arcgis.com/sharing/rest/content/groups/{groupId}/search`
 - Page size: 100; follow `nextStart` until complete.
 - Country assignment: `/Categories/Countries/{ISO3}` in each result's `groupCategories`.
-- Product assignment: `/Categories/Item Type/{value}` in `groupCategories`.
+- Product assignment: `/Categories/Product types/{value}` in `groupCategories`.
+- Product eligibility: exact `/Categories/Catalog role/Discoverable product`.
+- Cross-country assignment: exact
+  `/Categories/Geographic scope/Multi-country`, represented internally as
+  route code `XXX`.
 
 The group-content search endpoint is required because global search results do not include group-specific category assignments.
 
@@ -27,7 +34,7 @@ The group-content search endpoint is required because global search results do n
 `src/services/countries.ts` normalizes category values defensively:
 
 - trims category segments and accepts upper-case three-letter country codes;
-- treats `XXX` as cross-country content;
+- derives `XXX` cross-country content from the reviewed geographic scope;
 - maps legacy `TZN` metadata to Tanzania while preserving the assigned route code;
 - maps `Country Reports` to `Assessment Reports` and `DIEM EVE` to `EVE flood reports`;
 - recovers list-like product labels published as a single category string;
@@ -35,9 +42,15 @@ The group-content search endpoint is required because global search results do n
 
 Observed assignments define the directory. The ArcGIS category schema alone is not sufficient because assigned country codes can exist before they appear in the schema.
 
-## Current Live Baseline
+## Migration Baseline
 
-On 2026-07-16 the group returned 970 items, 54 country codes, and 2 cross-country resources. Metadata remains mutable. Some records lack country or product categories, and a small number carry multiple assignments; the interface excludes uncategorized records from country pages without changing ArcGIS.
+The 2026-08-25 cutover followed an exact review of 1,084 editor-visible Hub
+items. All 829 legacy product-type decisions were present in the unified Hub
+taxonomy. The final two missing country assignments (`COD` and `LBY`) were
+added and verified without removing any existing category. Three incorrect or
+obsolete legacy codes were deliberately not copied: Malawi uses `MWI`, Tanzania
+uses `TZA`, and Togo uses `TGO`. Supporting components remain in the Hub group
+but do not appear as independent country products.
 
 ## Map Behavior
 

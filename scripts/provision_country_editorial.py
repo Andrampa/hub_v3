@@ -6,8 +6,8 @@ target ArcGIS Online organization. It creates:
 1. A private editable hosted feature service with two non-spatial tables.
 2. A public, query-only hosted feature service view used by the web app.
 3. Seed country introductions/images from HubCountriesApp.
-4. One or two deterministic demo highlights per country from the newest items
-   currently assigned to that country in the DIEM country group.
+4. One or two deterministic demo highlights per country from the newest
+   discoverable products categorized in the DIEM Hub content group.
 
 The script never stores credentials. It uses the active ArcGIS Pro sign-in.
 Existing editorial rows are preserved; seeding only fills missing countries and
@@ -32,7 +32,7 @@ from arcgis.gis import GIS, Item
 
 
 EDITOR_GROUP_ID = "7f5d03df97854f4687c2f9defad01f31"
-COUNTRY_GROUP_ID = "c27d3dbba52343c6addfd61edaaa3e86"
+HUB_GROUP_ID = "ab8a43038b6347ac93507988f7e2a90b"
 LEGACY_COUNTRY_LAYER = (
     "https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/"
     "HubCountriesApp/FeatureServer/0"
@@ -300,7 +300,7 @@ def fetch_legacy_profiles() -> dict[str, dict[str, Any]]:
 def fetch_country_items() -> list[dict[str, Any]]:
     endpoint = (
         "https://www.arcgis.com/sharing/rest/content/groups/"
-        f"{COUNTRY_GROUP_ID}/search"
+        f"{HUB_GROUP_ID}/search"
     )
     items: list[dict[str, Any]] = []
     start = 1
@@ -343,7 +343,19 @@ def item_country_codes(item: dict[str, Any]) -> list[str]:
             iso3 = str(category)[len(prefix):].strip().upper()
             if re.fullmatch(r"[A-Z]{3}", iso3) and iso3 not in result:
                 result.append(iso3)
+    if not result and any(
+        str(category).lower() == "/categories/geographic scope/multi-country"
+        for category in item.get("groupCategories") or []
+    ):
+        result.append("XXX")
     return result
+
+
+def is_discoverable_product(item: dict[str, Any]) -> bool:
+    return any(
+        str(category).lower() == "/categories/catalog role/discoverable product"
+        for category in item.get("groupCategories") or []
+    )
 
 
 def detects_html(value: str) -> bool:
@@ -587,6 +599,8 @@ def seed_tables(source_item: Item) -> tuple[int, int, int, int]:
     legacy = fetch_legacy_profiles()
     resources_by_iso: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in country_items:
+        if not is_discoverable_product(item):
+            continue
         for iso3 in item_country_codes(item):
             resources_by_iso[iso3].append(item)
     for resources in resources_by_iso.values():

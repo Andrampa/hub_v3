@@ -12,13 +12,12 @@ import {
   groupProductFamilies,
   type ProductFamily,
 } from '../lib/productFamilies'
-import { itemDestination, itemThumbnail } from '../services/arcgis'
+import { CONTENT_GROUP_ID, itemDestination, itemThumbnail } from '../services/arcgis'
 import {
   fetchCountryEditorial,
   type CountryEditorialContent,
 } from '../services/countryEditorial'
 import {
-  COUNTRY_GROUP_ID,
   CROSS_COUNTRY_CODE,
   PRODUCT_TYPES,
   countryDefinition,
@@ -225,7 +224,7 @@ export default function CountryDetail() {
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">
                 <div><span className="kicker">Evidence collection</span><h2 id="products-heading">Choose a product</h2></div>
-                <p>Product classifications are maintained in the DIEM country group.</p>
+                <p>Product classifications are maintained in the DIEM Hub content group.</p>
               </div>
               <div className="product-filter-grid">
                 <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{allResourceFamilies.length}</strong><span>All products</span></button>
@@ -239,7 +238,7 @@ export default function CountryDetail() {
               <div className="section-wrap">
                 <div className="country-section-heading country-section-heading--library">
                   <div><span className="kicker">Resource library</span><h2>Find country evidence</h2></div>
-                  <a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${COUNTRY_GROUP_ID}#content`} target="_blank" rel="noreferrer">View source group ↗</a>
+                  <a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}#content`} target="_blank" rel="noreferrer">View source group ↗</a>
                 </div>
                 <div className="country-filter-bar">
                   <label className="country-filter-search"><span>Search</span><input type="search" placeholder={`Search ${definition.name}`} value={query} onChange={(event) => setFilter('q', event.target.value, '')} /></label>
@@ -247,7 +246,7 @@ export default function CountryDetail() {
                   <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently updated</option><option value="oldest">Oldest updated</option><option value="title">Title A–Z</option></select></label>
                   {(query || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
                 </div>
-                <div className="country-results-meta"><p><strong>{filtered.length}</strong> products found{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
+                <div className="country-results-meta"><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
                 {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
                 {pageCount > 1 && <nav className="pagination" aria-label="Country resource pages"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>Page <strong>{page}</strong> of {pageCount}</span><button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button></nav>}
               </div>

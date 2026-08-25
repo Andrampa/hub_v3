@@ -80,7 +80,7 @@ export function CountryMap({
           return (
             <Link
               to={`/countries/${iso3.toLowerCase()}`}
-              aria-label={`${summary.name}, ${summary.resourceCount} products`}
+              aria-label={`${summary.name}, ${summary.resourceCount} ${summary.resourceCount === 1 ? 'product' : 'products'}`}
               key={iso3}
               onMouseEnter={() => setHoveredIso(iso3)}
               onMouseLeave={() => setHoveredIso(undefined)}
@@ -94,7 +94,7 @@ export function CountryMap({
         </svg>
         <div className="map-selection" aria-live="polite">
         {hovered ? (
-          <><strong>{hovered.name}</strong><span>{hovered.resourceCount} products · Updated {new Date(hovered.latestModified).getUTCFullYear()}</span></>
+          <><strong>{hovered.name}</strong><span>{hovered.resourceCount} {hovered.resourceCount === 1 ? 'product' : 'products'} · Updated {new Date(hovered.latestModified).getUTCFullYear()}</span></>
         ) : (
           <><strong>Explore the map</strong><span>Select a highlighted country or use the directory below.</span></>
         )}

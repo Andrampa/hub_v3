@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-08-25 - Retire the separate Countries content group
+
+- Switched country discovery to the authoritative DIEM Hub content group and
+  its reviewed Countries, Product types, Catalog role and Geographic scope
+  categories.
+- Added and verified the final `COD` and `LBY` country assignments without
+  removing any existing Hub category.
+- Limited country cards to exact Discoverable product assignments, derived the
+  cross-country route from Multi-country scope, and removed the obsolete
+  orphan-sharing workflow.
+- Updated country-editorial provisioning to seed countries and highlights from
+  discoverable Hub products rather than the former Countries group.
+
 ## 2026-08-25 - Household surveys navigation and release-board copy
 
 - Renamed the first Household Surveys menu option to Surveys catalogue and

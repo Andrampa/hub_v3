@@ -7,6 +7,10 @@ without changing any category already assigned in the Hub content group.
 ArcGIS Online remains authoritative. The legacy Countries group supplies
 migration evidence only.
 
+The migration was completed on 2026-08-25. Country pages and ongoing country
+curation now use the Hub content group exclusively; the legacy group is retained
+only as historical evidence until its owners decide to archive or delete it.
+
 The required invariant for every item is:
 
 ```text

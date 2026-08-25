@@ -82,9 +82,14 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 ## Important Invariants
 
 - Public-group membership defines the current catalog boundary.
-- Hub content-group membership is the visibility boundary for every public product surface. The country catalog subtracts the Countries-group items that are absent from the Hub group, so a curation gap hides a product instead of leaking it. `CountryCatalog.diagnostics.outsideHubGroup` reports the size of that gap; `scripts/share-orphans-to-hub-group.ps1` closes it.
+- Hub content-group membership is the visibility boundary for every public
+  product surface. Country discovery reads that group directly, requires the
+  exact `Catalog role/Discoverable product` category, and never joins against
+  or falls back to the retired Countries group.
 - Hazard impact assessments are selected from Hub-group members carrying the exact `impact assessment` tag, excluding supporting service, web map and image types. Country, shock, role, scope and language facets come from that group's categories. The page does not infer multi-item event dossiers until a stable assessment/event identifier is published.
-- Country and product assignments come from the country group's `groupCategories`, never title inference.
+- Country and product assignments come from the Hub content group's
+  `Countries`, `Product types`, `Catalog role`, and `Geographic scope`
+  categories, never title inference.
 - Item IDs are keys; title uniqueness is not assumed.
 - Reviewed `DIEM-FAMILY:<canonical-item-id>` tags collapse translations into
   one public product on homepage and country discovery surfaces. Each variant

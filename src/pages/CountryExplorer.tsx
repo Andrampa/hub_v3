@@ -111,7 +111,7 @@ export default function CountryExplorer() {
             <section className="country-atlas section-wrap" aria-labelledby="atlas-heading">
               <div className="country-section-heading">
                 <div><span className="kicker">Evidence atlas</span><h2 id="atlas-heading">Where DIEM works</h2></div>
-                <p>Highlighted countries have material in the curated DIEM country group. Select a country to open its evidence page.</p>
+                <p>Highlighted countries have discoverable products categorized in the DIEM Hub content group. Select a country to open its evidence page.</p>
               </div>
               <div className="region-filters" aria-label="Filter countries by region">
                 {regions.map((value) => (
@@ -129,7 +129,7 @@ export default function CountryExplorer() {
             {catalog.crossCountry && (
               <section className="cross-country-strip section-wrap">
                 <div><span className="kicker">Beyond borders</span><h2>Cross-country analysis</h2><p>Research and analytical products that compare experiences across multiple contexts.</p></div>
-                <div><strong>{catalog.crossCountry.resourceCount}</strong><span>products</span></div>
+                <div><strong>{catalog.crossCountry.resourceCount}</strong><span>{catalog.crossCountry.resourceCount === 1 ? 'product' : 'products'}</span></div>
                 <Link to="/countries/cross-country">Explore analysis <span aria-hidden="true">→</span></Link>
               </section>
             )}
@@ -145,7 +145,7 @@ export default function CountryExplorer() {
                     <Link className="country-card" to={`/countries/${country.iso3.toLowerCase()}`} key={country.iso3}>
                       <div className="country-card-top"><span>{country.iso3}</span><span>{country.region}</span></div>
                       <h3><CountryFlag iso2={country.iso2} name={country.name} className="country-flag" />{country.name}</h3>
-                      <div className="country-card-count"><strong>{country.resourceCount}</strong><span>products</span></div>
+                      <div className="country-card-count"><strong>{country.resourceCount}</strong><span>{country.resourceCount === 1 ? 'product' : 'products'}</span></div>
                       <div className="country-card-types">
                         {topTypes(country.typeCounts).map(([type, count]) => <span key={type}>{type} <b>{count}</b></span>)}
                       </div>

@@ -14,10 +14,11 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 
 `src/services/countries.ts` contains:
 
-- Country group: `c27d3dbba52343c6addfd61edaaa3e86`
-- Group-content search pagination and in-memory request caching
-- ISO3 and Item Type category parsing and normalization
-- Country summaries and cross-country (`XXX`) content
+- Hub content-group pagination and in-memory request caching
+- exact `Catalog role/Discoverable product` eligibility
+- ISO3 and unified `Product types` category parsing and normalization
+- country summaries and cross-country content derived from
+  `Geographic scope/Multi-country`
 
 `src/services/impactAssessments.ts` contains:
 

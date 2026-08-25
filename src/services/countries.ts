@@ -3,7 +3,6 @@ import { groupProductFamilies } from '../lib/productFamilies'
 import type { ArcGISItem } from '../types'
 import { CONTENT_GROUP_ID } from './arcgis'
 
-export const COUNTRY_GROUP_ID = 'c27d3dbba52343c6addfd61edaaa3e86'
 export const CROSS_COUNTRY_CODE = 'XXX'
 const REST_ROOT = 'https://www.arcgis.com/sharing/rest'
 const PAGE_SIZE = 100
@@ -13,9 +12,8 @@ export const PRODUCT_TYPES = [
   'Assessment Reports',
   'Key Findings Presentations',
   'Questionnaires',
-  'Thematic Datasets',
-  'Charts',
   'EVE flood reports',
+  'DIEM EVE',
   'Crop calendar',
   'Storymaps',
   'Photo gallery',
@@ -63,8 +61,8 @@ export interface CountryCatalog {
     withoutCountry: number
     withoutType: number
     malformedTypes: number
-    /** Countries-group products hidden because they are not in the Hub group. */
-    outsideHubGroup: number
+    /** Hub items excluded because they are not independent catalog products. */
+    excludedByCatalogRole: number
   }
 }
 
@@ -136,7 +134,7 @@ function normalizeProductType(value: string): ProductType | undefined {
 }
 
 function extractProductTypes(categories: string[]) {
-  const prefix = '/Categories/Item Type/'
+  const prefix = '/Categories/Product types/'
   const rawValues = categories
     .filter((category) => category.toLowerCase().startsWith(prefix.toLowerCase()))
     .map((category) => category.slice(prefix.length))
@@ -162,16 +160,30 @@ function extractCountries(categories: string[]) {
     .filter((value) => /^[A-Z]{3}$/.test(value)))]
 }
 
+function isDiscoverableProduct(categories: string[]) {
+  return categories.some((category) => (
+    category.toLowerCase() === '/categories/catalog role/discoverable product'
+  ))
+}
+
+function isMultiCountry(categories: string[]) {
+  return categories.some((category) => (
+    category.toLowerCase() === '/categories/geographic scope/multi-country'
+  ))
+}
+
 function normalizeItem(item: ArcGISItem) {
   const categories = item.groupCategories || []
   const product = extractProductTypes(categories)
+  const countries = extractCountries(categories)
   return {
     item: {
       ...item,
-      countries: extractCountries(categories),
+      countries: countries.length ? countries : isMultiCountry(categories) ? [CROSS_COUNTRY_CODE] : [],
       productTypes: product.types,
     } satisfies CountryResource,
     malformed: product.malformed,
+    discoverable: isDiscoverableProduct(categories),
   }
 }
 
@@ -183,7 +195,7 @@ function searchUrl(start: number) {
     sortField: 'modified',
     sortOrder: 'desc',
   })
-  return `${REST_ROOT}/content/groups/${COUNTRY_GROUP_ID}/search?${params}`
+  return `${REST_ROOT}/content/groups/${CONTENT_GROUP_ID}/search?${params}`
 }
 
 async function fetchPage(start: number): Promise<GroupSearchResponse> {
@@ -208,52 +220,20 @@ function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummar
   }
 }
 
-/**
- * The Hub only shows products that belong to the Hub content group, so a
- * Countries-group item that is missing that membership must stay hidden.
- *
- * Rather than verify 800+ items, this asks ArcGIS for the difference between
- * the two groups. The response is the size of the curation gap, not of the
- * catalogue, so the request costs nothing once the groups agree.
- */
-async function fetchItemsOutsideHubGroup(): Promise<Set<string>> {
-  const excluded = new Set<string>()
-  let start = 1
-  while (start > 0) {
-    const params = new URLSearchParams({
-      f: 'json',
-      q: `group:${COUNTRY_GROUP_ID} -group:${CONTENT_GROUP_ID}`,
-      num: String(PAGE_SIZE),
-      start: String(start),
-    })
-    const response = await fetch(`${REST_ROOT}/search?${params}`)
-    if (!response.ok) throw new Error(`Hub group membership request failed (${response.status})`)
-    const data = await response.json() as GroupSearchResponse
-    if (data.error) throw new Error(data.error.message)
-    data.results.forEach((item) => excluded.add(item.id))
-    start = data.nextStart
-  }
-  return excluded
-}
-
 let catalogPromise: Promise<CountryCatalog> | undefined
 
 export function fetchCountryCatalog(): Promise<CountryCatalog> {
   if (catalogPromise) return catalogPromise
 
   catalogPromise = (async () => {
-    const [firstPage, outsideHubGroup] = await Promise.all([
-      fetchPage(1),
-      fetchItemsOutsideHubGroup(),
-    ])
+    const firstPage = await fetchPage(1)
     const starts: number[] = []
     for (let start = PAGE_SIZE + 1; start <= firstPage.total; start += PAGE_SIZE) starts.push(start)
     const remaining = await Promise.all(starts.map(fetchPage))
     const normalized = [firstPage, ...remaining]
       .flatMap((page) => page.results)
-      .filter((item) => !outsideHubGroup.has(item.id))
       .map(normalizeItem)
-    const items = normalized.map((entry) => entry.item)
+    const items = normalized.filter((entry) => entry.discoverable).map((entry) => entry.item)
     const countryCodes = [...new Set(items.flatMap((item) => item.countries))]
     const realCountries = countryCodes
       .filter((code) => code !== CROSS_COUNTRY_CODE)
@@ -270,8 +250,8 @@ export function fetchCountryCatalog(): Promise<CountryCatalog> {
       diagnostics: {
         withoutCountry: items.filter((item) => !item.countries.length).length,
         withoutType: items.filter((item) => item.productTypes.includes('Unclassified')).length,
-        malformedTypes: normalized.filter((entry) => entry.malformed).length,
-        outsideHubGroup: outsideHubGroup.size,
+        malformedTypes: normalized.filter((entry) => entry.discoverable && entry.malformed).length,
+        excludedByCatalogRole: normalized.filter((entry) => !entry.discoverable).length,
       },
     }
   })().catch((error) => {
