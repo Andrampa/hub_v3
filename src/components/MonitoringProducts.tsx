@@ -194,7 +194,13 @@ export function MonitoringProducts() {
                   return (
                     <section className="monitoring-product-group" key={groupKey} aria-labelledby={`monitoring-group-${groupKey.replace(/[^a-z0-9]+/gi, '-')}`}>
                       <header>
-                        <div><span>{group.country}</span><h3 id={`monitoring-group-${groupKey.replace(/[^a-z0-9]+/gi, '-')}`}>{group.round || 'Other resources'}</h3></div>
+                        <div>
+                          <span className="monitoring-group-country">
+                            {group.iso3 && <i className={`flag flag-small flag-${group.iso3.toLowerCase()}`} aria-hidden="true" />}
+                            <span>{group.country}</span>
+                          </span>
+                          <h3 id={`monitoring-group-${groupKey.replace(/[^a-z0-9]+/gi, '-')}`}>{group.round || 'Other resources'}</h3>
+                        </div>
                         <div className="monitoring-group-actions">
                           {group.iso3 && group.roundValue && (
                             <Link className="monitoring-survey-explorer-link" to={monitoringCountryPath(group.iso3, group.roundValue)}>

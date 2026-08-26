@@ -2,13 +2,17 @@
 
 ## Purpose
 
-The homepage supports three promotional discovery surfaces:
+The homepage supports two promotional discovery surfaces:
 
 - **Latest evidence** derives recent Impact assessment and Country brief items
   from the already-loaded public catalog.
-- **Explore DIEM** presents a manually controlled programme carousel.
 - **Featured update** presents one editor-managed campaign after both meaningful
   dwell time and scrolling.
+
+Programme discovery is now a stable set of Hub-area cards owned by the React
+application. The promotion service still parses legacy slide rows for backward
+compatibility, but the homepage no longer renders the carousel or uses those
+rows to route visitors directly to individual external applications.
 
 The catalog remains authoritative for catalog resources. Promotions may point
 to stable Hub routes or public external resources but do not copy or authorize
@@ -17,22 +21,18 @@ catalog records.
 ## Runtime Behaviour
 
 `src/services/hubPromotions.ts` owns the promotion contract. When no promotion
-view is configured, the carousel uses reviewed built-in slides and the popup
-attempts to read the former public campaign item
+view is configured, the popup attempts to read the former public campaign item
 `015a1eabdb454d1c90fd9ad282e407e6`. Its first table/layer ID is discovered from
 the live service definition rather than assumed. Failure is non-blocking.
 
 The popup appears only after:
 
 1. the page has remained active for at least 4.5 seconds; and
-2. the post-hero catalog statistics enter the upper 45 percent of the viewport.
+2. the evidence-in-focus section enters the upper 45 percent of the viewport.
 
 Dismissal is stored by publication channel and stable campaign ID. The default
 is seven days; editors can change `dismiss_days`. The popup does not steal
 keyboard focus and motion is removed when the visitor requests reduced motion.
-
-The carousel is manual by design. It exposes previous, next and direct slide
-controls and does not move content without the visitor's action.
 
 The latest-evidence strip uses exact, case-insensitive matches for the
 publisher-provided tags `Impact assessment` and `Country brief`. It shows at
@@ -58,7 +58,10 @@ The command returns stable item IDs for:
 Editors work only in the private source shared with the DIEM content-editor
 shared-update group.
 
-### Programme carousel fields
+### Legacy programme carousel fields
+
+These fields remain accepted by the service for compatibility but do not
+currently render on the homepage.
 
 | Field | Purpose |
 |---|---|
@@ -131,7 +134,7 @@ authenticated preview route and ArcGIS sharing enforcement.
 
 - Catalog failure retains the existing homepage retry state.
 - No matching latest-evidence tags omits the strip.
-- Promotion-view failure keeps the built-in carousel and omits the popup.
+- Promotion-view failure omits the popup.
 - Invalid destinations, missing required copy and invalid images are rejected.
 - Image delivery may still fail independently; editors must verify public image
   URLs before publishing.

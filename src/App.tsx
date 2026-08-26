@@ -1,161 +1,31 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
 import { EditorialPopup } from './components/EditorialPopup'
+import { FeaturedEvidence } from './components/FeaturedEvidence'
+import { HubAreaCards } from './components/HubAreaCards'
 import { LatestEvidenceBanner } from './components/LatestEvidenceBanner'
-import { ProgrammeCarousel } from './components/ProgrammeCarousel'
 import { ProgrammeNumbers } from './components/ProgrammeNumbers'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
-import {
-  cleanText,
-  formatDate,
-  isHazardImpactAssessment,
-  itemCountry,
-  itemTheme,
-  itemYear,
-} from './lib/catalog'
-import {
-  familySearchText,
-  groupProductFamilies,
-  type ProductFamily,
-} from './lib/productFamilies'
-import {
-  fetchMonitoringStatistics,
-  type MonitoringStatistics,
-} from './services/monitoring'
-import {
-  CONTENT_GROUP_ID,
-  fetchCatalog,
-  itemDestination,
-  itemThumbnail,
-} from './services/arcgis'
-import {
-  defaultProgrammeSlides,
-  fetchHubPromotions,
-  promotionChannel,
-  type HubPromotions,
-} from './services/hubPromotions'
-import type { ArcGISItem, CatalogData, SortOption } from './types'
+import { useCatalog } from './hooks/useCatalog'
+import { isHazardImpactAssessment } from './lib/catalog'
+import { groupProductFamilies } from './lib/productFamilies'
+import { fetchMonitoringStatistics, type MonitoringStatistics } from './services/monitoring'
+import { defaultProgrammeSlides, fetchHubPromotions, promotionChannel, type HubPromotions } from './services/hubPromotions'
 
-const PAGE_SIZE = 12
-
-const typeGroups: Record<string, string[]> = {
-  Data: ['Microsoft Excel', 'CSV', 'Shapefile', 'Feature Service', 'Service Definition'],
-  Documents: ['Document Link', 'PDF', 'Microsoft Powerpoint'],
-  'Maps & apps': [
-    'StoryMap',
-    'Web Map',
-    'Dashboard',
-    'Web Experience',
-    'Web Mapping Application',
-    'Form',
-  ],
-  Media: ['Image'],
-  Pages: ['Hub Page'],
-}
-
-function Icon({ name }: { name: 'search' | 'arrow' | 'refresh' | 'external' }) {
-  const paths = {
-    search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
-    arrow: <><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></>,
-    refresh: <><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></>,
-    external: <><path d="M14 4h6v6"/><path d="m20 4-9 9"/><path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6"/></>,
-  }
-  return <svg aria-hidden="true" viewBox="0 0 24 24">{paths[name]}</svg>
-}
-
-function categoryFor(item: ArcGISItem) {
-  return Object.entries(typeGroups).find(([, types]) => types.includes(item.type))?.[0] || 'Other'
-}
-
-function ContentCard({ family }: { family: ProductFamily }) {
-  const item = family.primary
-  const thumbnail = itemThumbnail(item)
-  const summary = cleanText(item.snippet || item.description)
-  const theme = itemTheme(item)
-
-  return (
-    <article className="content-card">
-      <a
-        className={`card-image card-image--${theme.toLowerCase().replaceAll(' ', '-')}`}
-        href={itemDestination(item)}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={`Open ${item.title}`}
-      >
-        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : <span>DIEM</span>}
-        <span className="type-badge">{item.type}</span>
-      </a>
-      <div className="card-body">
-        <div className="card-context">
-          <span>{theme}</span>
-          <span aria-hidden="true">·</span>
-          <time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time>
-        </div>
-        <h3>{item.title.trim()}</h3>
-        <p>{summary || 'Open this resource to view its complete description and metadata.'}</p>
-        <div className="card-footer">
-          <span>{itemCountry(item) || 'Cross-country'}</span>
-          <a href={itemDestination(item)} target="_blank" rel="noreferrer">
-            View resource <Icon name="external" />
-          </a>
-        </div>
-        {family.variants.length > 1 && (
-          <nav className="card-languages" aria-label={`Available languages for ${item.title.trim()}`}>
-            <span>Available in</span>
-            <div>
-              {family.languages.map(({ language, item: variant }) => (
-                <a href={itemDestination(variant)} target="_blank" rel="noreferrer" key={variant.id}>
-                  {language}
-                </a>
-              ))}
-            </div>
-          </nav>
-        )}
-      </div>
-    </article>
-  )
-}
-
-function LoadingState() {
-  return (
-    <div className="loading-state" role="status">
-      <span className="loader" />
-      <strong>Connecting to the public DIEM catalog</strong>
-      <p>Gathering the latest resources from the DIEM content platform…</p>
-    </div>
-  )
+function Icon({ name }: { name: 'search' | 'arrow' }) {
+  return <svg aria-hidden="true" viewBox="0 0 24 24">{name === 'search' ? <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></> : <><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></>}</svg>
 }
 
 export default function App() {
   const auth = useAuth()
-  const [catalog, setCatalog] = useState<CatalogData>()
-  const [error, setError] = useState<string>()
-  const [query, setQuery] = useState('')
-  const [category, setCategory] = useState('All content')
-  const [theme, setTheme] = useState('All themes')
-  const [year, setYear] = useState('All years')
-  const [sort, setSort] = useState<SortOption>('newest')
-  const [page, setPage] = useState(1)
-  const [promotions, setPromotions] = useState<HubPromotions>({
-    slides: defaultProgrammeSlides,
-    channel: promotionChannel,
-  })
+  const navigate = useNavigate()
+  const { catalog, error, retry } = useCatalog()
+  const [heroQuery, setHeroQuery] = useState('')
+  const [promotions, setPromotions] = useState<HubPromotions>({ slides: defaultProgrammeSlides, channel: promotionChannel })
   const [monitoringStatistics, setMonitoringStatistics] = useState<MonitoringStatistics | null>(null)
   const [monitoringStatisticsFailed, setMonitoringStatisticsFailed] = useState(false)
-
-  const loadCatalog = () => {
-    setError(undefined)
-    const controller = new AbortController()
-    fetchCatalog(controller.signal)
-      .then(setCatalog)
-      .catch((reason: Error) => {
-        if (reason.name !== 'AbortError') setError(reason.message)
-      })
-    return () => controller.abort()
-  }
-
-  useEffect(loadCatalog, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -167,190 +37,63 @@ export default function App() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetchMonitoringStatistics(controller.signal)
-      .then(setMonitoringStatistics)
-      .catch((reason: Error) => {
-        if (reason.name === 'AbortError') return
-        // The card degrades to its remaining tiers rather than disappearing,
-        // so a monitoring outage never blanks the homepage numbers.
-        console.warn('Monitoring statistics could not be loaded.', reason)
-        setMonitoringStatisticsFailed(true)
-      })
+    fetchMonitoringStatistics(controller.signal).then(setMonitoringStatistics).catch((reason: Error) => {
+      if (reason.name === 'AbortError') return
+      console.warn('Monitoring statistics could not be loaded.', reason)
+      setMonitoringStatisticsFailed(true)
+    })
     return () => controller.abort()
   }, [])
 
-  /**
-   * Both figures are derived from the catalogue that is already loaded, so the
-   * card costs no additional request. Counting hazard impact assessments from
-   * group members is also what keeps the figure accurate: ArcGIS tag search is
-   * stemmed, and only the Hub group is free of near-miss tag variants.
-   */
-  const stats = useMemo(() => {
-    const families = groupProductFamilies(catalog?.items || [])
-    return {
-      total: families.length,
-      hazardImpactAssessments: families.filter((family) => (
-        family.variants.some(isHazardImpactAssessment)
-      )).length,
-    }
-  }, [catalog])
+  const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+  const stats = useMemo(() => ({
+    total: families.length,
+    hazardImpactAssessments: families.filter((family) => family.variants.some(isHazardImpactAssessment)).length,
+  }), [families])
 
-  const families = useMemo(
-    () => groupProductFamilies(catalog?.items || []),
-    [catalog],
-  )
-
-  const themes = useMemo(
-    () => [...new Set(catalog?.items.map(itemTheme) || [])].sort(),
-    [catalog],
-  )
-  const years = useMemo(
-    () => [...new Set(catalog?.items.map(itemYear) || [])].sort((a, b) => b - a),
-    [catalog],
-  )
-
-  const filteredFamilies = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-    const visible = families.filter((family) => {
-      return (
-        (!normalizedQuery || familySearchText(family).includes(normalizedQuery)) &&
-        (category === 'All content' || family.variants.some((item) => categoryFor(item) === category)) &&
-        (theme === 'All themes' || family.variants.some((item) => itemTheme(item) === theme)) &&
-        (year === 'All years' || family.variants.some((item) => String(itemYear(item)) === year))
-      )
-    })
-    return visible.sort((a, b) => {
-      if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
-      return sort === 'oldest'
-        ? a.latestModified - b.latestModified
-        : b.latestModified - a.latestModified
-    })
-  }, [category, families, query, sort, theme, year])
-
-  useEffect(() => setPage(1), [category, query, sort, theme, year])
-
-  const pageCount = Math.max(1, Math.ceil(filteredFamilies.length / PAGE_SIZE))
-  const visibleFamilies = filteredFamilies.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const submitSearch = (event: FormEvent) => {
+    event.preventDefault()
+    const query = heroQuery.trim()
+    navigate(query ? `/catalog?q=${encodeURIComponent(query)}` : '/catalog')
+  }
 
   return (
     <>
       <SiteHeader active="home" />
-
       <main id="top">
         <section className="hero">
           <img className="hero-image" src={defaultProgrammeSlides[0].imageUrl} alt="" />
           <div className="hero-content">
             <div className="eyebrow">Data in Emergencies</div>
             <h1>Evidence where<br />decisions <em>can’t wait.</em></h1>
-            <p>
-              Regularly collected and analysed data on how shocks affect agricultural
-              livelihoods in fragile and risk-prone contexts.
-            </p>
-            <label className="hero-search">
+            <p>Regularly collected and analysed data on how shocks affect agricultural livelihoods in fragile and risk-prone contexts.</p>
+            <form className="hero-search" role="search" onSubmit={submitSearch}>
               <Icon name="search" />
-              <span className="sr-only">Search the catalog</span>
-              <input
-                type="search"
-                placeholder="Search by country, theme or resource…"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-              <a href="#catalog" aria-label="Go to catalog results"><Icon name="arrow" /></a>
-            </label>
-            {auth.status === 'authenticated' && (
-              <div className="hero-meta">
-                <span><i className="status-dot" /> Signed in to the DIEM community</span>
-              </div>
-            )}
+              <label className="sr-only" htmlFor="homepage-search">Search the DIEM product catalog</label>
+              <input id="homepage-search" type="search" placeholder="Search by country, theme or resource…" value={heroQuery} onChange={(event) => setHeroQuery(event.target.value)} />
+              <button type="submit" aria-label="Search the product catalog"><Icon name="arrow" /></button>
+            </form>
+            <div className="hero-actions"><Link to="/countries">Browse country evidence <span aria-hidden="true">→</span></Link></div>
+            {auth.status === 'authenticated' && <div className="hero-meta"><span><i className="status-dot" /> Signed in to the DIEM community</span></div>}
           </div>
-          <aside className="hero-callout">
-            <span>Data in Emergencies</span>
-            <p>Monitoring shocks. Understanding impacts. Anticipating risks.</p>
-            <a href="#about">Discover the programme <Icon name="arrow" /></a>
-          </aside>
         </section>
-
-        <ProgrammeNumbers
-          statistics={monitoringStatistics}
-          statisticsFailed={monitoringStatisticsFailed}
-          hazardImpactAssessments={stats.hazardImpactAssessments}
-          publicResources={stats.total}
-          catalogReady={Boolean(catalog)}
-        />
 
         {catalog && <LatestEvidenceBanner items={families.map((family) => family.primary)} />}
+        {error && <div className="home-catalog-notice section-wrap" role="alert"><p><strong>Latest public evidence is temporarily unavailable.</strong> The programme pathways remain available.</p><button type="button" onClick={retry}>Try again</button></div>}
+        <HubAreaCards />
+        <FeaturedEvidence families={families} />
+        <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} catalogReady={Boolean(catalog)} />
 
-        <ProgrammeCarousel slides={promotions.slides} />
-
-        <section className="overview section-wrap" id="overview">
-          <div className="section-heading">
-            <div><span className="kicker">At a glance</span><h2>A living evidence base</h2></div>
-            <p>Explore resources shared through the DIEM public catalog.</p>
-          </div>
-          <div>
-            <article className="principles-panel" id="about">
-              <span className="kicker kicker--light">Why DIEM</span>
-              <h3>From field evidence to informed action.</h3>
-              <p>DIEM examines the impact of shocks in food-crisis contexts, helping identify agricultural households and areas most in need.</p>
-              <ul>
-                <li><span>01</span>Monitor changing conditions</li>
-                <li><span>02</span>Assess impacts on livelihoods</li>
-                <li><span>03</span>Anticipate emerging risks</li>
-              </ul>
-            </article>
-          </div>
+        <section className="overview section-wrap" id="about">
+          <div className="section-heading"><div><span className="kicker">Why DIEM</span><h2>From field evidence to informed action</h2></div><p>DIEM connects regular monitoring, shock assessment and anticipatory analysis so evidence can support timely decisions.</p></div>
+          <article className="principles-panel">
+            <h3>One evidence programme, three connected questions.</h3>
+            <ul><li><span>01</span>How are conditions changing?</li><li><span>02</span>What are shocks doing to livelihoods?</li><li><span>03</span>Where could risk emerge next?</li></ul>
+          </article>
         </section>
 
-        <section className="catalog-section" id="catalog">
-          <div className="section-wrap">
-            <div className="section-heading catalog-heading">
-              <div><span className="kicker">Public catalog</span><h2>Explore the evidence</h2></div>
-              <p>Filter the complete public collection. Thematic sections will provide more focused pathways in future releases.</p>
-            </div>
-
-            <div className="filter-bar">
-              <label className="filter-search"><Icon name="search" /><span className="sr-only">Search</span><input type="search" placeholder="Search resources" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
-              <label><span>Content</span><select value={category} onChange={(e) => setCategory(e.target.value)}><option>All content</option>{Object.keys(typeGroups).map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Theme</span><select value={theme} onChange={(e) => setTheme(e.target.value)}><option>All themes</option>{themes.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Year</span><select value={year} onChange={(e) => setYear(e.target.value)}><option>All years</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Sort</span><select value={sort} onChange={(e) => setSort(e.target.value as SortOption)}><option value="newest">Recently updated</option><option value="oldest">Oldest updated</option><option value="title">Title A–Z</option></select></label>
-            </div>
-
-            {error ? (
-              <div className="error-state" role="alert">
-                <strong>The public catalog could not be reached.</strong>
-                <p>{error}. Check your connection and try again.</p>
-                <button type="button" onClick={loadCatalog}><Icon name="refresh" /> Retry</button>
-              </div>
-            ) : !catalog ? <LoadingState /> : (
-              <>
-                <div className="results-meta">
-                  <p><strong>{filteredFamilies.length.toLocaleString()}</strong> products found</p>
-                  <a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <Icon name="external" /></a>
-                </div>
-                <div className="card-grid">
-                  {visibleFamilies.map((family) => <ContentCard family={family} key={family.id} />)}
-                </div>
-                {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p></div>}
-                {pageCount > 1 && (
-                  <nav className="pagination" aria-label="Catalog pages">
-                    <button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button>
-                    <span>Page <strong>{page}</strong> of {pageCount}</span>
-                    <button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button>
-                  </nav>
-                )}
-              </>
-            )}
-          </div>
-        </section>
-
-        <EditorialPopup
-          campaign={promotions.campaign}
-          channel={promotions.channel}
-          triggerId="promotion-trigger"
-        />
+        <EditorialPopup campaign={promotions.campaign} channel={promotions.channel} triggerId="featured-evidence" />
       </main>
-
       <SiteFooter />
     </>
   )

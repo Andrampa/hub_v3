@@ -160,6 +160,16 @@ function extractCountries(categories: string[]) {
     .filter((value) => /^[A-Z]{3}$/.test(value)))]
 }
 
+/** Publisher-managed country assignments from the Hub group's category tree. */
+export function itemCountryCodes(item: ArcGISItem) {
+  return extractCountries(item.groupCategories || [])
+}
+
+/** Multi-country scope is explicit; absence of a country category is not enough. */
+export function itemHasMultiCountryScope(item: ArcGISItem) {
+  return isMultiCountry(item.groupCategories || [])
+}
+
 function isDiscoverableProduct(categories: string[]) {
   return categories.some((category) => (
     category.toLowerCase() === '/categories/catalog role/discoverable product'

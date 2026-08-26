@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { formatDate } from '../lib/catalog'
 import { itemDestination } from '../services/arcgis'
 import type { ArcGISItem } from '../types'
@@ -74,7 +75,7 @@ export function LatestEvidenceBanner({ items }: { items: ArcGISItem[] }) {
           <BannerItems items={featured} duplicate />
         </div>
       </div>
-      <a className="latest-evidence-all" href="#catalog">View catalog</a>
+      <Link className="latest-evidence-all" to="/catalog">View catalog</Link>
     </section>
   )
 }

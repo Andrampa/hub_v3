@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { HubCampaign, PromotionChannel } from '../services/hubPromotions'
 
 const DWELL_TIME_MS = 4500
@@ -69,16 +69,27 @@ export function EditorialPopup({
     return () => observer.disconnect()
   }, [campaign, dismissed, triggerId])
 
-  if (!campaign || dismissed || !dwellComplete || !scrollComplete) return null
+  const visible = Boolean(campaign && !dismissed && dwellComplete && scrollComplete)
+  const close = useCallback(() => {
+    if (campaign) rememberDismissal(campaign, channel)
+    setDismissed(true)
+  }, [campaign, channel])
+
+  useEffect(() => {
+    if (!visible) return
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [close, visible])
+
+  if (!campaign || !visible) return null
 
   const external = /^https?:\/\//i.test(campaign.destination)
-  const close = () => {
-    rememberDismissal(campaign, channel)
-    setDismissed(true)
-  }
 
   return (
-    <aside className="editorial-popup" aria-label="Featured DIEM update">
+    <aside className="editorial-popup" role="dialog" aria-labelledby="editorial-popup-title">
       <button type="button" className="editorial-popup-close" onClick={close} aria-label="Dismiss featured update">
         <span aria-hidden="true">×</span>
       </button>
@@ -89,7 +100,7 @@ export function EditorialPopup({
       )}
       <div className="editorial-popup-content">
         <span>Featured update</span>
-        <h2>{campaign.title}</h2>
+        <h2 id="editorial-popup-title">{campaign.title}</h2>
         <p>{campaign.description}</p>
         <a
           href={campaign.destination}

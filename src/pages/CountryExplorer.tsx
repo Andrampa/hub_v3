@@ -6,7 +6,7 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
-import { familySearchText, groupProductFamilies } from '../lib/productFamilies'
+import { groupProductFamilies } from '../lib/productFamilies'
 
 function topTypes(typeCounts: Record<string, number>) {
   return Object.entries(typeCounts)
@@ -17,7 +17,6 @@ function topTypes(typeCounts: Record<string, number>) {
 
 export default function CountryExplorer() {
   const { catalog, error, retry } = useCountryCatalog()
-  const [query, setQuery] = useState('')
   const [region, setRegion] = useState('All regions')
 
   const regions = useMemo(
@@ -30,60 +29,12 @@ export default function CountryExplorer() {
     ))
   }, [catalog, region])
   const visibleIso = useMemo(() => new Set(visibleCountries.map((country) => country.iso3)), [visibleCountries])
-  const matchingProducts = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
-    if (!normalized || !catalog) return []
-    const countryByIso = new Map(catalog.countries.map((country) => [country.iso3, country]))
-    return groupProductFamilies(catalog.items)
-      .filter((family) => familySearchText(family).includes(normalized))
-      .flatMap((family) => [...new Set(family.variants.flatMap((item) => item.countries))]
-        .filter((iso3) => countryByIso.has(iso3))
-        .map((iso3) => ({ item: family.primary, country: countryByIso.get(iso3)! })))
-      .slice(0, 8)
-  }, [catalog, query])
   const latestUpdate = Math.max(...(catalog?.countries.map((country) => country.latestModified) || [0]))
 
   return (
     <>
       <SiteHeader active="countries" />
       <main id="top" className="countries-main">
-        <section className="countries-hero">
-          <div className="countries-hero-inner">
-            <div className="eyebrow">Country evidence</div>
-            <h1>Start with a place. Find the evidence.</h1>
-            <p>Explore DIEM monitoring, assessments, survey materials and analysis organized around the countries they describe.</p>
-            <label className="country-search">
-              <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <span className="sr-only">Find a product by name</span>
-              <input
-                type="search"
-                placeholder="Search product names…"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                role="combobox"
-                aria-autocomplete="list"
-                aria-controls="product-search-results"
-                aria-expanded={Boolean(query.trim())}
-              />
-              <span>{query.trim() ? `${matchingProducts.length} matches` : 'Search resources'}</span>
-              {query.trim() && (
-                <div className="country-search-results" id="product-search-results" role="listbox" aria-label="Matching products">
-                  {matchingProducts.length ? matchingProducts.map(({ item, country }) => (
-                    <Link
-                      key={`${item.id}-${country.iso3}`}
-                      to={`/countries/${country.iso3.toLowerCase()}?q=${encodeURIComponent(item.title.trim())}`}
-                      role="option"
-                    >
-                      <span>{item.title.trim()}</span>
-                      <small><CountryFlag iso2={country.iso2} name={country.name} decorative />{country.name} · {item.productTypes[0] || 'DIEM resource'}</small>
-                    </Link>
-                  )) : <p>No products match “{query.trim()}”.</p>}
-                </div>
-              )}
-            </label>
-          </div>
-        </section>
-
         {!catalog && !error && (
           <section className="country-loading section-wrap" role="status">
             <span className="loader" />
@@ -102,12 +53,6 @@ export default function CountryExplorer() {
 
         {catalog && (
           <>
-            <section className="country-facts" aria-label="Country catalog summary">
-              <div><strong>{catalog.countries.length}</strong><span>countries with evidence</span></div>
-              <div><strong>{groupProductFamilies(catalog.items).length.toLocaleString()}</strong><span>curated products</span></div>
-              <div><strong>{latestUpdate ? formatDate(latestUpdate) : '—'}</strong><span>latest update</span></div>
-            </section>
-
             <section className="country-atlas section-wrap" aria-labelledby="atlas-heading">
               <div className="country-section-heading">
                 <div><span className="kicker">Evidence atlas</span><h2 id="atlas-heading">Where DIEM works</h2></div>
@@ -124,6 +69,12 @@ export default function CountryExplorer() {
                 ))}
               </div>
               <CountryMap countries={catalog.countries} visibleIso={visibleIso} />
+            </section>
+
+            <section className="country-facts" aria-label="Country catalog summary">
+              <div><strong>{catalog.countries.length}</strong><span>countries with evidence</span></div>
+              <div><strong>{groupProductFamilies(catalog.items).length.toLocaleString()}</strong><span>curated products</span></div>
+              <div><strong>{latestUpdate ? formatDate(latestUpdate) : '—'}</strong><span>latest update</span></div>
             </section>
 
             {catalog.crossCountry && (

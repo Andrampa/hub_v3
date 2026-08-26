@@ -9,7 +9,7 @@
 ## Entry Points
 
 - Homepage search.
-- Catalog filters.
+- Dedicated `/catalog` search and filters.
 - Overview format chart.
 - Country explorer and direct `/countries/:iso3` links.
 - Household monitoring, hazard impacts, flood services, and contact navigation links.
@@ -39,10 +39,12 @@
 
 ## Public Discovery Journey
 
-1. User sees catalog scope and DIEM purpose.
-2. User can scan recent tagged evidence and manually explore DIEM programme pathways.
-3. User searches a country, theme, or resource phrase.
-4. User narrows by broad content family, provisional theme, year, and sort order.
+1. User sees DIEM purpose and chooses a pathway: complete products, household
+   monitoring, hazard impacts, flood services, country evidence, or a future
+   DIEM-Risk/DIEM-Research area clearly marked as coming soon.
+2. User can scan the moving Latest evidence strip and a short evidence-in-focus selection.
+3. User searches a country, theme, or resource phrase and arrives at `/catalog` with the query preserved.
+4. User narrows the complete collection by broad content family, provisional theme, year, and sort order.
 5. User scans consistent cards with type, date, geography, and summary.
 6. User opens the authoritative resource in a new tab.
 
@@ -86,7 +88,7 @@ for the campaign's configured recurrence window.
 - No match: suggest broadening search or removing filters.
 - Missing summary/thumbnail: show a useful fallback without hiding the item.
 - Broken external resource: ArcGIS ownership remains visible through the source catalog link.
-- Promotion source unavailable: retain the built-in programme carousel and omit the popup.
+- Promotion source unavailable: omit the popup without blocking homepage or catalog discovery.
 
 ## Key UX Principles
 

@@ -6,6 +6,8 @@ import { AuthProvider } from './auth/AuthContext'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './assets/fao/fao-theme.min.css'
 import './styles.css'
+import './hub-home.css'
+import './catalog.css'
 import './promotions.css'
 import './countries.css'
 import './programme-pages.css'
@@ -13,6 +15,7 @@ import './impact-assessments.css'
 import './fao-adaptation.css'
 
 const CountryExplorer = lazy(() => import('./pages/CountryExplorer'))
+const Catalog = lazy(() => import('./pages/Catalog'))
 const CountryDetail = lazy(() => import('./pages/CountryDetail'))
 const DataAccess = lazy(() => import('./pages/DataAccess'))
 const DatasetExplorer = lazy(() => import('./pages/DatasetExplorer'))
@@ -34,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
         <Suspense fallback={<RouteLoading />}>
           <Routes>
             <Route path="/" element={<App />} />
+            <Route path="/catalog" element={<Catalog />} />
             <Route path="/countries" element={<CountryExplorer />} />
             <Route path="/countries/:iso3" element={<CountryDetail />} />
             <Route path="/data" element={<DataAccess />} />

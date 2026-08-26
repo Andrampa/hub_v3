@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 
-export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'contact' }) {
+export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'contact' }) {
   const auth = useAuth()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
   return (
@@ -22,7 +24,7 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
           </Link>
         </div>
         <div className="nav-links">
-          <a className={active === 'home' ? 'active' : ''} href="/#catalog">Home</a>
+          <Link className={active === 'home' ? 'active' : ''} to="/">Home</Link>
           <div className={`nav-dropdown${active === 'monitoring' || active === 'data' ? ' active' : ''}`}>
             <button type="button" aria-haspopup="true">
               Household Surveys
@@ -48,6 +50,16 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
           <Link className={active === 'contact' ? 'active' : ''} to="/contact">Contact</Link>
         </div>
+        <button
+          className="mobile-menu-toggle"
+          type="button"
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-navigation"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          <span aria-hidden="true">{mobileMenuOpen ? '×' : '☰'}</span>
+          <span>Menu</span>
+        </button>
         <div className="auth-actions">
           {auth.status !== 'authenticated' && (
             <a
@@ -81,13 +93,14 @@ export function SiteHeader({ active }: { active: 'home' | 'countries' | 'data' |
           )}
         </div>
       </nav>
-      <nav className="mobile-nav" aria-label="Mobile navigation">
-        <a className={active === 'home' ? 'active' : ''} href="/#catalog">Home</a>
-        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system">Surveys</Link>
-        <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Impacts</Link>
-        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood</Link>
-        <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
-        <Link className={active === 'contact' ? 'active' : ''} to="/contact">Contact</Link>
+      <nav id="mobile-navigation" className={`mobile-nav${mobileMenuOpen ? ' is-open' : ''}`} aria-label="Mobile navigation">
+        <Link className={active === 'home' ? 'active' : ''} to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+        <Link className={active === 'catalog' ? 'active' : ''} to="/catalog" onClick={() => setMobileMenuOpen(false)}>Products</Link>
+        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Surveys</Link>
+        <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments" onClick={() => setMobileMenuOpen(false)}>Impacts</Link>
+        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood</Link>
+        <Link className={active === 'countries' ? 'active' : ''} to="/countries" onClick={() => setMobileMenuOpen(false)}>Countries</Link>
+        <Link className={active === 'contact' ? 'active' : ''} to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
       </nav>
       {auth.error && (
         <div className="auth-notice" role="alert">

@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-08-26 - Reframe the homepage around DIEM pathways
+
+- Replaced the homepage full product grid with four static Hub-section cards
+  for household monitoring, hazard impact assessments, flood services and
+  country evidence, followed by a manual three-card carousel for the complete
+  product catalog, DIEM-Research and DIEM-Risk. The two unpublished areas are
+  visible but intentionally have no links.
+- Routed flood discovery through `/flood-services` rather than linking to EVE
+  or the retired Floodex application directly from the homepage.
+- Added the dedicated `/catalog` route with URL-preserved search, content/theme/year
+  filters, sorting, pagination, retry, empty states and authoritative source links.
+- Kept the moving Latest evidence strip, linked it to the new catalog, and added
+  a compact evidence-in-focus selection rather than repeating the full collection.
+- Made homepage search open the catalog with its query and added a responsive,
+  toggle-based mobile navigation menu that includes Products.
+- Delayed featured campaigns until visitors reach the evidence-in-focus section
+  and reduced the campaign footprint on small screens.
+- Expanded Recently published across DIEM from three oversized cards to eight
+  compact cards, using a four-column desktop grid and tighter image, copy and
+  spacing proportions while retaining responsive layouts.
+- Compacted the dedicated catalog into a four-column desktop grid with 16
+  products per page, shorter imagery and two-line title/summary limits. Removed
+  the redundant View resource link because the card image and title already
+  open the same authoritative destination; distinct language links remain.
+- Added compact FAO flag marks to catalog cards and a URL-backed Country
+  filter. Both use publisher-managed `Countries` group categories and the
+  shared country normalization contract rather than title inference.
+- Added country flags to household-monitoring product groups and aligned
+  country-page resource cards with the catalogue's denser four-column layout,
+  including compact flags and removal of the redundant open-resource action.
+
+## 2026-08-26 - Preserve link contrast across interactive states
+
+- Corrected the shared FAO hover treatment so links remain visible on dark-blue
+  panels and filled blue/orange actions, including the Countries cross-country
+  strip, homepage hero, programme CTAs, editorial panels, protected-data cards
+  and campaign popup.
+- Kept corporate footer links dark on hover and keyboard focus against the
+  footer's light background.
+
 ## 2026-08-25 - Restructure flood services around the consolidated EVE 2.0
 
 - Rebuilt `/flood-services` around one platform, one reference and one decision

@@ -17,7 +17,7 @@ The initial release is a static single-page app with no custom backend or databa
 
 ## Startup / Execution Sequence
 
-1. The router selects the homepage, household monitoring release board,
+1. The router selects the homepage, complete product catalog, household monitoring release board,
    full-screen survey Explorer, hazard-impact assessment page, flood-services
    page, contact page, country explorer, country detail, or protected data page.
 2. The selected screen starts its group requests; country routes share a cached country-catalog promise.
@@ -26,10 +26,11 @@ The initial release is a static single-page app with no custom backend or databa
 5. Search and filters operate locally over the loaded public catalog.
 6. Item cards open the authoritative resource URL or ArcGIS item page.
 
-The homepage derives its Latest evidence strip from the already-loaded public
-catalog. Programme carousel and popup configuration load independently through
-the promotion service. Failure retains the reviewed built-in carousel and
-omits the popup, without blocking catalog discovery.
+The homepage derives its moving Latest evidence strip, focused evidence cards
+and publication figures from the already-loaded public catalog. The complete
+filterable collection lives at `/catalog`; homepage search passes its query to
+that route. Popup configuration loads independently through the promotion
+service, so a campaign failure does not block discovery.
 
 Authentication initializes independently. It restores a same-tab session when present; otherwise public catalog loading remains anonymous. Interactive sign-in uses a popup callback, then validates the returned ArcGIS user's community organization before exposing an authenticated state.
 
@@ -37,7 +38,9 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 
 ## Core Modules
 
-- `src/App.tsx`: current screen, state, derived views, and components.
+- `src/App.tsx`: homepage pathways, recent evidence, programme figures and campaign state.
+- `src/pages/Catalog.tsx`: complete public-catalog search, URL-backed filters, sorting and pagination.
+- `src/hooks/useCatalog.ts`: shared public-catalog loading, retry and abort lifecycle.
 - `src/main.tsx`: browser routing and lazy-loaded country screens.
 - `src/pages/CountryExplorer.tsx`: map, region filters, search, and directory.
 - `src/pages/CountryDetail.tsx`: country profile and resource-library state.
@@ -49,7 +52,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/CountryEditorial.tsx`: sanitized rich text, country imagery, and curated evidence cards.
 - `src/services/hubPromotions.ts`: promotion channels, ArcGIS view contract, validation, compatibility fallback, and built-in carousel slides.
 - `src/components/LatestEvidenceBanner.tsx`: catalog-derived recent-evidence strip and motion controls.
-- `src/components/ProgrammeCarousel.tsx`: manual, responsive programme discovery carousel.
+- `src/components/HubAreaCards.tsx`: static programme/country pathways plus the manual Products, Research and Risk portfolio carousel.
+- `src/components/FeaturedEvidence.tsx`: compact recent-evidence selection for the homepage.
 - `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.

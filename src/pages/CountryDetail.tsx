@@ -31,13 +31,23 @@ import {
   type CountryMonitoringCoverage,
 } from '../services/monitoring'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 16
 
 function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
   const item = family.primary
   const summary = cleanText(item.snippet || item.description)
   const thumbnail = itemThumbnail(item)
   const product = item.productTypes[0] || 'Unclassified'
+  const countryCodes = [...new Set(family.variants.flatMap((variant) => variant.countries))]
+    .filter((code) => code !== CROSS_COUNTRY_CODE)
+  const assignedCountries = countryCodes
+    .map((code) => countryDefinition(code))
+    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+  const countryLabel = assignedCountries.length
+    ? assignedCountries.map((entry) => entry.name).join(', ')
+    : family.variants.some((variant) => variant.countries.includes(CROSS_COUNTRY_CODE))
+      ? 'Cross-country'
+      : 'Country not assigned'
   return (
     <article className="country-resource-card">
       <a className="country-resource-image" href={itemDestination(item)} target="_blank" rel="noreferrer" aria-label={`Open ${item.title}`}>
@@ -46,11 +56,13 @@ function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
       </a>
       <div className="country-resource-body">
         <div className="country-resource-meta"><span>{item.type}</span><time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time></div>
-        <h3>{item.title.trim()}</h3>
+        <h3><a href={itemDestination(item)} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
         <p>{summary || 'Open this resource to view its complete description and metadata.'}</p>
         <div className="country-resource-footer">
-          <span>{item.productTypes.slice(1).join(' · ') || 'DIEM resource'}</span>
-          <a href={itemDestination(item)} target="_blank" rel="noreferrer">Open resource <span aria-hidden="true">↗</span></a>
+          <span className="country-resource-country-flags" aria-hidden="true">
+            {assignedCountries.slice(0, 2).map((entry) => <i className={`flag flag-small flag-${entry.iso3.toLowerCase()}`} key={entry.iso3} />)}
+          </span>
+          <span title={countryLabel}>{countryLabel}</span>
         </div>
         {family.variants.length > 1 && (
           <nav className="country-resource-languages" aria-label={`Available languages for ${item.title.trim()}`}>

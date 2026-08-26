@@ -505,7 +505,7 @@
   }
 
   .editorial-popup-image {
-    height: 105px;
+    display: none;
   }
 
   .editorial-popup-content {
