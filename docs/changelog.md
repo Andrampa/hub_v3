@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-02 - Document Hub concepts and editorial scope
+
+- Added a concise overview of the Hub's data model, sections, discovery
+  functions and editor-controlled content.
+- Mapped the structure proposed in Josselin's email to accomplished, partial
+  and not-yet-implemented functionality without treating planned sections as
+  delivered.
+
 ## 2026-08-26 - Reframe the homepage around DIEM pathways
 
 - Replaced the homepage full product grid with four static Hub-section cards

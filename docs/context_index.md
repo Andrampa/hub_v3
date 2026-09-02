@@ -7,6 +7,7 @@
 | `README.md` | Human-facing overview and commands |
 | `AGENTS.md` | Repository-wide agent rules |
 | `docs/project_spec.md` | Confirmed product scope and non-goals |
+| `docs/hub_concepts.md` | Concise product concepts, structure, editorial controls, and status against Josselin's proposal |
 | `docs/architecture.md` | Runtime flow and code boundaries |
 | `docs/services_and_data.md` | ArcGIS behavior and metadata interpretation |
 | `docs/service_manifest.md` | Endpoint inventory |
