@@ -1,0 +1,172 @@
+import { useDeferredValue, useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { buildCatalogSearchIndex, searchCatalog, searchCountries } from '../lib/catalogSearch'
+import type { ProductFamily } from '../lib/productFamilies'
+import { itemDestination } from '../services/arcgis'
+import type { CountryResource, CountrySummary } from '../services/countries'
+
+interface Suggestion {
+  key: string
+  kind: 'country' | 'product' | 'all'
+  label: string
+  detail: string
+  /** Internal route, or an external product URL opened in a new tab. */
+  to?: string
+  href?: string
+}
+
+function SearchIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
+}
+
+function ArrowIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+}
+
+export function CatalogSearchBox({ families, countries }: {
+  families: ProductFamily<CountryResource>[]
+  countries: CountrySummary[]
+}) {
+  const navigate = useNavigate()
+  const listId = useId()
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(-1)
+  // Indexing waits for the first interaction so it never lands in homepage load.
+  const [indexRequested, setIndexRequested] = useState(false)
+  const wrapper = useRef<HTMLDivElement>(null)
+
+  const index = useMemo(
+    () => (indexRequested ? buildCatalogSearchIndex(families) : undefined),
+    [families, indexRequested],
+  )
+  // Matching is sub-millisecond, so the input stays live and React yields the
+  // suggestion render instead of a timer holding results back.
+  const deferredQuery = useDeferredValue(query)
+
+  const suggestions = useMemo<Suggestion[]>(() => {
+    if (!index || deferredQuery.trim().length < 2) return []
+    const matchedCountries = searchCountries(countries, deferredQuery)
+    const matchedFamilies = searchCatalog(index, deferredQuery, matchedCountries.length ? 5 : 7)
+    const items: Suggestion[] = [
+      ...matchedCountries.map((country) => ({
+        key: `country-${country.iso3}`,
+        kind: 'country' as const,
+        label: country.name,
+        detail: `${country.resourceCount} ${country.resourceCount === 1 ? 'product' : 'products'}`,
+        to: `/countries/${country.iso3.toLowerCase()}`,
+      })),
+      ...matchedFamilies.map(({ family }) => ({
+        key: `product-${family.id}`,
+        kind: 'product' as const,
+        label: family.primary.title.trim(),
+        detail: family.primary.productTypes[0] || family.primary.type,
+        href: itemDestination(family.primary),
+      })),
+    ]
+    if (!items.length) return []
+    return [...items, {
+      key: 'all',
+      kind: 'all',
+      label: `See all results for “${deferredQuery.trim()}”`,
+      detail: '',
+      to: `/catalog?q=${encodeURIComponent(deferredQuery.trim())}`,
+    }]
+  }, [countries, deferredQuery, index])
+
+  useEffect(() => setActive(-1), [deferredQuery])
+
+  useEffect(() => {
+    if (!open) return
+    const dismiss = (event: MouseEvent) => {
+      if (!wrapper.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', dismiss)
+    return () => document.removeEventListener('mousedown', dismiss)
+  }, [open])
+
+  const goToCatalog = () => {
+    const value = query.trim()
+    navigate(value ? `/catalog?q=${encodeURIComponent(value)}` : '/catalog')
+  }
+
+  const choose = (suggestion: Suggestion) => {
+    setOpen(false)
+    if (suggestion.to) navigate(suggestion.to)
+    else if (suggestion.href) window.open(suggestion.href, '_blank', 'noopener,noreferrer')
+  }
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const selection = suggestions[active]
+    if (selection) choose(selection)
+    else goToCatalog()
+  }
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      setOpen(false)
+      setActive(-1)
+      return
+    }
+    if (!suggestions.length) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      setOpen(true)
+      const step = event.key === 'ArrowDown' ? 1 : -1
+      setActive((current) => {
+        const next = current + step
+        if (next < 0) return suggestions.length - 1
+        return next >= suggestions.length ? 0 : next
+      })
+    }
+  }
+
+  const expanded = open && suggestions.length > 0
+
+  return (
+    <div className="hero-search-wrap" ref={wrapper}>
+      <form className="hero-search" role="search" onSubmit={submit}>
+        <SearchIcon />
+        <label className="sr-only" htmlFor="homepage-search">Search the DIEM product catalog</label>
+        <input
+          id="homepage-search"
+          type="search"
+          role="combobox"
+          autoComplete="off"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+          placeholder="Search by country, theme or resource…"
+          value={query}
+          onFocus={() => { setIndexRequested(true); setOpen(true) }}
+          onChange={(event) => { setIndexRequested(true); setQuery(event.target.value); setOpen(true) }}
+          onKeyDown={onKeyDown}
+        />
+        <button type="submit" aria-label="Search the product catalog"><ArrowIcon /></button>
+      </form>
+      {expanded && (
+        <ul className="hero-suggestions" id={listId} role="listbox" aria-label="Search suggestions">
+          {suggestions.map((suggestion, position) => (
+            <li
+              className={`hero-suggestion hero-suggestion--${suggestion.kind}${position === active ? ' is-active' : ''}`}
+              id={`${listId}-${position}`}
+              role="option"
+              aria-selected={position === active}
+              key={suggestion.key}
+              onMouseEnter={() => setActive(position)}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => choose(suggestion)}
+            >
+              <span className="hero-suggestion-label">{suggestion.label}</span>
+              {suggestion.detail && <span className="hero-suggestion-detail">{suggestion.detail}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="sr-only" role="status" aria-live="polite">
+        {expanded ? `${suggestions.length - 1} suggestions available.` : ''}
+      </p>
+    </div>
+  )
+}

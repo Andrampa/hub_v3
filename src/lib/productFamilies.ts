@@ -1,6 +1,8 @@
 import type { ArcGISItem } from '../types'
 
 const FAMILY_TAG_PREFIX = 'diem-family:'
+/** Publishing plumbing that must never surface as searchable text. */
+export const MACHINE_TAG_PATTERN = /^diem-(family|language):/i
 const LANGUAGE_TAG_PREFIX = 'diem-language:'
 const LANGUAGE_CATEGORY_PREFIX = '/categories/languages/'
 
@@ -78,12 +80,3 @@ export function groupProductFamilies<T extends ArcGISItem>(items: T[]): ProductF
   })
 }
 
-export function familySearchText(family: ProductFamily) {
-  return family.variants.flatMap((item) => [
-    item.title,
-    item.snippet,
-    item.description,
-    item.type,
-    ...(item.tags || []),
-  ]).filter(Boolean).join(' ').toLowerCase()
-}

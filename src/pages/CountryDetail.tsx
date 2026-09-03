@@ -9,8 +9,8 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { cleanText, formatDate } from '../lib/catalog'
+import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
-  familySearchText,
   groupProductFamilies,
   type ProductFamily,
 } from '../lib/productFamilies'
@@ -152,13 +152,14 @@ export default function CountryDetail() {
     () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map((item) => new Date(item.modified).getUTCFullYear())))].sort((a, b) => b - a),
     [allResourceFamilies],
   )
+  const searchIndex = useMemo(() => buildCatalogSearchIndex(allResourceFamilies), [allResourceFamilies])
+  const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
   const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase()
     return allResourceFamilies
       .filter((family) => {
         const productTypes = new Set(family.variants.flatMap((item) => item.productTypes))
         return (
-          (!normalized || familySearchText(family).includes(normalized)) &&
+          (!matchedIds || matchedIds.has(family.id)) &&
           (selectedPathway === 'All pathways' || family.variants.some((item) => item.evidencePathways.includes(selectedPathway as EvidencePathway))) &&
           (selectedType === 'All products' || productTypes.has(selectedType as ProductType)) &&
           (selectedYear === 'All years' || family.variants.some((item) => String(new Date(item.modified).getUTCFullYear()) === selectedYear))
@@ -169,7 +170,7 @@ export default function CountryDetail() {
         if (sort === 'oldest') return a.latestModified - b.latestModified
         return b.latestModified - a.latestModified
       })
-  }, [allResourceFamilies, query, selectedPathway, selectedType, selectedYear, sort])
+  }, [allResourceFamilies, matchedIds, selectedPathway, selectedType, selectedYear, sort])
 
   useEffect(() => setPage(1), [iso3, query, selectedPathway, selectedType, selectedYear, sort])
 

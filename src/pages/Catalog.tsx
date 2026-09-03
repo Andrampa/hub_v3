@@ -5,7 +5,8 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { itemYear } from '../lib/catalog'
-import { familySearchText, groupProductFamilies } from '../lib/productFamilies'
+import { groupProductFamilies } from '../lib/productFamilies'
+import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import { CONTENT_GROUP_ID } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
@@ -65,10 +66,12 @@ export default function Catalog() {
     catalog?.items.some((item) => item.productTypes.includes(value))
   )), [catalog])
 
+  const searchIndex = useMemo(() => buildCatalogSearchIndex(families), [families])
+  const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
+
   const filteredFamilies = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
     return families.filter((family) => (
-      (!normalizedQuery || familySearchText(family).includes(normalizedQuery)) &&
+      (!matchedIds || matchedIds.has(family.id)) &&
       (category === 'All content' || family.variants.some((item) => categoryFor(item) === category)) &&
       (country === 'All countries' || family.variants.some((item) => item.countries.includes(country))) &&
       (pathway === 'All pathways' || family.variants.some((item) => item.evidencePathways.includes(pathway as EvidencePathway))) &&
@@ -78,7 +81,7 @@ export default function Catalog() {
       if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
       return sort === 'oldest' ? a.latestModified - b.latestModified : b.latestModified - a.latestModified
     })
-  }, [category, country, families, pathway, product, query, sort, year])
+  }, [category, country, families, matchedIds, pathway, product, sort, year])
 
   const pageCount = Math.max(1, Math.ceil(filteredFamilies.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount)

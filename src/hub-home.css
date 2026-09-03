@@ -93,6 +93,40 @@ a.hub-carousel-card:focus-visible { border-color: transparent; color: #fff; box-
 .featured-evidence .section-heading > a { align-self: end; color: #116bac; font-size: .82rem; font-weight: 700; }
 .featured-evidence-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 
+/* The suggestion list overlays the hero image, so it owns a stacking context. */
+.hero-search-wrap { position: relative; z-index: 3; width: min(640px, 100%); }
+.hero-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 4;
+  max-height: min(52vh, 360px);
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px 0;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  box-shadow: 0 18px 38px rgba(0, 0, 0, .22);
+  list-style: none;
+}
+.hero-suggestion {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 18px;
+  color: #1c4767;
+  font-size: .84rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.hero-suggestion.is-active { background: #eaf2f9; }
+.hero-suggestion-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero-suggestion-detail { flex: none; color: #6d6d6d; font-size: .66rem; text-transform: uppercase; letter-spacing: .04em; }
+.hero-suggestion--country .hero-suggestion-label { font-weight: 700; }
+.hero-suggestion--all { border-top: 1px solid #e6e6e6; margin-top: 4px; padding-top: 11px; color: #116bac; font-size: .76rem; font-weight: 700; }
+
 .hero-search button {
   display: grid;
   place-items: center;
@@ -132,6 +166,7 @@ a.hub-carousel-card:focus-visible { border-color: transparent; color: #fff; box-
   .featured-evidence { margin-top: 56px; padding: 56px 0; }
   .featured-evidence .section-heading > a { align-self: start; }
   .featured-evidence-grid .card-image { height: 165px; }
+  .hero-suggestions { max-height: 44vh; }
   .home-catalog-notice { align-items: flex-start; flex-direction: column; }
 }
 
