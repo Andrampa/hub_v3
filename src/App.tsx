@@ -66,7 +66,7 @@ export default function App() {
         {error && <div className="home-catalog-notice section-wrap" role="alert"><p><strong>Latest public evidence is temporarily unavailable.</strong> The programme pathways remain available.</p><button type="button" onClick={retry}>Try again</button></div>}
         <HubAreaCards />
         <FeaturedEvidence families={families} />
-        <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} catalogReady={Boolean(catalog)} />
+        <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} countriesWithEvidence={catalog?.countries.length || 0} catalogReady={Boolean(catalog)} />
 
         <EditorialPopup campaign={promotions.campaign} channel={promotions.channel} triggerId="featured-evidence" />
       </main>

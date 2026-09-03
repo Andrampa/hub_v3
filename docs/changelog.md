@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-09-03 - Apply design review items 1 to 4
+
+- Stopped publishing demo country highlights: `fetchPublishedEditorial` drops
+  `is_demo` rows, so the placeholder prose describing the curation layout, and
+  its "Demo curation" badge, no longer reach public country pages. Every
+  published highlight row is currently a demo, so the "In evidence" band is
+  absent until editors publish reviewed highlights.
+- Replaced `modified` with `created` wherever a date was presented to readers.
+  Cards read "Added <date>", the facet is "Year added" and now spans 2021-2026
+  instead of collapsing to 2026, sort reads "Recently added" / "Oldest first"
+  over a new `ProductFamily.latestCreated`, the homepage section is "Recently
+  added to the catalogue", and the banner's "New" badge tracks catalogue entry.
+  `modified` is retained only where an update date is meant. Existing `newest`
+  and `oldest` sort links keep working.
+- Separated the two country figures that previously contradicted each other:
+  "Countries surveyed" (42, monitoring system) sits in the monitoring tier and
+  "Countries with evidence" (live, currently 54) in the evidence tier, with a
+  footnote dating the fixed figure and attributing the live ones.
+- Added Catalogue to the desktop primary navigation, which previously had no
+  link to `/catalog` at all, and rebuilt the mobile menu to mirror the desktop
+  structure, including the Data access and Survey explorer destinations that
+  were unreachable on mobile.
+
 ## 2026-09-03 - Record the public-launch design and product review
 
 - Added `docs/design_review_2026-09-03.md`: an anonymous review of the running

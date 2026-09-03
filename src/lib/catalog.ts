@@ -56,8 +56,16 @@ export function itemCountry(item: ArcGISItem) {
   return prefix
 }
 
+/**
+ * The year a product entered the catalogue, taken from `created`.
+ *
+ * `modified` is the ArcGIS record's last-touched timestamp, not a publication
+ * date: the August 2026 category migration rewrote it for most of the group, so
+ * a facet built on it would report 2026 for products published years earlier.
+ * `created` is untouched by re-tagging and spans 2020 to the present.
+ */
 export function itemYear(item: ArcGISItem) {
-  return new Date(item.modified).getUTCFullYear()
+  return new Date(item.created).getUTCFullYear()
 }
 
 export function cleanText(value?: string) {

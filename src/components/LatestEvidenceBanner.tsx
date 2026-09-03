@@ -16,11 +16,13 @@ function BannerItems({ items, duplicate = false }: { items: ArcGISItem[], duplic
   return (
     <div className="latest-evidence-group" aria-hidden={duplicate || undefined}>
       {items.map((item) => {
-        const recent = Date.now() - item.modified <= NEW_WINDOW_MS
+        // "New" means new to the catalogue, so it tracks `created`. Using
+        // `modified` would badge the whole group after a re-categorization run.
+        const recent = Date.now() - item.created <= NEW_WINDOW_MS
         return (
           <article className="latest-evidence-item" key={`${duplicate ? 'duplicate-' : ''}${item.id}`}>
             {recent && <span className="latest-evidence-new">New</span>}
-            <time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time>
+            <time dateTime={new Date(item.created).toISOString()}>{formatDate(item.created)}</time>
             <span>{item.type}</span>
             <a
               href={itemDestination(item)}
@@ -41,7 +43,7 @@ export function LatestEvidenceBanner({ items }: { items: ArcGISItem[] }) {
   const [userPaused, setUserPaused] = useState(false)
   const [interactionPaused, setInteractionPaused] = useState(false)
   const featured = useMemo(
-    () => items.filter(isFeatured).sort((a, b) => b.modified - a.modified).slice(0, MAX_ITEMS),
+    () => items.filter(isFeatured).sort((a, b) => b.created - a.created).slice(0, MAX_ITEMS),
     [items],
   )
   const paused = userPaused || interactionPaused

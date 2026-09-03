@@ -84,7 +84,7 @@ export function CountryEditorial({ countryName, content }: CountryEditorialProps
               {content.isPreview && <p>Demonstration selections from the most recently updated country evidence.</p>}
             </div>
             <div className={`country-highlight-grid country-highlight-grid--${Math.min(highlights.length, 2)}`}>
-              {highlights.map(({ item, leadContent, leadFormat, headline, description, ctaLabel, isDemo }) => {
+              {highlights.map(({ item, leadContent, leadFormat, headline, description, ctaLabel }) => {
                 const thumbnail = itemThumbnail(item)
                 return (
                   <div className="country-highlight-feature" key={item.id}>
@@ -111,7 +111,6 @@ export function CountryEditorial({ countryName, content }: CountryEditorialProps
                           />
                         )}
                         <div className="country-highlight-footer">
-                          {isDemo && <span>Demo curation</span>}
                           <a href={itemDestination(item)} target="_blank" rel="noreferrer">{ctaLabel} <span aria-hidden="true">↗</span></a>
                         </div>
                       </div>

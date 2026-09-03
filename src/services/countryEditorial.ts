@@ -20,7 +20,6 @@ export interface CountryEditorialHighlight {
   headline: string
   description: string
   ctaLabel: string
-  isDemo: boolean
 }
 
 export interface CountryEditorialContent {
@@ -131,7 +130,11 @@ async function fetchPublishedEditorial(
 
   const profileRow = profiles[0]
   const byId = new Map(resources.map((item) => [item.id, item]))
+  // Rows flagged `is_demo` exist to show editors what the curation layout does.
+  // They carry placeholder prose about the layout itself, so they are never
+  // published: a country with no reviewed highlights shows no highlight band.
   const highlights = rows.flatMap((row) => {
+    if (row.is_demo === 1) return []
     const item = row.item_id ? byId.get(row.item_id) : undefined
     if (!item) return []
     return [{
@@ -141,7 +144,6 @@ async function fetchPublishedEditorial(
       headline: row.headline?.trim() || item.title.trim(),
       description: row.description?.trim() || '',
       ctaLabel: row.cta_label?.trim() || 'Open resource',
-      isDemo: row.is_demo === 1,
     }]
   })
 

@@ -11,7 +11,10 @@ export interface ProductFamily<T extends ArcGISItem = ArcGISItem> {
   primary: T
   variants: T[]
   languages: Array<{ language: string; item: T }>
+  /** Last ArcGIS record change across the family. Maintenance, not publication. */
   latestModified: number
+  /** Newest catalogue entry date across the family. Survives re-tagging. */
+  latestCreated: number
 }
 
 function familyId(item: ArcGISItem) {
@@ -76,6 +79,7 @@ export function groupProductFamilies<T extends ArcGISItem>(items: T[]): ProductF
       variants,
       languages,
       latestModified: Math.max(...variants.map((item) => item.modified)),
+      latestCreated: Math.max(...variants.map((item) => item.created)),
     }
   })
 }

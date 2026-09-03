@@ -8,8 +8,11 @@ empty, filtered and error states. Findings were cross-checked against the live
 DIEM Hub content group `ab8a43038b6347ac93507988f7e2a90b`, which returned 991
 records and 817 discoverable product families at the time of review.
 
-No code was changed. This document is the backlog; pick items from it rather
-than treating it as a completed plan.
+This document is the backlog; pick items from it rather than treating it as a
+completed plan. Findings were recorded before any code changed. Items marked
+`[SHIPPED]` have since been applied; their text is left as written so the
+before-state stays legible, with an implementation note where the delivered fix
+differs from the one first proposed.
 
 ## Status
 
@@ -17,8 +20,8 @@ than treating it as a completed plan.
 |---|---|
 | Reviewed | 2026-09-03 |
 | Base commit | `113d271` |
-| Items agreed | none yet |
-| Items shipped | none yet |
+| Items agreed | Top 10 items 1-4 |
+| Items shipped | 1, 2, 3, 4 (2026-09-03) |
 
 Update the two rows above as work is selected and completed, and record shipped
 items in `docs/changelog.md`.
@@ -27,7 +30,7 @@ items in `docs/changelog.md`.
 
 ## Top 10 changes, ranked by impact over effort
 
-### 1. Delete the demo copy shipped on every country page
+### 1. Delete the demo copy shipped on every country page [SHIPPED]
 
 `/countries/NER` renders, twice: "A recent addition to this country evidence
 collection, selected to demonstrate how editors can introduce a featured
@@ -44,7 +47,16 @@ content.
 
 Impact: credibility. Effort: hours.
 
-### 2. Stop presenting the ArcGIS `modified` timestamp as a publication date
+**Implementation note.** `fetchPublishedEditorial` now drops rows where
+`is_demo = 1`, so demo prose can never reach a public page whatever an editor
+publishes. A check against the live editorial table found that **all 73
+published highlight rows, across all 55 countries, are demo rows**, so the
+"In evidence" band is currently absent site-wide. That is the intended
+behaviour, not a regression: the band returns for a country as soon as an
+editor publishes a highlight with `is_demo = 0`. The country introduction
+(profile) is unaffected and still renders.
+
+### 2. Stop presenting the ArcGIS `modified` timestamp as a publication date [SHIPPED]
 
 Every date on the site comes from `item.modified`. The homepage section headed
 "Recently published across DIEM" shows eight items all dated 24 Aug 2026, which
@@ -61,7 +73,25 @@ from a category, falling back to "Year not recorded" instead of silently using
 
 Impact: trust. Effort: half a day.
 
-### 3. Reconcile the two country counts
+**Implementation note.** The title-parsing idea in the Edit above was tested
+against the live group and rejected: only 20 percent of titles contain a
+four-digit year, and many of those are comparison years rather than publication
+years ("Rice Production Trend: 2021 compared to 2020"), so a parser would have
+invented wrong dates for a fifth of the catalogue and left the rest unlabelled.
+
+`created` was used instead. It is untouched by re-tagging and spans the
+programme: 2021 (108 items), 2022 (182), 2023 (218), 2024 (179), 2025 (226),
+2026 (71). Shipped as: cards read "Added \<date\>" from `created`; the facet is
+"Year added" and now offers 2021-2026 instead of collapsing to 2026; sort
+options are "Recently added" / "Oldest first" over a new
+`ProductFamily.latestCreated`; the homepage section is "Recently added to the
+catalogue"; the banner's "New" badge tracks `created`.
+
+`latestModified` is retained where an update date is genuinely meant - the
+country hero's "latest update" stat and the atlas tooltip. The `newest` and
+`oldest` URL sort values are unchanged, so existing shared links still work.
+
+### 3. Reconcile the two country counts [SHIPPED]
 
 The homepage states `42 - Countries covered`. `/countries` states
 `54 - Countries with evidence`. The 42 is the hardcoded
@@ -76,7 +106,15 @@ a code comment.
 
 Impact: trust. Effort: hours.
 
-### 4. Put the catalogue in the primary navigation
+**Implementation note.** The two figures count genuinely different populations,
+so they were separated rather than merged. The monitoring tier now reads
+"Countries surveyed" (42, the fixed monitoring-system figure) and the evidence
+tier gained "Countries with evidence" (live from the content group, currently
+54). A footnote under the block dates the fixed figure and states that the
+evidence figures are read live. This also fills the empty third grid cell noted
+in lens 1.
+
+### 4. Put the catalogue in the primary navigation [SHIPPED]
 
 The desktop header at `src/components/SiteHeader.tsx:26-71` has no link to
 `/catalog`. The largest surface on the site - 817 products, six facets, 52
@@ -90,6 +128,13 @@ in the desktop dropdown.
 navigations, and add the two missing destinations to the mobile menu.
 
 Impact: journey. Effort: hours.
+
+**Implementation note.** "Catalogue" is now the last item in the desktop
+`.nav-links` and carries the active state on `/catalog`. The mobile menu was
+reordered to mirror the desktop information architecture: Home, Catalogue,
+Countries, Hazard impacts, Flood services, then a Household surveys group
+holding Surveys catalogue, Survey explorer and Data access, then About DIEM.
+Verified with no horizontal overflow at 390, 768 and 1440 px.
 
 ### 5. Make facet counts respond to the active filter
 

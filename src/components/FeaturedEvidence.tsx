@@ -14,7 +14,7 @@ function familyCountry(family: EvidenceFamily) {
 
 function selectEvidence(families: EvidenceFamily[]) {
   const candidates = [...families]
-    .sort((a, b) => b.latestModified - a.latestModified)
+    .sort((a, b) => b.latestCreated - a.latestCreated)
     .filter((family) => itemThumbnail(family.primary))
   const selected: EvidenceFamily[] = []
   const countries = new Set<string>()
@@ -41,7 +41,7 @@ export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
     <section className="featured-evidence" id="featured-evidence" aria-labelledby="featured-evidence-title">
       <div className="section-wrap">
         <div className="section-heading">
-          <div><span className="kicker">Evidence in focus</span><h2 id="featured-evidence-title">Recently published across DIEM</h2></div>
+          <div><span className="kicker">Evidence in focus</span><h2 id="featured-evidence-title">Recently added to the catalogue</h2></div>
           <Link to="/catalog">View all products <span aria-hidden="true">→</span></Link>
         </div>
         {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}

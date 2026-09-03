@@ -134,8 +134,7 @@
 .country-highlight-description p { margin-bottom: 8px; }
 .country-highlight-description ul, .country-highlight-description ol { margin-block: 7px; }
 .country-highlight-description a { color: var(--fao-blue); }
-.country-highlight-footer { margin-top: auto; padding-top: 20px; display: flex; align-items: end; justify-content: space-between; gap: 15px; border-top: 1px solid #e9eeec; }
-.country-highlight-footer > span { color: #829196; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.country-highlight-footer { margin-top: auto; padding-top: 20px; display: flex; align-items: end; justify-content: flex-end; gap: 15px; border-top: 1px solid #e9eeec; }
 .country-highlight-footer a { color: var(--fao-blue); font-size: 10px; font-weight: 700; white-space: nowrap; }
 .country-editorial-status { margin-top: 48px; padding: 16px 20px; display: flex; justify-content: space-between; gap: 20px; background: #fff8ef; border-left: 3px solid var(--orange); color: #6c584c; font-size: 11px; }
 .country-editorial-status strong { color: #734324; }

@@ -79,7 +79,7 @@ export default function Catalog() {
       (year === 'All years' || family.variants.some((item) => String(itemYear(item)) === year))
     )).sort((a, b) => {
       if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
-      return sort === 'oldest' ? a.latestModified - b.latestModified : b.latestModified - a.latestModified
+      return sort === 'oldest' ? a.latestCreated - b.latestCreated : b.latestCreated - a.latestCreated
     })
   }, [category, country, families, matchedIds, pathway, product, sort, year])
 
@@ -120,8 +120,8 @@ export default function Catalog() {
               <label><span>Product</span><select value={product} onChange={(event) => update('product', event.target.value, 'All products')}><option>All products</option>{availableProducts.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label><span>Country</span><select value={country} onChange={(event) => update('country', event.target.value, 'All countries')}><option>All countries</option>{countries.map((value) => <option value={value.iso3} key={value.iso3}>{value.name}</option>)}</select></label>
               <label><span>Format</span><select value={category} onChange={(event) => update('content', event.target.value, 'All content')}><option>All content</option>{Object.keys(typeGroups).map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Year</span><select value={year} onChange={(event) => update('year', event.target.value, 'All years')}><option>All years</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Sort</span><select value={sort} onChange={(event) => update('sort', event.target.value, 'newest')}><option value="newest">Recently updated</option><option value="oldest">Oldest updated</option><option value="title">Title A–Z</option></select></label>
+              <label><span>Year added</span><select value={year} onChange={(event) => update('year', event.target.value, 'All years')}><option>All years</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
+              <label><span>Sort</span><select value={sort} onChange={(event) => update('sort', event.target.value, 'newest')}><option value="newest">Recently added</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
             </div>
             {error ? <div className="error-state" role="alert"><strong>The public catalog could not be reached.</strong><p>{error}. Check your connection and try again.</p><button type="button" onClick={retry}>Retry</button></div> : !catalog ? <div className="loading-state" role="status"><span className="loader" /><strong>Connecting to the public DIEM catalog</strong><p>Gathering the latest resources from the DIEM content platform…</p></div> : <>
               {availablePathways.length > 0 && (

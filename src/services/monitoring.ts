@@ -54,6 +54,11 @@ export const MONITORING_STATISTICS_SOURCE_URL = 'https://services5.arcgis.com/sj
  * only when the programme starts monitoring a new country, which is rare, and
  * the homepage should not pay for a request on every visit to learn it.
  *
+ * This counts countries the *monitoring system* has surveyed. It is a smaller
+ * population than the countries with discoverable products in the Hub content
+ * group, which the country explorer computes live. The two figures are labelled
+ * distinctly on the homepage so they can never read as a contradiction.
+ *
  * Verified 28 July 2026 (42 countries). Re-run to confirm:
  *   GET https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/
  *       OER_Monitoring_System_View/FeatureServer/0/query
@@ -61,6 +66,9 @@ export const MONITORING_STATISTICS_SOURCE_URL = 'https://services5.arcgis.com/sj
  *       &returnGeometry=false&f=json
  */
 export const MONITORING_COUNTRIES_COVERED = 42
+
+/** Shown with the figure above so a reader can date it without reading source. */
+export const MONITORING_COUNTRIES_VERIFIED_LABEL = 'Countries surveyed verified 28 Jul 2026'
 
 /** Programme start, used to date every cumulative figure on the homepage. */
 export const MONITORING_SINCE_LABEL = 'Since June 2020'

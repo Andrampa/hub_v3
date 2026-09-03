@@ -55,10 +55,13 @@ export function CatalogContentCard({ family }: { family: ProductFamily<CountryRe
         <span className={`type-badge${product === 'Unclassified' ? ' type-badge--unclassified' : ''}`}>{product}</span>
       </a>
       <div className="card-body">
+        {/* `created` is when the product entered the catalogue. `modified` is the
+            last edit to the ArcGIS record, which bulk re-categorization rewrites,
+            so it is never presented here as if it were a publication date. */}
         <div className="card-context">
           <span>{item.type}</span>
           <span aria-hidden="true">·</span>
-          <time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time>
+          <time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time>
         </div>
         {pathways.length > 0 && (
           <ul className="catalog-pathways" aria-label="Evidence pathways">

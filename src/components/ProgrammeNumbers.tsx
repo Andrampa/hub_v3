@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   MONITORING_COUNTRIES_COVERED,
+  MONITORING_COUNTRIES_VERIFIED_LABEL,
   MONITORING_SINCE_LABEL,
   type MonitoringStatistics,
 } from '../services/monitoring'
@@ -10,6 +11,8 @@ interface ProgrammeNumbersProps {
   statisticsFailed: boolean
   hazardImpactAssessments: number
   publicResources: number
+  /** Live count of countries with discoverable products in the content group. */
+  countriesWithEvidence: number
   catalogReady: boolean
 }
 
@@ -121,6 +124,7 @@ export function ProgrammeNumbers({
   statisticsFailed,
   hazardImpactAssessments,
   publicResources,
+  countriesWithEvidence,
   catalogReady,
 }: ProgrammeNumbersProps) {
   const { ref, revealed } = useRevealed<HTMLElement>()
@@ -162,9 +166,12 @@ export function ProgrammeNumbers({
                 active={revealed}
                 pending={monitoringPending}
               />
+              {/* "Countries surveyed" is the monitoring population and is a
+                  fixed figure; "Countries with evidence" below is the live
+                  catalogue population. The labels keep the two distinguishable. */}
               <Figure
                 value={MONITORING_COUNTRIES_COVERED}
-                label="Countries covered"
+                label="Countries surveyed"
                 active={revealed}
               />
             </>
@@ -187,14 +194,19 @@ export function ProgrammeNumbers({
             active={revealed}
             pending={!catalogReady}
           />
+          <Figure
+            value={countriesWithEvidence}
+            label="Countries with evidence"
+            active={revealed}
+            pending={!catalogReady}
+          />
         </div>
       </div>
 
-      {statistics?.lastPublicationDate && (
-        <p className="pn-footnote">
-          Latest survey published {statistics.lastPublicationDate}
-        </p>
-      )}
+      <p className="pn-footnote">
+        {statistics?.lastPublicationDate && <>Latest survey published {statistics.lastPublicationDate}. </>}
+        {MONITORING_COUNTRIES_VERIFIED_LABEL}; evidence figures are read live from the DIEM Hub content group.
+      </p>
     </section>
   )
 }

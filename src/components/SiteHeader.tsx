@@ -48,6 +48,7 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
           <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
+          <Link className={active === 'catalog' ? 'active' : ''} to="/catalog">Catalogue</Link>
           <div className={`nav-dropdown${active === 'about' ? ' active' : ''}`}>
             <button type="button" aria-haspopup="true">
               About DIEM
@@ -114,11 +115,16 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
       </nav>
       <nav id="mobile-navigation" className={`mobile-nav${mobileMenuOpen ? ' is-open' : ''}`} aria-label="Mobile navigation">
         <Link className={active === 'home' ? 'active' : ''} to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-        <Link className={active === 'catalog' ? 'active' : ''} to="/catalog" onClick={() => setMobileMenuOpen(false)}>Products</Link>
-        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Surveys</Link>
-        <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments" onClick={() => setMobileMenuOpen(false)}>Impacts</Link>
-        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood</Link>
+        <Link className={active === 'catalog' ? 'active' : ''} to="/catalog" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>
         <Link className={active === 'countries' ? 'active' : ''} to="/countries" onClick={() => setMobileMenuOpen(false)}>Countries</Link>
+        <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments" onClick={() => setMobileMenuOpen(false)}>Hazard impacts</Link>
+        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood services</Link>
+        {/* Mirrors the desktop Household Surveys dropdown; /data and the survey
+            explorer were previously unreachable from the mobile menu. */}
+        <span className="mobile-nav-heading">Household surveys</span>
+        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Surveys catalogue</Link>
+        <Link to="/monitoring" onClick={() => setMobileMenuOpen(false)}>Survey explorer</Link>
+        <Link className={active === 'data' ? 'active' : ''} to="/data" onClick={() => setMobileMenuOpen(false)}>Data access</Link>
         <span className="mobile-nav-heading">About DIEM</span>
         <Link className={active === 'about' ? 'active' : ''} to="/about" onClick={() => setMobileMenuOpen(false)}>What is DIEM?</Link>
         <Link className={active === 'about' ? 'active' : ''} to="/photo-galleries" onClick={() => setMobileMenuOpen(false)}>Photo galleries</Link>

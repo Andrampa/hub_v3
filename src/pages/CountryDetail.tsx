@@ -8,7 +8,7 @@ import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
-import { cleanText, formatDate } from '../lib/catalog'
+import { cleanText, formatDate, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
   groupProductFamilies,
@@ -68,7 +68,7 @@ function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
         <span className="country-product-badge">{product}</span>
       </a>
       <div className="country-resource-body">
-        <div className="country-resource-meta"><span>{item.type}</span><time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time></div>
+        <div className="country-resource-meta"><span>{item.type}</span><time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time></div>
         {pathways.length > 0 && (
           <ul className="country-resource-pathways" aria-label="Evidence pathways">
             {pathways.map((pathway) => (
@@ -149,7 +149,7 @@ export default function CountryDetail() {
     return counts
   }, [allResourceFamilies])
   const years = useMemo(
-    () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map((item) => new Date(item.modified).getUTCFullYear())))].sort((a, b) => b - a),
+    () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map(itemYear)))].sort((a, b) => b - a),
     [allResourceFamilies],
   )
   const searchIndex = useMemo(() => buildCatalogSearchIndex(allResourceFamilies), [allResourceFamilies])
@@ -162,13 +162,13 @@ export default function CountryDetail() {
           (!matchedIds || matchedIds.has(family.id)) &&
           (selectedPathway === 'All pathways' || family.variants.some((item) => item.evidencePathways.includes(selectedPathway as EvidencePathway))) &&
           (selectedType === 'All products' || productTypes.has(selectedType as ProductType)) &&
-          (selectedYear === 'All years' || family.variants.some((item) => String(new Date(item.modified).getUTCFullYear()) === selectedYear))
+          (selectedYear === 'All years' || family.variants.some((item) => String(itemYear(item)) === selectedYear))
         )
       })
       .sort((a, b) => {
         if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
-        if (sort === 'oldest') return a.latestModified - b.latestModified
-        return b.latestModified - a.latestModified
+        if (sort === 'oldest') return a.latestCreated - b.latestCreated
+        return b.latestCreated - a.latestCreated
       })
   }, [allResourceFamilies, matchedIds, selectedPathway, selectedType, selectedYear, sort])
 
@@ -337,8 +337,8 @@ export default function CountryDetail() {
                 </div>
                 <div className="country-filter-bar">
                   <label className="country-filter-search"><span>Search</span><input type="search" placeholder={`Search ${definition.name}`} value={query} onChange={(event) => setFilter('q', event.target.value, '')} /></label>
-                  <label><span>Year</span><select value={selectedYear} onChange={(event) => setFilter('year', event.target.value, 'All years')}><option>All years</option>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
-                  <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently updated</option><option value="oldest">Oldest updated</option><option value="title">Title A–Z</option></select></label>
+                  <label><span>Year added</span><select value={selectedYear} onChange={(event) => setFilter('year', event.target.value, 'All years')}><option>All years</option>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
+                  <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently added</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
                   {(query || selectedPathway !== 'All pathways' || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
                 </div>
                 <div className="country-results-meta"><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${selectedPathway}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
