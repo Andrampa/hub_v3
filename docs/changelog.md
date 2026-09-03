@@ -572,3 +572,35 @@ All notable documentation and implementation changes. Most recent entry first.
   tiers restored, and no horizontal overflow at 375, 768 and 1280 px. The
   authenticated layout was reviewed through the harness, not through a real
   session; the tier behaviour itself still needs a real-account run.
+
+# 2026-09-03 - Catalog cards carry the publisher's categorization
+
+- `/catalog` now reads the same normalized source as the country pages
+  (`useCountryCatalog`) instead of the raw group search. Categorization is
+  therefore identical on both surfaces by construction rather than by two
+  parallel implementations that can drift.
+- Cards gained the product-type badge and the DIEM pillar pills already shown on
+  country pages, with the same labels, icons and colours.
+- Replaced the inferred "Theme" filter with authoritative "Pillar" and "Product"
+  filters, plus a pillar quick-filter strip matching the country pages. The old
+  theme was guessed from the title and tags, and `AGENTS.md` forbids presenting
+  such guesses as official DIEM taxonomy - filtering on a guess while displaying
+  the publisher's real categories would have been worse than either alone.
+- The card image accent now follows the assigned pillar rather than the guessed
+  theme, so a colour means the same thing everywhere.
+- Root cause of "categorization is missing on some cards": `/catalog` listed
+  every item in the Hub content group, including the 135 that are not
+  `Catalog role/Discoverable product` - supporting layers, services and
+  components that carry no product categories because they are not products.
+  They are now excluded, matching the rule country discovery already follows.
+  The catalog goes from 991 items to 856 discoverable items, 817 product
+  families after language grouping.
+- Remaining gaps are editorial, not code. Of the 856 discoverable items, 334
+  carry no DIEM pillar, 34 carry no product type, and 28 carry no country. Those
+  cards show a muted "Unclassified" badge and no pillar pill, which is honest
+  about the assignment being absent. Closing them is an ArcGIS categorization
+  task, not an application change.
+- Verified: `npm run build` passes; `/catalog` returns 817 products with a
+  product badge on every visible card, the pillar filter narrows correctly and
+  round-trips through the URL, and there is no console error or horizontal
+  overflow at 375, 768 and 1280 px.

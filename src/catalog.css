@@ -60,3 +60,35 @@
   .catalog-page .card-grid { grid-template-columns: 1fr; }
   .catalog-page .card-image { height: 165px; }
 }
+
+/* Publisher-assigned categorization on catalog cards.
+   Named for the catalog rather than reusing the country page's classes, so the
+   two surfaces can be restyled independently while showing the same labels. */
+.catalog-page .card-image--regular-monitoring { background: linear-gradient(135deg, #0b4a68, #4a92c0); }
+.catalog-page .card-image--hazard-impact { background: linear-gradient(135deg, #913e1c, #ec9a5c); }
+.catalog-page .card-image--research-analysis { background: linear-gradient(135deg, #594774, #a699be); }
+.catalog-page .card-image--seasonal-calendar { background: linear-gradient(135deg, #355f3f, #88ad74); }
+.catalog-page .card-image--unclassified { background: linear-gradient(135deg, #46585e, #8a9aa0); }
+.catalog-page .type-badge--unclassified { background: rgba(70, 88, 94, .82); font-style: italic; }
+
+.catalog-pathways { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 0; padding: 0; list-style: none; }
+.catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: #eef3f5; border-left: 3px solid #8a9aa0; color: #40595f; font-size: 9px; font-weight: 700; letter-spacing: .03em; }
+.catalog-pathway i { font-size: 10px; }
+.catalog-pathway--regular-monitoring { border-left-color: var(--fao-blue); }
+.catalog-pathway--hazard-impact { border-left-color: var(--orange); }
+.catalog-pathway--research-analysis { border-left-color: var(--deep-blue); }
+.catalog-pathway--seasonal-calendar { border-left-color: #5792c9; }
+
+.catalog-pathway-filter { margin-bottom: 22px; padding: 7px; display: flex; flex-wrap: wrap; gap: 6px; background: #f1f5f7; border: 1px solid #dbe4e8; }
+.catalog-pathway-filter button { min-height: 40px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 10px; background: white; border: 1px solid transparent; color: #405961; cursor: pointer; font-size: 10px; font-weight: 700; }
+.catalog-pathway-filter button::before { content: ''; width: 4px; align-self: stretch; background: #8a9aa0; }
+.catalog-pathway-filter button strong { color: inherit; font-size: 12px; }
+.catalog-pathway-filter button[aria-pressed="true"] { background: var(--deep-blue); color: white; }
+.catalog-pathway-filter--regular-monitoring::before { background: var(--fao-blue) !important; }
+.catalog-pathway-filter--hazard-impact::before { background: var(--orange) !important; }
+.catalog-pathway-filter--research-analysis::before { background: var(--deep-blue) !important; }
+.catalog-pathway-filter--seasonal-calendar::before { background: #5792c9 !important; }
+
+@media (max-width: 620px) {
+  .catalog-pathway-filter button { flex: 1 1 100%; justify-content: space-between; }
+}

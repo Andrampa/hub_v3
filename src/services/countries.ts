@@ -22,6 +22,15 @@ export const PRODUCT_TYPES = [
 
 export type ProductType = (typeof PRODUCT_TYPES)[number] | 'Unclassified'
 
+export const EVIDENCE_PATHWAYS = [
+  'Regular monitoring',
+  'Hazard impact',
+  'Research & analysis',
+  'Seasonal calendar',
+] as const
+
+export type EvidencePathway = (typeof EVIDENCE_PATHWAYS)[number]
+
 interface AtlasCountry {
   name: string
   isoA3?: string
@@ -44,6 +53,7 @@ export interface CountryDefinition {
 export interface CountryResource extends ArcGISItem {
   countries: string[]
   productTypes: ProductType[]
+  evidencePathways: EvidencePathway[]
 }
 
 export interface CountrySummary extends CountryDefinition {
@@ -152,6 +162,23 @@ function extractProductTypes(categories: string[]) {
   return { types: normalized.length ? normalized : ['Unclassified' as const], malformed }
 }
 
+function extractEvidencePathways(categories: string[], productTypes: ProductType[]) {
+  const prefix = '/Categories/DIEM pillars/'
+  const pillarLookup: Record<string, EvidencePathway> = {
+    'household monitoring system': 'Regular monitoring',
+    'hazard impact assessment': 'Hazard impact',
+    research: 'Research & analysis',
+  }
+  const pathways = categories
+    .filter((category) => category.toLowerCase().startsWith(prefix.toLowerCase()))
+    .map((category) => pillarLookup[category.slice(prefix.length).trim().toLowerCase()])
+    .filter((pathway): pathway is EvidencePathway => Boolean(pathway))
+
+  // Crop calendar is already an explicit, publisher-controlled product type.
+  if (productTypes.includes('Crop calendar')) pathways.push('Seasonal calendar')
+  return [...new Set(pathways)]
+}
+
 function extractCountries(categories: string[]) {
   const prefix = '/Categories/Countries/'
   return [...new Set(categories
@@ -191,6 +218,7 @@ function normalizeItem(item: ArcGISItem) {
       ...item,
       countries: countries.length ? countries : isMultiCountry(categories) ? [CROSS_COUNTRY_CODE] : [],
       productTypes: product.types,
+      evidencePathways: extractEvidencePathways(categories, product.types),
     } satisfies CountryResource,
     malformed: product.malformed,
     discoverable: isDiscoverableProduct(categories),

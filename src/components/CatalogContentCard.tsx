@@ -1,40 +1,75 @@
-import { cleanText, formatDate, itemTheme } from '../lib/catalog'
+import { cleanText, formatDate } from '../lib/catalog'
 import { itemDestination, itemThumbnail } from '../services/arcgis'
-import { countryDefinition, itemCountryCodes, itemHasMultiCountryScope } from '../services/countries'
+import {
+  CROSS_COUNTRY_CODE,
+  EVIDENCE_PATHWAYS,
+  countryDefinition,
+  type CountryResource,
+  type EvidencePathway,
+} from '../services/countries'
 import type { ProductFamily } from '../lib/productFamilies'
 
-export function CatalogContentCard({ family }: { family: ProductFamily }) {
+/** Shared with the country pages so one product is labelled identically wherever it appears. */
+const PATHWAY_ICONS: Record<EvidencePathway, string> = {
+  'Regular monitoring': 'bi-activity',
+  'Hazard impact': 'bi-bullseye',
+  'Research & analysis': 'bi-journal-richtext',
+  'Seasonal calendar': 'bi-calendar3',
+}
+
+export function pathwaySlug(value: string) {
+  return value.toLowerCase().replace(/[^a-z]+/g, '-')
+}
+
+export function CatalogContentCard({ family }: { family: ProductFamily<CountryResource> }) {
   const item = family.primary
   const thumbnail = itemThumbnail(item)
   const summary = cleanText(item.snippet || item.description)
-  const theme = itemTheme(item)
   const destination = itemDestination(item)
-  const countryCodes = [...new Set(family.variants.flatMap(itemCountryCodes))]
+  const product = item.productTypes[0] || 'Unclassified'
+  const pathways = EVIDENCE_PATHWAYS.filter((pathway) => (
+    family.variants.some((variant) => variant.evidencePathways.includes(pathway))
+  ))
+  // The image accent follows the publisher-assigned pillar rather than a theme
+  // guessed from the title, so the colour means the same thing on every surface.
+  const accent = pathways.length ? pathwaySlug(pathways[0]) : 'unclassified'
+  const countryCodes = [...new Set(family.variants.flatMap((variant) => variant.countries))]
+    .filter((code) => code !== CROSS_COUNTRY_CODE)
   const countries = countryCodes.map(countryDefinition)
-  const multiCountry = family.variants.some(itemHasMultiCountryScope)
+  const crossCountry = family.variants.some((variant) => variant.countries.includes(CROSS_COUNTRY_CODE))
   const visibleCountries = countries.slice(0, 2)
   const countryLabel = countries.length
     ? countries.map((country) => country.name).join(', ')
-    : multiCountry ? 'Cross-country' : 'Country not assigned'
+    : crossCountry ? 'Cross-country' : 'Country not assigned'
 
   return (
     <article className="content-card">
       <a
-        className={`card-image card-image--${theme.toLowerCase().replaceAll(' ', '-')}`}
+        className={`card-image card-image--${accent}`}
         href={destination}
         target="_blank"
         rel="noreferrer"
         aria-label={`Open ${item.title}`}
       >
         {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : <span>DIEM</span>}
-        <span className="type-badge">{item.type}</span>
+        <span className={`type-badge${product === 'Unclassified' ? ' type-badge--unclassified' : ''}`}>{product}</span>
       </a>
       <div className="card-body">
         <div className="card-context">
-          <span>{theme}</span>
+          <span>{item.type}</span>
           <span aria-hidden="true">·</span>
           <time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time>
         </div>
+        {pathways.length > 0 && (
+          <ul className="catalog-pathways" aria-label="Evidence pathways">
+            {pathways.map((pathway) => (
+              <li className={`catalog-pathway catalog-pathway--${pathwaySlug(pathway)}`} key={pathway}>
+                <i className={`bi ${PATHWAY_ICONS[pathway]}`} aria-hidden="true" />
+                {pathway}
+              </li>
+            ))}
+          </ul>
+        )}
         <h3><a href={destination} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
         <p>{summary || 'Open this resource to view its complete description and metadata.'}</p>
         <div className="card-footer">
