@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 
-export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'contact' }) {
+export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'about' }) {
   const auth = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
@@ -48,7 +48,26 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
           <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
-          <Link className={active === 'contact' ? 'active' : ''} to="/contact">Contact</Link>
+          <div className={`nav-dropdown${active === 'about' ? ' active' : ''}`}>
+            <button type="button" aria-haspopup="true">
+              About DIEM
+              <span aria-hidden="true" />
+            </button>
+            <div className="nav-dropdown-menu nav-dropdown-menu--end">
+              <Link to="/about">
+                <strong>What is DIEM?</strong>
+                <small>Purpose, approach and stories from users</small>
+              </Link>
+              <Link to="/photo-galleries">
+                <strong>Photo galleries</strong>
+                <small>DIEM teams and fieldwork in pictures</small>
+              </Link>
+              <Link to="/contact">
+                <strong>Contact us</strong>
+                <small>Questions, support and collaboration</small>
+              </Link>
+            </div>
+          </div>
         </div>
         <button
           className="mobile-menu-toggle"
@@ -100,7 +119,10 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
         <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments" onClick={() => setMobileMenuOpen(false)}>Impacts</Link>
         <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood</Link>
         <Link className={active === 'countries' ? 'active' : ''} to="/countries" onClick={() => setMobileMenuOpen(false)}>Countries</Link>
-        <Link className={active === 'contact' ? 'active' : ''} to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+        <span className="mobile-nav-heading">About DIEM</span>
+        <Link className={active === 'about' ? 'active' : ''} to="/about" onClick={() => setMobileMenuOpen(false)}>What is DIEM?</Link>
+        <Link className={active === 'about' ? 'active' : ''} to="/photo-galleries" onClick={() => setMobileMenuOpen(false)}>Photo galleries</Link>
+        <Link className={active === 'about' ? 'active' : ''} to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact us</Link>
       </nav>
       {auth.error && (
         <div className="auth-notice" role="alert">

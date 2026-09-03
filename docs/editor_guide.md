@@ -15,6 +15,8 @@ here.
 | Homepage programme carousel | Built-in reviewed slides until the promotion editorial source is provisioned | After provisioning: publish `prod` rows in **Programme carousel** |
 | Homepage Latest evidence strip | The normal public DIEM catalog items | Add the exact tag `Impact assessment` or `Country brief` |
 | Catalog cards, titles, dates and links | The authoritative ArcGIS catalog item | Edit the original ArcGIS item; Hub reloads live metadata |
+| Country-card evidence pathway | The item's controlled Hub group categories | Assign **DIEM pillars/Household monitoring system**, **Hazard impact assessment** or **Research**; **Product types/Crop calendar** supplies Seasonal calendar |
+| Photo galleries | **DIEM Hub 3.0 — Photo gallery catalogue** | Add or update a row and set **Publication status** to **Published** |
 
 ## Important Editing Rules
 
@@ -27,6 +29,23 @@ here.
 5. Images and destinations must be public HTTP(S) URLs.
 6. A staging flag controls presentation only. It does not protect secret or
    embargoed information.
+7. Country-card pathway labels come only from controlled Hub categories. Do not
+   add a title keyword or general tag expecting it to change the pathway.
+
+## Photo Galleries
+
+Editable catalogue:
+
+[Open DIEM Hub 3.0 — Photo gallery catalogue](https://hqfao.maps.arcgis.com/home/item.html?id=24afb02b6cf549f99380cd6b3780691b)
+
+Flickr remains the home of the photographs. The ArcGIS layer supplies only the
+metadata needed to build `/photo-galleries`; do not create a StoryMap wrapper.
+Complete the gallery ID, title, short summary, canonical Flickr album URL,
+public Flickr thumbnail URL, thumbnail alt text, ISO3, country name, event or
+round, gallery date, credit and display order. Set **Publication status** to
+`Published` only after checking both links. The service is intentionally
+public and read-only; an owner must temporarily enable editing to maintain it,
+then disable editing again immediately.
 
 ## Country Introductions
 

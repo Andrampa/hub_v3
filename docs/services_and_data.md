@@ -17,8 +17,18 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
 - Hub content-group pagination and in-memory request caching
 - exact `Catalog role/Discoverable product` eligibility
 - ISO3 and unified `Product types` category parsing and normalization
+- controlled evidence-pathway normalization from `DIEM pillars`, with the
+  explicit `Product types/Crop calendar` seasonal mapping
 - country summaries and cross-country content derived from
   `Geographic scope/Multi-country`
+
+`src/services/eve.ts` contains:
+
+- the public EVE production origin and ADM0 FeatureServer root;
+- dynamic resolution of the ADM0 table rather than a fixed layer index;
+- a distinct, geometry-free `iso3_code` query cached once in memory;
+- normalized regular-monitoring eligibility and validated country Overview
+  links using `mode=overview&adm0={ISO3}`.
 
 `src/services/impactAssessments.ts` contains:
 
@@ -44,6 +54,15 @@ ArcGIS Online is authoritative. The browser fetches current metadata on every ap
   publication windows and stable campaign dismissal IDs;
 - a temporary read-only fallback to legacy popup item
   `015a1eabdb454d1c90fd9ad282e407e6`.
+
+`src/services/photoGalleries.ts` reads the public, read-only hosted catalogue
+item `24afb02b6cf549f99380cd6b3780691b` (layer `0`). Only rows whose
+`publication_status` is `Published` are displayed. Flickr is authoritative for
+the photographs and album destination; ArcGIS owns the Hub-facing title,
+summary, ISO3, date, thumbnail, ordering and publication controls. The runtime
+accepts only FAO emergencies Flickr album URLs and `live.staticflickr.com`
+thumbnails. `VITE_PHOTO_GALLERY_SERVICE_URL` can override the service endpoint
+for a staging catalogue.
 
 The Latest evidence strip does not make a second ArcGIS request. It derives up
 to six current items from the already-loaded catalog using exact,
@@ -121,6 +140,9 @@ Authentication uses the separate community portal and OAuth client described in 
 - `fetchCountryEditorial`: published introduction, image fields, and valid highlighted items for one country.
 - `fetchHubPromotions`: validated programme slides and at most one active popup campaign for the configured publication channel.
 - `fetchCountryMonitoringCoverage`: public Monitoring-app coverage and latest visible round for one ISO3 country.
+- `fetchEveActiveCountryCodes`: cached public EVE ADM0 country-code catalog.
+- `isEveRegularMonitoringActive`: normalized membership check against that catalog.
+- `buildEveCountryOverviewUrl`: validated EVE Overview deep link for one ISO3 country.
 - `fetchSurveyReleases`: complete forthcoming and published survey round list, ordered by arrival, with linked survey products.
 - `fetchSurveyThemes`: thematic areas the Monitoring application can open for one survey round.
 - `resourcesForCountry`: resources assigned to an ISO3 code.
@@ -148,6 +170,9 @@ Only React in-memory state. Browser and ArcGIS HTTP caches may apply. There is n
 - Repeated titles can identify different ArcGIS items.
 - Homepage country/theme classifications remain provisional inferences.
 - Country pages depend on publisher-maintained group categories, which can be missing, malformed, or multiply assigned.
+- EVE country actions depend on the public ADM0 FeatureServer schema retaining
+  an ADM0-named layer/table and the `iso3_code` field. Eligibility describes
+  catalog membership, not arrival of the latest dekad.
 - A resource URL can fail while the ArcGIS item remains valid.
 - Item metadata may not expose a feature service, a service may have tables instead of geometry, and service field schemas can change without code changes.
 - Packaged formats depend on the existing Hub download generator and each item's export configuration; a format can fail independently even when live queries succeed.

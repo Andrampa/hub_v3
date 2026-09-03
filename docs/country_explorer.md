@@ -22,6 +22,7 @@ Static hosting must rewrite unknown application paths to `index.html`; otherwise
 - Page size: 100; follow `nextStart` until complete.
 - Country assignment: `/Categories/Countries/{ISO3}` in each result's `groupCategories`.
 - Product assignment: `/Categories/Product types/{value}` in `groupCategories`.
+- Analytical pathway: `/Categories/DIEM pillars/{value}` in `groupCategories`.
 - Product eligibility: exact `/Categories/Catalog role/Discoverable product`.
 - Cross-country assignment: exact
   `/Categories/Geographic scope/Multi-country`, represented internally as
@@ -106,6 +107,41 @@ navigation controls are never treated as authorization.
 Cross-country routes and countries without a public monitoring round do not
 render the panel. A failed monitoring-coverage request is non-blocking and does
 not affect the country editorial or Evidence collection.
+
+## Analytical Pathways
+
+Country product families expose a separate, URL-backed **Evidence pathway**
+filter and retain the existing product-type filters. Cards show text labels,
+icons and restrained color accents for every controlled pathway assigned to a
+family:
+
+- `DIEM pillars/Household monitoring system` → **Regular monitoring**;
+- `DIEM pillars/Hazard impact assessment` → **Hazard impact**;
+- `DIEM pillars/Research` → **Research & analysis**;
+- `Product types/Crop calendar` → **Seasonal calendar**.
+
+The seasonal rule uses an explicit publisher-controlled product type while no
+equivalent DIEM-pillar leaf exists. No pathway is inferred from titles, item
+types or uncontrolled tags. Families may display more than one pathway when
+their authoritative variants carry more than one relevant assignment, and
+unassigned products remain available under **All pathways**.
+
+## EVE Regular Monitoring
+
+Standard country routes also check the public EVE ADM0 master catalog. The Hub
+resolves the ADM0 table dynamically from the FeatureServer root, reads only the
+distinct `iso3_code` values without geometry, and caches that small set in
+memory. A country is eligible when its normalized ISO3 code occurs in that set.
+
+Eligible pages render a compact **Flood monitoring** action linking directly to
+EVE's production Overview mode with `mode=overview&adm0={ISO3}`. This means the
+country belongs to EVE's regular-monitoring catalog; it does not claim that the
+latest global dekad has arrived or that current observations are complete.
+
+The EVE check is independent from household-monitoring coverage, so either or
+both actions can appear. Cross-country routes do not request EVE eligibility.
+Service-resolution or query failures silently omit the optional action and do
+not affect editorial content, monitoring coverage or the Evidence collection.
 
 ## Latest Update
 

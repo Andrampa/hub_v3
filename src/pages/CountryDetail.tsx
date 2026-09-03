@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import crossCountryHeroImage from '../assets/heroes/cyclone-freddy-madagascar-2023.jpg'
 import { CountryEditorial } from '../components/CountryEditorial'
+import { CountryEveOverview } from '../components/CountryEveOverview'
 import { CountryMonitoring } from '../components/CountryMonitoring'
 import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
@@ -20,16 +21,19 @@ import {
 } from '../services/countryEditorial'
 import {
   CROSS_COUNTRY_CODE,
+  EVIDENCE_PATHWAYS,
   PRODUCT_TYPES,
   countryDefinition,
   resourcesForCountry,
   type CountryResource,
+  type EvidencePathway,
   type ProductType,
 } from '../services/countries'
 import {
   fetchCountryMonitoringCoverage,
   type CountryMonitoringCoverage,
 } from '../services/monitoring'
+import { isEveRegularMonitoringActive } from '../services/eve'
 
 const PAGE_SIZE = 16
 
@@ -48,6 +52,15 @@ function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
     : family.variants.some((variant) => variant.countries.includes(CROSS_COUNTRY_CODE))
       ? 'Cross-country'
       : 'Country not assigned'
+  const pathways = EVIDENCE_PATHWAYS.filter((pathway) => (
+    family.variants.some((variant) => variant.evidencePathways.includes(pathway))
+  ))
+  const pathwayIcons: Record<EvidencePathway, string> = {
+    'Regular monitoring': 'bi-activity',
+    'Hazard impact': 'bi-bullseye',
+    'Research & analysis': 'bi-journal-richtext',
+    'Seasonal calendar': 'bi-calendar3',
+  }
   return (
     <article className="country-resource-card">
       <a className="country-resource-image" href={itemDestination(item)} target="_blank" rel="noreferrer" aria-label={`Open ${item.title}`}>
@@ -56,6 +69,16 @@ function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
       </a>
       <div className="country-resource-body">
         <div className="country-resource-meta"><span>{item.type}</span><time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time></div>
+        {pathways.length > 0 && (
+          <ul className="country-resource-pathways" aria-label="Evidence pathways">
+            {pathways.map((pathway) => (
+              <li className={`country-pathway country-pathway--${pathway.toLowerCase().replace(/[^a-z]+/g, '-')}`} key={pathway}>
+                <i className={`bi ${pathwayIcons[pathway]}`} aria-hidden="true" />
+                {pathway}
+              </li>
+            ))}
+          </ul>
+        )}
         <h3><a href={itemDestination(item)} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
         <p>{summary || 'Open this resource to view its complete description and metadata.'}</p>
         <div className="country-resource-footer">
@@ -88,9 +111,11 @@ export default function CountryDetail() {
   const [editorial, setEditorial] = useState<CountryEditorialContent>()
   const [editorialError, setEditorialError] = useState(false)
   const [monitoringCoverage, setMonitoringCoverage] = useState<CountryMonitoringCoverage>()
+  const [eveMonitoringActive, setEveMonitoringActive] = useState(false)
 
   const query = searchParams.get('q') || ''
   const selectedType = searchParams.get('type') || 'All products'
+  const selectedPathway = searchParams.get('pathway') || 'All pathways'
   const selectedYear = searchParams.get('year') || 'All years'
   const sort = searchParams.get('sort') || 'latest'
 
@@ -115,6 +140,14 @@ export default function CountryDetail() {
     })
     return counts
   }, [allResourceFamilies])
+  const pathwayCounts = useMemo(() => {
+    const counts = new Map<EvidencePathway, number>()
+    allResourceFamilies.forEach((family) => {
+      const pathways = new Set(family.variants.flatMap((item) => item.evidencePathways))
+      pathways.forEach((pathway) => counts.set(pathway, (counts.get(pathway) || 0) + 1))
+    })
+    return counts
+  }, [allResourceFamilies])
   const years = useMemo(
     () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map((item) => new Date(item.modified).getUTCFullYear())))].sort((a, b) => b - a),
     [allResourceFamilies],
@@ -126,6 +159,7 @@ export default function CountryDetail() {
         const productTypes = new Set(family.variants.flatMap((item) => item.productTypes))
         return (
           (!normalized || familySearchText(family).includes(normalized)) &&
+          (selectedPathway === 'All pathways' || family.variants.some((item) => item.evidencePathways.includes(selectedPathway as EvidencePathway))) &&
           (selectedType === 'All products' || productTypes.has(selectedType as ProductType)) &&
           (selectedYear === 'All years' || family.variants.some((item) => String(new Date(item.modified).getUTCFullYear()) === selectedYear))
         )
@@ -135,9 +169,9 @@ export default function CountryDetail() {
         if (sort === 'oldest') return a.latestModified - b.latestModified
         return b.latestModified - a.latestModified
       })
-  }, [allResourceFamilies, query, selectedType, selectedYear, sort])
+  }, [allResourceFamilies, query, selectedPathway, selectedType, selectedYear, sort])
 
-  useEffect(() => setPage(1), [iso3, query, selectedType, selectedYear, sort])
+  useEffect(() => setPage(1), [iso3, query, selectedPathway, selectedType, selectedYear, sort])
 
   useEffect(() => {
     if (!catalog || !country) return
@@ -165,6 +199,21 @@ export default function CountryDetail() {
         if ((requestError as Error).name !== 'AbortError') setMonitoringCoverage(undefined)
       })
     return () => controller.abort()
+  }, [catalog, country, iso3])
+
+  useEffect(() => {
+    setEveMonitoringActive(false)
+    if (!catalog || !country || iso3 === CROSS_COUNTRY_CODE) return
+
+    let cancelled = false
+    isEveRegularMonitoringActive(iso3)
+      .then((active) => {
+        if (!cancelled) setEveMonitoringActive(active)
+      })
+      .catch(() => {
+        if (!cancelled) setEveMonitoringActive(false)
+      })
+    return () => { cancelled = true }
   }, [catalog, country, iso3])
 
   function setFilter(key: string, value: string, defaultValue: string) {
@@ -250,11 +299,27 @@ export default function CountryDetail() {
               <CountryMonitoring countryName={definition.name} coverage={monitoringCoverage} />
             )}
 
+            {eveMonitoringActive && (
+              <CountryEveOverview countryName={definition.name} iso3={definition.iso3} />
+            )}
+
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">
                 <div><span className="kicker">Evidence collection</span><h2 id="products-heading">Choose a product</h2></div>
                 <p>Product classifications are maintained in the DIEM Hub content group.</p>
               </div>
+              {pathwayCounts.size > 0 && (
+                <div className="country-pathway-filter" role="group" aria-label="Filter by evidence pathway">
+                  <button type="button" aria-pressed={selectedPathway === 'All pathways'} onClick={() => setFilter('pathway', 'All pathways', 'All pathways')}>
+                    <span>All pathways</span><strong>{allResourceFamilies.length}</strong>
+                  </button>
+                  {EVIDENCE_PATHWAYS.filter((pathway) => pathwayCounts.has(pathway)).map((pathway) => (
+                    <button type="button" className={`country-pathway-filter--${pathway.toLowerCase().replace(/[^a-z]+/g, '-')}`} aria-pressed={selectedPathway === pathway} onClick={() => setFilter('pathway', pathway, 'All pathways')} key={pathway}>
+                      <span>{pathway}</span><strong>{pathwayCounts.get(pathway)}</strong>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="product-filter-grid">
                 <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{allResourceFamilies.length}</strong><span>All products</span></button>
                 {PRODUCT_TYPES.filter((type) => productCounts.has(type)).map((type) => (
@@ -273,9 +338,9 @@ export default function CountryDetail() {
                   <label className="country-filter-search"><span>Search</span><input type="search" placeholder={`Search ${definition.name}`} value={query} onChange={(event) => setFilter('q', event.target.value, '')} /></label>
                   <label><span>Year</span><select value={selectedYear} onChange={(event) => setFilter('year', event.target.value, 'All years')}><option>All years</option>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
                   <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently updated</option><option value="oldest">Oldest updated</option><option value="title">Title A–Z</option></select></label>
-                  {(query || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
+                  {(query || selectedPathway !== 'All pathways' || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
                 </div>
-                <div className="country-results-meta"><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
+                <div className="country-results-meta"><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${selectedPathway}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
                 {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
                 {pageCount > 1 && <nav className="pagination" aria-label="Country resource pages"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>Page <strong>{page}</strong> of {pageCount}</span><button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button></nav>}
               </div>

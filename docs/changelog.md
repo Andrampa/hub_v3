@@ -1,10 +1,70 @@
 # Changelog
 
+## 2026-09-03 - Replace photo-gallery StoryMap wrappers
+
+- Created and published a protected, authoritative ArcGIS catalogue for photo
+  gallery metadata, then locked its public service to read-only access.
+- Migrated the five supplied legacy StoryMaps to canonical FAO emergencies
+  Flickr albums with reviewed titles, countries, dates, thumbnails and credits.
+- Added ten further supplied Flickr albums directly to the same catalogue,
+  bringing the initial public gallery collection to fifteen records.
+- Added eleven further reviewed Flickr albums, including DIEM Monitoring and
+  DIEM-Impact work from 2022–23, bringing the public collection to 26 records.
+- Added a native `/photo-galleries` page with responsive cards, country
+  filtering, loading/error/empty states and resilient external images.
+- Added Photo galleries to the About DIEM desktop and mobile menus; legacy
+  StoryMaps are no longer part of the Hub discovery path.
+
+## 2026-09-03 - Add the About DIEM section
+
+- Replaced the single Contact header choice with an About DIEM menu that groups
+  What is DIEM? above Contact us on desktop and mobile navigation.
+- Added a public programme overview explaining DIEM's purpose, evidence cycle
+  and principal Hub pathways, with the introductory and DIEM-user-story videos.
+- Marked the household, flood and risk data-explorer proposal as accomplished:
+  household data is downloadable through the Hub, while EVE provides flood and
+  Exposure Model risk downloads documented on the Hub's Flood services page.
+- Added the newsletter invitation and account-creation route for updates about
+  assessments, datasets, initiatives and events, completing the proposed
+  About/impact/video/newsletter area.
+
+## 2026-09-03 - Distinguish country evidence pathways
+
+- Added URL-backed country filtering for Regular monitoring, Hazard impact,
+  Research & analysis and Seasonal calendar, while preserving the existing
+  product-type facet.
+- Added accessible text labels reinforced by Bootstrap icons and restrained FAO
+  palette accents on country product cards; color is never the only signal.
+- Derived pathways from controlled `DIEM pillars` categories, using the
+  explicit `Product types/Crop calendar` assignment for Seasonal calendar and
+  no title/tag inference.
+- Marked the proposed four-part analytical product grouping as accomplished.
+
+## 2026-09-03 - Link EVE-active countries to their Overview
+
+- Added a lightweight, cached lookup against the authoritative EVE ADM0 master
+  catalog, with dynamic table resolution and no geometry or dekad payloads.
+- Country pages now show a direct EVE Overview action only when their normalized
+  ISO3 code occurs in that live catalog. The optional lookup fails independently
+  from country evidence and household-monitoring coverage.
+- Documented that EVE catalog membership means regular-monitoring coverage, not
+  confirmation that the latest global dekad has arrived.
+- Marked country links to household, flood and risk explorers as accomplished:
+  EVE Overview includes both regular flood monitoring and the embedded flood
+  Exposure Model risk pathway.
+
+## 2026-09-03 - Consolidate Hub principles and operating model
+
+- Expanded `docs/hub_concepts.md` into the single reference for the Hub's
+  purpose, operating model, public-visibility and authorization boundaries,
+  editorial ownership, data-quality limits and roadmap status.
+- Added a practical review test for future features and editorial workflows.
+
 ## 2026-09-02 - Document Hub concepts and editorial scope
 
 - Added a concise overview of the Hub's data model, sections, discovery
   functions and editor-controlled content.
-- Mapped the structure proposed in Josselin's email to accomplished, partial
+- Mapped the proposed programme structure to accomplished, partial
   and not-yet-implemented functionality without treating planned sections as
   delivered.
 
@@ -572,35 +632,3 @@ All notable documentation and implementation changes. Most recent entry first.
   tiers restored, and no horizontal overflow at 375, 768 and 1280 px. The
   authenticated layout was reviewed through the harness, not through a real
   session; the tier behaviour itself still needs a real-account run.
-
-# 2026-09-03 - Catalog cards carry the publisher's categorization
-
-- `/catalog` now reads the same normalized source as the country pages
-  (`useCountryCatalog`) instead of the raw group search. Categorization is
-  therefore identical on both surfaces by construction rather than by two
-  parallel implementations that can drift.
-- Cards gained the product-type badge and the DIEM pillar pills already shown on
-  country pages, with the same labels, icons and colours.
-- Replaced the inferred "Theme" filter with authoritative "Pillar" and "Product"
-  filters, plus a pillar quick-filter strip matching the country pages. The old
-  theme was guessed from the title and tags, and `AGENTS.md` forbids presenting
-  such guesses as official DIEM taxonomy - filtering on a guess while displaying
-  the publisher's real categories would have been worse than either alone.
-- The card image accent now follows the assigned pillar rather than the guessed
-  theme, so a colour means the same thing everywhere.
-- Root cause of "categorization is missing on some cards": `/catalog` listed
-  every item in the Hub content group, including the 135 that are not
-  `Catalog role/Discoverable product` - supporting layers, services and
-  components that carry no product categories because they are not products.
-  They are now excluded, matching the rule country discovery already follows.
-  The catalog goes from 991 items to 856 discoverable items, 817 product
-  families after language grouping.
-- Remaining gaps are editorial, not code. Of the 856 discoverable items, 334
-  carry no DIEM pillar, 34 carry no product type, and 28 carry no country. Those
-  cards show a muted "Unclassified" badge and no pillar pill, which is honest
-  about the assignment being absent. Closing them is an ArcGIS categorization
-  task, not an application change.
-- Verified: `npm run build` passes; `/catalog` returns 817 products with a
-  product badge on every visible card, the pillar filter narrows correctly and
-  round-trips through the URL, and there is no console error or horizontal
-  overflow at 375, 768 and 1280 px.

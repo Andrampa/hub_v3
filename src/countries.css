@@ -165,8 +165,28 @@
 .country-monitoring-primary:hover { background: var(--deep-blue); transform: translateY(-1px); }
 .country-monitoring-primary span { color: #f4a574; font-size: 18px; }
 .country-monitoring-secondary { margin-top: 3px; padding: 8px 2px 6px; color: var(--fao-blue); border-bottom: 1px solid #cddbd8; }
+.country-eve { padding-top: 22px; }
+.country-eve-card { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; align-items: center; min-height: 128px; background: #f3f7fa; border: 1px solid #d4e1e8; border-left: 4px solid var(--fao-blue); }
+.country-eve-identity { align-self: stretch; padding: 24px 28px; display: flex; flex-direction: column; justify-content: center; background: var(--deep-blue); color: white; }
+.country-eve-identity strong { font-size: 25px; letter-spacing: .08em; }
+.country-eve-identity span { margin-top: 7px; color: #c7dce8; font-size: 8px; font-weight: 700; letter-spacing: .1em; line-height: 1.45; text-transform: uppercase; }
+.country-eve-copy { min-width: 0; padding: 25px 32px; }
+.country-eve-copy h2 { margin: 5px 0 7px; color: var(--deep-blue); font-size: clamp(22px, 2.3vw, 29px); line-height: 1.15; letter-spacing: -.025em; }
+.country-eve-copy p { max-width: 670px; margin: 0; color: #61767e; font-size: 12px; line-height: 1.6; }
+.country-eve-action { min-height: 48px; margin-right: 30px; padding: 0 17px; display: inline-flex; align-items: center; gap: 18px; background: var(--fao-blue); color: white; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.country-eve-action:hover { background: var(--deep-blue); color: white; }
+.country-eve-action span { color: #f4a574; font-size: 16px; }
 
 .country-products { padding-block: 82px 75px; }
+.country-pathway-filter { margin-bottom: 28px; padding: 7px; display: flex; flex-wrap: wrap; gap: 6px; background: #f1f5f7; border: 1px solid #dbe4e8; }
+.country-pathway-filter button { min-height: 40px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 10px; background: white; border: 1px solid transparent; color: #405961; cursor: pointer; font-size: 10px; font-weight: 700; }
+.country-pathway-filter button::before { content: ''; width: 4px; align-self: stretch; background: #8a9aa0; }
+.country-pathway-filter button strong { color: inherit; font-size: 12px; }
+.country-pathway-filter button[aria-pressed="true"] { background: var(--deep-blue); color: white; }
+.country-pathway-filter--regular-monitoring::before { background: var(--fao-blue) !important; }
+.country-pathway-filter--hazard-impact::before { background: var(--orange) !important; }
+.country-pathway-filter--research-analysis::before { background: var(--deep-blue) !important; }
+.country-pathway-filter--seasonal-calendar::before { background: #5792c9 !important; }
 .product-filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .product-filter-grid button { min-height: 78px; padding: 15px; display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid #dce4e2; background: white; color: #4f6269; cursor: pointer; }
 .product-filter-grid button:hover { border-color: #a8c4c5; }
@@ -196,6 +216,12 @@
 .country-resource-body { padding: 17px 18px 16px; }
 .country-resource-meta { display: flex; justify-content: space-between; gap: 10px; color: #809095; font-size: 9px; font-weight: 700; text-transform: uppercase; }
 .country-resource-meta span { color: var(--orange); }
+.country-resource-pathways { min-height: 21px; margin: 9px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; list-style: none; }
+.country-pathway { padding: 4px 6px; display: inline-flex; align-items: center; gap: 4px; background: #e9f2f7; border-left: 3px solid var(--fao-blue); color: #245a73; font-size: 8px; font-weight: 800; letter-spacing: .035em; line-height: 1.2; text-transform: uppercase; }
+.country-pathway i { font-size: 10px; }
+.country-pathway--hazard-impact { background: #fff1e7; border-left-color: var(--orange); color: #8b491f; }
+.country-pathway--research-analysis { background: #e8eef2; border-left-color: var(--deep-blue); color: var(--deep-blue); }
+.country-pathway--seasonal-calendar { background: #edf4fa; border-left-color: #5792c9; color: #365f83; }
 .country-resource-body h3 { min-height: 44px; margin: 9px 0 7px; color: #173d50; font-size: 14px; line-height: 1.45; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .country-resource-body h3 a { color: inherit; text-decoration: none; }
 .country-resource-body h3 a:hover, .country-resource-body h3 a:focus-visible { color: var(--fao-blue); text-decoration: underline; text-underline-offset: 3px; }
@@ -226,6 +252,8 @@
   .country-monitoring-actions > span { width: 100%; margin: 0; }
   .country-monitoring-primary { min-width: 210px; }
   .country-monitoring-secondary { margin: 0; padding: 9px 0; border: 0; }
+  .country-eve-card { grid-template-columns: 145px minmax(0, 1fr); }
+  .country-eve-action { grid-column: 1 / -1; justify-content: space-between; margin: 0; padding: 0 28px; }
   .country-filter-bar { grid-template-columns: 1.4fr .7fr .9fr; }
   .country-filter-bar > button { grid-column: 1 / -1; min-height: 38px; }
 }
@@ -276,8 +304,15 @@
   .country-monitoring-actions { grid-column: auto; padding: 25px; display: flex; align-items: stretch; }
   .country-monitoring-actions > span { margin-bottom: 10px; }
   .country-monitoring-primary { min-width: 0; }
+  .country-eve { width: 100%; padding-top: 18px; }
+  .country-eve-card { grid-template-columns: 1fr; border-inline: 0; border-left: 0; border-top: 4px solid var(--fao-blue); }
+  .country-eve-identity { min-height: 92px; padding: 20px 25px; }
+  .country-eve-copy { padding: 25px; }
+  .country-eve-action { grid-column: auto; margin: 0 25px 25px; padding: 0 16px; }
   .country-products { padding-block: 65px; }
   .product-filter-grid { grid-template-columns: 1fr 1fr; }
+  .country-pathway-filter { align-items: stretch; }
+  .country-pathway-filter button { flex: 1 1 calc(50% - 6px); justify-content: space-between; }
   .product-filter-grid button { min-height: 70px; }
   .country-library { padding-block: 65px; }
   .country-filter-bar { grid-template-columns: 1fr; }

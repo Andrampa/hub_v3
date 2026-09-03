@@ -6,7 +6,7 @@ const CONTACT_FORM_URL = 'https://arcg.is/0Df1Ca'
 export default function Contact() {
   return (
     <>
-      <SiteHeader active="contact" />
+      <SiteHeader active="about" />
       <main className="contact-page">
         <section className="contact-hero">
           <div className="section-wrap">

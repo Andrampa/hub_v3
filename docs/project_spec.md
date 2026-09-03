@@ -32,7 +32,10 @@ Public decision-makers, governments, partners, researchers, donors, practitioner
   platform and its grouped capabilities, the VISTA seasonal reference and its
   public explorer, catalog-driven flood impact assessments, and the DIEM
   Community access route for restricted field evidence.
-- Public contact page with the DIEM ArcGIS contact form.
+- Public About DIEM navigation area with a programme overview, evidence-cycle
+  pathways, two official videos, a native Flickr-backed photo-gallery catalogue,
+  a community newsletter invitation and the DIEM
+  ArcGIS contact form.
 
 ## Next Confirmed Priority
 

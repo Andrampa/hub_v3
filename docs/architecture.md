@@ -19,7 +19,8 @@ The initial release is a static single-page app with no custom backend or databa
 
 1. The router selects the homepage, complete product catalog, household monitoring release board,
    full-screen survey Explorer, hazard-impact assessment page, flood-services
-   page, contact page, country explorer, country detail, or protected data page.
+   page, About DIEM overview, contact page, country explorer, country detail,
+   or protected data page.
 2. The selected screen starts its group requests; country routes share a cached country-catalog promise.
 3. The service reads the total and requests remaining 100-item pages.
 4. The UI derives overview counts or authoritative group-category assignments.
@@ -44,6 +45,10 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/main.tsx`: browser routing and lazy-loaded country screens.
 - `src/pages/CountryExplorer.tsx`: map, region filters, search, and directory.
 - `src/pages/CountryDetail.tsx`: country profile and resource-library state.
+- `src/components/CountryEveOverview.tsx`: optional country-specific EVE
+  regular-monitoring action.
+- `src/services/eve.ts`: dynamic ADM0-table resolution, cached EVE country
+  eligibility and validated Overview deep links.
 - `src/pages/HazardImpactAssessments.tsx`: hybrid Living Shock Atlas, latest-assessment row, dossier library and evidence timeline.
 - `src/services/impactAssessments.ts`: exact-tag eligibility, group-category normalization and assessment summaries.
 - `src/components/ImpactAtlasMap.tsx`: category-driven map selection for the hazard-impact catalog.
@@ -68,7 +73,13 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/services/monitoringEmbed.ts`: monitoring-app URL configuration, bridge message validation, visualization-state normalization, and Hub URL construction.
 - `src/services/monitoring.ts`: public monitoring-statistics and survey-schedule queries, legacy rule normalization, pagination and response validation.
 - `src/pages/FloodServices.tsx`: public DIEM flood-service pathway, EVE 2.0 capability presentation, VISTA reference access, catalog-driven flood assessments filtered on the `Shock types/Flood` category, and the DIEM Community access route.
+- `src/pages/AboutDiem.tsx`: public programme overview, evidence-cycle pathways,
+  official introductory/user-story videos and community newsletter invitation.
 - `src/pages/Contact.tsx`: embedded and direct DIEM contact-form access.
+- `src/pages/PhotoGalleries.tsx`: native public gallery discovery, country
+  filtering, resilient Flickr thumbnails and direct album links.
+- `src/services/photoGalleries.ts`: published-row queries against the public,
+  read-only ArcGIS gallery catalogue plus Flickr URL validation.
 - `src/pages/DatasetExplorer.tsx`: internal map, filter, preview, export and API experience for a protected data service.
 - `src/components/DatasetGeometryMap.tsx`: Leaflet map over the public ArcGIS light-gray basemap, with filtered service geometry, tooltips, popups and extent controls.
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
@@ -103,6 +114,9 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - Country highlights store item IDs only and render only when the referenced item remains in the active country's catalog.
 - Theme and country inference never determines authorization.
 - Promotion status, channels and hidden UI are editorial controls, never authorization.
+- Flickr hosts gallery images, while ArcGIS item
+  `24afb02b6cf549f99380cd6b3780691b` is the authoritative editorial catalogue
+  for gallery titles, countries, dates, thumbnails and publication status.
 - ArcGIS errors produce an explicit retry state.
 - Authentication requires the exact community organization ID; authenticated status never replaces item-level ArcGIS authorization.
 - Tokens and the identity manager stay outside page components; protected JSON and binary resources are requested through `AuthContext.requestProtected` and `AuthContext.downloadProtected`.

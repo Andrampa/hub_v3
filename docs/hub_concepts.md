@@ -1,8 +1,24 @@
-# DIEM Hub 3.0: concepts, structure and editorial controls
+# DIEM Hub 3.0: principles, scope and operating model
 
-This note summarizes the main ideas used to build DIEM Hub 3.0 and records how
-the structure proposed in Josselin's email is reflected in the current product.
-Status is current to 2 September 2026.
+This is the single, plain-language reference for how DIEM Hub 3.0 works, what
+it deliberately does not do, and which parts editors, publishers and the
+application each own. It also records how the proposed programme structure is
+reflected in the current product. Status is current to 3 September
+2026.
+
+## Purpose, audience and design stance
+
+DIEM Hub helps decision-makers, governments, partners, researchers,
+practitioners and FAO staff find and use FAO Data in Emergencies evidence. It
+is a public discovery and access layer over DIEM's ArcGIS Online content, not a
+replacement content-management system, a data warehouse or a recreation of
+specialist analytical applications.
+
+The editorial voice is direct, evidence-led, humane and operational. FAO blue
+and deep blue are institutional anchors; orange is restrained to urgency or
+action. The interface should lead with user concepts and evidence rather than
+ArcGIS implementation types, and retain accessible contrast, whitespace and
+clear states at every screen size.
 
 ## Core principles
 
@@ -27,6 +43,22 @@ Status is current to 2 September 2026.
 - **Resilient public access.** Search, filters, sorting, pagination, shareable
   URLs, responsive layouts, accessible controls, and clear loading, empty and
   error states are built into the main discovery paths.
+
+## Operating model and ownership
+
+| Owner | Owns | Does not own |
+|---|---|---|
+| **ArcGIS publishers/editors** | Item metadata, resources, sharing, Hub-group membership, controlled group categories and editorial-source records. | A separate Hub catalogue or browser implementation. |
+| **Hub editors** | Country copy/images, country highlights, eligible latest-evidence tags and approved promotion content. | Confidentiality: a publication flag does not make content public. |
+| **Hub application** | Live retrieval, normalization, safe presentation, discovery controls, permission-aware protected requests and graceful failures. | Changing ArcGIS access rights or declaring inferred labels official. |
+| **Specialist applications** | Analytical experiences such as the Monitoring Explorer, EVE and VISTA. | Being copied or maintained as parallel Hub functionality. |
+| **Users** | Searching, filtering, opening authoritative resources and using authorized data tools. | Seeing protected metadata or resources merely by signing in. |
+
+The Hub is a static React application with no custom backend or database. The
+browser requests the public Portal REST API and retains returned data only in
+memory. A transitional packaged-download generator supports some protected
+formats, but is not a competing data store. Public requests remain anonymous;
+OAuth uses authorization code with PKCE and no browser-held secret.
 
 ## How information is available
 
@@ -90,19 +122,63 @@ Editors should use `docs/editor_guide.md` for exact item links, field names,
 preview steps and rollback instructions. Publishing flags control display, not
 confidentiality; embargoed content must be protected through ArcGIS sharing.
 
-## Josselin email: delivery status
+## Discovery rules, safety and limits
+
+The application paginates ArcGIS searches beyond their 100-record page size,
+then applies public search and filters to the loaded inventory. It keeps source
+and freshness visible through publisher metadata and direct resource links.
+Missing summaries/thumbnails receive useful fallbacks; an unavailable external
+resource does not erase its ArcGIS source item.
+
+Country discovery is intentionally stricter than the broad catalogue. It uses
+the active Hub group, exact `Catalog role/Discoverable product`, the
+`Countries` and `Product types` category branches, and
+`Geographic scope/Multi-country` where applicable. It never falls back to the
+retired country group or infers eligibility from an item's text.
+
+Hazard-impact discovery uses the exact `Impact Assessment` tag within the Hub
+group and controlled country, shock, role, scope, language and pillar facets.
+Supporting services, web maps and images are excluded. Related resources stay
+independent dossiers until publishers provide a stable assessment/event ID.
+
+The protected explorer accepts only configured items, reads the permitted
+feature-service schema and caps browser preview, CSV and GeoJSON exports at
+20,000 matching records. Larger requests get transparent API/batching guidance
+instead of silent truncation. API links never expose a token; ArcGIS remains
+the item-by-item authorization decision.
+
+The Hub expects data drift: counts, newest dates, thumbnails, links, titles,
+tags and categories can change at any time. Group categories can be missing,
+malformed or multiply assigned. The application explains these cases rather
+than hiding the product or inventing a replacement classification.
+
+## Deliberate product limits and roadmap
+
+The delivered foundation is the shared public catalogue, country-first
+discovery, multilingual product families, household-monitoring and flood
+pathways, hazard-impact discovery, editorial country/promotion controls and a
+permission-aware data workspace.
+
+The Hub does not recreate existing dashboards/apps, manage ArcGIS sharing,
+host a duplicate metadata store, infer access from tags, or promote provisional
+title/tag matches to official taxonomy. Phase 1 also defers a DIEM-owned
+large-export backend; any replacement needs an approved API, job queue/worker,
+temporary object storage and expiring download URLs.
+
+## Proposed programme structure: delivery status
 
 | Proposal in the email | Status in Hub 3.0 |
 |---|---|
 | **Country entry point for all relevant evidence** | **Accomplished.** Country map/directory, profiles, categorized resources, chronological sorting, cross-country discovery, editorial introductions and featured items are available. Products not produced directly by DIEM can appear if editors add them to the Hub group and categorize them. |
 | **Country emergency-agriculture-needs dashboard with AgHiN Phase 3+, “in need,” map and needs-group charts** | **Not yet implemented.** Country pages show published household-survey rounds and link to the Explorer; they do not reproduce the proposed four AgHiN widgets or extract brief highlights automatically. |
-| **Links from country pages to household, flood and risk explorers** | **Partly accomplished.** Country pages deep-link to household survey exploration and data access. Flood services are available as a Hub section. A dedicated DIEM-Risk section and uniform country-level links to all explorers are still future work. |
-| **Analytical products grouped by Context Monitoring, Hazard Impact Assessments, Research & Analysis and Seasonal Calendar** | **Partly accomplished.** Product-type categories and chronological discovery exist, and Hazard Impact Assessments has a dedicated page. The complete four-part country taxonomy has not been implemented as written. |
+| **Links from country pages to household, flood and risk explorers** | **Accomplished.** Country pages deep-link to household survey exploration and data access. Countries in EVE's live ADM0 regular-monitoring catalog link directly to their EVE Overview, where flood monitoring and the embedded flood Exposure Model provide the risk-analysis pathway. |
+| **Analytical products grouped by Context Monitoring, Hazard Impact Assessments, Research & Analysis and Seasonal Calendar** | **Accomplished.** Country product cards carry accessible pathway labels, icons and restrained color accents, with a shareable pathway filter for Regular monitoring, Hazard impact, Research & analysis and Seasonal calendar. Labels use controlled Hub categories rather than title/tag inference; product types remain a separate facet. |
 | **Crises section for major, ongoing and multi-country crises** | **Partly accomplished.** Cross-country products and hazard/date filters are available, but there is no editor-curated standalone Crises page ranking named crises such as the Middle East, El Niño or Sahel floods. |
 | **Upgraded DIEM Impact discovery by hazard and date, featuring recent products** | **Accomplished.** The Hazard Impact Assessments page provides latest items, country and shock filters, dossiers and a timeline. Related files remain separate until publishers provide a stable assessment/event identifier. |
-| **Data explorer covering household, flood and risk** | **Partly accomplished.** The Household Survey Explorer, protected dataset explorer and EVE/VISTA flood pathway are connected. DIEM-Risk is shown as a future area rather than a completed section. |
+| **Data explorer covering household, flood and risk** | **Accomplished.** Household monitoring-system data can be downloaded directly through the Hub's authorized data workspace. Flood-monitoring and Exposure Model risk data can be downloaded through EVE, with that access pathway described and linked from the Hub's Flood services page. |
 | **Research and analysis organized by topic, activated as material grows** | **Not yet implemented as a section.** Research products can be found in the catalogue and cross-country discovery, while DIEM-Research is visibly marked as forthcoming. The proposed topic pages and research-initiative invitation are not yet present. |
-| **About us, impact, video, newsletters and methodology** | **Not yet implemented as a consolidated section.** DIEM purpose is introduced across current pages, methodology/guidance products can appear in discovery, and Contact exists, but there is no complete About area matching the email. |
+| **About us, impact, video and newsletters** | **Accomplished.** The About DIEM menu groups the What is DIEM? overview, Photo galleries and Contact us. The overview explains DIEM's purpose and evidence cycle, presents introductory and user-story videos, and invites visitors to create a free DIEM community account to receive newsletter updates about assessments, datasets, initiatives and events. Impact is evidenced through the programme explanation, user stories and linked hazard-impact pathway. |
+| **Photo galleries** | **Accomplished.** The About DIEM menu includes a native, responsive gallery page populated from the authoritative ArcGIS photo-gallery catalogue. Flickr remains the image host and destination; the initial five legacy StoryMaps and 21 further supplied Flickr albums are represented by 26 catalogue records, and StoryMap wrappers are no longer required for Hub discovery. |
 | **One product accessible through geographic and thematic lenses** | **Accomplished.** Shared catalogue items can surface in several routes without being copied. |
 | **External/partner products can be included** | **Accomplished by design.** Eligibility depends on Hub-group membership and editorial categorization, not authorship by the DIEM team. |
 | **Two language versions should not appear as two products** | **Accomplished for reviewed families.** They render as one family with direct language links; unreviewed/untagged items remain independent. |
@@ -112,5 +188,13 @@ In short, Hub 3.0 has delivered the shared catalogue foundation, country-first
 discovery, household monitoring, hazard-impact and flood pathways, controlled
 data access, multilingual grouping and several practical editorial controls.
 The largest remaining parts of the email's vision are the AgHiN country
-dashboard, standalone crisis curation, the thematic DIEM-Research area,
-DIEM-Risk, and a consolidated About section.
+dashboard, standalone crisis curation and the thematic DIEM-Research area.
+
+## Practical test for a proposed change
+
+Before accepting a feature, editorial workflow or data change, confirm: does
+ArcGIS remain authoritative; is public visibility gated by Hub-group
+membership; are protected resources authorized by ArcGIS per item; is each
+classification explicit and publisher-controlled; does the item keep its stable
+ID and authoritative destination; and does the experience remain useful when
+remote metadata changes or fails? If any answer is no, redesign before release.

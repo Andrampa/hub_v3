@@ -24,7 +24,9 @@ const HouseholdMonitoring = lazy(() => import('./pages/HouseholdMonitoring'))
 const MonitoringSystem = lazy(() => import('./pages/MonitoringSystem'))
 const FloodServices = lazy(() => import('./pages/FloodServices'))
 const HazardImpactAssessments = lazy(() => import('./pages/HazardImpactAssessments'))
+const AboutDiem = lazy(() => import('./pages/AboutDiem'))
 const Contact = lazy(() => import('./pages/Contact'))
+const PhotoGalleries = lazy(() => import('./pages/PhotoGalleries'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function RouteLoading() {
@@ -48,7 +50,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/monitoring" element={<MonitoringSystem />} />
             <Route path="/flood-services" element={<FloodServices />} />
             <Route path="/hazard-impact-assessments" element={<HazardImpactAssessments />} />
+            <Route path="/about" element={<AboutDiem />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/photo-galleries" element={<PhotoGalleries />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

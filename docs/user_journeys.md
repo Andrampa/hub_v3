@@ -12,7 +12,8 @@
 - Dedicated `/catalog` search and filters.
 - Overview format chart.
 - Country explorer and direct `/countries/:iso3` links.
-- Household monitoring, hazard impacts, flood services, and contact navigation links.
+- Household monitoring, hazard impacts, flood services, and an About DIEM menu
+  containing What is DIEM? and Contact us.
 
 ## Programme Pages
 
@@ -35,7 +36,11 @@
    reaches the VISTA comparison explorer or product downloads, scans published
    flood assessments read live from the catalog, and finds the DIEM Community
    request route when they need restricted field evidence.
-4. A visitor opens `/contact` and completes the embedded ArcGIS contact form or opens it in a new tab.
+4. A visitor opens the About DIEM menu, reads the programme overview and
+   evidence cycle at `/about`, watches the introductory or user-story video,
+   browses field photo galleries, creates an account to receive newsletter
+   updates, or continues to `/contact` to complete the embedded ArcGIS contact
+   form.
 
 ## Public Discovery Journey
 
@@ -79,8 +84,14 @@ for the campaign's configured recurrence window.
 4. Where published household-monitoring rounds exist, the user can open the
    latest public round or compare public rounds in the embedded Monitoring
    application.
-5. User filters by publisher-maintained product category, text, or year and can share the resulting URL.
-6. User opens the authoritative resource; cross-country products follow the same library pattern.
+5. Where the country occurs in EVE's live ADM0 monitoring catalog, the user can
+   open that country's EVE Overview directly. The action describes catalog
+   coverage, not latest-dekad freshness.
+6. User distinguishes and filters Regular monitoring, Hazard impact, Research
+   & analysis and Seasonal calendar pathways through text labels reinforced by
+   icons and color, alongside publisher-maintained product types.
+7. User filters by text or year and can share the resulting URL.
+8. User opens the authoritative resource; cross-country products follow the same library pattern.
 
 ## Failure / Empty States
 
@@ -89,6 +100,7 @@ for the campaign's configured recurrence window.
 - Missing summary/thumbnail: show a useful fallback without hiding the item.
 - Broken external resource: ArcGIS ownership remains visible through the source catalog link.
 - Promotion source unavailable: omit the popup without blocking homepage or catalog discovery.
+- EVE catalog unavailable: omit the optional country action without blocking the country page.
 
 ## Key UX Principles
 
