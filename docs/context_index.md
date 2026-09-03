@@ -20,6 +20,7 @@
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/data_access_strategy.md` | Proposed `/data` restructure: questionnaire generations, publication-tier decision, microdata routing, phasing |
 | `docs/user_journeys.md` | Public discovery behavior |
+| `docs/design_review_2026-09-03.md` | Prioritised design/product review backlog: top 10 changes, findings by lens, do-not-do list |
 | `docs/development_workflow.md` | Commands and verification |
 | `docs/handoff.md` | Active unfinished work |
 | `docs/changelog.md` | Durable change history |
@@ -33,6 +34,7 @@
 - ArcGIS endpoint work: `services_and_data.md`, then `service_manifest.md`.
 - Authentication or protected access: `authentication.md`, then `services_and_data.md`.
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.
+- Design, copy-voice, accessibility or catalogue-UX backlog: `design_review_2026-09-03.md`, then the file it names.
 - Homepage promotion or campaign work: `hub_promotions.md`, then `user_journeys.md`.
 - Content-editor question or training: start with `editor_guide.md`.
 - Whole-catalog category migration: `catalog_categorization.md`, then `country_explorer.md`.

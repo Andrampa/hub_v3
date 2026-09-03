@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-03 - Record the public-launch design and product review
+
+- Added `docs/design_review_2026-09-03.md`: an anonymous review of the running
+  application at 1440, 768 and 390 px across the homepage, catalogue, country
+  explorer, country detail, data workspace and 404 routes, in loading, empty,
+  filtered and error states.
+- Recorded ten prioritised changes, findings across visual craft, generated-copy
+  tells, information architecture, functionality gaps, proposed additions, web
+  practice and trust, plus an explicit do-not-do list.
+- Confirmed against the live content group that two records carry an incorrect
+  `DIEM-LANGUAGE:French` tag, that the homepage country figure is a hardcoded
+  constant disagreeing with the live country explorer, and that `Source Serif 4`
+  and `DM Sans` are declared but never loaded.
+- Documentation only; no application behavior changed.
+
 ## 2026-09-03 - Replace photo-gallery StoryMap wrappers
 
 - Created and published a protected, authoritative ArcGIS catalogue for photo
