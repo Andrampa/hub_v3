@@ -84,14 +84,6 @@ export default function App() {
         <FeaturedEvidence families={families} />
         <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} catalogReady={Boolean(catalog)} />
 
-        <section className="overview section-wrap" id="about">
-          <div className="section-heading"><div><span className="kicker">Why DIEM</span><h2>From field evidence to informed action</h2></div><p>DIEM connects regular monitoring, shock assessment and anticipatory analysis so evidence can support timely decisions.</p></div>
-          <article className="principles-panel">
-            <h3>One evidence programme, three connected questions.</h3>
-            <ul><li><span>01</span>How are conditions changing?</li><li><span>02</span>What are shocks doing to livelihoods?</li><li><span>03</span>Where could risk emerge next?</li></ul>
-          </article>
-        </section>
-
         <EditorialPopup campaign={promotions.campaign} channel={promotions.channel} triggerId="featured-evidence" />
       </main>
       <SiteFooter />

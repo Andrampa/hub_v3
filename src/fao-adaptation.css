@@ -93,6 +93,7 @@ h1, h2, h3, h4, h5, h6,
   .household-explorer-banner,
   .programme-hero,
   .contact-hero,
+  .about-hero,
   .programme-slide,
   .flood-reference,
   .data-gate-hero,
@@ -118,6 +119,7 @@ h1, h2, h3, h4, h5, h6,
   .household-explorer-banner,
   .programme-hero,
   .contact-hero,
+  .about-hero,
   .programme-slide,
   .flood-reference,
   .data-gate-hero,
@@ -503,3 +505,20 @@ h1, h2, h3, h4, h5, h6,
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; }
 }
+
+/*
+ * The About hero sits on a dark photograph, so it follows the same treatment as
+ * the other dark heroes: white headings and eyebrow (via the dark-surface lists above),
+ * with no serif accent colour that drops below readable contrast.
+ */
+.about-hero h1,
+.about-hero h1 em {
+  color: #fff;
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.12;
+}
+.about-hero h1 { font-size: clamp(2.35rem, 4.5vw, 3.5rem); }
+.about-hero p { color: #fff; font-size: .95rem; }

@@ -124,8 +124,6 @@ a.hub-carousel-card:focus-visible { border-color: transparent; color: #fff; box-
 .home-catalog-notice button { flex: 0 0 auto; border: 1px solid #116bac; background: #fff; color: #116bac; padding: 8px 13px; font-weight: 700; }
 
 .programme-numbers { margin-top: 72px; }
-.overview .principles-panel { max-width: none; }
-.overview .principles-panel ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 @media (max-width: 900px) {
   .hub-area-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -147,7 +145,6 @@ a.hub-carousel-card:focus-visible { border-color: transparent; color: #fff; box-
   .featured-evidence .section-heading > a { align-self: start; }
   .featured-evidence-image { height: 165px; }
   .home-catalog-notice { align-items: flex-start; flex-direction: column; }
-  .overview .principles-panel ul { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
