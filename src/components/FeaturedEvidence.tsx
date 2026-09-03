@@ -1,16 +1,25 @@
 import { Link } from 'react-router-dom'
-import { cleanText, formatDate, itemCountry } from '../lib/catalog'
+import { CatalogContentCard } from './CatalogContentCard'
 import type { ProductFamily } from '../lib/productFamilies'
-import { itemDestination, itemThumbnail } from '../services/arcgis'
+import { CROSS_COUNTRY_CODE, countryDefinition, type CountryResource } from '../services/countries'
+import { itemThumbnail } from '../services/arcgis'
 
-function selectEvidence(families: ProductFamily[]) {
+type EvidenceFamily = ProductFamily<CountryResource>
+
+/** One country per card until the grid is full, so the homepage sample stays geographically broad. */
+function familyCountry(family: EvidenceFamily) {
+  const code = family.variants.flatMap((variant) => variant.countries).find((value) => value !== CROSS_COUNTRY_CODE)
+  return code ? countryDefinition(code).name : 'Cross-country'
+}
+
+function selectEvidence(families: EvidenceFamily[]) {
   const candidates = [...families]
     .sort((a, b) => b.latestModified - a.latestModified)
     .filter((family) => itemThumbnail(family.primary))
-  const selected: ProductFamily[] = []
+  const selected: EvidenceFamily[] = []
   const countries = new Set<string>()
   for (const family of candidates) {
-    const country = itemCountry(family.primary) || 'Cross-country'
+    const country = familyCountry(family)
     if (countries.has(country)) continue
     selected.push(family)
     countries.add(country)
@@ -24,7 +33,7 @@ function selectEvidence(families: ProductFamily[]) {
   return selected
 }
 
-export function FeaturedEvidence({ families }: { families: ProductFamily[] }) {
+export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
   const evidence = selectEvidence(families)
   if (!evidence.length) return null
 
@@ -35,24 +44,9 @@ export function FeaturedEvidence({ families }: { families: ProductFamily[] }) {
           <div><span className="kicker">Evidence in focus</span><h2 id="featured-evidence-title">Recently published across DIEM</h2></div>
           <Link to="/catalog">View all products <span aria-hidden="true">→</span></Link>
         </div>
-        <div className="featured-evidence-grid">
-          {evidence.map((family) => {
-            const item = family.primary
-            const destination = itemDestination(item)
-            return (
-              <article className="featured-evidence-card" key={family.id}>
-                <a href={destination} target="_blank" rel="noreferrer" className="featured-evidence-image" aria-label={`Open ${item.title}`}>
-                  <img src={itemThumbnail(item)} alt="" loading="lazy" />
-                </a>
-                <div className="featured-evidence-body">
-                  <div><span>{item.type}</span><time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time></div>
-                  <h3><a href={destination} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
-                  <p>{cleanText(item.snippet || item.description) || 'Open the resource for its complete description and metadata.'}</p>
-                  <span>{itemCountry(item) || 'Cross-country'}</span>
-                </div>
-              </article>
-            )
-          })}
+        {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}
+        <div className="card-grid featured-evidence-grid">
+          {evidence.map((family) => <CatalogContentCard family={family} key={family.id} />)}
         </div>
       </div>
     </section>

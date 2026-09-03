@@ -8,7 +8,7 @@ import { LatestEvidenceBanner } from './components/LatestEvidenceBanner'
 import { ProgrammeNumbers } from './components/ProgrammeNumbers'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
-import { useCatalog } from './hooks/useCatalog'
+import { useCountryCatalog } from './hooks/useCountryCatalog'
 import { isHazardImpactAssessment } from './lib/catalog'
 import { groupProductFamilies } from './lib/productFamilies'
 import { fetchMonitoringStatistics, type MonitoringStatistics } from './services/monitoring'
@@ -21,7 +21,7 @@ function Icon({ name }: { name: 'search' | 'arrow' }) {
 export default function App() {
   const auth = useAuth()
   const navigate = useNavigate()
-  const { catalog, error, retry } = useCatalog()
+  const { catalog, error, retry } = useCountryCatalog()
   const [heroQuery, setHeroQuery] = useState('')
   const [promotions, setPromotions] = useState<HubPromotions>({ slides: defaultProgrammeSlides, channel: promotionChannel })
   const [monitoringStatistics, setMonitoringStatistics] = useState<MonitoringStatistics | null>(null)
