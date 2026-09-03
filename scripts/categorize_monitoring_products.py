@@ -2,8 +2,12 @@
 
 The monitoring feature layer is authoritative for country, round, and its
 linked deliverables. Additional candidates must carry an existing Household
-monitoring system category or one of the exact controlled tags below. The
-script writes a review CSV in dry-run mode by default and never changes tags.
+monitoring system category or one of the exact controlled tags below. That tag
+set includes the country-deliverable tags ("Country brief", "country findings
+presentation", "Country report"), which name monitoring round outputs that the
+round table does not always link; items also tagged "Impact assessment" stay
+excluded. The script writes a review CSV in dry-run mode by default and never
+changes tags.
 
 Run with ArcGIS Pro's Python environment and an authenticated GIS("home").
 Before applying, create the Monitoring products schema branch, choose the
@@ -33,9 +37,12 @@ MONITORING_LAYER_URL = (
     "https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/"
     "OER_Monitoring_System_View/FeatureServer/0/query"
 )
-DRY_RUN = "false"
-REVIEW_POLICY = "approve_all"
-APPROVE_ALL_EXPECTED_CANDIDATES = "402"
+DRY_RUN = "true"
+REVIEW_POLICY = "csv"
+# Re-authorize this only after reviewing the candidate set produced by the
+# expanded tag gate. It was "402" before the country-deliverable tags were
+# added, so a stale value now fails loudly instead of applying blindly.
+APPROVE_ALL_EXPECTED_CANDIDATES = "0"
 MAX_ITEMS_TO_UPDATE = "0"
 OUTPUT_CSV = r"C:\git\hub_v3\monitoring_product_category_review.csv"
 BATCH_SIZE = "100"
@@ -59,6 +66,9 @@ MANAGED_BRANCHES = (
 )
 
 MONITORING_TAGS = {
+    "country brief",
+    "country findings presentation",
+    "country report",
     "diem-monitoring",
     "household monitoring",
     "household monitoring system",
