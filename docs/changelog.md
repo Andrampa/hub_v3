@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-09-03 - Apply design review items 5 to 8
+
+- Pillar tab counts are now computed within every other active filter, so a
+  filtered view no longer advertises catalogue-wide totals beside a zero result.
+  Added a `No pillar assigned` tab and select option, which makes the counts
+  reconcile with the total for the first time; a tab whose count is zero is
+  disabled rather than hidden.
+- Dropped card summaries that only restate the title, which was most of the
+  catalogue, and replaced the "Open this resource to view its complete
+  description and metadata" filler with "No description in the catalogue
+  record."
+- Card thumbnails are now shown only when the image file distinguishes one
+  product from another; 862 of 991 items share a thumbnail name such as a
+  per-country basemap or an ArcGIS default. The rest render a plate carrying
+  the round or edition parsed from the title, on the existing pathway-coloured
+  ground, so a page of one country's briefs is scannable. Homepage card
+  selection no longer requires a thumbnail.
+- Cached the normalized content group in `sessionStorage` for 15 minutes with a
+  background refresh: a cold load takes about 5 s and 11 paged requests, a
+  cached load 21 ms with identical counts. Only the typed contract is persisted,
+  which took the entry from 1855 kB to 706 kB. ArcGIS remains authoritative and
+  every load still revalidates.
+- Replaced the catalogue's blocking spinner with the live filter bar and a
+  skeleton grid matching a page of results.
+
 ## 2026-09-03 - Apply design review items 1 to 4
 
 - Stopped publishing demo country highlights: `fetchPublishedEditorial` drops

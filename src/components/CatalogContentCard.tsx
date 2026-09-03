@@ -1,5 +1,5 @@
-import { cleanText, formatDate } from '../lib/catalog'
-import { itemDestination, itemThumbnail } from '../services/arcgis'
+import { NO_SUMMARY_LABEL, distinctSummary, formatDate, itemEdition } from '../lib/catalog'
+import { distinctThumbnail, itemDestination } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
   EVIDENCE_PATHWAYS,
@@ -21,10 +21,18 @@ export function pathwaySlug(value: string) {
   return value.toLowerCase().replace(/[^a-z]+/g, '-')
 }
 
-export function CatalogContentCard({ family }: { family: ProductFamily<CountryResource> }) {
+export function CatalogContentCard({
+  family,
+  thumbnailIndex,
+}: {
+  family: ProductFamily<CountryResource>
+  /** Thumbnail names unique in the catalogue; see buildDistinctThumbnailIndex. */
+  thumbnailIndex: Set<string>
+}) {
   const item = family.primary
-  const thumbnail = itemThumbnail(item)
-  const summary = cleanText(item.snippet || item.description)
+  const thumbnail = distinctThumbnail(item, thumbnailIndex)
+  const summary = distinctSummary(item)
+  const edition = itemEdition(item)
   const destination = itemDestination(item)
   const product = item.productTypes[0] || 'Unclassified'
   const pathways = EVIDENCE_PATHWAYS.filter((pathway) => (
@@ -51,7 +59,11 @@ export function CatalogContentCard({ family }: { family: ProductFamily<CountryRe
         rel="noreferrer"
         aria-label={`Open ${item.title}`}
       >
-        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : <span>DIEM</span>}
+        {/* Without a distinguishing image the panel carries the round or
+            edition, the one token that separates a product from its siblings. */}
+        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} /> : (
+          <span className="card-image-plate">{edition}</span>
+        )}
         <span className={`type-badge${product === 'Unclassified' ? ' type-badge--unclassified' : ''}`}>{product}</span>
       </a>
       <div className="card-body">
@@ -74,7 +86,7 @@ export function CatalogContentCard({ family }: { family: ProductFamily<CountryRe
           </ul>
         )}
         <h3><a href={destination} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
-        <p>{summary || 'Open this resource to view its complete description and metadata.'}</p>
+        <p className={summary ? undefined : 'card-summary--absent'}>{summary || NO_SUMMARY_LABEL}</p>
         <div className="card-footer">
           <span className="catalog-country" title={countryLabel}>
             {visibleCountries.length > 0 && (

@@ -1,8 +1,9 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { CatalogContentCard } from './CatalogContentCard'
 import type { ProductFamily } from '../lib/productFamilies'
 import { CROSS_COUNTRY_CODE, countryDefinition, type CountryResource } from '../services/countries'
-import { itemThumbnail } from '../services/arcgis'
+import { buildDistinctThumbnailIndex } from '../services/arcgis'
 
 type EvidenceFamily = ProductFamily<CountryResource>
 
@@ -12,10 +13,14 @@ function familyCountry(family: EvidenceFamily) {
   return code ? countryDefinition(code).name : 'Cross-country'
 }
 
+/**
+ * Selection is by catalogue entry date and country spread only. It used to
+ * require a thumbnail, which silently ranked the products carrying a shared
+ * country basemap above newer ones with none; cards now render a typed panel
+ * when there is no distinguishing image, so the image is no longer a gate.
+ */
 function selectEvidence(families: EvidenceFamily[]) {
-  const candidates = [...families]
-    .sort((a, b) => b.latestCreated - a.latestCreated)
-    .filter((family) => itemThumbnail(family.primary))
+  const candidates = [...families].sort((a, b) => b.latestCreated - a.latestCreated)
   const selected: EvidenceFamily[] = []
   const countries = new Set<string>()
   for (const family of candidates) {
@@ -34,7 +39,11 @@ function selectEvidence(families: EvidenceFamily[]) {
 }
 
 export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
-  const evidence = selectEvidence(families)
+  const evidence = useMemo(() => selectEvidence(families), [families])
+  const thumbnailIndex = useMemo(
+    () => buildDistinctThumbnailIndex(families.flatMap((family) => family.variants)),
+    [families],
+  )
   if (!evidence.length) return null
 
   return (
@@ -46,7 +55,7 @@ export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
         </div>
         {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}
         <div className="card-grid featured-evidence-grid">
-          {evidence.map((family) => <CatalogContentCard family={family} key={family.id} />)}
+          {evidence.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}
         </div>
       </div>
     </section>

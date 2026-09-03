@@ -92,3 +92,48 @@
 @media (max-width: 620px) {
   .catalog-pathway-filter button { flex: 1 1 100%; justify-content: space-between; }
 }
+
+/* Shown instead of an image when a product has no thumbnail that distinguishes
+   it from its siblings. The round or edition is the token that varies within a
+   series, so a page of one country's briefs stays scannable.
+   Overrides the watermark rule in styles.css, which targets any span in a card
+   image and would otherwise place this bottom-right at 50px in near-white. */
+.card-image > span.card-image-plate,
+.country-resource-image > span.card-image-plate {
+  position: absolute;
+  inset: 0;
+  right: auto;
+  bottom: auto;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  padding: 15px 16px 0;
+  color: rgba(255, 255, 255, .92);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.1;
+}
+.card-summary--absent { font-style: italic; opacity: .7; }
+.catalog-pathway-filter--unassigned::before { background: #b0bcc1 !important; }
+
+/* Skeleton grid shown while the content group is being paged. It occupies the
+   same geometry as a page of results, so nothing jumps when they arrive. */
+.results-meta--pending { color: #60747b; font-size: .8rem; }
+.content-card--skeleton { background: #fff; border: 1px solid #e3eaed; }
+.skeleton-block {
+  display: block;
+  background: linear-gradient(90deg, #eef2f4 25%, #e3e9ec 50%, #eef2f4 75%) 0 0 / 300% 100%;
+}
+.skeleton-block--image { height: 138px; }
+.skeleton-block--title { height: 13px; margin-top: 9px; }
+.skeleton-block--meta { height: 9px; margin-top: 9px; }
+.skeleton-block--short { width: 55%; }
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton-block { animation: catalog-skeleton 1.4s ease-in-out infinite; }
+}
+@keyframes catalog-skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (max-width: 620px) { .skeleton-block--image { height: 165px; } }
+.catalog-pathway-filter button:disabled { color: #93a3a9; cursor: default; }
+.catalog-pathway-filter button:disabled::before { background: #dbe2e5 !important; }

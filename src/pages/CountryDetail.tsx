@@ -8,13 +8,13 @@ import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
-import { cleanText, formatDate, itemYear } from '../lib/catalog'
+import { NO_SUMMARY_LABEL, distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
   groupProductFamilies,
   type ProductFamily,
 } from '../lib/productFamilies'
-import { CONTENT_GROUP_ID, itemDestination, itemThumbnail } from '../services/arcgis'
+import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemDestination } from '../services/arcgis'
 import {
   fetchCountryEditorial,
   type CountryEditorialContent,
@@ -37,10 +37,11 @@ import { isEveRegularMonitoringActive } from '../services/eve'
 
 const PAGE_SIZE = 16
 
-function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
+function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<CountryResource>, thumbnailIndex: Set<string> }) {
   const item = family.primary
-  const summary = cleanText(item.snippet || item.description)
-  const thumbnail = itemThumbnail(item)
+  const summary = distinctSummary(item)
+  const edition = itemEdition(item)
+  const thumbnail = distinctThumbnail(item, thumbnailIndex)
   const product = item.productTypes[0] || 'Unclassified'
   const countryCodes = [...new Set(family.variants.flatMap((variant) => variant.countries))]
     .filter((code) => code !== CROSS_COUNTRY_CODE)
@@ -64,7 +65,9 @@ function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
   return (
     <article className="country-resource-card">
       <a className="country-resource-image" href={itemDestination(item)} target="_blank" rel="noreferrer" aria-label={`Open ${item.title}`}>
-        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : <span>DIEM</span>}
+        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} /> : (
+          <span className="card-image-plate">{edition}</span>
+        )}
         <span className="country-product-badge">{product}</span>
       </a>
       <div className="country-resource-body">
@@ -80,7 +83,7 @@ function ResourceCard({ family }: { family: ProductFamily<CountryResource> }) {
           </ul>
         )}
         <h3><a href={itemDestination(item)} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
-        <p>{summary || 'Open this resource to view its complete description and metadata.'}</p>
+        <p className={summary ? undefined : 'card-summary--absent'}>{summary || NO_SUMMARY_LABEL}</p>
         <div className="country-resource-footer">
           <span className="country-resource-country-flags" aria-hidden="true">
             {assignedCountries.slice(0, 2).map((entry) => <i className={`flag flag-small flag-${entry.iso3.toLowerCase()}`} key={entry.iso3} />)}
@@ -152,6 +155,9 @@ export default function CountryDetail() {
     () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map(itemYear)))].sort((a, b) => b - a),
     [allResourceFamilies],
   )
+  // Built from the whole catalogue, not just this country, so an image counts as
+  // distinguishing only if no other product anywhere reuses the same file.
+  const thumbnailIndex = useMemo(() => buildDistinctThumbnailIndex(catalog?.items || []), [catalog])
   const searchIndex = useMemo(() => buildCatalogSearchIndex(allResourceFamilies), [allResourceFamilies])
   const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
   const filtered = useMemo(() => {
@@ -342,7 +348,7 @@ export default function CountryDetail() {
                   {(query || selectedPathway !== 'All pathways' || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
                 </div>
                 <div className="country-results-meta"><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${selectedPathway}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
-                {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
+                {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
                 {pageCount > 1 && <nav className="pagination" aria-label="Country resource pages"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>Page <strong>{page}</strong> of {pageCount}</span><button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button></nav>}
               </div>
             </section>

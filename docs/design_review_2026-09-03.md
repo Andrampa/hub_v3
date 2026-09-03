@@ -20,8 +20,8 @@ differs from the one first proposed.
 |---|---|
 | Reviewed | 2026-09-03 |
 | Base commit | `113d271` |
-| Items agreed | Top 10 items 1-4 |
-| Items shipped | 1, 2, 3, 4 (2026-09-03) |
+| Items agreed | Top 10 items 1-8 |
+| Items shipped | 1-8 (2026-09-03) |
 
 Update the two rows above as work is selected and completed, and record shipped
 items in `docs/changelog.md`.
@@ -136,7 +136,7 @@ Countries, Hazard impacts, Flood services, then a Household surveys group
 holding Surveys catalogue, Survey explorer and Data access, then About DIEM.
 Verified with no horizontal overflow at 390, 768 and 1440 px.
 
-### 5. Make facet counts respond to the active filter
+### 5. Make facet counts respond to the active filter [SHIPPED]
 
 `src/pages/Catalog.tsx:130` and `:141` compute the pillar tab counts from
 `families`, never `filteredFamilies`. Filtering to Niger with a nonsense query
@@ -149,7 +149,16 @@ a gap the "All pathways" label conceals.
 
 Impact: correctness. Effort: hours.
 
-### 6. Suppress the summary when it merely repeats the title
+**Implementation note.** A `familiesBeforePathway` set now applies every filter
+except the pillar, and each tab counts within it, so a tab states how many
+results choosing it would actually give. A `No pillar assigned` tab and a
+matching select option were added; the counts now reconcile in the open
+catalogue (400 + 118 + 3 + 44 + 252 = 817) and under a filter (Niger:
+23 + 2 + 0 + 2 + 16 = 43). A tab whose count is zero is shown rather than
+hidden, because hiding it would silently change the arithmetic a reader is
+checking, but it is disabled so it is never a dead click.
+
+### 6. Suppress the summary when it merely repeats the title [SHIPPED]
 
 Cards read "Mali - DIEM Monitoring Brief - Round 7" followed by the description
 "DIEM Monitoring Brief - Round 7". On a 16-card grid this is a full column of
@@ -164,7 +173,13 @@ catalogue record" instead of an instruction to go elsewhere.
 
 Impact: craft. Effort: hours.
 
-### 7. Replace the identical map thumbnails with a typed record block
+**Implementation note.** `distinctSummary` in `src/lib/catalog.ts` drops a
+snippet whose folded text is a substring of the folded title, or the reverse.
+The fallback is `NO_SUMMARY_LABEL` - "No description in the catalogue record."
+- set in italic at reduced opacity, so a thin record reads as thin rather than
+as an instruction to go elsewhere.
+
+### 7. Replace the identical map thumbnails with a typed record block [SHIPPED]
 
 On `/countries/NER` all 43 cards carry the same Niger basemap tile. On
 `/catalog` the first screen shows four near-identical ArcGIS extents. The image
@@ -178,7 +193,25 @@ face.
 
 Impact: craft. Effort: 1-2 days.
 
-### 8. Cache the catalogue across reloads and show the shell immediately
+**Implementation note.** Duplicate images are detected by thumbnail *file name*,
+which is the field that actually repeats: `thumbnail/thumb_NER.jpg` covers 41
+Niger products and `thumbnail/ago_downloaded.png` covers 155 items, while every
+item still gets its own URL because the URL carries the item id. Measured on the
+live group, 862 of 991 items share a name and only 108 are unique.
+
+`buildDistinctThumbnailIndex` collects the names used exactly once and
+`distinctThumbnail` returns a URL only for those. Everything else renders a
+plate carrying `itemEdition` - the round, cycle, month/year or year parsed from
+the title - in large type on the existing pathway-coloured ground, which already
+encodes the pillar. The plate sits top-left so it clears the product badge the
+FAO theme moves to the bottom-left, and its rule overrides the watermark
+selector in `styles.css` that targets any span inside a card image.
+
+`FeaturedEvidence` no longer requires a thumbnail when choosing homepage cards.
+That filter had been quietly ranking products carrying a shared country basemap
+above newer ones with no image at all.
+
+### 8. Cache the catalogue across reloads and show the shell immediately [SHIPPED]
 
 A cold load fires 16 ArcGIS requests, of which 11 are paged group searches of
 100 records each, before anything renders. `/countries` holds a centred spinner
@@ -196,6 +229,23 @@ instead of a blocking spinner.
 ArcGIS Online must remain the authoritative source. See "Do not do", item 1.
 
 Impact: performance. Effort: 1-2 days.
+
+**Implementation note.** The normalized group is written to `sessionStorage`
+under a versioned key. A copy younger than 15 minutes resolves immediately while
+a background refresh updates the cache for the next load; anything older waits
+for the network as before. Measured: a cold load takes about 5 s and 11 paged
+requests, a cached load resolves in 21 ms with identical counts (856 items, 54
+countries). ArcGIS stays authoritative - every load still revalidates, and a
+read or write failure is caught and ignored rather than surfaced.
+
+Only the declared contract is persisted. `normalizeItem` spreads the raw ArcGIS
+item, so fields this application never reads rode along: `licenseInfo` alone was
+498 kB of licence boilerplate and is read only for protected data items, while
+`typeKeywords` and `accessInformation` are read nowhere. Projecting to the typed
+fields took the cache from 1855 kB to 706 kB.
+
+The catalogue's blocking spinner was replaced by the real filter bar plus a
+16-card skeleton grid occupying the same geometry as a page of results.
 
 ### 9. Split the bilingual country introduction
 

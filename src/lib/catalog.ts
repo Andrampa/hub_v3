@@ -82,3 +82,40 @@ export function formatDate(timestamp: number) {
     timeZone: 'UTC',
   }).format(new Date(timestamp))
 }
+
+/**
+ * A record summary worth printing.
+ *
+ * Most ArcGIS snippets restate the title, often with only the country prefix
+ * removed ("Mali - DIEM Monitoring Brief - Round 7" / "DIEM Monitoring Brief -
+ * Round 7"). Printing both fills a whole column of a card grid with the same
+ * words, so a summary that adds nothing is dropped and the caller decides what
+ * to say instead.
+ */
+export function distinctSummary(item: ArcGISItem) {
+  const summary = cleanText(item.snippet || item.description)
+  if (!summary) return ''
+  const fold = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+  const foldedTitle = fold(item.title)
+  const foldedSummary = fold(summary)
+  if (!foldedSummary) return ''
+  return foldedTitle.includes(foldedSummary) || foldedSummary.includes(foldedTitle) ? '' : summary
+}
+
+/** Shown in place of a summary, so a thin record reads as thin rather than as an instruction. */
+export const NO_SUMMARY_LABEL = 'No description in the catalogue record.'
+
+/**
+ * The part of a title that distinguishes one product from its siblings.
+ *
+ * Series titles differ only by a round or cycle number, so that number is the
+ * one token worth showing when a product has no distinguishing thumbnail.
+ */
+export function itemEdition(item: ArcGISItem) {
+  const round = item.title.match(/\b(?:round|cycle|ronde|ciclo)\s*#?\s*(\d+)\b/i)
+  if (round) return `Round ${round[1]}`
+  const monthYear = item.title.match(/\b(0[1-9]|1[0-2])[\s/-](20\d{2})\b/)
+  if (monthYear) return `${monthYear[1]}/${monthYear[2]}`
+  const year = item.title.match(/\b(20[1-3]\d)\b/)
+  return year ? year[1] : undefined
+}

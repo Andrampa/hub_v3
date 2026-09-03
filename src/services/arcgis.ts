@@ -79,6 +79,34 @@ export function itemThumbnail(item: ArcGISItem) {
   return `${REST_ROOT}/content/items/${item.id}/info/${item.thumbnail}?w=800`
 }
 
+/**
+ * Thumbnail file names that identify exactly one product.
+ *
+ * Most of the group shares a handful of thumbnails: a per-country basemap tile
+ * (`thumbnail/thumb_NER.jpg` covers 41 Niger products) or an ArcGIS default
+ * (`thumbnail/ago_downloaded.png`, `thumbnail/thumbnail.jpeg`). Every item still
+ * gets its own URL because the URL carries the item id, so the duplication is
+ * only visible once the images render, as a wall of identical maps that defeats
+ * scanning. Measured on the live group, 862 of 991 items share a name and 108
+ * are unique.
+ *
+ * Callers build this from the whole catalogue and use it to decide whether an
+ * image is worth showing at all.
+ */
+export function buildDistinctThumbnailIndex(items: ArcGISItem[]) {
+  const counts = new Map<string, number>()
+  items.forEach((item) => {
+    if (!item.thumbnail) return
+    counts.set(item.thumbnail, (counts.get(item.thumbnail) || 0) + 1)
+  })
+  return new Set([...counts].flatMap(([name, count]) => (count === 1 ? [name] : [])))
+}
+
+/** The thumbnail URL only when the image distinguishes this product from others. */
+export function distinctThumbnail(item: ArcGISItem, index: Set<string>) {
+  return item.thumbnail && index.has(item.thumbnail) ? itemThumbnail(item) : undefined
+}
+
 export function itemDestination(item: ArcGISItem) {
   return item.url || `${ARCGIS_PORTAL}/home/item.html?id=${item.id}`
 }
