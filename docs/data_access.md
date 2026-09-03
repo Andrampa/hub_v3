@@ -6,6 +6,35 @@
 
 The current production Hub remains unchanged. ArcGIS Online remains authoritative for every item and download.
 
+## Access Tiers
+
+| Tier | Who | Sees |
+|---|---|---|
+| 1 | Anonymous | General instructions only: the access ladder, the three questionnaire generations, the microdata routes, and the public guide at `/data/guide`. No protected metadata is requested. |
+| 2 | Enabled member of community organization `D5aXW6TZFpeM2wke` | Aggregated data, administrative boundaries, documentation, API and tools, plus the full microdata licence with the request form beneath it. |
+| 3 | Tier 2 and member of household-data group `3f1e99b44e3e4107957de001a1242a70` | Everything, including the household microdata datasets. |
+
+Tier decides what is *offered*. ArcGIS item sharing decides what is *authorized*;
+every protected item is still resolved against the active identity.
+
+Tier 2 is derived from organization membership, not from the aggregated-data
+group (`c8ae74a0f2de480abe6f72876a52b0cc`), to which account creation
+auto-provisions members after roughly ten minutes.
+
+The provisioning notice is shown when **no aggregated dataset resolved as
+available at all**, and on no other condition. Deriving it from
+`capabilities.aggregatedData` instead produced a false alarm for accounts that
+could plainly see their data — group-membership derivation and item resolution
+can disagree, and only resolution reflects what the user actually has. The
+notice offers the ten-minute window as a likely explanation rather than
+asserting it, and offers a re-check.
+
+Presentation rule: dataset cards lead with the curated manifest label, not the
+live ArcGIS title. Infrastructure services are named for the pipeline that
+builds them (`diem_adm_repr_1_mview_noshape`), which is correct in ArcGIS and
+unreadable in a catalogue card. The live title is still rendered as a subdued
+source line, so the underlying service is never concealed.
+
 ## Access Model
 
 1. Anonymous visitors can see the purpose and access instructions, but no protected item metadata is requested.
@@ -29,27 +58,85 @@ The UI must never infer protected access from login alone. Organization login op
 
 Protected responses are held only in React memory. They are cleared when authentication is lost or the user signs out.
 
+## Questionnaire Generations
+
+Every manifest entry carries a `version` of `v1`, `v2` or `v3`, and
+`REFERENCE_GENERATION` in `src/services/protectedData.ts` names the one shown
+first. Definitions match the Monitoring dashboard user guide; changing one
+without the other makes the two products contradict each other.
+
+| Generation | Period | Role |
+|---|---|---|
+| V3 | 2026 onwards | Reference. From Q3 2026 every survey uses this questionnaire, so all incoming data flows through V3 only. |
+| V2 | December 2022 – 2026 | Archive |
+| V1 | Before December 2022 | Archive |
+
+The reference generation renders first and expanded. Archives render as
+collapsed `<details>` blocks carrying their own data *and* their own field
+descriptions and codebooks, so a reader never has to work out which codebook
+belongs to which period. Moving a generation between roles is a single edit to
+`REFERENCE_GENERATION`; no layout change is involved.
+
+V3 entries are marked `preview: true`. Their Phase 5 services are published and
+queryable but currently hold simulated records, and the UI must say so wherever
+they are offered. Clear the flag when real survey data replaces the test load.
+
 ## Resource Manifest
 
 `src/services/protectedData.ts` is the typed manifest for:
 
-- current and archived household microdata;
-- four current and four archived aggregated thematic datasets;
-- French and Spanish data-access guides;
+- household microdata for each generation;
+- aggregated thematic datasets for each generation;
 - current and archived administrative boundaries;
-- field descriptions, codebook and aggregated metadata.
+- field descriptions, codebooks and SDMX metadata, tagged by generation.
 
 Stable item IDs are configuration. Titles and modified dates are read live after login. Provided legacy Hub URLs are retained as migration references, while available resources open their authoritative ArcGIS item page.
 
+Documentation held on another portal carries `staticLink` and is never resolved
+against ArcGIS, because a cross-portal request would only manufacture a
+misleading "availability check failed" state for a public download.
+
+The French and Spanish PDF guides are retired. All guidance now lives in the web
+guide, so the two cannot drift apart; translation is deferred.
+
+## Public Data Access Guide
+
+`/data/guide` is a public route owned by the Hub, covering DIEM, the three
+generations, the access tiers, aggregated data, microdata and its two routes,
+documentation, boundaries, methodology, the API, citation and both licence
+regimes. It holds no protected metadata, is what an anonymous visitor most
+needs, and is the page the Monitoring dashboard should link to instead of
+restating the same material.
+
+Microdata carries a separate and stricter licence than aggregated data —
+confidentiality, research and statistical use only, no commercial requesters, no
+redissemination. It is published in full at tier 2, with the request form
+directly beneath it, so the terms are read in the same movement as the request.
+That licence must be present wherever microdata download is offered.
+
+## Dataset Deep Links
+
+`/data/:datasetId` accepts `?country=ISO3&round=N`. `deepLinkFields` resolves
+those against the layer schema — preferring an ISO3 field over a country name,
+because that is what the Monitoring dashboard sends and what survives spelling
+and language differences — and `filtersFromDeepLink` seeds the filter set once,
+when the schema is first known. Later filter edits own the URL, and the two
+filters are mirrored back into it so a filtered view stays shareable.
+
+This is the entry contract replacing the dashboard's legacy
+`.../datasets/<itemId>/explore?filters=<base64>` links. Repointing
+`DATA_ACCESS_CONFIG.hubDatasetRoot` lives in the Monitoring repository and has
+not been done yet.
+
 ## User Experience
 
-- `/data` anonymous state: purpose, protection rationale, sign-in and access-form links.
+- `/data` anonymous state: purpose, the three-level access ladder, the three questionnaire generations, the microdata routes, sign-in and the public guide. No dataset is listed, because item titles and update dates are themselves protected metadata.
 - Authenticated hero: user identity and count of resources available to that account.
 - `/data/:datasetId`: internal dataset explorer for supported microdata, aggregated data and boundary resources.
 - Explorer: real ArcGIS service geometry where available, interactive labelled basemap with selectable features and extent controls, live item/layer metadata, recommended country/round filters, matching-record count, table preview, copyable service/query URLs, and current-filter downloads.
-- Microdata: current versus archived structure, anonymization note and one-year renewable access pathway.
-- Aggregated data: switch between current and 2021–2022 archive across four thematic areas.
-- Guides and metadata: protected French/Spanish guides, field descriptions, codebook and questionnaires.
+- Microdata: FAM as the default route with its publication lag, direct request as the exception, the full microdata licence, and the datasets themselves only at tier 3.
+- Aggregated data: reference generation expanded, older generations as collapsed archives with their own documentation.
+- Documentation: field descriptions, codebooks and SDMX metadata per generation, plus the questionnaire catalogue.
 - Boundaries: current and historical ADM1/ADM2 operational references.
 - Tools: microdata labelling repository, DIEM API examples and FAO Microdata Catalogue.
 - Citations: copyable English, French and Spanish citation text plus licensing.

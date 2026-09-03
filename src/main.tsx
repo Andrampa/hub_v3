@@ -18,6 +18,7 @@ const CountryExplorer = lazy(() => import('./pages/CountryExplorer'))
 const Catalog = lazy(() => import('./pages/Catalog'))
 const CountryDetail = lazy(() => import('./pages/CountryDetail'))
 const DataAccess = lazy(() => import('./pages/DataAccess'))
+const DataGuide = lazy(() => import('./pages/DataGuide'))
 const DatasetExplorer = lazy(() => import('./pages/DatasetExplorer'))
 const HouseholdMonitoring = lazy(() => import('./pages/HouseholdMonitoring'))
 const MonitoringSystem = lazy(() => import('./pages/MonitoringSystem'))
@@ -41,6 +42,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/countries" element={<CountryExplorer />} />
             <Route path="/countries/:iso3" element={<CountryDetail />} />
             <Route path="/data" element={<DataAccess />} />
+            <Route path="/data/guide" element={<DataGuide />} />
             <Route path="/data/:datasetId" element={<DatasetExplorer />} />
             <Route path="/monitoring-system" element={<HouseholdMonitoring />} />
             <Route path="/monitoring" element={<MonitoringSystem />} />

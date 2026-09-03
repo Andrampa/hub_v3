@@ -95,6 +95,45 @@ export function usableFields(fields: FeatureField[]) {
   return fields.filter((field) => !/^shape__|^objectid$|^globalid$/i.test(field.name))
 }
 
+/**
+ * The country and round fields a `?country=&round=` deep link addresses.
+ *
+ * This is the entry contract for links arriving from the Monitoring dashboard,
+ * which carries the country and exact survey round the user was looking at.
+ * ISO3 is preferred over a country name because that is what the dashboard
+ * sends and what survives spelling and language differences.
+ */
+export function deepLinkFields(fields: FeatureField[]) {
+  const country = fields.find((field) => /^(adm0_iso3|iso3)$/i.test(field.name))
+    || fields.find((field) => /^(adm0_name|country)$/i.test(field.name))
+  const round = fields.find((field) => /^(round|round_num|survey_round)$/i.test(field.name))
+  return { country, round }
+}
+
+export function filtersFromDeepLink(
+  fields: FeatureField[],
+  values: { country?: string | null; round?: string | null },
+): DatasetFilter[] {
+  const targets = deepLinkFields(fields)
+  const filters: DatasetFilter[] = []
+  const country = values.country?.trim()
+  const round = values.round?.trim()
+  if (targets.country && country) {
+    filters.push({
+      id: `deeplink-country`,
+      fieldName: targets.country.name,
+      operator: 'equals',
+      // ISO3 fields are stored uppercase; a lowercase code in a link would
+      // otherwise return an empty, and silently wrong, result set.
+      value: /iso3/i.test(targets.country.name) ? country.toUpperCase() : country,
+    })
+  }
+  if (targets.round && round && /^\d+$/.test(round)) {
+    filters.push({ id: `deeplink-round`, fieldName: targets.round.name, operator: 'equals', value: round })
+  }
+  return filters
+}
+
 export function fieldIsNumeric(field: FeatureField | undefined) {
   return /smallinteger|integer|single|double|oid/i.test(field?.type || '')
 }

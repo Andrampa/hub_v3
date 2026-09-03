@@ -13,7 +13,6 @@ export const DIEM_ACCESS_GROUPS = {
 } as const
 
 const SESSION_KEY = 'diem-hub-3.arcgis-session'
-const DEVELOPMENT_REDIRECT_URI = 'https://localhost:5173/oauth-callback.html'
 
 export interface CommunityUser {
   username: string
@@ -47,8 +46,17 @@ export class CommunityAccessError extends Error {
   }
 }
 
+/**
+ * Always the origin actually serving the page.
+ *
+ * A hardcoded development origin breaks as soon as Vite is not on its usual
+ * port: the popup lands on the hardcoded origin, which is cross-origin to the
+ * opener, and the SDK's postMessage handshake dies with an opaque frame-access
+ * error rather than anything mentioning OAuth. Deriving it means the only way to
+ * fail is an unregistered origin, which ArcGIS reports plainly. Every dev port
+ * that is used has to be registered as a redirect URL on the OAuth application.
+ */
 function redirectUri() {
-  if (import.meta.env.DEV) return DEVELOPMENT_REDIRECT_URI
   return `${window.location.origin}/oauth-callback.html`
 }
 

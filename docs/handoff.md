@@ -190,3 +190,54 @@ The dataset map now uses Leaflet with public ArcGIS light-gray base/reference ti
 5. For country work, read `docs/country_explorer.md` and inspect `src/services/countries.ts` first.
 6. For protected downloads, read `docs/data_access.md` and inspect `src/services/protectedData.ts` first.
 7. For Phase 2 export work, decide the FAO-approved hosting, queue and temporary object-storage platform before implementing the backend.
+
+## Data access rework - Phase A shipped 2026-09-03, Phases B/C open
+
+`/data` was restructured on 2026-09-03 around questionnaire generations, three
+access tiers and a public guide. The design record is
+`docs/data_access_strategy.md`; the shipped contract is `docs/data_access.md`.
+Changed files: `src/services/protectedData.ts`, `src/services/dataExplorer.ts`,
+`src/pages/DataAccess.tsx`, `src/pages/DatasetExplorer.tsx`,
+`src/pages/DataGuide.tsx` (new), `src/main.tsx`, `src/data-access.css`.
+
+Verification done: `npm run build` passes; anonymous `/data` and `/data/guide`
+render with no console errors and no horizontal overflow at 375, 768 and 1280 px.
+
+**Not verified, and the exact next task.** The authenticated workspace has never
+been exercised with a real account. Sign in and run one pass per tier: a
+brand-new account inside the ten-minute provisioning window (expect the
+provisioning banner, not "additional access required"), a community member
+without microdata access (expect aggregated data plus the licence and request
+form, and the locked-microdata message), and a household-data group member
+(expect the microdata datasets). Specifically confirm that the seven V3 Phase 5
+item IDs resolve through `https://hqfao-hub.maps.arcgis.com/sharing/rest` the
+way the older V2 items do; they are configured but have never been resolved by
+this application. Verification command: `npm run build`, then the dev server.
+
+**V3 is in the reference slot with test data.** Its Phase 5 services hold
+simulated COD/NGA/TCD round-99 records. Every V3 manifest entry carries
+`preview: true`, which drives a per-card flag and a section notice. This is
+acceptable only while the Hub is off production. Before any production cutover,
+confirm no preview flag is still set, or that real data has replaced the test
+load. `REFERENCE_GENERATION` in `src/services/protectedData.ts` is the single
+value controlling which generation leads.
+
+**Phase B**, when the V3 rebuild lands: create one dissemination view per
+published V3 table (1:1 pointer, no field hiding, community sharing, publication
+metadata), replace the placeholder item IDs with the view item IDs, clear the
+preview flags, and publish V3 field descriptions, codebook and SDMX metadata.
+
+**Phase C**, microdata grants: add country and round selection to the ArcGIS
+request form, then productionise the temporary-view, one-member-group and
+revoke-on-expiry procedure. This is internal tooling and is deliberately not
+described on the Hub.
+
+**Cross-repository, not started.** The Monitoring dashboard still builds legacy
+Hub links in `DATA_ACCESS_CONFIG.hubDatasetRoot`
+(`C:\git\hh_survey_v3\development\phase6_web_app\js\core\config.js`). Hub 3.0 now
+accepts `?country=ISO3&round=N` on `/data/:datasetId`; repointing that config and
+settling the `_0` layer-suffix convention is a change in that repository.
+
+Also open: who maintains `/data/guide` now that it supersedes the same material
+in the dashboard user guide, and the dead CSS left in `src/data-access.css` from
+the retired guide-language panel, collection switch and access pathway.

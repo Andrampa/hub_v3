@@ -474,3 +474,101 @@ All notable documentation and implementation changes. Most recent entry first.
 # 2026-08-10
 
 - Added a same-origin Household Survey Explorer action to each linked monitoring survey header. The action preselects the survey country and round while leaving thematic-area selection to the Explorer landing step.
+
+# 2026-09-03 - Data access restructured around questionnaire generations
+
+- Replaced the `/data` "current versus archive" binary with an explicit
+  questionnaire-generation model. `REFERENCE_GENERATION` in
+  `src/services/protectedData.ts` names the generation shown first; older
+  generations render as collapsed archives carrying their own datasets and their
+  own field descriptions and codebooks.
+- Placed V3 in the reference slot. Its Phase 5 services are published but hold
+  simulated round-99 records, so every V3 entry is marked `preview` and the UI
+  says so on each card and above the section. Clear those flags when real survey
+  data replaces the test load, and verify none survive into a production build.
+- Implemented three access tiers: anonymous sees instructions, the access ladder,
+  the generations and the microdata routes but no dataset metadata; community
+  members see aggregated data, boundaries, documentation, tools and the full
+  microdata licence with the request form beneath it; household-data group
+  members additionally see the microdata datasets.
+- Added a provisioning notice for the roughly ten minutes between account
+  creation and automatic group assignment. Aggregated items restricted while
+  `capabilities.aggregatedData` is false is a provisioning window, not a
+  permission problem, and the previous generic copy told users who had done
+  everything right that they lacked access they already had.
+- Restored the microdata licence, which Hub 3.0 had lost entirely: confidentiality,
+  research and statistical use only, no commercial requesters, no redissemination.
+  Only the aggregated CC BY 4.0 licence was published before.
+- Made FAM the stated default route for microdata, with its publication lag and
+  the reason for it, and direct request the documented exception including its
+  evaluation time, institutional-email condition and one-year renewable term.
+- Added the public `/data/guide` route covering DIEM, the three generations, the
+  access tiers, aggregated data, microdata, documentation, boundaries,
+  methodology, the API, citation and both licence regimes. Retired the French and
+  Spanish PDF guides; all guidance now lives in the site so the two cannot drift.
+- Added `?country=ISO3&round=N` deep links to `/data/:datasetId`, resolved against
+  the layer schema and mirrored back into the URL. This is the entry contract
+  replacing the Monitoring dashboard's legacy
+  `/datasets/<itemId>/explore?filters=<base64>` links; repointing
+  `DATA_ACCESS_CONFIG.hubDatasetRoot` lives in the Monitoring repository.
+- Documentation held on another portal now carries `staticLink` and is never
+  resolved against ArcGIS, so a public cross-portal download can no longer
+  present itself as a failed availability check.
+- Verified: `npm run build` passes; anonymous `/data` and `/data/guide` render
+  with no console errors and no horizontal overflow at 375, 768 and 1280 px. The
+  authenticated tiers are unverified and need a real-account acceptance run.
+
+# 2026-09-03 - OAuth redirect derived from the serving origin
+
+- Removed the hardcoded `https://localhost:5173/oauth-callback.html` development
+  redirect. The redirect URI is now derived from `window.location.origin` in
+  development as well as production.
+- Why it mattered: whenever the page was served from any other port, the popup
+  landed on the hardcoded origin, which is cross-origin to its opener, and the
+  ArcGIS SDK's `postMessage` handshake died with "Blocked a frame with origin
+  ... from accessing a cross-origin frame" — an error that names no OAuth
+  concept and sends the reader towards the identity provider instead of the
+  port. Deriving the origin leaves an unregistered origin as the only failure
+  mode, which ArcGIS reports plainly.
+- Every development port in use must be registered as a redirect URL on the OAuth
+  application. 5173 and 5174 are both registered; `127.0.0.1` is a distinct
+  origin from `localhost` and would need its own entry.
+- Changed microdata grant duration from one year to one week, renewable, in the
+  workspace and the guide.
+
+# 2026-09-03 - Data workspace presentation and access-state corrections
+
+- Fixed a false provisioning alarm. The banner was derived from
+  `capabilities.aggregatedData`, so an account that could plainly see its
+  datasets was still told its privileges were activating. It now appears only
+  when no aggregated dataset resolved as available at all - the condition that
+  actually blocks someone - and its wording no longer asserts a cause it cannot
+  know.
+- Dataset cards now lead with the curated label rather than the live ArcGIS
+  title. Infrastructure services are named for the pipeline that builds them
+  (`diem_adm_repr_1_mview_noshape`), which is right there and unreadable here.
+  The live title is kept as a subdued monospace source line, so the underlying
+  service is never hidden. Long service names no longer overflow the card.
+- Removed the duplicated eyebrow. For an aggregated dataset the thematic layer
+  is the title again, so the eyebrow now carries the period, or the generation
+  and its period where no period is set.
+- Shortened the access chip so it stays on one line; the action control at the
+  foot of the card carries the longer explanation.
+- Aggregated and microdata grids now flow with `auto-fit`, so five thematic
+  layers no longer leave an orphan card on a second row.
+- Made the data access guide prominent on the anonymous page: a dedicated
+  "Start here" band above the access ladder, and the hero link promoted to a
+  secondary button. It was previously a plain text link and easy to miss.
+- Changed the gate eyebrow to "DIEM Household Monitoring System Data".
+- V3 documentation now states that field descriptions, the codebook and the
+  detailed metadata are in production, published with the first V3 survey, and
+  that older-generation documentation is for orientation only because the field
+  set and codes have changed. Same note added to the guide.
+- Added `STYLE_PREVIEW` in `src/pages/DataAccess.tsx`: a layout harness that
+  renders the authenticated workspace with fabricated resolutions so styling can
+  be reviewed without a session. It bypasses the access tiers, so it must stay
+  false outside a local styling pass. It is false.
+- Verified: `npm run build` passes; `/data` renders the anonymous gate with the
+  tiers restored, and no horizontal overflow at 375, 768 and 1280 px. The
+  authenticated layout was reviewed through the harness, not through a real
+  session; the tier behaviour itself still needs a real-account run.

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
@@ -19,6 +19,8 @@ import {
   fetchTablePreview,
   fieldIsNumeric,
   fieldIsText,
+  deepLinkFields,
+  filtersFromDeepLink,
   HUB_DOWNLOAD_FORMATS,
   hubDownloadRequest,
   resourceForDataset,
@@ -111,6 +113,7 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
 
 export default function DatasetExplorer() {
   const { datasetId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const auth = useAuth()
   const [definition, setDefinition] = useState<DatasetDefinition>()
   const [definitionError, setDefinitionError] = useState<string>()
@@ -146,14 +149,40 @@ export default function DatasetExplorer() {
     fetchDatasetDefinition(datasetId, auth.requestProtected)
       .then((result) => {
         if (!active) return
+        const layerFields = usableFields(result.layer.fields)
         setDefinition(result)
-        setDraftField(initialField(usableFields(result.layer.fields)))
+        setDraftField(initialField(layerFields))
+        // Apply an incoming ?country=&round= deep link once, when the schema is
+        // first known. Later filter edits own the URL, not the other way round,
+        // so this reads the address bar directly rather than subscribing to it.
+        const incoming = new URLSearchParams(window.location.search)
+        setFilters(filtersFromDeepLink(layerFields, {
+          country: incoming.get('country'),
+          round: incoming.get('round'),
+        }))
       })
       .catch((error: Error) => {
         if (active) setDefinitionError(error.message)
       })
     return () => { active = false }
   }, [auth.requestProtected, auth.status, datasetId])
+
+  // Keep the country and round filters addressable, so a filtered view can be
+  // shared and so a link handed to the dashboard round-trips back unchanged.
+  // Only these two filters are mirrored; arbitrary attribute filters stay local.
+  useEffect(() => {
+    if (!definition) return
+    const targets = deepLinkFields(fields)
+    const valueFor = (name?: string) => name
+      ? filters.find((filter) => filter.fieldName === name && filter.operator === 'equals')?.value
+      : undefined
+    const next = new URLSearchParams(searchParams)
+    const country = valueFor(targets.country?.name)
+    const round = valueFor(targets.round?.name)
+    if (country) next.set('country', country); else next.delete('country')
+    if (round) next.set('round', round); else next.delete('round')
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true })
+  }, [definition, fields, filters, searchParams, setSearchParams])
 
   useEffect(() => {
     if (!definition) return

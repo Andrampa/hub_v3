@@ -18,6 +18,7 @@
 | `docs/editor_guide.md` | Human-facing instructions for all country, popup, carousel, banner, and catalog curation |
 | `docs/catalog_categorization.md` | Whole-catalog category audit, Excel review, additive application and verification |
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
+| `docs/data_access_strategy.md` | Proposed `/data` restructure: questionnaire generations, publication-tier decision, microdata routing, phasing |
 | `docs/user_journeys.md` | Public discovery behavior |
 | `docs/development_workflow.md` | Commands and verification |
 | `docs/handoff.md` | Active unfinished work |
@@ -28,6 +29,7 @@
 - Catalog request/filter change: `architecture.md`, then `services_and_data.md`.
 - Country page or category change: `country_explorer.md`, then `country_editorial.md` when curation is involved, then `services_and_data.md`.
 - Microdata, aggregated downloads, guides, or protected items: `data_access.md`, then `authentication.md`.
+- Planning the `/data` rework or V3 data publication: `data_access_strategy.md`, then `data_access.md`.
 - ArcGIS endpoint work: `services_and_data.md`, then `service_manifest.md`.
 - Authentication or protected access: `authentication.md`, then `services_and_data.md`.
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.

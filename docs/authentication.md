@@ -9,7 +9,23 @@ DIEM Hub 3.0 accepts ArcGIS accounts that are enabled members of the FAO Data in
 - OAuth client ID: `7ZnjQhVHwjuYi1FM`
 - Community portal: `https://hqfao-hub.maps.arcgis.com`
 - Community organization ID: `D5aXW6TZFpeM2wke`
-- Development callback: `https://localhost:5173/oauth-callback.html`. Local sign-in must use this exact HTTPS origin; `127.0.0.1` and alternative ports are not registered redirect URLs.
+- Development callbacks: `https://localhost:5173/oauth-callback.html` and `https://localhost:5174/oauth-callback.html`.
+
+The redirect URI is always derived from `window.location.origin`, in development
+as well as production. It must never be hardcoded to one development port. When
+the page origin and the redirect origin differ — which is what a hardcoded port
+produces as soon as Vite falls back to another port, or a second server holds the
+usual one — the OAuth popup lands cross-origin to its opener and the SDK's
+`postMessage` handshake fails with an opaque frame-access error that says nothing
+about OAuth:
+
+> Failed to read a named property 'dispatchEvent' from 'Window': Blocked a frame
+> with origin "https://localhost:5173" from accessing a cross-origin frame.
+
+Deriving the origin means the only remaining failure is an unregistered origin,
+which ArcGIS reports plainly. Every development port actually used must be
+registered as a redirect URL on the OAuth application; `127.0.0.1` is a different
+origin from `localhost` and needs its own registration.
 
 The client ID is public application configuration. No client secret belongs in this browser application.
 
