@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-04 - Shorter homepage provenance line
+
+- The "DIEM in numbers" footnote no longer names or links the monitoring
+  statistics service, and no longer says evidence figures are read from the DIEM
+  Hub content group. It keeps the period the monitoring totals cover, the latest
+  publication date, the date the fixed country figure was verified, and that the
+  evidence figures are live.
+
 ## 2026-09-04 - Product hero legibility, and no empty overview
 
 - The product type on the blue hero was FAO blue on deep blue, a contrast of
