@@ -18,28 +18,23 @@
 .catalog-product-action:hover, .catalog-product-action:focus-visible { background: #fff; color: var(--deep-blue); }
 .catalog-product-action--secondary { border-color: rgba(255,255,255,.65); background: transparent; }
 .catalog-product-action-note { margin: 8px 0 0; font-size: var(--text-micro); }
-.catalog-product-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(290px, .65fr); gap: 44px; padding: clamp(36px, 5vw, 64px); background: #fff; }
-.catalog-product-description h2, .catalog-product-metadata h2 { margin: 9px 0 20px; color: var(--deep-blue); }
+.catalog-product-layout { display: grid; gap: 40px; padding: clamp(36px, 5vw, 64px); background: #fff; }
+.catalog-product-description h2, .catalog-product-facts h2, .catalog-product-citation h2 { margin: 9px 0 20px; color: var(--deep-blue); }
 .catalog-product-description :is(p, li) { color: var(--ink-muted); line-height: 1.75; }
 .catalog-product-description img { max-width: 100%; height: auto; }
-.catalog-product-metadata { align-self: start; padding: 26px; background: var(--line-faint); border-top: 4px solid var(--fao-blue); }
-.catalog-product-metadata dl { margin: 0; }
-.catalog-product-metadata dl > div { padding: 13px 0; border-top: 1px solid var(--line-soft); }
-.catalog-product-metadata dt { color: var(--ink-muted); font-size: var(--text-micro); letter-spacing: .08em; text-transform: uppercase; }
-.catalog-product-metadata dd { margin: 4px 0 0; overflow-wrap: anywhere; color: var(--deep-blue); }
+
 .catalog-product-editions { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line-soft); }
 .catalog-product-editions ul { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
 .catalog-product-editions a { display: block; padding: 8px 12px; border: 1px solid var(--fao-blue); color: var(--fao-blue); font-weight: 700; }
 .catalog-product-editions a[aria-current="page"] { background: var(--fao-blue); color: #fff; }
-.catalog-product-citation { margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
-.catalog-product-categories { margin-top: 25px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+
 .catalog-product-categories ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .catalog-product-categories li { padding: 6px 9px; background: #fff; border: 1px solid var(--line-soft); color: var(--deep-blue); font-size: var(--text-micro); font-weight: 700; }
-.catalog-product-citation p { color: var(--ink-muted); font-size: var(--text-small); line-height: 1.6; }
+
 .catalog-product-citation-languages { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
 .catalog-product-citation-languages button { padding: 5px 10px; border: 1px solid var(--line); background: #fff; color: var(--ink-faint); font-size: var(--text-small); font-weight: 700; cursor: pointer; }
 .catalog-product-citation-languages button[aria-pressed="true"] { border-color: var(--fao-blue); background: var(--fao-blue); color: #fff; }
-.catalog-product-citation-copy { padding: 9px 13px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); font-weight: 700; }
+
 .catalog-product-preview { padding: clamp(36px, 5vw, 64px); background: #e5ecf4; border-top: 1px solid #c8d8e5; }
 .catalog-product-preview-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; }
 .catalog-product-preview-heading h2 { margin: 9px 0 8px; color: var(--deep-blue); }
@@ -85,3 +80,28 @@
 .catalog-product-licence a { color: #fff; text-decoration: underline; }
 .catalog-product-licence summary { cursor: pointer; }
 .catalog-product-licence details span { display: block; margin-top: 6px; }
+
+/* Details as a band under the hero rather than a rail beside the overview.
+   Most products have no description - the overview is a line or a photo credit
+   - so the rail left a column of white space beside it and pushed the citation
+   below the fold. */
+.catalog-product-facts { padding: clamp(26px, 3.5vw, 40px) clamp(36px, 5vw, 64px); background: var(--line-faint); border-bottom: 1px solid var(--line-soft); }
+.catalog-product-facts dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px 34px; margin: 0; }
+.catalog-product-facts dt { color: var(--ink-muted); font-size: var(--text-micro); letter-spacing: .08em; text-transform: uppercase; }
+.catalog-product-facts dd { margin: 5px 0 0; overflow-wrap: anywhere; color: var(--deep-blue); font-size: var(--text-small); line-height: 1.5; }
+.catalog-product-facts dd code { font-size: var(--text-small); }
+.catalog-product-facts .catalog-product-categories { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+.catalog-product-facts .catalog-product-categories h2 { margin: 0 0 11px; color: var(--ink-muted); font-size: var(--text-micro); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+/* The citation is a wide block, so a 90-character persistent URL has room to
+   sit on one or two lines instead of breaking out of a narrow rail. */
+.catalog-product-citation { padding: 26px 28px; background: var(--line-faint); border-top: 4px solid var(--fao-blue); }
+.catalog-product-citation-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.catalog-product-citation h2 { margin: 0; }
+.catalog-product-citation p { max-width: 900px; margin: 16px 0 18px; overflow-wrap: anywhere; color: var(--ink-muted); font-size: var(--text-small); line-height: 1.65; }
+.catalog-product-citation-languages { margin: 0; }
+.catalog-product-citation-copy { padding: 9px 13px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); font-weight: 700; }
+
+@media (max-width: 720px) {
+  .catalog-product-citation { padding: 22px 20px; }
+}

@@ -9,7 +9,7 @@ import { formatDate } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
 import { CITATION_LANGUAGES, citationFor, citationRound, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { itemResourceAction, itemThumbnail } from '../services/arcgis'
-import { countryDefinition, fetchCurrentCatalogProduct, type CountryResource } from '../services/countries'
+import { countryDefinition, fetchCurrentCatalogProduct, pathwayLabel, type CountryResource } from '../services/countries'
 
 type ProductState =
   | { status: 'loading' }
@@ -214,6 +214,26 @@ export default function CatalogProduct() {
                 {item.thumbnail && <img src={itemThumbnail(item)} alt="" />}
               </header>
 
+              {/* Product details run across the page rather than down a column.
+                  Most products carry no description - the overview is one line
+                  or a photo credit - so a tall right-hand rail left a column of
+                  white space beside it and pushed the citation below the fold. */}
+              <section className="catalog-product-facts" aria-label="Product details">
+                <dl>
+                  <div><dt>Format</dt><dd>{item.type}</dd></div>
+                  <div><dt>Added to catalogue</dt><dd><time dateTime={new Date(item.created).toISOString()}>{formatDate(item.created)}</time></dd></div>
+                  <div><dt>Countries</dt><dd>{countries.length ? countries.map((country) => country.name).join(', ') : 'Not assigned'}</dd></div>
+                  <div><dt>Evidence pathway</dt><dd>{item.evidencePathways.map(pathwayLabel).join(', ') || 'Not assigned'}</dd></div>
+                  <div><dt>ArcGIS item ID</dt><dd><code>{item.id}</code></dd></div>
+                </dl>
+                {categories.length > 0 && (
+                  <div className="catalog-product-categories">
+                    <h2>Content categories</h2>
+                    <ul>{categories.map((category) => <li key={category}>{category}</li>)}</ul>
+                  </div>
+                )}
+              </section>
+
               <div className="catalog-product-layout">
                 <section className="catalog-product-description" aria-labelledby="about-product">
                   <span className="kicker">About this product</span>
@@ -232,22 +252,8 @@ export default function CatalogProduct() {
                   )}
                 </section>
 
-                <aside className="catalog-product-metadata" aria-label="Product details">
-                  <h2>Product details</h2>
-                  <dl>
-                    <div><dt>Format</dt><dd>{item.type}</dd></div>
-                    <div><dt>Added to catalogue</dt><dd><time dateTime={new Date(item.created).toISOString()}>{formatDate(item.created)}</time></dd></div>
-                    <div><dt>Countries</dt><dd>{countries.length ? countries.map((country) => country.name).join(', ') : 'Not assigned'}</dd></div>
-                    <div><dt>Evidence pathway</dt><dd>{item.evidencePathways.join(', ') || 'Not assigned'}</dd></div>
-                    <div><dt>ArcGIS item ID</dt><dd><code>{item.id}</code></dd></div>
-                  </dl>
-                  {categories.length > 0 && (
-                    <div className="catalog-product-categories">
-                      <h2>Content categories</h2>
-                      <ul>{categories.map((category) => <li key={category}>{category}</li>)}</ul>
-                    </div>
-                  )}
-                  <div className="catalog-product-citation">
+                <section className="catalog-product-citation" aria-labelledby="citation-heading">
+                  <div className="catalog-product-citation-head">
                     <h2 id="citation-heading">Citation</h2>
                     <div className="catalog-product-citation-languages" role="group" aria-label="Citation language">
                       {CITATION_LANGUAGES.map((language) => (
@@ -259,11 +265,12 @@ export default function CatalogProduct() {
                         >{language}</button>
                       ))}
                     </div>
-                    <p>{citation}</p>
-                    <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>{copied ? 'Citation copied' : 'Copy citation'}</button>
                   </div>
-                </aside>
+                  <p>{citation}</p>
+                  <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>{copied ? 'Citation copied' : 'Copy citation'}</button>
+                </section>
               </div>
+
               {item.type === 'PDF' && (
                 <section className="catalog-product-preview" aria-labelledby="product-preview-title">
                   <div className="catalog-product-preview-heading">

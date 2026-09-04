@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-04 - Product details run across the page
+
+- Product details and the citation move out of the right-hand rail into a band
+  under the hero and a wide block under the overview. Most products carry no
+  description - the overview is a line, or a photo credit - so a 910-pixel rail
+  stood beside a 127-pixel column of text, wasting the space and pushing the
+  citation below the fold. The page is about 500 pixels shorter for it.
+- A citation no longer breaks out of its frame. A persistent openknowledge or
+  DOI link is 60 to 90 unbroken characters, which a 290-pixel rail could not
+  hold; the block is now the width of the page and wraps anywhere in the string.
+- Evidence pathway in the details band reads its label, so a product shows
+  "Agricultural calendar" here as it does on its card.
+- Verified at 1200 and 390 px: no horizontal overflow, the citation text stays
+  inside its box, and the details band collapses to one column on a phone.
+
 ## 2026-09-04 - EVE gets its own citation, and citations get a durable link
 
 - EVE products cite **FAO DIEM - Events Visualization in Emergencies (EVE)**.
