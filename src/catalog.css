@@ -13,7 +13,7 @@
 .catalog-page .content-card { display: flex; flex-direction: column; }
 .catalog-page .card-image { height: 138px; }
 .catalog-page .card-body { display: flex; flex: 1; flex-direction: column; padding: 17px 18px 18px; }
-.catalog-page .card-context { font-size: 9px; }
+.catalog-page .card-context { font-size: var(--text-micro); }
 .catalog-page .card-body h3 {
   display: -webkit-box;
   min-height: 2.8em;
@@ -30,7 +30,7 @@
   min-height: 2.9em;
   margin: 0 0 12px;
   color: #606f74;
-  font-size: .72rem;
+  font-size: var(--text-small);
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -74,15 +74,15 @@
 .catalog-page .type-badge--unclassified { background: rgba(70, 88, 94, .82); font-style: italic; }
 
 .catalog-pathways { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 0; padding: 0; list-style: none; }
-.catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: #eef3f5; border-left: 3px solid #8a9aa0; color: #40595f; font-size: 9px; font-weight: 700; letter-spacing: .03em; }
-.catalog-pathway i { font-size: 10px; }
+.catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: #eef3f5; border-left: 3px solid #8a9aa0; color: #40595f; font-size: var(--text-micro); font-weight: 700; letter-spacing: .03em; }
+.catalog-pathway i { font-size: var(--text-small); }
 .catalog-pathway--regular-monitoring { border-left-color: var(--fao-blue); }
 .catalog-pathway--hazard-impact { border-left-color: var(--orange); }
 .catalog-pathway--research-analysis { border-left-color: var(--deep-blue); }
 .catalog-pathway--seasonal-calendar { border-left-color: #5792c9; }
 
 .catalog-pathway-filter { margin-bottom: 22px; padding: 7px; display: flex; flex-wrap: wrap; gap: 6px; background: #f1f5f7; border: 1px solid #dbe4e8; }
-.catalog-pathway-filter button { min-height: 40px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 10px; background: white; border: 1px solid transparent; color: #405961; cursor: pointer; font-size: 10px; font-weight: 700; }
+.catalog-pathway-filter button { min-height: 40px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 10px; background: white; border: 1px solid transparent; color: #405961; cursor: pointer; font-size: var(--text-small); font-weight: 700; }
 .catalog-pathway-filter button::before { content: ''; width: 4px; align-self: stretch; background: #8a9aa0; }
 .catalog-pathway-filter button strong { color: inherit; font-size: 12px; }
 .catalog-pathway-filter button[aria-pressed="true"] { background: var(--deep-blue); color: white; }
@@ -176,7 +176,7 @@
   background: #fff;
   border: 1px solid #b8b8b8;
 }
-.inline-search-caption { display: block; margin-bottom: 7px; color: #88969a; font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.inline-search-caption { display: block; margin-bottom: 7px; color: #88969a; font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 .inline-search { display: flex; align-items: center; gap: 8px; width: 100%; }
 .inline-search:focus-within { outline: 2px solid var(--fao-blue); outline-offset: 6px; }
 .inline-search input { flex: 1; min-width: 0; padding: 0; border: 0; background: transparent; outline: 0; color: #545454; font-size: 12px; }

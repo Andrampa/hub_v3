@@ -20,7 +20,7 @@
 }
 
 .monitoring-filters label { display: grid; gap: 7px; }
-.monitoring-filters label > span { color: #1c4767; font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.monitoring-filters label > span { color: #1c4767; font-size: var(--text-small); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
 .monitoring-filters input,
 .monitoring-filters select {
   width: 100%;
