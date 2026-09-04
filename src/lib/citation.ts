@@ -1,3 +1,4 @@
+import { itemRound } from './catalog'
 import { itemLanguage } from './productFamilies'
 import type { CountryResource, EvidencePathway } from '../services/countries'
 
@@ -19,6 +20,14 @@ interface SeriesName {
   Français: string
   Español: string
 }
+
+/**
+ * EVE is its own service under its own brand, not a hazard-impact product that
+ * happens to concern floods, so it is matched on product type before the
+ * pathway is consulted. The brand is not translated: it is a name.
+ */
+const EVE_SERIES = 'FAO DIEM - Events Visualization in Emergencies (EVE)'
+const EVE_PRODUCT_TYPES = ['EVE flood reports', 'DIEM EVE']
 
 /**
  * The programme series a product belongs to, named as the guide names it: the
@@ -66,7 +75,33 @@ export function productUrl(itemId: string) {
   return `https://data-in-emergencies.fao.org/catalog/${itemId}`
 }
 
+/**
+ * The durable address to cite. A DOI or an FAO Open Knowledge handle outlives
+ * this catalogue - deprecated items are removed from the content group as the
+ * Hub is built - so where a product has one, that is what a reference should
+ * carry. Everything else cites its Hub product page, the only stable address it
+ * has.
+ */
+const PERSISTENT_HOSTS = [/^https?:\/\/(dx\.)?doi\.org\//i, /^https?:\/\/openknowledge\.fao\.org\//i]
+
+export function citationUrl(item: CountryResource) {
+  const url = item.url?.trim()
+  return url && PERSISTENT_HOSTS.some((pattern) => pattern.test(url)) ? url : productUrl(item.id)
+}
+
+/**
+ * The round a citation should state. Taken from the product's own title where
+ * it is there, and otherwise from a sibling edition's: a French brief titled
+ * without its round is the same round as the English edition it is grouped
+ * with, and "DIEM-Monitoring, Niger" without a round describes fourteen
+ * documents.
+ */
+export function citationRound(item: CountryResource, siblings: CountryResource[] = []) {
+  return itemRound(item) ?? siblings.map((sibling) => itemRound(sibling)).find(Boolean)
+}
+
 function seriesFor(item: CountryResource, language: CitationLanguage) {
+  if (item.productTypes.some((type) => EVE_PRODUCT_TYPES.includes(type))) return EVE_SERIES
   const pathway = PATHWAY_PRIORITY.find((candidate) => item.evidencePathways.includes(candidate))
   return pathway ? SERIES_BY_PATHWAY[pathway][language] : undefined
 }
@@ -80,18 +115,25 @@ function accessDate(language: CitationLanguage, on: Date) {
   return `${PHRASES[language].cited} ${formatted}`
 }
 
-export function citationFor(item: CountryResource, language: CitationLanguage, on = new Date()) {
+export function citationFor(
+  item: CountryResource,
+  language: CitationLanguage,
+  { on = new Date(), round }: { on?: Date; round?: number } = {},
+) {
   const year = new Date(item.created).getUTCFullYear()
   const series = seriesFor(item, language)
   const phrases = PHRASES[language]
   const collection = 'Data in Emergencies (DIEM) Hub'
+  // Stated only when the title does not already say it: a citation reading
+  // "Round 4 (FR). Round 4." is worse than one that leaves the number out.
+  const roundSuffix = round && !itemRound(item) ? ` Round ${round}.` : ''
   const parts = [
     `FAO. ${year}.`,
-    `${item.title.trim()}.`,
+    `${item.title.trim()}.${roundSuffix}`,
     `${phrases.in}: ${series ? `${series}. ` : ''}${collection}.`,
     `${phrases.city}.`,
     `[${accessDate(language, on)}].`,
-    productUrl(item.id),
+    citationUrl(item),
   ]
   return parts.join(' ')
 }

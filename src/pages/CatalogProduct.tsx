@@ -7,7 +7,7 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
-import { CITATION_LANGUAGES, citationFor, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
+import { CITATION_LANGUAGES, citationFor, citationRound, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { itemResourceAction, itemThumbnail } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, type CountryResource } from '../services/countries'
 
@@ -18,6 +18,36 @@ type ProductState =
   | { status: 'error'; message: string }
 
 const PdfPreview = lazy(() => import('../components/PdfPreview').then((module) => ({ default: module.PdfPreview })))
+
+/**
+ * The licence a reuser needs before they download, rather than a paragraph of
+ * boilerplate. ArcGIS `licenseInfo` is free HTML and averages a few hundred
+ * bytes of it across the group, so a recognizable Creative Commons statement is
+ * reduced to its name and left as a link; anything else is offered as the
+ * publisher wrote it, behind a disclosure, and a product with no licence
+ * recorded says nothing rather than implying one.
+ */
+const CC_LICENCES: Array<{ pattern: RegExp; label: string; href: string }> = [
+  { pattern: /CC[\s-]?BY[\s-]?NC[\s-]?SA[\s-]?4/i, label: 'CC BY-NC-SA 4.0', href: 'https://creativecommons.org/licenses/by-nc-sa/4.0/' },
+  { pattern: /CC[\s-]?BY[\s-]?NC[\s-]?4/i, label: 'CC BY-NC 4.0', href: 'https://creativecommons.org/licenses/by-nc/4.0/' },
+  { pattern: /CC[\s-]?BY[\s-]?SA[\s-]?4/i, label: 'CC BY-SA 4.0', href: 'https://creativecommons.org/licenses/by-sa/4.0/' },
+  { pattern: /CC[\s-]?BY[\s-]?4|creativecommons\.org\/licenses\/by\/4/i, label: 'CC BY 4.0', href: 'https://creativecommons.org/licenses/by/4.0/' },
+  { pattern: /CC[\s-]?BY[\s-]?NC[\s-]?SA[\s-]?3(\.0)?[\s-]?IGO/i, label: 'CC BY-NC-SA 3.0 IGO', href: 'https://creativecommons.org/licenses/by-nc-sa/3.0/igo/' },
+  { pattern: /CC[\s-]?BY[\s-]?NC[\s-]?3(\.0)?[\s-]?IGO/i, label: 'CC BY-NC 3.0 IGO', href: 'https://creativecommons.org/licenses/by-nc/3.0/igo/' },
+  { pattern: /CC[\s-]?BY[\s-]?SA[\s-]?3(\.0)?[\s-]?IGO/i, label: 'CC BY-SA 3.0 IGO', href: 'https://creativecommons.org/licenses/by-sa/3.0/igo/' },
+  { pattern: /CC[\s-]?BY[\s-]?3|creativecommons\.org\/licenses\/by\/3/i, label: 'CC BY 3.0 IGO', href: 'https://creativecommons.org/licenses/by/3.0/igo/' },
+]
+
+function licenceFor(item: CountryResource) {
+  const raw = item.licenseInfo?.trim()
+  if (!raw) return undefined
+  const text = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!text) return undefined
+  const known = CC_LICENCES.find((licence) => licence.pattern.test(text))
+  return known
+    ? { label: known.label, href: known.href }
+    : { html: DOMPurify.sanitize(raw, { USE_PROFILES: { html: true } }) }
+}
 
 function publicCategories(item: CountryResource) {
   return [...new Set((item.groupCategories || [])
@@ -60,7 +90,6 @@ export default function CatalogProduct() {
   const [chosenCitationLanguage, setChosenCitationLanguage] = useState<CitationLanguage>()
   const citationLanguage = chosenCitationLanguage || (item ? defaultCitationLanguage(item) : 'English')
   const setCitationLanguage = setChosenCitationLanguage
-  const citation = item ? citationFor(item, citationLanguage) : undefined
   /**
    * A product page is the one URL on the Hub worth indexing per product, so it
    * carries structured data naming the publisher, the catalogue date and the
@@ -96,8 +125,13 @@ export default function CatalogProduct() {
     return groupProductFamilies([...catalog.items.filter((candidate) => candidate.id !== item.id), item])
       .find((candidate) => candidate.variants.some((variant) => variant.id === item.id))
   }, [catalog, item])
+  const citationSiblings = family?.variants.filter((variant) => variant.id !== item?.id) || []
+  const citation = item
+    ? citationFor(item, citationLanguage, { round: citationRound(item, citationSiblings) })
+    : undefined
   const countries = item?.countries.map(countryDefinition) || []
   const categories = item ? publicCategories(item) : []
+  const licence = item ? licenceFor(item) : undefined
   const description = item?.description
     ? DOMPurify.sanitize(item.description, { USE_PROFILES: { html: true } })
     : undefined
@@ -164,6 +198,18 @@ export default function CatalogProduct() {
                     </a>
                   )}
                   <p className="catalog-product-action-note">{item.type === 'PDF' ? 'Preview in the Hub or download the original file.' : 'Opens the authoritative resource in a new tab.'}</p>
+                  {licence && (
+                    <div className="catalog-product-licence">
+                      {'label' in licence && licence.label ? (
+                        <>Licence: <a href={licence.href} target="_blank" rel="noreferrer">{licence.label}</a></>
+                      ) : (
+                        <details>
+                          <summary>Licence and conditions of use</summary>
+                          <span dangerouslySetInnerHTML={{ __html: licence.html || '' }} />
+                        </details>
+                      )}
+                    </div>
+                  )}
                 </div>
                 {item.thumbnail && <img src={itemThumbnail(item)} alt="" />}
               </header>

@@ -81,3 +81,7 @@
   .catalog-pdf-toolbar > div { justify-content: space-between; }
   .catalog-pdf-canvas-wrap { height: 65vh; min-height: 420px; padding: 10px; }
 }
+.catalog-product-licence { margin: 6px 0 0; color: #cfe0e6; font-size: var(--text-small); line-height: 1.6; }
+.catalog-product-licence a { color: #fff; text-decoration: underline; }
+.catalog-product-licence summary { cursor: pointer; }
+.catalog-product-licence details span { display: block; margin-top: 6px; }

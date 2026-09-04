@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-09-04 - EVE gets its own citation, and citations get a durable link
+
+- EVE products cite **FAO DIEM - Events Visualization in Emergencies (EVE)**.
+  EVE is a service with its own brand, not a hazard-impact product that happens
+  to concern floods, so it is matched on product type before the pathway is
+  consulted, and the brand is not translated: it is a name.
+- A citation now carries the durable address where the product has one. A DOI or
+  an FAO Open Knowledge handle outlives this catalogue - deprecated items are
+  being removed from the content group as the Hub is built - so a reference
+  should carry it rather than a Hub link that may not resolve in five years. 402
+  products carry a publisher URL; the rest cite their Hub product page, which is
+  the only stable address they have.
+- A citation states the round when the product's own title does not, taken from
+  a sibling edition. "DIEM-Monitoring, Niger" without a round describes fourteen
+  documents, and a French edition titled without its number is the same round as
+  the English one it is grouped with.
+- The licence sits beside the download action, where a reuser needs it, rather
+  than in the citation string. A recognized Creative Commons statement is shown
+  as its name and linked - CC BY 4.0, CC BY-NC-SA 3.0 IGO and the other IGO
+  variants the group actually uses - and anything else is offered as the
+  publisher wrote it behind a disclosure. A product with no licence recorded
+  says nothing rather than implying one.
+- Verified on a monitoring brief, a hazard impact assessment, an EVE flood
+  report and a French edition. The browser check also caught a `<details>`
+  inside a `<p>`, which React reports as a hydration error; the wrapper is a
+  `<div>`.
+
 ## 2026-09-04 - Product citations in three languages
 
 - Product pages carry the three reference forms DIEM publishes, in English,
