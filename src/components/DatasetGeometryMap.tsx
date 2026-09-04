@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import L, { type GeoJSON as LeafletGeoJSON, type Layer } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
+import type { MapExtent } from '../services/dataExplorer'
 
 function propertyValue(properties: GeoJsonProperties | null, patterns: RegExp[]) {
   if (!properties) return undefined
@@ -37,19 +38,40 @@ function popupContent(properties: GeoJsonProperties | null) {
 export function DatasetGeometryMap({
   collection,
   totalCount,
+  truncated = false,
+  isLoadingView = false,
+  fitKey,
+  onExtentChange,
 }: {
   collection: FeatureCollection<Geometry, GeoJsonProperties>
   totalCount: number
+  /** The service had more features in this view than the map drew. */
+  truncated?: boolean
+  isLoadingView?: boolean
+  /**
+   * Changes when the filter changes, and only then. The map refits its extent
+   * on a new value; refitting on every collection would fight the user, because
+   * each pan or zoom loads a new collection.
+   */
+  fitKey?: string
+  onExtentChange?: (extent: MapExtent) => void
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | undefined>(undefined)
   const dataLayerRef = useRef<LeafletGeoJSON | undefined>(undefined)
+  const extentHandlerRef = useRef(onExtentChange)
+  const fittedKeyRef = useRef<string | undefined>(undefined)
   const [selected, setSelected] = useState<{ place: string; country?: string; round?: string }>()
   const [mapReady, setMapReady] = useState(false)
 
-  const previewNote = useMemo(() => collection.features.length < totalCount
-    ? `Showing ${collection.features.length.toLocaleString()} of ${totalCount.toLocaleString()} mapped records`
-    : `${collection.features.length.toLocaleString()} mapped records`, [collection.features.length, totalCount])
+  extentHandlerRef.current = onExtentChange
+
+  const shown = collection.features.length
+  const previewNote = useMemo(() => {
+    if (shown >= totalCount) return `${totalCount.toLocaleString()} mapped records`
+    if (truncated) return `Showing ${shown.toLocaleString()} of ${totalCount.toLocaleString()} mapped records`
+    return `All ${shown.toLocaleString()} features in view, of ${totalCount.toLocaleString()} matching records`
+  }, [shown, totalCount, truncated])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -73,9 +95,28 @@ export function DatasetGeometryMap({
       pane: 'diemReferencePane',
     }).addTo(map)
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map)
+
+    // Debounced so a drag or a pinch-zoom reports one extent, not thirty.
+    let pending: number | undefined
+    const reportExtent = () => {
+      window.clearTimeout(pending)
+      pending = window.setTimeout(() => {
+        const bounds = map.getBounds()
+        extentHandlerRef.current?.({
+          xmin: bounds.getWest(),
+          ymin: bounds.getSouth(),
+          xmax: bounds.getEast(),
+          ymax: bounds.getNorth(),
+        })
+      }, 450)
+    }
+    map.on('moveend zoomend', reportExtent)
+
     mapRef.current = map
     setMapReady(true)
     return () => {
+      window.clearTimeout(pending)
+      map.off('moveend zoomend', reportExtent)
       map.remove()
       mapRef.current = undefined
       dataLayerRef.current = undefined
@@ -86,7 +127,7 @@ export function DatasetGeometryMap({
     const map = mapRef.current
     if (!map || !mapReady) return
     dataLayerRef.current?.remove()
-    setSelected(undefined)
+    if (fittedKeyRef.current !== fitKey) setSelected(undefined)
     const layer = L.geoJSON(collection as FeatureCollection, {
       style: {
         color: '#f8fbfc',
@@ -117,9 +158,12 @@ export function DatasetGeometryMap({
     layer.bringToFront()
     dataLayerRef.current = layer
     const bounds = layer.getBounds()
-    if (bounds.isValid()) map.fitBounds(bounds, { padding: [32, 32], maxZoom: 7 })
+    if (bounds.isValid() && fittedKeyRef.current !== fitKey) {
+      fittedKeyRef.current = fitKey
+      map.fitBounds(bounds, { padding: [32, 32], maxZoom: 7 })
+    }
     window.setTimeout(() => map.invalidateSize(), 0)
-  }, [collection, mapReady])
+  }, [collection, fitKey, mapReady])
 
   function resetExtent() {
     const bounds = dataLayerRef.current?.getBounds()
@@ -137,6 +181,8 @@ export function DatasetGeometryMap({
         <strong>{selected?.place || previewNote}</strong>
         <span>{selected ? [selected.country, selected.round ? `Round ${selected.round}` : undefined].filter(Boolean).join(' · ') || 'Selected feature' : 'Select a feature to inspect its location and survey context.'}</span>
       </div>
+      {truncated && <p className="dataset-map-hint">Zoom closer to load more features in view.</p>}
+      {isLoadingView && <p className="dataset-map-hint dataset-map-hint--busy">Loading features for this view…</p>}
       <button type="button" className="dataset-map-reset" onClick={resetExtent}>Reset data extent</button>
       <div className="dataset-map-legend"><span /> Filtered DIEM features</div>
     </section>

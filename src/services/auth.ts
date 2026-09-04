@@ -153,6 +153,91 @@ async function validateCommunityUser(manager: ArcGISIdentityManager) {
   }
 }
 
+/**
+ * Cross-tab session handoff.
+ *
+ * The token lives in `sessionStorage`, which is per-tab, so opening a dataset
+ * in a new tab landed on the sign-in gate even though the user was signed in
+ * next door. Rather than move the token to `localStorage` -- which would
+ * persist it to disk across browser restarts and widen its exposure, against
+ * the storage invariant in `docs/authentication.md` -- a new tab asks the tabs
+ * already open for the session it should adopt.
+ *
+ * `BroadcastChannel` is same-origin only and lives in memory, so this adds no
+ * new place the token is written. A tab opened when nothing else is open still
+ * has to sign in, exactly as before.
+ */
+const SESSION_CHANNEL = 'diem-hub-3.session-handoff'
+const HANDOFF_TIMEOUT_MS = 700
+
+type HandoffMessage =
+  | { type: 'request' }
+  | { type: 'offer'; session: string }
+  | { type: 'signout' }
+
+function sessionChannel() {
+  return typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel(SESSION_CHANNEL)
+}
+
+const signOutListeners = new Set<() => void>()
+
+/** Notified when another tab signs out, so this tab does not keep a revoked session. */
+export function onRemoteSignOut(listener: () => void) {
+  signOutListeners.add(listener)
+  return () => { signOutListeners.delete(listener) }
+}
+
+let responder: BroadcastChannel | null = null
+
+/** Answer other tabs' requests for the session this tab holds. */
+export function startSessionSharing() {
+  if (responder) return () => {}
+  const channel = sessionChannel()
+  if (!channel) return () => {}
+  responder = channel
+  channel.onmessage = (event: MessageEvent<HandoffMessage>) => {
+    const message = event.data
+    if (message?.type === 'request') {
+      const serialized = sessionStorage.getItem(SESSION_KEY)
+      if (serialized) channel.postMessage({ type: 'offer', session: serialized } satisfies HandoffMessage)
+      return
+    }
+    if (message?.type === 'signout') {
+      sessionStorage.removeItem(SESSION_KEY)
+      for (const listener of signOutListeners) listener()
+    }
+  }
+  return () => {
+    channel.close()
+    responder = null
+  }
+}
+
+/** Ask any open tab for its session. Resolves to null when nobody answers. */
+function requestSessionFromPeers(): Promise<string | null> {
+  const channel = sessionChannel()
+  if (!channel) return Promise.resolve(null)
+  return new Promise((resolve) => {
+    const finish = (value: string | null) => {
+      window.clearTimeout(timer)
+      channel.close()
+      resolve(value)
+    }
+    const timer = window.setTimeout(() => finish(null), HANDOFF_TIMEOUT_MS)
+    channel.onmessage = (event: MessageEvent<HandoffMessage>) => {
+      if (event.data?.type === 'offer' && event.data.session) finish(event.data.session)
+    }
+    channel.postMessage({ type: 'request' } satisfies HandoffMessage)
+  })
+}
+
+function announceSignOut() {
+  const channel = sessionChannel()
+  if (!channel) return
+  channel.postMessage({ type: 'signout' } satisfies HandoffMessage)
+  channel.close()
+}
+
 function saveSession(manager: ArcGISIdentityManager) {
   sessionStorage.setItem(SESSION_KEY, manager.serialize())
 }
@@ -173,7 +258,7 @@ async function revokeQuietly(manager: ArcGISIdentityManager) {
 }
 
 export async function restoreSession(): Promise<AuthSession | null> {
-  const serialized = sessionStorage.getItem(SESSION_KEY)
+  const serialized = sessionStorage.getItem(SESSION_KEY) || await requestSessionFromPeers()
   if (!serialized) return null
 
   try {
@@ -197,6 +282,7 @@ export async function signIn(): Promise<AuthSession> {
 }
 
 export async function signOut(manager: ArcGISIdentityManager | null) {
+  announceSignOut()
   if (manager) await revokeQuietly(manager)
   else clearSession()
 }

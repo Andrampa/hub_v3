@@ -149,8 +149,9 @@ Authentication uses the separate community portal and OAuth client described in 
 - `fetchProtectedDataWorkspace`: permission-aware protected item inventory.
 - `authoritativeResourceUrl`: authenticated ArcGIS item details/download destination.
 - `fetchDatasetDefinition`, `fetchRecordCount`, `fetchTablePreview`, and `fetchGeometryPreview`: internal protected explorer requests.
-- `downloadCsv` and `downloadGeoJson`: browser-generated exports capped at 20,000 matching records.
-- `bulkDownloadScripts`: token-free Python/R templates that preserve the current filter and batch large ArcGIS queries by object ID.
+- `downloadCsv`, `downloadXlsx` and `downloadGeoJson`: browser-generated exports capped at 20,000 matching records.
+- `fetchFieldOptions`: distinct values for one attribute, from a coded-value domain where the field declares one and otherwise from an unfiltered `returnDistinctValues` query capped at `FILTER_OPTION_LIMIT`.
+- `bulkDownloadScripts`: Python/R templates that preserve the current filter and batch large ArcGIS queries by object ID. They prompt for community credentials at run time and exchange them for a token; no credential or token is embedded in the generated file.
 - `hubDownloadRequest`: authenticated bridge to the existing DIEM Hub packaged-download generator for formats that require server-side creation.
 - `itemThumbnail`: ArcGIS thumbnail URL.
 - `itemDestination`: published URL when present, otherwise ArcGIS item page.

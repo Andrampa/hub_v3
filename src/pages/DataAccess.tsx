@@ -16,6 +16,7 @@ import {
   REFERENCE_RESOURCES,
   authoritativeResourceUrl,
   fetchProtectedDataWorkspace,
+  protectedItemThumbnailUrl,
   resourcesForGeneration,
   type DataGeneration,
   type ProtectedDataResource,
@@ -108,11 +109,44 @@ function ResourceAction({ resource, label = 'Open and download' }: { resource: R
  * introduced. The live title is still shown, as a subdued source line, so the
  * underlying service is never hidden from anyone who needs it.
  */
+/**
+ * The item's own thumbnail, when it has a distinctive one.
+ *
+ * Protected item images need the session, so the bytes are fetched with the
+ * token in a header and shown from an object URL. The token therefore never
+ * appears in the `src`, and a card with no usable image simply renders as it
+ * did before rather than leaving a broken frame.
+ */
+function DatasetThumbnail({ resource }: { resource: ResolvedDataResource }) {
+  const auth = useAuth()
+  const [source, setSource] = useState<string>()
+  const url = protectedItemThumbnailUrl(resource.item)
+
+  useEffect(() => {
+    if (!url) return
+    let objectUrl: string | undefined
+    let active = true
+    auth.fetchProtectedImage(url).then((blob) => {
+      if (!active || !blob) return
+      objectUrl = URL.createObjectURL(blob)
+      setSource(objectUrl)
+    })
+    return () => {
+      active = false
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [auth, url])
+
+  if (!source) return null
+  return <div className="dataset-card-thumb"><img src={source} alt="" loading="lazy" /></div>
+}
+
 function DatasetCard({ resource, icon = 'table' }: { resource: ResolvedDataResource; icon?: IconName }) {
   const liveTitle = resource.item?.title
   const archived = resource.version !== REFERENCE_GENERATION
   return (
     <article className={`dataset-card${archived ? ' dataset-card--archived' : ''}`}>
+      <DatasetThumbnail resource={resource} />
       <div className="dataset-card-topline">
         <span className="dataset-icon"><Icon name={icon} /></span>
         <span className={`access-chip access-chip--${resource.access}`}><i />{statusCopy(resource)}</span>

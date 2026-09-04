@@ -2,9 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { request, type ArcGISIdentityManager } from '@esri/arcgis-rest-request'
 import {
   CommunityAccessError,
+  onRemoteSignOut,
   restoreSession,
   signIn as beginSignIn,
   signOut as endSession,
+  startSessionSharing,
   type CommunityUser,
 } from '../services/auth'
 
@@ -19,6 +21,11 @@ interface AuthContextValue {
   clearError: () => void
   requestProtected: <T>(url: string, params?: Record<string, unknown>) => Promise<T>
   downloadProtected: (url: string, params?: Record<string, unknown>) => Promise<Blob>
+  // Authenticated image fetch for item thumbnails. Separate from
+  // `downloadProtected`, which speaks the Hub export API's 202-polling
+  // protocol. The token travels in a header, never in the image URL, so it
+  // cannot leak through referrers, history or a copied `src`.
+  fetchProtectedImage: (url: string) => Promise<Blob | null>
   // Deliberate, narrow exception to "components never receive the token": the
   // embedded Monitoring dashboard is a separate origin that cannot read this
   // session, so MonitoringSystem hands it the raw token over an origin-pinned
@@ -72,6 +79,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CommunityUser | null>(null)
   const [manager, setManager] = useState<ArcGISIdentityManager | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Serve the session to tabs opened later, and follow a sign-out that
+  // happened in another tab so no tab keeps a revoked identity on screen.
+  useEffect(() => {
+    const stopSharing = startSessionSharing()
+    const stopListening = onRemoteSignOut(() => {
+      setManager(null)
+      setUser(null)
+      setStatus('anonymous')
+    })
+    return () => {
+      stopListening()
+      stopSharing()
+    }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -190,6 +212,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('The export could not be completed.')
   }, [manager, status])
 
+  const fetchProtectedImage = useCallback(async (url: string): Promise<Blob | null> => {
+      if (!manager || status !== 'authenticated') return null
+      try {
+        const token = await manager.getToken(manager.portal)
+        const response = await fetch(url, { headers: { 'X-Esri-Authorization': `Bearer ${token}` } })
+        if (!response.ok) return null
+        const blob = await response.blob()
+        // ArcGIS answers an unauthorized image request with a JSON error and a
+        // 200, so the content type is the only reliable check that this is one.
+        return blob.size && blob.type.startsWith('image/') ? blob : null
+      } catch {
+        // A decorative image is never worth surfacing an error for.
+        return null
+      }
+  }, [manager, status])
+
   const embedCredential = useCallback(async (): Promise<EmbedCredential | null> => {
       if (!manager || status !== 'authenticated') return null
       // getToken refreshes through the stored refresh token when the access
@@ -208,8 +246,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearError,
     requestProtected,
     downloadProtected,
+    fetchProtectedImage,
     embedCredential,
-  }), [clearError, downloadProtected, embedCredential, error, requestProtected, signIn, signOut, status, user])
+  }), [clearError, downloadProtected, embedCredential, error, fetchProtectedImage, requestProtected, signIn, signOut, status, user])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

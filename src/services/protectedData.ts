@@ -108,6 +108,20 @@ export interface ProtectedArcGISItem {
   licenseInfo?: string
   numViews?: number
   size?: number
+  thumbnail?: string
+}
+
+/**
+ * ArcGIS supplies a thumbnail for almost every item, but most DIEM data items
+ * carry a portal default or a shared per-country tile rather than anything that
+ * describes the dataset. Showing those makes a set of cards look identical and
+ * says nothing, so only a distinctive image earns the space.
+ */
+const GENERIC_THUMBNAILS = /^(thumbnail\/)?(ago_downloaded|thumbnail)\.(png|jpe?g|gif)$/i
+
+export function protectedItemThumbnailUrl(item?: ProtectedArcGISItem) {
+  if (!item?.thumbnail || GENERIC_THUMBNAILS.test(item.thumbnail)) return undefined
+  return `${DATA_REST}/content/items/${item.id}/info/${item.thumbnail}?w=400`
 }
 
 export interface ResolvedDataResource extends ProtectedDataResource {

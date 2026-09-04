@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-09-04 - Dataset explorer: map extent loading, download scope, cross-tab session
+
+- The map now loads geometry for the current extent rather than a fixed 250
+  features for the whole filter. Zooming into a crowded area spends the same
+  rendering budget on a smaller area, so features appear progressively instead
+  of the map showing the same arbitrary sample at every zoom. A hint says so
+  when what is drawn is a sample, and the map reframes only when the filter
+  changes, never on a pan.
+- The download panel states what a file will contain: the filtered record
+  count, or that no filters are applied and the file is the whole dataset.
+- Bulk Python/R scripts authenticate with the community username and password,
+  prompted for at run time, instead of a pasted token. A token expires within
+  the hour, so a long extraction could die halfway through and the user had to
+  find the token first; nothing sensitive is written into the script file.
+  Enterprise-SSO accounts cannot use this exchange and still need a token.
+- Dataset cards show the ArcGIS item thumbnail when the item has a distinctive
+  one. Portal defaults are suppressed, and the image is fetched with the token
+  in a header so it never appears in a URL.
+- A tab opened after sign-in adopts the session from a tab already open,
+  over a same-origin `BroadcastChannel`, instead of landing on the sign-in
+  gate. The token stays out of `localStorage` and cookies, so this adds no new
+  place it is persisted; sign-out is announced on the same channel.
+
+## 2026-09-04 - Dataset explorer: downloads, filter value lists, API links
+
+- Removed the item-`/data` API link. Hosted feature services carry no uploaded
+  data file, so `/sharing/rest/content/items/{id}/data?f=json` returned an
+  empty body for every explorer dataset. The row now offers the item-metadata
+  endpoint, which is what a scripter actually wants there.
+- Excel is now written in the browser instead of requested from the DIEM Hub
+  export generator, which cannot produce it. That generator serves only csv,
+  shapefile, geojson and kml, so Excel, File Geodatabase, GeoPackage and SQLite
+  were buttons that could never succeed -- and on a non-spatial table Excel was
+  the only button shown. The three remaining unsupported formats are withdrawn
+  until Phase 2 owns generation. `write-excel-file` loads as a lazy chunk, so
+  the library is fetched only when a user asks for a workbook.
+- Filter values are a dropdown wherever the attribute offers a bounded list,
+  taken from a coded-value domain where one exists and otherwise from an
+  unfiltered `returnDistinctValues` query capped at 500 options. The server
+  does the distinct, so the cost does not grow with table size; higher-cardinality
+  attributes fall back to the text input they had before.
+- Over the 20,000-record limit the download panel now explains why the limit
+  exists and lists the three routes that have no limit, rather than only saying
+  a filter is required.
+
 ## 2026-09-03 - Design review phase 2: readability, colour and orange
 
 - Put a readability floor under the type scale. 241 declarations sat between

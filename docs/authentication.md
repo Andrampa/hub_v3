@@ -36,7 +36,7 @@ The client ID is public application configuration. No client secret belongs in t
 3. ArcGIS shows the community organization login page. Its native **No account?** link creates an account in the same community.
 4. `oauth-callback.html` completes the code exchange.
 5. The app loads the signed-in ArcGIS user and requires `orgId === D5aXW6TZFpeM2wke` and `disabled !== true`.
-6. A valid identity is retained in `sessionStorage` for reloads in the same browser tab.
+6. A valid identity is retained in `sessionStorage` for reloads in the same browser tab. A tab opened later has no `sessionStorage` of its own, so it asks the tabs already open for the session over a same-origin `BroadcastChannel` before showing the sign-in gate, and adopts the first one offered. The token is still never written to `localStorage` or a cookie; when no other tab is open, the new tab signs in normally. A sign-out is announced on the same channel so no other tab keeps a revoked identity on screen.
 7. Sign-out revokes the ArcGIS session where possible and always removes local session data.
 
 The context exposes `requestProtected` for JSON requests and `downloadProtected` for binary export responses used by `/data`. Both closures retain the identity manager and token inside the provider; page components receive neither.
@@ -122,6 +122,8 @@ it, and only to feed this bridge.
 - Do not request protected data metadata before authentication or render stale protected state after sign-out.
 - Do not log serialized sessions, access tokens, refresh tokens, or OAuth callback query parameters.
 - Never place the ArcGIS token in the embedded dashboard's iframe URL, a cookie, or `localStorage`; the `postMessage` bridge is its only transport.
+- Never place the token in any URL, including image `src` attributes. Protected item thumbnails are fetched with an `X-Esri-Authorization` header through `fetchProtectedImage` and rendered from an object URL.
+- Cross-tab session handoff may use only same-origin, in-memory transport (`BroadcastChannel`). It must not introduce a new place the token is persisted.
 - Never let the embedded dashboard assert who the user is; it receives a credential, not a claim.
 - Account creation remains owned by the ArcGIS community organization.
 

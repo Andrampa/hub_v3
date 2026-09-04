@@ -8,20 +8,44 @@ import {
   type ResolvedDataResource,
 } from './protectedData'
 import { ALL_PROTECTED_DATA_RESOURCES } from './protectedData'
+import { COMMUNITY_PORTAL } from './auth'
 
 export const MAP_FEATURE_LIMIT = 250
 export const BROWSER_EXPORT_LIMIT = 20000
+
+/**
+ * How many distinct values a filter dropdown holds before the field falls back
+ * to free text.
+ *
+ * The option list is produced by the service with `returnDistinctValues`, so
+ * its cost is independent of table size: a five-million-record layer answers a
+ * distinct query on `adm0_name` with the same few hundred rows a small one
+ * does. The cap exists for the reader, not the server -- past a few hundred
+ * options a select is worse than typing. One extra value is always requested so
+ * a truncated list can be recognised instead of silently shortened.
+ */
+export const FILTER_OPTION_LIMIT = 500
 
 export interface ServiceLayerReference {
   id: number
   name: string
 }
 
+export interface CodedValue {
+  name: string
+  code: string | number
+}
+
+export interface FieldDomain {
+  type?: string
+  codedValues?: CodedValue[]
+}
+
 export interface FeatureField {
   name: string
   alias: string
   type: string
-  domain?: unknown
+  domain?: FieldDomain | null
 }
 
 export interface FeatureServiceInfo {
@@ -142,6 +166,64 @@ export function fieldIsText(field: FeatureField | undefined) {
   return /string|guid|globalid/i.test(field?.type || '')
 }
 
+export interface FieldOptions {
+  values: string[]
+  /** True when the field has more distinct values than a dropdown should hold. */
+  truncated: boolean
+}
+
+/**
+ * Options a field declares itself, with no query at all.
+ *
+ * A coded-value domain is the authoritative list for the field, so it is
+ * preferred over sampling distinct values: it is free, exact, and includes
+ * codes that happen to be unused in the current data.
+ */
+export function codedValueOptions(field: FeatureField | undefined): string[] | undefined {
+  const coded = field?.domain?.codedValues
+  if (!coded?.length) return undefined
+  return coded.map((entry) => String(entry.code))
+}
+
+/** Fields worth offering a value list for. Dates and blobs stay free entry. */
+export function fieldSupportsOptions(field: FeatureField | undefined) {
+  if (!field) return false
+  if (codedValueOptions(field)) return true
+  return fieldIsText(field) || /smallinteger|integer/i.test(field.type)
+}
+
+/**
+ * Distinct values for one attribute, for the filter dropdown.
+ *
+ * Deliberately unfiltered (`1=1`): the option list describes the dataset, not
+ * the current selection, so adding one filter must not silently empty the
+ * choices available for the next one.
+ */
+export async function fetchFieldOptions(
+  definition: DatasetDefinition,
+  field: FeatureField,
+  requester: ProtectedRequester,
+): Promise<FieldOptions> {
+  const coded = codedValueOptions(field)
+  if (coded) return { values: coded, truncated: false }
+
+  const response = await requester<QueryResponse>(`${definition.layerUrl}/query`, {
+    where: '1=1',
+    outFields: field.name,
+    returnDistinctValues: 'true',
+    returnGeometry: 'false',
+    orderByFields: field.name,
+    resultRecordCount: String(FILTER_OPTION_LIMIT + 1),
+  })
+  const values = (response.features || [])
+    .map((feature) => feature.attributes[field.name])
+    .filter((value) => value !== null && value !== undefined && String(value).trim() !== '')
+    .map((value) => String(value))
+  const unique = Array.from(new Set(values))
+  if (unique.length > FILTER_OPTION_LIMIT) return { values: [], truncated: true }
+  return { values: unique, truncated: false }
+}
+
 function escapeSql(value: string) {
   return value.replaceAll("'", "''")
 }
@@ -221,15 +303,49 @@ export async function fetchTablePreview(
   })
 }
 
+export interface MapExtent {
+  xmin: number
+  ymin: number
+  xmax: number
+  ymax: number
+}
+
+export interface GeometryPreview {
+  collection: GeoJsonResponse
+  /**
+   * The service had more features in this extent than the map asked for, so
+   * what is drawn is a sample. Zooming in shrinks the extent and lets the same
+   * budget cover everything inside it.
+   */
+  truncated: boolean
+}
+
+/**
+ * Geometry for the map, bounded by both the filter and the current view.
+ *
+ * The 250-feature budget is a rendering limit, not a data limit. Passing the
+ * map's extent means that budget is spent on what the user is actually looking
+ * at, so zooming into a crowded area progressively reveals every feature in it
+ * rather than showing the same arbitrary 250 for the whole filter.
+ */
 export async function fetchGeometryPreview(
   definition: DatasetDefinition,
   where: string,
   requester: ProtectedRequester,
-) {
-  if (definition.isTable || !definition.layer.geometryType) return { type: 'FeatureCollection', features: [] } as GeoJsonResponse
+  extent?: MapExtent,
+): Promise<GeometryPreview> {
+  if (definition.isTable || !definition.layer.geometryType) {
+    return { collection: { type: 'FeatureCollection', features: [] } as GeoJsonResponse, truncated: false }
+  }
   const response = await requester<EsriGeometryResponse>(`${definition.layerUrl}/query`, {
     f: 'json',
     where,
+    ...(extent ? {
+      geometry: JSON.stringify({ ...extent, spatialReference: { wkid: 4326 } }),
+      geometryType: 'esriGeometryEnvelope',
+      inSR: '4326',
+      spatialRel: 'esriSpatialRelIntersects',
+    } : {}),
     outFields: Array.from(new Set([
       definition.layer.objectIdField,
       definition.layer.displayField,
@@ -245,7 +361,13 @@ export async function fetchGeometryPreview(
     resultRecordCount: String(MAP_FEATURE_LIMIT),
     returnExceededLimitFeatures: 'false',
   })
-  return esriFeaturesToGeoJson(response)
+  return {
+    collection: esriFeaturesToGeoJson(response),
+    // The service is asked for exactly the budget, so a full page means there
+    // were at least that many; `exceededTransferLimit` is not set when the cap
+    // came from `resultRecordCount` rather than the layer's own maximum.
+    truncated: (response.features?.length || 0) >= MAP_FEATURE_LIMIT,
+  }
 }
 
 function normalizePosition(position: number[]) {
@@ -416,17 +538,71 @@ export async function downloadGeoJson(
   return new Blob([JSON.stringify(response)], { type: 'application/geo+json' })
 }
 
-export type HubDownloadFormat = 'csv' | 'shp' | 'geojson' | 'kml' | 'filegdb' | 'xlsx' | 'sqlite' | 'geopackage'
+/** Excel rejects the characters [ ] : * ? / \ in sheet names, and anything past 31 characters. */
+function excelSheetName(name: string) {
+  return name.replace(/[[\]:*?/\\]/g, ' ').trim().slice(0, 31) || 'Data'
+}
 
+/**
+ * Excel, built here rather than requested from the export service.
+ *
+ * The service cannot produce `.xlsx` at all, and Excel is the format
+ * non-GIS users ask for first, so it is assembled from the same paged
+ * attribute fetch that backs the CSV export. Field aliases become the header
+ * row because they are what the schema shows the reader, and numeric fields
+ * are written as numbers so totals and pivots work without re-typing columns.
+ * The 20,000-record cap applies for the same reason it applies to CSV: the
+ * whole result is held in memory before the file is written.
+ */
+export async function downloadXlsx(
+  definition: DatasetDefinition,
+  where: string,
+  count: number,
+  requester: ProtectedRequester,
+) {
+  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${BROWSER_EXPORT_LIMIT.toLocaleString()} records. Use the service API for a larger automated extraction.`)
+  const { default: writeXlsxFile } = await import('write-excel-file/browser')
+  const rows = await fetchAllAttributes(definition, where, requester, count)
+  const columns = usableFields(definition.layer.fields)
+
+  const header = columns.map((field) => ({
+    value: field.alias || field.name,
+    fontWeight: 'bold' as const,
+  }))
+  const body = rows.map((row) => columns.map((field) => {
+    const value = row[field.name]
+    if (value === null || value === undefined || value === '') return null
+    if (fieldIsNumeric(field) && typeof value === 'number' && Number.isFinite(value)) {
+      return { value, type: Number }
+    }
+    return { value: String(value), type: String }
+  }))
+
+  return writeXlsxFile([header, ...body], {
+    sheet: excelSheetName(definition.layer.name),
+    stickyRowsCount: 1,
+    columns: columns.map(() => ({ width: 22 })),
+  }).toBlob()
+}
+
+export type HubDownloadFormat = 'csv' | 'shp' | 'geojson' | 'kml'
+
+/**
+ * Formats the DIEM Hub export generator actually serves.
+ *
+ * The generator rejects anything outside this set with "Unsupported file
+ * format. Supported file formats are csv, shapefile, geojson, kml", so Excel,
+ * File Geodatabase, GeoPackage and SQLite were buttons that could never
+ * succeed. Excel is now produced in the browser by `downloadXlsx` instead; the
+ * remaining three are gone until Phase 2 owns generation and can offer them for
+ * real. CSV and GeoJSON stay listed because the type is shared with
+ * `hubDownloadRequest`, but the explorer builds both locally.
+ */
 export const HUB_DOWNLOAD_FORMATS: Array<{ format: HubDownloadFormat; label: string; spatial: boolean; route: string; extension: string }> = [
   { format: 'csv', label: 'CSV', spatial: false, route: 'csv', extension: 'csv' },
-  { format: 'xlsx', label: 'Excel', spatial: false, route: 'excel', extension: 'xlsx' },
   { format: 'shp', label: 'Shapefile', spatial: true, route: 'shapefile', extension: 'zip' },
   { format: 'geojson', label: 'GeoJSON', spatial: true, route: 'geojson', extension: 'geojson' },
   { format: 'kml', label: 'KML / KMZ', spatial: true, route: 'kml', extension: 'kmz' },
-  { format: 'filegdb', label: 'File Geodatabase', spatial: true, route: 'filegdb', extension: 'zip' },
-  { format: 'geopackage', label: 'GeoPackage', spatial: true, route: 'geoPackage', extension: 'gpkg' },
-  { format: 'sqlite', label: 'SQLite', spatial: true, route: 'sqlite', extension: 'sqlite' },
 ]
 
 const DIEM_HUB_DOWNLOAD_API = 'https://data-in-emergencies.fao.org/api/download/v1/items'
@@ -448,14 +624,10 @@ function startsWithBytes(bytes: Uint8Array, signature: number[]) {
 export async function validatePackagedDownload(blob: Blob, format: HubDownloadFormat) {
   const bytes = new Uint8Array(await blob.slice(0, 16).arrayBuffer())
   const isZip = startsWithBytes(bytes, [0x50, 0x4b])
-  const isSqlite = new TextDecoder().decode(bytes).startsWith('SQLite format 3')
   const beginning = new TextDecoder().decode(bytes).trimStart().toLowerCase()
 
-  if (['xlsx', 'shp', 'filegdb'].includes(format) && !isZip) {
+  if (format === 'shp' && !isZip) {
     throw new Error('The export service did not return the expected packaged file.')
-  }
-  if (['geopackage', 'sqlite'].includes(format) && !isSqlite) {
-    throw new Error('The export service did not return a valid SQLite-based file.')
   }
   if (format === 'kml') {
     if (isZip) return { blob, extension: 'kmz' }
@@ -479,34 +651,73 @@ export function apiLinks(definition: DatasetDefinition, where: string) {
     layer: definition.layerUrl,
     query: `${definition.layerUrl}/query?${query}`,
     item: `${DATA_PORTAL}/home/item.html?id=${definition.resource.id}`,
-    itemData: `${DATA_REST}/content/items/${definition.resource.id}/data?f=json`,
+    itemMetadata: `${DATA_REST}/content/items/${definition.resource.id}?f=json`,
   }
 }
 
+/**
+ * Bulk extraction scripts, for results past the browser download limit.
+ *
+ * The scripts authenticate with the community username and password rather
+ * than a pasted token: a token expires within the hour, so a long extraction
+ * could die halfway through, and the user had to go and find the token first.
+ * Credentials are prompted for at run time and never written into the file, so
+ * a copied script can be shared or committed without leaking anything. This
+ * exchange only works for ArcGIS built-in community accounts; an account
+ * federated through enterprise SSO has no password to present here.
+ */
 export function bulkDownloadScripts(definition: DatasetDefinition, where: string) {
   const queryUrl = `${definition.layerUrl}/query`
+  const tokenUrl = `${COMMUNITY_PORTAL}/sharing/rest/generateToken`
   const filename = `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-bulk.csv`
   const python = `# DIEM bulk attribute download (Python 3, standard library only)
-# Set a short-lived access token before running:
-# Windows PowerShell: $env:DIEM_ACCESS_TOKEN="your-token"
+#
+# Run it and enter your DIEM community username and password when prompted.
+# The password is read without echoing and is never stored in this file.
+# Accounts that sign in through enterprise SSO cannot use this exchange.
 import csv
+import getpass
 import json
-import os
 import urllib.parse
 import urllib.request
 
+TOKEN_URL = ${JSON.stringify(tokenUrl)}
 QUERY_URL = ${JSON.stringify(queryUrl)}
 WHERE = ${JSON.stringify(where)}
 OUTPUT = ${JSON.stringify(filename)}
-TOKEN = os.environ["DIEM_ACCESS_TOKEN"]
+REFERER = ${JSON.stringify(COMMUNITY_PORTAL)}
 
-def service_post(parameters):
-    body = urllib.parse.urlencode({"f": "json", "token": TOKEN, **parameters}).encode()
-    with urllib.request.urlopen(QUERY_URL, body) as response:
+
+def post(url, parameters):
+    body = urllib.parse.urlencode({"f": "json", **parameters}).encode()
+    with urllib.request.urlopen(url, body) as response:
         payload = json.load(response)
     if "error" in payload:
         raise RuntimeError(payload["error"])
     return payload
+
+
+def sign_in():
+    username = input("DIEM community username: ").strip()
+    password = getpass.getpass("Password: ")
+    result = post(TOKEN_URL, {
+        "username": username,
+        "password": password,
+        "referer": REFERER,
+        "expiration": 120,
+    })
+    token = result.get("token")
+    if not token:
+        raise RuntimeError("The portal did not return a token for these credentials.")
+    return token
+
+
+TOKEN = sign_in()
+
+
+def service_post(parameters):
+    return post(QUERY_URL, {"token": TOKEN, **parameters})
+
 
 id_result = service_post({"where": WHERE, "returnIdsOnly": "true"})
 object_ids = id_result.get("objectIds", [])
@@ -527,43 +738,69 @@ if rows:
 print(f"Saved {len(rows):,} records to {OUTPUT}")
 `
   const r = `# DIEM bulk attribute download (R)
+#
 # Packages: install.packages(c("httr", "jsonlite"))
-# Set a short-lived token before running:
-# Sys.setenv(DIEM_ACCESS_TOKEN="your-token")
+# Optional, for a non-echoing password prompt: install.packages("askpass")
+# Run it and enter your DIEM community username and password when prompted.
+# The password is not stored in this file.
+# Accounts that sign in through enterprise SSO cannot use this exchange.
 library(httr)
 library(jsonlite)
 
+token_url <- ${JSON.stringify(tokenUrl)}
 query_url <- ${JSON.stringify(queryUrl)}
 where <- ${JSON.stringify(where)}
 output <- ${JSON.stringify(filename)}
-token <- Sys.getenv("DIEM_ACCESS_TOKEN")
-if (token == "") stop("Set DIEM_ACCESS_TOKEN before running this script.")
+referer <- ${JSON.stringify(COMMUNITY_PORTAL)}
 
-service_post <- function(parameters) {
-  response <- POST(query_url, body = c(list(f="json", token=token), parameters), encode="form")
+post_json <- function(url, parameters) {
+  response <- POST(url, body = c(list(f = "json"), parameters), encode = "form")
   stop_for_status(response)
-  payload <- fromJSON(content(response, as="text", encoding="UTF-8"), simplifyVector=TRUE)
-  if (!is.null(payload$error)) stop(toJSON(payload$error, auto_unbox=TRUE))
+  payload <- fromJSON(content(response, as = "text", encoding = "UTF-8"), simplifyVector = TRUE)
+  if (!is.null(payload$error)) stop(toJSON(payload$error, auto_unbox = TRUE))
   payload
 }
 
-id_result <- service_post(list(where=where, returnIdsOnly="true"))
+sign_in <- function() {
+  username <- trimws(readline("DIEM community username: "))
+  password <- if (requireNamespace("askpass", quietly = TRUE)) {
+    askpass::askpass("Password: ")
+  } else {
+    readline("Password (visible): ")
+  }
+  result <- post_json(token_url, list(
+    username = username,
+    password = password,
+    referer = referer,
+    expiration = 120
+  ))
+  if (is.null(result$token)) stop("The portal did not return a token for these credentials.")
+  result$token
+}
+
+token <- sign_in()
+
+service_post <- function(parameters) {
+  post_json(query_url, c(list(token = token), parameters))
+}
+
+id_result <- service_post(list(where = where, returnIdsOnly = "true"))
 object_ids <- unlist(id_result$objectIds)
 pages <- list()
 if (length(object_ids) > 0) {
-  for (start in seq(1, length(object_ids), by=1000)) {
+  for (start in seq(1, length(object_ids), by = 1000)) {
     batch <- object_ids[start:min(start + 999, length(object_ids))]
     page <- service_post(list(
-      objectIds=paste(batch, collapse=","),
-      outFields="*",
-      returnGeometry="false"
+      objectIds = paste(batch, collapse = ","),
+      outFields = "*",
+      returnGeometry = "false"
     ))
     pages[[length(pages) + 1]] <- page$features$attributes
   }
 }
 result <- if (length(pages)) do.call(rbind, pages) else data.frame()
-write.csv(result, output, row.names=FALSE, fileEncoding="UTF-8")
-message(sprintf("Saved %s records to %s", format(nrow(result), big.mark=","), output))
+write.csv(result, output, row.names = FALSE, fileEncoding = "UTF-8")
+message(sprintf("Saved %s records to %s", format(nrow(result), big.mark = ","), output))
 `
   return { python, r }
 }

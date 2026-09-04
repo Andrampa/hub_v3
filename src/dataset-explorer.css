@@ -150,3 +150,17 @@
   .dataset-map-legend { display: none; }
   .dataset-table-section { padding: 23px 14px; }
 }
+
+/* Filter value lists and the over-limit download guidance. */
+.filter-option-note { margin: 0 20px 14px; color: var(--ink-muted); font-size: var(--text-micro); line-height: 1.5; }
+.download-alternatives { margin: 0 0 15px; padding: 13px 14px; border-left: 3px solid var(--orange); background: #fff5eb; }
+.download-alternatives strong { display: block; color: var(--deep-blue); font-size: var(--text-small); }
+.download-alternatives p { margin: 6px 0 0; color: var(--ink-muted); font-size: var(--text-micro); line-height: 1.5; }
+.download-alternatives ol { margin: 9px 0 0; padding-left: 18px; display: grid; gap: 7px; }
+.download-alternatives li { color: var(--ink-muted); font-size: var(--text-micro); line-height: 1.5; }
+.download-alternatives li strong { display: inline; color: var(--deep-blue); }
+.download-alternatives-note { border-top: 1px solid #f0ddc6; margin-top: 11px; padding-top: 9px; }
+.download-scope { margin: 0 0 4px; padding: 8px 10px; border-left: 3px solid #cbd8d6; background: #f7faf9; color: var(--ink-muted); font-size: var(--text-micro); line-height: 1.5; }
+.download-scope strong { color: var(--deep-blue); }
+.dataset-map-hint { position: absolute; left: 12px; bottom: 52px; z-index: 500; margin: 0; padding: 5px 9px; border-radius: 3px; background: rgba(255, 255, 255, .93); box-shadow: 0 1px 4px rgba(20, 50, 60, .22); color: var(--ink-muted); font-size: var(--text-micro); }
+.dataset-map-hint--busy { bottom: 82px; color: var(--deep-blue); }
