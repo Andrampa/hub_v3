@@ -1,5 +1,6 @@
-import { NO_SUMMARY_LABEL, distinctSummary, formatDate, itemEdition } from '../lib/catalog'
-import { distinctThumbnail, itemDestination, itemThumbnail } from '../services/arcgis'
+import { Link } from 'react-router-dom'
+import { distinctSummary, formatDate, itemEdition } from '../lib/catalog'
+import { distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
   EVIDENCE_PATHWAYS,
@@ -36,7 +37,7 @@ export function CatalogContentCard({
   // image alone cannot tell one product in a series from the next. The round is
   // marked on those cards; a thumbnail that is unique to its product is left clean.
   const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
-  const destination = itemDestination(item)
+  const destination = itemProductPath(item)
   const product = item.productTypes[0] || 'Unclassified'
   const pathways = EVIDENCE_PATHWAYS.filter((pathway) => (
     family.variants.some((variant) => variant.evidencePathways.includes(pathway))
@@ -55,11 +56,9 @@ export function CatalogContentCard({
 
   return (
     <article className="content-card">
-      <a
+      <Link
         className={`card-image card-image--${accent}`}
-        href={destination}
-        target="_blank"
-        rel="noreferrer"
+        to={destination}
         aria-label={`Open ${item.title}`}
       >
         {thumbnail
@@ -67,7 +66,7 @@ export function CatalogContentCard({
           : <span className="card-image-plate">{edition}</span>}
         {thumbnail && edition && <span className="card-edition">{edition}</span>}
         <span className={`type-badge${product === 'Unclassified' ? ' type-badge--unclassified' : ''}`}>{product}</span>
-      </a>
+      </Link>
       <div className="card-body">
         {/* `created` is when the product entered the catalogue. `modified` is the
             last edit to the ArcGIS record, which bulk re-categorization rewrites,
@@ -87,8 +86,8 @@ export function CatalogContentCard({
             ))}
           </ul>
         )}
-        <h3><a href={destination} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
-        <p className={summary ? undefined : 'card-summary--absent'}>{summary || NO_SUMMARY_LABEL}</p>
+        <h3><Link to={destination}>{item.title.trim()}</Link></h3>
+        {summary && <p>{summary}</p>}
         <div className="card-footer">
           <span className="catalog-country" title={countryLabel}>
             {visibleCountries.length > 0 && (
@@ -108,9 +107,9 @@ export function CatalogContentCard({
             <ul aria-labelledby={`languages-${item.id}`}>
               {family.languages.map(({ language, item: variant }) => (
                 <li key={variant.id}>
-                  <a href={itemDestination(variant)} target="_blank" rel="noreferrer">
+                  <Link to={itemProductPath(variant)}>
                     {language}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

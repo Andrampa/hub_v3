@@ -31,6 +31,7 @@ export interface GenerationProfile {
  * derives its whole structure from this value.
  */
 export const REFERENCE_GENERATION: DataGeneration = 'v3'
+export const ADMIN_REFERENCE_DATASET_ID = '3596c3ad318849068eda21517ade30be'
 
 export const GENERATIONS: Record<DataGeneration, GenerationProfile> = {
   v3: {
@@ -305,7 +306,7 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
 
 export const REFERENCE_RESOURCES: ProtectedDataResource[] = [
   {
-    id: '3596c3ad318849068eda21517ade30be',
+    id: ADMIN_REFERENCE_DATASET_ID,
     version: 'v3',
     fallbackTitle: 'Current administrative reference boundaries',
     description: 'Operational ADM1 and ADM2 reference boundaries currently used by DIEM surveys.',

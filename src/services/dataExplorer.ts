@@ -337,6 +337,7 @@ export async function fetchGeometryPreview(
   if (definition.isTable || !definition.layer.geometryType) {
     return { collection: { type: 'FeatureCollection', features: [] } as GeoJsonResponse, truncated: false }
   }
+  const availableFieldNames = new Set(definition.layer.fields.map((field) => field.name.toLowerCase()))
   const response = await requester<EsriGeometryResponse>(`${definition.layerUrl}/query`, {
     f: 'json',
     where,
@@ -346,6 +347,9 @@ export async function fetchGeometryPreview(
       inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects',
     } : {}),
+    // Some long-lived ArcGIS views retain a stale displayField after their
+    // schema changes. Asking for that missing field rejects the whole geometry
+    // query, so only send names that still exist in the live layer schema.
     outFields: Array.from(new Set([
       definition.layer.objectIdField,
       definition.layer.displayField,
@@ -353,7 +357,7 @@ export async function fetchGeometryPreview(
         .filter((field) => /^(adm[0-2]_(name|iso3)|adm_name|country|name)$/i.test(field.name))
         .slice(0, 8)
         .map((field) => field.name),
-    ].filter(Boolean))).join(',') || '*',
+    ].filter((name): name is string => !!name && availableFieldNames.has(name.toLowerCase())))).join(',') || '*',
     returnGeometry: 'true',
     outSR: '4326',
     geometryPrecision: '4',
@@ -673,17 +677,22 @@ export function bulkDownloadScripts(definition: DatasetDefinition, where: string
   const python = `# DIEM bulk attribute download (Python 3, standard library only)
 #
 # Run it and enter your DIEM community username and password when prompted.
-# The password is read without echoing and is never stored in this file.
+# The password is masked in a terminal or a small dialog and is never stored.
 # Accounts that sign in through enterprise SSO cannot use this exchange.
 import csv
 import getpass
 import json
+import sys
 import urllib.parse
 import urllib.request
 
 TOKEN_URL = ${JSON.stringify(tokenUrl)}
 QUERY_URL = ${JSON.stringify(queryUrl)}
 WHERE = ${JSON.stringify(where)}
+# Easy filter examples: remove the leading # from one line, then edit its value.
+# Text values need single quotes inside the SQL expression.
+# WHERE = "adm0_ISO3 = 'AFG'"
+# WHERE = "adm0_ISO3 = 'AFG' AND round = 1"
 OUTPUT = ${JSON.stringify(filename)}
 REFERER = ${JSON.stringify(COMMUNITY_PORTAL)}
 
@@ -697,9 +706,32 @@ def post(url, parameters):
     return payload
 
 
+def read_password():
+    # IDLE replaces stdin with a shell stream that cannot disable echo, which
+    # makes getpass warn and can expose the password. Use a masked standard-
+    # library dialog there, while retaining the normal terminal prompt in a
+    # command prompt, PowerShell or Unix shell.
+    if getattr(sys.stdin, "isatty", lambda: False)() and getattr(sys.stderr, "isatty", lambda: False)():
+        return getpass.getpass("Password: ")
+    try:
+        import tkinter as tk
+        from tkinter import simpledialog
+        root = tk.Tk()
+        root.withdraw()
+        try:
+            password = simpledialog.askstring("DIEM community sign-in", "Password:", show="*", parent=root)
+        finally:
+            root.destroy()
+        if password is None:
+            raise KeyboardInterrupt("Password entry cancelled.")
+        return password
+    except ImportError:
+        return getpass.getpass("Password: ")
+
+
 def sign_in():
     username = input("DIEM community username: ").strip()
-    password = getpass.getpass("Password: ")
+    password = read_password()
     result = post(TOKEN_URL, {
         "username": username,
         "password": password,
@@ -750,6 +782,10 @@ library(jsonlite)
 token_url <- ${JSON.stringify(tokenUrl)}
 query_url <- ${JSON.stringify(queryUrl)}
 where <- ${JSON.stringify(where)}
+# Easy filter examples: remove the leading # from one line, then edit its value.
+# Text values need single quotes inside the SQL expression.
+# where <- "adm0_ISO3 = 'AFG'"
+# where <- "adm0_ISO3 = 'AFG' AND round = 1"
 output <- ${JSON.stringify(filename)}
 referer <- ${JSON.stringify(COMMUNITY_PORTAL)}
 

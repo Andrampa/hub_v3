@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
+import { ADMIN_REFERENCE_DATASET_ID } from '../services/protectedData'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { DatasetGeometryMap } from '../components/DatasetGeometryMap'
 import { SiteFooter } from '../components/SiteFooter'
@@ -389,6 +390,7 @@ export default function DatasetExplorer() {
                   <span className="dataset-info-type">{definition.resource.item?.type || (definition.isTable ? 'Feature Table' : 'Feature Layer')}</span>
                   <h2 id="dataset-about-heading">{definition.resource.item?.title || definition.resource.fallbackTitle}</h2>
                   <p className="dataset-info-owner">Published by <strong>{definition.resource.item?.owner || 'FAO DIEM'}</strong></p>
+                  {datasetId !== ADMIN_REFERENCE_DATASET_ID && <p className="dataset-admin-reference">Join geographic fields using the official ADM codes. <Link to={`/data/${ADMIN_REFERENCE_DATASET_ID}`}>Open the administrative reference boundaries <ExplorerIcon name="arrow"/></Link></p>}
                   <p>{definition.resource.item?.snippet || definition.resource.description}</p>
                   <div className="dataset-info-actions"><a href="#dataset-table">View data table</a><a href="#dataset-download">Download options</a></div>
                   <a className="dataset-arcgis-link" href={links?.item} target="_blank" rel="noreferrer">View full dataset details <ExplorerIcon name="external"/></a>
@@ -455,7 +457,7 @@ export default function DatasetExplorer() {
               </aside>
               <div className="dataset-results-panel">
                 <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : `Previewing ${previewRows.length.toLocaleString()} records`}</span><span>{definition.layer.name}</span></div>
-                {!definition.isTable && (isMapLoading ? <div className="dataset-map-loading"><span className="loader"/><strong>Loading map geometry</strong><p>The data table remains available while spatial features load.</p></div> : geometry ? <DatasetGeometryMap collection={geometry} totalCount={count || 0} truncated={geometryTruncated} isLoadingView={isMapLoading} fitKey={where} onExtentChange={setMapExtent} /> : <div className="dataset-map-unavailable"><strong>Map preview is temporarily unavailable.</strong><p>{mapError || 'The service did not return geometry for the current filters.'}</p></div>)}
+                {!definition.isTable && (geometry ? <DatasetGeometryMap collection={geometry} totalCount={count || 0} truncated={geometryTruncated} isLoadingView={isMapLoading} fitKey={where} onExtentChange={setMapExtent} /> : isMapLoading ? <div className="dataset-map-loading"><span className="loader"/><strong>Loading map geometry</strong><p>The data table remains available while spatial features load.</p></div> : <div className="dataset-map-unavailable"><strong>Map preview is temporarily unavailable.</strong><p>{mapError || 'The service did not return geometry for the current filters.'}</p></div>)}
                 <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {fields.length.toLocaleString()} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <div className="dataset-table-scroll"><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</div>}</section>
               </div>
             </section>

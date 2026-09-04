@@ -110,3 +110,41 @@ export function distinctThumbnail(item: ArcGISItem, index: Set<string>) {
 export function itemDestination(item: ArcGISItem) {
   return item.url || `${ARCGIS_PORTAL}/home/item.html?id=${item.id}`
 }
+
+const DIRECT_FILE_TYPES = new Set([
+  'CSV',
+  'Image',
+  'Microsoft Excel',
+  'Microsoft Powerpoint',
+  'PDF',
+  'Shapefile',
+])
+
+/** Stable Hub URL for every product discovery surface. */
+export function itemProductPath(item: Pick<ArcGISItem, 'id'>) {
+  return `/catalog/${item.id}`
+}
+
+/** The authoritative resource action exposed from a membership-checked page. */
+export function itemResourceAction(item: ArcGISItem) {
+  if (item.url) {
+    return {
+      href: item.url,
+      label: /^https?:\/\/(?:www\.)?arcgis\.com\//i.test(item.url)
+        ? 'Open ArcGIS application'
+        : 'Open resource',
+    }
+  }
+  if (DIRECT_FILE_TYPES.has(item.type)) {
+    return {
+      href: `${REST_ROOT}/content/items/${item.id}/data`,
+      label: item.type === 'Image'
+        ? 'View Image'
+        : `Download ${item.type}`,
+    }
+  }
+  return {
+    href: `${ARCGIS_PORTAL}/home/item.html?id=${item.id}`,
+    label: 'View in ArcGIS',
+  }
+}

@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useId, useMemo, useRef, useState, type For
 import { useNavigate } from 'react-router-dom'
 import { buildCatalogSearchIndex, extractItemIds, searchCatalog, searchCountries } from '../lib/catalogSearch'
 import type { ProductFamily } from '../lib/productFamilies'
-import { itemDestination } from '../services/arcgis'
+import { itemProductPath } from '../services/arcgis'
 import type { CountryResource, CountrySummary } from '../services/countries'
 
 interface Suggestion {
@@ -10,9 +10,8 @@ interface Suggestion {
   kind: 'country' | 'product' | 'all'
   label: string
   detail: string
-  /** Internal route, or an external product URL opened in a new tab. */
+  /** Internal route. */
   to?: string
-  href?: string
   /** inline only: apply this country as a filter rather than navigating. */
   iso3?: string
 }
@@ -91,7 +90,7 @@ export function CatalogSearchBox({
         kind: 'product' as const,
         label: family.primary.title.trim(),
         detail: family.primary.productTypes[0] || family.primary.type,
-        href: itemDestination(family.primary),
+        to: itemProductPath(family.primary),
       })),
     ]
     if (!items.length) return []
@@ -128,7 +127,6 @@ export function CatalogSearchBox({
     setOpen(false)
     if (suggestion.iso3) onCountrySelect?.(suggestion.iso3)
     else if (suggestion.to) navigate(suggestion.to)
-    else if (suggestion.href) window.open(suggestion.href, '_blank', 'noopener,noreferrer')
   }
 
   const submit = (event: FormEvent) => {

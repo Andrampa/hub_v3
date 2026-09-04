@@ -138,7 +138,7 @@ function DatasetThumbnail({ resource }: { resource: ResolvedDataResource }) {
   }, [auth, url])
 
   if (!source) return null
-  return <div className="dataset-card-thumb"><img src={source} alt="" loading="lazy" /></div>
+  return <div className={`dataset-card-thumb${resource.kind === 'microdata' ? ' dataset-card-thumb--microdata' : ''}`}><img src={source} alt="" loading="lazy" /></div>
 }
 
 function DatasetCard({ resource, icon = 'table' }: { resource: ResolvedDataResource; icon?: IconName }) {

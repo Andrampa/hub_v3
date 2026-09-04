@@ -102,9 +102,6 @@ export function distinctSummary(item: ArcGISItem) {
   return foldedTitle.includes(foldedSummary) || foldedSummary.includes(foldedTitle) ? '' : summary
 }
 
-/** Shown in place of a summary, so a thin record reads as thin rather than as an instruction. */
-export const NO_SUMMARY_LABEL = 'No description in the catalogue record.'
-
 /**
  * The part of a title that distinguishes one product from its siblings.
  *

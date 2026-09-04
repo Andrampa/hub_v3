@@ -25,7 +25,9 @@ The initial release is a static single-page app with no custom backend or databa
 3. The service reads the total and requests remaining 100-item pages.
 4. The UI derives overview counts or authoritative group-category assignments.
 5. Search and filters operate locally over the loaded public catalog.
-6. Item cards open the authoritative resource URL or ArcGIS item page.
+6. General catalogue and country-product cards open `/catalog/:id`. That route
+   rechecks current Hub-group membership before exposing the authoritative file,
+   external resource or ArcGIS application action.
 
 The homepage derives its moving Latest evidence strip, focused evidence cards
 and publication figures from the already-loaded public catalog. The complete
@@ -41,6 +43,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 
 - `src/App.tsx`: homepage pathways, recent evidence, programme figures and campaign state.
 - `src/pages/Catalog.tsx`: complete public-catalog search, URL-backed filters, sorting and pagination.
+- `src/pages/CatalogProduct.tsx`: membership-checked public product detail,
+  authoritative resource action, language editions, metadata and citation.
 - `src/hooks/useCatalog.ts`: shared public-catalog loading, retry and abort lifecycle.
 - `src/main.tsx`: browser routing and lazy-loaded country screens.
 - `src/pages/CountryExplorer.tsx`: map, region filters, search, and directory.
@@ -86,6 +90,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
 - `src/data-access.css`: data workspace visual and responsive behavior.
 - `src/services/arcgis.ts`: portal constants, pagination, fetch validation, resource URLs.
+- `src/catalog-product.css`: responsive public product-detail presentation and
+  unavailable/error states.
 - `src/services/auth.ts`: OAuth configuration, session lifecycle, and community validation.
 - `src/auth/AuthContext.tsx`: React authentication states and actions.
 - `src/lib/catalog.ts`: metadata cleanup, dates, and provisional classification.

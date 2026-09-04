@@ -181,6 +181,18 @@ The decision is to defer the DIEM-owned large-export backend to Phase 2. Phase 1
 
 The dataset map now uses Leaflet with public ArcGIS light-gray base/reference tiles, pan/zoom, filtered-extent reset, feature hover/click details and a Hub-style item/layer metadata stack. Reference tiles are held in a dedicated pane below vector geometry. Leaflet's renderer classes are excluded from the global icon SVG rule; without that exclusion the vector canvas is clipped to `1.15em` and features appear missing even though bounds are valid. Build verification passes, but the authenticated map, filters, generated scripts and real downloads still need a human acceptance test because the Codex in-app browser has no DIEM community session.
 
+On 2026-09-04 the extent-loading loop was fixed by keeping the existing Leaflet
+map mounted while a new extent query runs. Geometry requests now also discard a
+stale ArcGIS `displayField` unless it exists in the live field schema; this is
+required by administrative reference item `3596c3ad318849068eda21517ade30be`,
+whose layer 0 advertises missing field `admin2Name_en`. Its equivalent corrected
+public query returned 250 polygons successfully. Generated Python bulk scripts
+now use a masked Tk dialog under IDLE and `getpass` in a real terminal. FileGDB
+was not exposed: the live DIEM v1 `/filegdb` route returns 404, ArcGIS item
+export is owner/admin-only, and this reference service has Sync disabled. The
+required authenticated acceptance pass remains the two dataset routes named
+above, plus running a newly generated Python script from IDLE.
+
 ## Resume Checklist
 
 1. Run `git status --short`.

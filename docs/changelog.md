@@ -1,5 +1,55 @@
 # Changelog
 
+## 2026-09-04 - Membership-checked catalogue product pages
+
+- Added stable `/catalog/:id` product pages with title, summary, sanitized full
+  description, format, catalogue date, countries, evidence pathway, ArcGIS item
+  ID, language editions and a copyable citation.
+- Product routes perform a fresh targeted search against the authoritative Hub
+  content group and require the discoverable-product category. Withdrawn,
+  unshared or demoted items now fail on the Hub with a clear unavailable state
+  instead of sending readers to a bare ArcGIS 403 response.
+- Uploaded PDF, Excel, PowerPoint, image, shapefile and CSV products expose the
+  direct ArcGIS file endpoint after that check. Publisher URLs and ArcGIS
+  applications retain their authoritative destinations, with action labels
+  that make the click behaviour explicit.
+- Catalogue cards, product search suggestions, country resource cards and
+  country editorial highlights now use the internal product route in the same
+  tab, removing the ArcGIS detour and duplicate new-tab navigation.
+- Product navigation resets to the top of the new route. Product details omit
+  the internal publisher account, expose cleaned content-group categories but
+  not catalogue-role controls, and direct readers without a description to the
+  resource itself. Cards with no useful summary now leave it out and let long
+  country names use the available footer width instead of truncating them.
+- Added an opt-in PDF.js preview below the product details. It lazy-loads the
+  authoritative ArcGIS file only after the reader requests it, renders one page
+  at a time with paging and zoom controls, can be hidden again, and keeps direct
+  View PDF links visible if loading or rendering fails. A native iframe was
+  rejected after the live endpoint confirmed `X-Frame-Options: SAMEORIGIN`;
+  ArcGIS permits the cross-origin byte-range requests used by PDF.js.
+- Made Preview PDF, rather than the ArcGIS file URL, the primary PDF action in
+  the product hero. The preview opens and scrolls into view; every external PDF
+  action is now accurately labelled Download PDF because ArcGIS serves the file
+  with `Content-Disposition: attachment`.
+- Verified `npm run build`, a live public PDF route and direct `/data` action,
+  citation copying, and the unavailable-product state in the local browser.
+
+## 2026-09-04 - Dataset explorer: stable maps and safe IDLE password entry
+
+- Added ready-to-uncomment country and country/round filter examples to both
+  generated bulk scripts, and linked every dataset explorer to the current
+  administrative reference boundaries for ADM-code joins.
+- Changed microdata card artwork to a contained, left-aligned thumbnail so the
+  V1/V2 images are shown without being enlarged and heavily cropped.
+- Kept the Leaflet dataset map mounted while extent queries run, preventing the
+  load/unmount/refit loop after pan and zoom.
+- Made geometry previews ignore stale ArcGIS `displayField` metadata that does
+  not exist in the live layer schema, restoring the administrative-boundary map.
+- Made generated Python bulk-download scripts use a masked password dialog in
+  IDLE while retaining `getpass` in a real terminal.
+- Documented why File Geodatabase remains unavailable until the Phase 2 export
+  service rather than presenting a download route the current Hub API rejects.
+
 ## 2026-09-04 - Audit: where a product click goes
 
 Documentation only; recorded as an addendum in

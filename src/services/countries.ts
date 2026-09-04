@@ -225,7 +225,7 @@ function normalizeItem(item: ArcGISItem) {
   }
 }
 
-function searchUrl(start: number) {
+function searchUrl(start: number, query?: string) {
   const params = new URLSearchParams({
     f: 'json',
     num: String(PAGE_SIZE),
@@ -233,15 +233,30 @@ function searchUrl(start: number) {
     sortField: 'modified',
     sortOrder: 'desc',
   })
+  if (query) params.set('q', query)
   return `${REST_ROOT}/content/groups/${CONTENT_GROUP_ID}/search?${params}`
 }
 
-async function fetchPage(start: number): Promise<GroupSearchResponse> {
-  const response = await fetch(searchUrl(start))
+async function fetchPage(start: number, query?: string): Promise<GroupSearchResponse> {
+  const response = await fetch(searchUrl(start, query))
   if (!response.ok) throw new Error(`Country catalog request failed (${response.status})`)
   const data = await response.json() as GroupSearchResponse
   if (data.error) throw new Error(data.error.message)
   return data
+}
+
+/**
+ * Resolves a product from the live Hub group rather than the catalogue cache.
+ * A public ArcGIS item that has left the group must not remain discoverable via
+ * a copied Hub URL, even when its item metadata is still public.
+ */
+export async function fetchCurrentCatalogProduct(id: string): Promise<CountryResource | undefined> {
+  if (!/^[a-f0-9]{32}$/i.test(id)) return undefined
+  const response = await fetchPage(1, `id:${id}`)
+  const exact = response.results.find((item) => item.id.toLowerCase() === id.toLowerCase())
+  if (!exact) return undefined
+  const normalized = normalizeItem(exact)
+  return normalized.discoverable ? normalized.item : undefined
 }
 
 function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummary {
@@ -388,7 +403,7 @@ async function requestCatalog(): Promise<CountryCatalog> {
   const firstPage = await fetchPage(1)
   const starts: number[] = []
   for (let start = PAGE_SIZE + 1; start <= firstPage.total; start += PAGE_SIZE) starts.push(start)
-  const remaining = await Promise.all(starts.map(fetchPage))
+  const remaining = await Promise.all(starts.map((start) => fetchPage(start)))
   const normalized = [firstPage, ...remaining]
     .flatMap((page) => page.results)
     .map(normalizeItem)

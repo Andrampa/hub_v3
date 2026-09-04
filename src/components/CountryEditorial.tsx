@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import DOMPurify from 'dompurify'
+import { Link } from 'react-router-dom'
 import { formatDate } from '../lib/catalog'
-import { itemDestination, itemThumbnail } from '../services/arcgis'
+import { itemProductPath, itemThumbnail } from '../services/arcgis'
 import type { CountryEditorialContent } from '../services/countryEditorial'
 
 interface CountryEditorialProps {
@@ -94,9 +95,9 @@ export function CountryEditorial({ countryName, content }: CountryEditorialProps
                       </div>
                     )}
                     <article className="country-highlight-card">
-                      <a className="country-highlight-image" href={itemDestination(item)} target="_blank" rel="noreferrer">
+                      <Link className="country-highlight-image" to={itemProductPath(item)}>
                         {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : <span aria-hidden="true">DIEM</span>}
-                      </a>
+                      </Link>
                       <div className="country-highlight-body">
                         <div className="country-highlight-meta">
                           <span>{item.productTypes[0] || item.type}</span>
@@ -111,7 +112,7 @@ export function CountryEditorial({ countryName, content }: CountryEditorialProps
                           />
                         )}
                         <div className="country-highlight-footer">
-                          <a href={itemDestination(item)} target="_blank" rel="noreferrer">{ctaLabel} <span aria-hidden="true">↗</span></a>
+                          <Link to={itemProductPath(item)}>{ctaLabel}</Link>
                         </div>
                       </div>
                     </article>

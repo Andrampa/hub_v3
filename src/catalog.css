@@ -38,7 +38,8 @@
 .catalog-page .card-footer { margin-top: auto; padding-top: 11px; }
 .catalog-page .card-footer > span { max-width: 100%; }
 .catalog-country { display: flex; min-width: 0; align-items: center; gap: 7px; }
-.catalog-country > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.catalog-country > span:last-child { min-width: 0; line-height: 1.35; overflow-wrap: anywhere; }
+.content-card .card-footer > .catalog-country { max-width: 100%; white-space: normal; }
 .catalog-country-flags { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 3px; }
 .catalog-country-flags .flag { width: 20px; height: 15px; min-height: 0; margin: 0; border: 1px solid rgba(84, 84, 84, .18); background-position: center; background-size: cover; }
 .catalog-page .card-languages { margin-top: 9px; padding-top: 9px; }
@@ -117,7 +118,6 @@
   letter-spacing: -.02em;
   line-height: 1.1;
 }
-.card-summary--absent { font-style: italic; opacity: .7; }
 .catalog-pathway-filter--unassigned::before { background: #b0bcc1 !important; }
 
 /* Skeleton grid shown while the content group is being paged. It occupies the

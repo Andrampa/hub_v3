@@ -9,13 +9,13 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
-import { NO_SUMMARY_LABEL, distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
+import { distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
   groupProductFamilies,
   type ProductFamily,
 } from '../lib/productFamilies'
-import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemDestination, itemThumbnail } from '../services/arcgis'
+import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
 import {
   fetchCountryEditorial,
   type CountryEditorialContent,
@@ -67,13 +67,13 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
   }
   return (
     <article className="country-resource-card">
-      <a className="country-resource-image" href={itemDestination(item)} target="_blank" rel="noreferrer" aria-label={`Open ${item.title}`}>
+      <Link className="country-resource-image" to={itemProductPath(item)} aria-label={`Open ${item.title}`}>
         {thumbnail
           ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
           : <span className="card-image-plate">{edition}</span>}
         {thumbnail && edition && <span className="card-edition">{edition}</span>}
         <span className="country-product-badge">{product}</span>
-      </a>
+      </Link>
       <div className="country-resource-body">
         <div className="country-resource-meta"><span>{item.type}</span><time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time></div>
         {pathways.length > 0 && (
@@ -86,8 +86,8 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
             ))}
           </ul>
         )}
-        <h3><a href={itemDestination(item)} target="_blank" rel="noreferrer">{item.title.trim()}</a></h3>
-        <p className={summary ? undefined : 'card-summary--absent'}>{summary || NO_SUMMARY_LABEL}</p>
+        <h3><Link to={itemProductPath(item)}>{item.title.trim()}</Link></h3>
+        {summary && <p>{summary}</p>}
         <div className="country-resource-footer">
           <span className="country-resource-country-flags" aria-hidden="true">
             {assignedCountries.slice(0, 2).map((entry) => <i className={`flag flag-small flag-${entry.iso3.toLowerCase()}`} key={entry.iso3} />)}
@@ -101,7 +101,7 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
             <ul aria-labelledby={`country-languages-${item.id}`}>
               {family.languages.map(({ language, item: variant }) => (
                 <li key={variant.id}>
-                  <a href={itemDestination(variant)} target="_blank" rel="noreferrer">{language}</a>
+                  <Link to={itemProductPath(variant)}>{language}</Link>
                 </li>
               ))}
             </ul>

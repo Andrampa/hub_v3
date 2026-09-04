@@ -17,6 +17,9 @@
 .dataset-info-stack h2 { margin: 7px 0 8px; color: var(--deep-blue); font-size: 19px; line-height: 1.2; letter-spacing: -.02em; }
 .dataset-info-stack > p { margin: 10px 0 0; color: var(--ink-muted); font-size: var(--text-small); line-height: 1.55; }
 .dataset-info-stack .dataset-info-owner { margin-top: 0; color: #536b74; }
+.dataset-info-stack > .dataset-admin-reference { margin-top: 14px; padding: 11px 12px; border-left: 3px solid var(--fao-blue); background: #f2f6f5; color: #536b74; }
+.dataset-admin-reference a { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; color: var(--fao-blue); font-weight: 700; }
+.dataset-admin-reference a svg { width: 13px; }
 .dataset-info-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 15px; }
 .dataset-info-actions a { padding: 8px 5px; border: 1px solid #71a9bd; color: var(--fao-blue); font-size: var(--text-micro); font-weight: 700; text-align: center; }
 .dataset-info-actions a:first-child { background: var(--fao-blue); color: white; }

@@ -8,6 +8,7 @@ import './assets/fao/fao-theme.min.css'
 import './styles.css'
 import './hub-home.css'
 import './catalog.css'
+import './catalog-product.css'
 import './promotions.css'
 import './countries.css'
 import './programme-pages.css'
@@ -16,6 +17,7 @@ import './fao-adaptation.css'
 
 const CountryExplorer = lazy(() => import('./pages/CountryExplorer'))
 const Catalog = lazy(() => import('./pages/Catalog'))
+const CatalogProduct = lazy(() => import('./pages/CatalogProduct'))
 const CountryDetail = lazy(() => import('./pages/CountryDetail'))
 const DataAccess = lazy(() => import('./pages/DataAccess'))
 const DataGuide = lazy(() => import('./pages/DataGuide'))
@@ -41,6 +43,7 @@ createRoot(document.getElementById('root')!).render(
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/catalog" element={<Catalog />} />
+            <Route path="/catalog/:itemId" element={<CatalogProduct />} />
             <Route path="/countries" element={<CountryExplorer />} />
             <Route path="/countries/:iso3" element={<CountryDetail />} />
             <Route path="/data" element={<DataAccess />} />

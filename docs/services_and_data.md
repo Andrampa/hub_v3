@@ -2,7 +2,25 @@
 
 ## Runtime Data Principle
 
-ArcGIS Online is authoritative. The browser fetches current metadata on every application load and retains it only in memory.
+ArcGIS Online is authoritative. The browser may use the bounded session cache
+documented below as a fast first render, while background and route-specific
+requests revalidate against ArcGIS.
+
+Public product deep links use `/catalog/:id`. The product route does not trust
+the session catalogue cache as proof of continued publication: it performs a
+targeted search against the live Hub content group and requires the exact
+`Catalog role/Discoverable product` category. A missing, unshared or demoted
+item renders the Hub's unavailable state and exposes no resource link.
+
+For a verified product, `itemResourceAction` resolves uploaded PDF, Excel,
+PowerPoint, image, shapefile and CSV items to the ArcGIS `/data` endpoint;
+items with a publisher URL retain that URL; other ArcGIS item types retain the
+ArcGIS item page. ArcGIS remains authoritative and enforces file sharing.
+Verified PDF products may also be previewed through a lazy-loaded PDF.js viewer
+on their Hub page. ArcGIS blocks cross-origin framing with
+`X-Frame-Options: SAMEORIGIN`, but allows the CORS and byte-range requests used
+by the renderer. The preview is opt-in, renders one page at a time, and never
+replaces the direct resource link.
 
 ## Main Service / Data Configuration
 

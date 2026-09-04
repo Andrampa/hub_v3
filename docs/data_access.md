@@ -134,6 +134,9 @@ not been done yet.
 - Authenticated hero: user identity and count of resources available to that account.
 - `/data/:datasetId`: internal dataset explorer for supported microdata, aggregated data and boundary resources.
 - Explorer: real ArcGIS service geometry where available, interactive labelled basemap with selectable features and extent controls, live item/layer metadata, recommended country/round filters, matching-record count, table preview, copyable service/query URLs, and current-filter downloads.
+- Every dataset explorer links to the current administrative reference boundary
+  dataset so analysts can join survey and aggregate records to the matching
+  ADM geometry through the published administrative codes.
 - Microdata: FAM as the default route with its publication lag, direct request as the exception, the full microdata licence, and the datasets themselves only at tier 3.
 - Aggregated data: reference generation expanded, older generations as collapsed archives with their own documentation.
 - Documentation: field descriptions, codebooks and SDMX metadata per generation, plus the questionnaire catalogue.
@@ -155,7 +158,14 @@ The application resolves the configured ArcGIS item to its feature service and l
 
 Every portal download format is disabled while the current filtered result exceeds 20,000 records. The filter selector prioritizes country and survey-round fields, and the download panel explains whether the current result is ready or needs further filtering. When the result is over the limit the panel replaces the buttons' explanation with the routes that have no such limit: narrowing to a country and round, the bulk Python/R scripts, and direct service queries. CSV, Excel and GeoJSON are generated directly in the browser from bounded, authenticated feature-service queries. Shapefile and KML/KMZ use the existing DIEM Hub `/api/download/v1/items/{itemId}/{format}` generator with the selected layer and current `where` clause; that generator serves only csv, shapefile, geojson and kml, so Excel, File Geodatabase, GeoPackage and SQLite are no longer offered through it. The request uses `AuthContext.downloadProtected`; tokens are never exposed to page components or forwarded outside the Hub origin. The provider follows the documented `202` status URL until a file is ready, rejects HTML/JSON/empty responses as files, and the explorer verifies ZIP and KML signatures before starting the browser download. Availability still depends on the source item's ArcGIS Hub export settings, so every format requires an authenticated acceptance test and returns an explicit error when generation is unavailable.
 
-For bulk extraction, the explorer generates downloadable and copyable Python and R scripts. Each script includes the current filter, requests object IDs first, queries records in 1,000-ID batches and writes a CSV. The scripts prompt for the DIEM community username and password at run time and exchange them for a token through `generateToken`, so nothing sensitive is written into the file and a long extraction does not die when a pasted token expires. Credentials are never embedded by the portal and never leave the user's machine except to the community portal. This exchange requires an ArcGIS built-in community account; accounts federated through enterprise SSO have no password to present and must supply a token instead.
+For bulk extraction, the explorer generates downloadable and copyable Python and R scripts. Each script includes the current filter, plus commented examples for an `adm0_ISO3 = 'AFG'` country filter and a combined country/round filter that a new user can enable and edit. It requests object IDs first, queries records in 1,000-ID batches and writes a CSV. The scripts prompt for the DIEM community username and password at run time and exchange them for a token through `generateToken`, so nothing sensitive is written into the file and a long extraction does not die when a pasted token expires. The Python script uses `getpass` in a real terminal and a masked standard-library dialog under IDLE, whose shell cannot suppress password echo. Credentials are never embedded by the portal and never leave the user's machine except to the community portal. This exchange requires an ArcGIS built-in community account; accounts federated through enterprise SSO have no password to present and must supply a token instead.
+
+File Geodatabase cannot currently be offered as a Hub download. Although some
+source FeatureServer definitions advertise `filegdb`, ArcGIS Online's item
+export operation is restricted to the item owner or an administrator, the
+DIEM Hub v1 generator has no `/filegdb` route, and `createReplica` requires a
+sync-enabled service. Add FileGDB only through the Phase 2 DIEM-owned export
+service; do not expose a format button based solely on `supportedExportFormats`.
 
 ### Export-service decision (Phase 2)
 
