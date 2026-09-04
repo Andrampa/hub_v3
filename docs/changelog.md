@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-09-03 - Item id search, and the type-ahead on the catalogue
+
+- Item ids are indexed and a complete id is treated as a lookup rather than as
+  words to search for. A bare id, an ArcGIS item URL, a REST URL and an
+  uppercase id all resolve to the product; a variant's id finds its family; a
+  partial id still matches through the scored path. `/catalog?q=<id>` is
+  shareable.
+- The catalogue's plain search input is replaced by the homepage search
+  component, so a query means the same thing on both surfaces. A `variant` prop
+  separates the behaviours: `hero` navigates away, `inline` is owned by the
+  page, so typing drives `?q=` and narrows the grid live, a country suggestion
+  applies that filter in place, and the "see all results" row is dropped.
+
 ## 2026-09-03 - Design review phase 1: six quick wins
 
 Six independent changes drawn from the visual-craft, generated-copy and
