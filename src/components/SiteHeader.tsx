@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
@@ -8,8 +8,25 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
+  /**
+   * Only five of the twenty page components give their `<main>` an id, so the
+   * target is resolved at click time rather than through a fixed hash. `main`
+   * is not focusable by default, so it takes a programmatic `tabindex` before
+   * focus moves; without that the browser scrolls but leaves the cursor in the
+   * header and the next Tab returns to the navigation.
+   */
+  const skipToContent = (event: MouseEvent<HTMLAnchorElement>) => {
+    const main = document.querySelector('main')
+    if (!main) return
+    event.preventDefault()
+    main.setAttribute('tabindex', '-1')
+    main.focus({ preventScroll: true })
+    main.scrollIntoView({ behavior: 'auto', block: 'start' })
+  }
+
   return (
     <header className="fao-header subsite-header site-header">
+      <a className="skip-link" href="#top" onClick={skipToContent}>Skip to content</a>
       <div className="utility-bar">
         <span>Food and Agriculture Organization of the United Nations</span>
         <a href="https://www.fao.org/emergencies/" target="_blank" rel="noreferrer">FAO emergencies and resilience</a>

@@ -137,3 +137,24 @@
 @media (max-width: 620px) { .skeleton-block--image { height: 165px; } }
 .catalog-pathway-filter button:disabled { color: #93a3a9; cursor: default; }
 .catalog-pathway-filter button:disabled::before { background: #dbe2e5 !important; }
+
+/* Round marker on cards whose thumbnail is a shared country basemap or an
+   ArcGIS default. The image is back, but it cannot tell Round 8 from Round 11,
+   so the one token that varies is stated over it. Sits top-right, clear of the
+   product badge the FAO theme pins to the bottom-left. */
+.card-image > span.card-edition,
+.country-resource-image > span.card-edition {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: auto;
+  bottom: auto;
+  padding: 6px 10px;
+  background: rgba(3, 49, 72, .88);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.25;
+  white-space: nowrap;
+}

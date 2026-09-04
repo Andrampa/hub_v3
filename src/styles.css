@@ -20,6 +20,15 @@ a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
 svg:not(.leaflet-zoom-animated):not(.leaflet-zoom-hide):not(.country-map):not(.impact-map):not(.country-shape) { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+
+/* Off-screen until focused, so a keyboard user can reach the content without
+   tabbing through the whole header on every page. Sighted mouse users never
+   see it. WCAG 2.4.1 Bypass Blocks. */
+.skip-link { position: absolute; z-index: 100; top: -60px; left: 12px; padding: 11px 18px; background: var(--deep-blue); color: white; font-size: 13px; font-weight: 700; transition: top .12s ease; }
+.skip-link:focus { top: 8px; outline: 2px solid var(--orange); outline-offset: 2px; }
+/* The skip target is focused programmatically, so it takes no focus ring of its own. */
+main:focus { outline: none; }
+@media (prefers-reduced-motion: reduce) { .skip-link { transition: none; } }
 .section-wrap { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
 
 .utility-bar { height: 31px; padding: 0 max(24px, calc((100% - 1180px) / 2)); display: flex; align-items: center; justify-content: space-between; background: #043753; color: #d8e8ef; font-size: 10px; letter-spacing: .04em; }
@@ -160,7 +169,7 @@ svg:not(.leaflet-zoom-animated):not(.leaflet-zoom-hide):not(.country-map):not(.i
 .card-footer > span { max-width: 43%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .card-languages { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #edf0ef; }
 .card-languages > span { color: #65777c; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.card-languages div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.card-languages ul { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; margin: 0; padding: 0; list-style: none; }
 .card-languages a { padding: 3px 7px; border: 1px solid #bfd8e5; border-radius: 2px; color: var(--fao-blue); font-size: 9px; font-weight: 700; }
 .card-languages a:hover, .card-languages a:focus-visible { background: var(--fao-blue); color: white; }
 .pagination { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 38px; }

@@ -1,5 +1,5 @@
 import { NO_SUMMARY_LABEL, distinctSummary, formatDate, itemEdition } from '../lib/catalog'
-import { distinctThumbnail, itemDestination } from '../services/arcgis'
+import { distinctThumbnail, itemDestination, itemThumbnail } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
   EVIDENCE_PATHWAYS,
@@ -30,9 +30,12 @@ export function CatalogContentCard({
   thumbnailIndex: Set<string>
 }) {
   const item = family.primary
-  const thumbnail = distinctThumbnail(item, thumbnailIndex)
+  const thumbnail = itemThumbnail(item)
   const summary = distinctSummary(item)
-  const edition = itemEdition(item)
+  // Most of the group shares a per-country basemap or an ArcGIS default, so the
+  // image alone cannot tell one product in a series from the next. The round is
+  // marked on those cards; a thumbnail that is unique to its product is left clean.
+  const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
   const destination = itemDestination(item)
   const product = item.productTypes[0] || 'Unclassified'
   const pathways = EVIDENCE_PATHWAYS.filter((pathway) => (
@@ -59,11 +62,10 @@ export function CatalogContentCard({
         rel="noreferrer"
         aria-label={`Open ${item.title}`}
       >
-        {/* Without a distinguishing image the panel carries the round or
-            edition, the one token that separates a product from its siblings. */}
-        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} /> : (
-          <span className="card-image-plate">{edition}</span>
-        )}
+        {thumbnail
+          ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
+          : <span className="card-image-plate">{edition}</span>}
+        {thumbnail && edition && <span className="card-edition">{edition}</span>}
         <span className={`type-badge${product === 'Unclassified' ? ' type-badge--unclassified' : ''}`}>{product}</span>
       </a>
       <div className="card-body">
@@ -97,17 +99,22 @@ export function CatalogContentCard({
             <span>{countries.length > 2 ? `${visibleCountries.map((country) => country.name).join(', ')} +${countries.length - 2}` : countryLabel}</span>
           </span>
         </div>
+        {/* A list, not a <nav>. As a landmark every card added an entry to the
+            screen-reader landmark menu, burying the page's real regions under
+            one "Available languages for ..." per card. */}
         {family.variants.length > 1 && (
-          <nav className="card-languages" aria-label={`Available languages for ${item.title.trim()}`}>
-            <span>Available in</span>
-            <div>
+          <div className="card-languages">
+            <span id={`languages-${item.id}`}>Available in</span>
+            <ul aria-labelledby={`languages-${item.id}`}>
               {family.languages.map(({ language, item: variant }) => (
-                <a href={itemDestination(variant)} target="_blank" rel="noreferrer" key={variant.id}>
-                  {language}
-                </a>
+                <li key={variant.id}>
+                  <a href={itemDestination(variant)} target="_blank" rel="noreferrer">
+                    {language}
+                  </a>
+                </li>
               ))}
-            </div>
-          </nav>
+            </ul>
+          </div>
         )}
       </div>
     </article>

@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-09-03 - Restore card thumbnails and apply design review item 10
+
+- Restored the thumbnail on every card that has one, reversing the part of item
+  7 that hid shared images. The round or edition is kept as a small chip over
+  the image, shown only where the thumbnail is a shared country basemap or an
+  ArcGIS default and so cannot separate one product in a series from the next.
+  The full-panel fallback now appears only for the items with no thumbnail at
+  all.
+- Added a skip link as the first focusable element on every page. It is
+  off-screen until focused, and resolves its target at click time because most
+  page components do not give their `main` an id. Tab stops before the
+  catalogue search box drop from 19 to 2 (WCAG 2.4.1 Bypass Blocks).
+- Replaced the per-card language `nav` with a labelled list. Each card was
+  adding a navigation landmark, so a screen reader's landmark menu listed
+  "Available languages for ..." once per card instead of the page's real
+  regions; landmarks on a filtered catalogue page fall from 6 to 3. The chips
+  render identically.
+- The image half of item 10 was withdrawn after measurement: card and hub-area
+  image containers set a fixed height, so missing intrinsic dimensions caused no
+  layout shift.
+
 ## 2026-09-03 - Apply design review items 5 to 8
 
 - Pillar tab counts are now computed within every other active filter, so a

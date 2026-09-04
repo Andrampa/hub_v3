@@ -14,7 +14,7 @@ import {
   groupProductFamilies,
   type ProductFamily,
 } from '../lib/productFamilies'
-import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemDestination } from '../services/arcgis'
+import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemDestination, itemThumbnail } from '../services/arcgis'
 import {
   fetchCountryEditorial,
   type CountryEditorialContent,
@@ -40,8 +40,10 @@ const PAGE_SIZE = 16
 function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<CountryResource>, thumbnailIndex: Set<string> }) {
   const item = family.primary
   const summary = distinctSummary(item)
-  const edition = itemEdition(item)
-  const thumbnail = distinctThumbnail(item, thumbnailIndex)
+  const thumbnail = itemThumbnail(item)
+  // Marked only where the image is a shared basemap or an ArcGIS default and so
+  // cannot separate one product in a series from the next.
+  const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
   const product = item.productTypes[0] || 'Unclassified'
   const countryCodes = [...new Set(family.variants.flatMap((variant) => variant.countries))]
     .filter((code) => code !== CROSS_COUNTRY_CODE)
@@ -65,9 +67,10 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
   return (
     <article className="country-resource-card">
       <a className="country-resource-image" href={itemDestination(item)} target="_blank" rel="noreferrer" aria-label={`Open ${item.title}`}>
-        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} /> : (
-          <span className="card-image-plate">{edition}</span>
-        )}
+        {thumbnail
+          ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
+          : <span className="card-image-plate">{edition}</span>}
+        {thumbnail && edition && <span className="card-edition">{edition}</span>}
         <span className="country-product-badge">{product}</span>
       </a>
       <div className="country-resource-body">
@@ -90,15 +93,18 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
           </span>
           <span title={countryLabel}>{countryLabel}</span>
         </div>
+        {/* A list, not a <nav>; see CatalogContentCard for why. */}
         {family.variants.length > 1 && (
-          <nav className="country-resource-languages" aria-label={`Available languages for ${item.title.trim()}`}>
-            <span>Available in</span>
-            <div>
+          <div className="country-resource-languages">
+            <span id={`country-languages-${item.id}`}>Available in</span>
+            <ul aria-labelledby={`country-languages-${item.id}`}>
               {family.languages.map(({ language, item: variant }) => (
-                <a href={itemDestination(variant)} target="_blank" rel="noreferrer" key={variant.id}>{language}</a>
+                <li key={variant.id}>
+                  <a href={itemDestination(variant)} target="_blank" rel="noreferrer">{language}</a>
+                </li>
               ))}
-            </div>
-          </nav>
+            </ul>
+          </div>
         )}
       </div>
     </article>

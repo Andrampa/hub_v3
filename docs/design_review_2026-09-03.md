@@ -20,8 +20,8 @@ differs from the one first proposed.
 |---|---|
 | Reviewed | 2026-09-03 |
 | Base commit | `113d271` |
-| Items agreed | Top 10 items 1-8 |
-| Items shipped | 1-8 (2026-09-03) |
+| Items agreed | Top 10 items 1-8, 10 |
+| Items shipped | 1-8, 10 (2026-09-03) |
 
 Update the two rows above as work is selected and completed, and record shipped
 items in `docs/changelog.md`.
@@ -261,7 +261,7 @@ context, last reviewed <date>".
 
 Impact: content. Effort: half a day.
 
-### 10. Add a skip link and stop emitting a `<nav>` per card
+### 10. Add a skip link and stop emitting a `<nav>` per card [SHIPPED]
 
 There is no skip link on any route; every page places roughly twenty header
 links and two dropdowns ahead of the content for a keyboard user.
@@ -275,6 +275,29 @@ with a visually hidden label; set intrinsic dimensions on thumbnails and drop
 `lazy` from the first row.
 
 Impact: accessibility. Effort: hours.
+
+**Implementation note.** The skip link is the first focusable element in
+`SiteHeader`, off-screen until focused. Only five of the twenty page components
+give their `<main>` an id, so the target is resolved at click time rather than
+through a fixed hash: the handler finds `main`, applies `tabindex="-1"` and
+moves focus. Without that tabindex the browser scrolls but leaves the cursor in
+the header, and the next Tab returns to the navigation. Verified end to end on
+`/catalog`: Tab reveals the link, activating it focuses `<main>`, and the next
+Tab lands on the search box. **Tab stops before the search box: 19 to 2.**
+
+The per-card language `<nav>` is now a `<div>` holding a `<ul>` labelled by its
+own "Available in" text. Landmark counts fell from 6 to 3 on
+`/catalog?country=NER` and from 4 to 4 on a country page where the remaining
+landmarks are all genuine (Primary, Mobile, Breadcrumb, Country resource pages).
+The chips are pixel-identical - the flex row, 48x21 px bordered links and 34 px
+block height are unchanged.
+
+The image half of this item was withdrawn. The claim of layout shift was wrong:
+`.card-image` and `.hub-area-image` set a fixed 175 px height with
+`object-fit: cover`, so the container reserves the space whether or not the
+image has loaded. Item 7 separately added intrinsic dimensions to card
+thumbnails. What remains is minor - four homepage images sit at 880 px against
+a 900 px fold and are marked `loading="lazy"` - and was left alone.
 
 ---
 
