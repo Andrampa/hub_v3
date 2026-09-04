@@ -7,6 +7,7 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
+import { CITATION_LANGUAGES, citationFor, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { itemResourceAction, itemThumbnail } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, type CountryResource } from '../services/countries'
 
@@ -17,10 +18,6 @@ type ProductState =
   | { status: 'error'; message: string }
 
 const PdfPreview = lazy(() => import('../components/PdfPreview').then((module) => ({ default: module.PdfPreview })))
-
-function citationFor(item: CountryResource) {
-  return `Food and Agriculture Organization of the United Nations. (n.d.). ${item.title.trim()}. DIEM Hub. ArcGIS item ${item.id}.`
-}
 
 function publicCategories(item: CountryResource) {
   return [...new Set((item.groupCategories || [])
@@ -54,6 +51,16 @@ export default function CatalogProduct() {
   }, [itemId])
 
   const item = state.status === 'available' ? state.item : undefined
+
+  /**
+   * The citation offers the three reference forms DIEM publishes, and opens on
+   * the product's own language where that is one of them, so the common case is
+   * a copy without a choice.
+   */
+  const [chosenCitationLanguage, setChosenCitationLanguage] = useState<CitationLanguage>()
+  const citationLanguage = chosenCitationLanguage || (item ? defaultCitationLanguage(item) : 'English')
+  const setCitationLanguage = setChosenCitationLanguage
+  const citation = item ? citationFor(item, citationLanguage) : undefined
   /**
    * A product page is the one URL on the Hub worth indexing per product, so it
    * carries structured data naming the publisher, the catalogue date and the
@@ -96,8 +103,8 @@ export default function CatalogProduct() {
     : undefined
 
   const copyCitation = async () => {
-    if (!item) return
-    await navigator.clipboard.writeText(citationFor(item))
+    if (!citation) return
+    await navigator.clipboard.writeText(citation)
     setCopied(true)
     window.setTimeout(() => setCopied(false), 2200)
   }
@@ -195,8 +202,19 @@ export default function CatalogProduct() {
                     </div>
                   )}
                   <div className="catalog-product-citation">
-                    <h2>Citation</h2><p>{citationFor(item)}</p>
-                    <button type="button" onClick={() => void copyCitation()}>{copied ? 'Citation copied' : 'Copy citation'}</button>
+                    <h2 id="citation-heading">Citation</h2>
+                    <div className="catalog-product-citation-languages" role="group" aria-label="Citation language">
+                      {CITATION_LANGUAGES.map((language) => (
+                        <button
+                          type="button"
+                          key={language}
+                          aria-pressed={language === citationLanguage}
+                          onClick={() => setCitationLanguage(language)}
+                        >{language}</button>
+                      ))}
+                    </div>
+                    <p>{citation}</p>
+                    <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>{copied ? 'Citation copied' : 'Copy citation'}</button>
                   </div>
                 </aside>
               </div>

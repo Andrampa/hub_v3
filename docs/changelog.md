@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-09-04 - Product citations in three languages
+
+- Product pages carry the three reference forms DIEM publishes, in English,
+  French and Spanish, following the guide's wording: the series name and its
+  translated form, the city in the citation's own language, and the bracketed
+  access verb. The page opens on the product's own language where that is one of
+  the three, so the common case is a copy without a choice.
+- The citation now identifies the product rather than the collection. The
+  previous line read "Food and Agriculture Organization of the United Nations.
+  (n.d.). <title>. DIEM Hub. ArcGIS item <id>." - undated, unresolvable, and
+  quoting an ArcGIS identifier a reader cannot follow. It now carries the
+  catalogue year, the product title, the series it belongs to, and a link to the
+  product page rather than to the Hub's front door.
+- The series is derived from the product's evidence pathway: regular monitoring
+  and agricultural calendars cite DIEM-Monitoring [DIEM-Suivi] /
+  [DIEM-Monitoreo], hazard impact cites DIEM-Impact, research and analysis cites
+  DIEM-Research and Analysis. A product with no pathway cites the Hub alone
+  rather than inventing a series for it.
+- The access date is filled in at render time instead of left as the guide's
+  "[Cited date]" placeholder, which is the part people forget to replace.
+- Verified in the browser across a monitoring brief, a hazard impact assessment
+  and a French edition: correct series per pathway, correct default language,
+  and dates formatted for each language by `Intl`.
+
 ## 2026-09-04 - Agricultural calendar everywhere it is read
 
 - The pathway stored as `Seasonal calendar` now reads "Agricultural calendar"

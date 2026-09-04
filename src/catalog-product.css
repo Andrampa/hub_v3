@@ -36,7 +36,10 @@
 .catalog-product-categories ul { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .catalog-product-categories li { padding: 6px 9px; background: #fff; border: 1px solid var(--line-soft); color: var(--deep-blue); font-size: var(--text-micro); font-weight: 700; }
 .catalog-product-citation p { color: var(--ink-muted); font-size: var(--text-small); line-height: 1.6; }
-.catalog-product-citation button { padding: 9px 13px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); font-weight: 700; }
+.catalog-product-citation-languages { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+.catalog-product-citation-languages button { padding: 5px 10px; border: 1px solid var(--line); background: #fff; color: var(--ink-faint); font-size: var(--text-small); font-weight: 700; cursor: pointer; }
+.catalog-product-citation-languages button[aria-pressed="true"] { border-color: var(--fao-blue); background: var(--fao-blue); color: #fff; }
+.catalog-product-citation-copy { padding: 9px 13px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); font-weight: 700; }
 .catalog-product-preview { padding: clamp(36px, 5vw, 64px); background: #e5ecf4; border-top: 1px solid #c8d8e5; }
 .catalog-product-preview-heading { display: flex; align-items: end; justify-content: space-between; gap: 32px; }
 .catalog-product-preview-heading h2 { margin: 9px 0 8px; color: var(--deep-blue); }
