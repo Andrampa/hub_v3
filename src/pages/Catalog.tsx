@@ -133,10 +133,13 @@ export default function Catalog() {
     <>
       <SiteHeader active="catalog" />
       <main className="catalog-page" id="top">
-        <section className="catalog-hero"><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1>Explore DIEM products</h1><p>Search the complete public collection of evidence, data, maps and analytical resources.</p></div></section>
+        {/* One heading, not two. The page previously announced itself four
+            times over before a product appeared: eyebrow, title, second
+            eyebrow, second title. The subtitle now states what is in the
+            catalogue and where it comes from instead of restating the title. */}
+        <section className="catalog-hero"><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${families.length.toLocaleString()} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by pillar, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by pillar, product type, country or year.'}</p></div></section>
         <section className="catalog-section" aria-labelledby="catalog-title">
           <div className="section-wrap">
-            <div className="section-heading catalog-heading"><div><span className="kicker">Find evidence</span><h2 id="catalog-title">The complete collection</h2></div><p>Filter by the pillar a product belongs to and the kind of product it is, or search across titles, descriptions and tags.</p></div>
             <div className="filter-bar catalog-filter-bar">
               <label className="filter-search"><SearchIcon /><span className="sr-only">Search products</span><input type="search" placeholder="Search products" value={query} onChange={(event) => update('q', event.target.value)} /></label>
               <label><span>Pillar</span><select value={pathway} onChange={(event) => update('pathway', event.target.value, 'All pathways')}><option>All pathways</option>{availablePathways.map((value) => <option key={value}>{value}</option>)}{unassignedCount > 0 && <option>{UNASSIGNED_PATHWAY}</option>}</select></label>

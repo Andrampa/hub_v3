@@ -136,7 +136,6 @@ main:focus { outline: none; }
 .principles-panel li span { color: var(--orange); }
 
 .catalog-section { padding: 90px 0 85px; background: #eef2f0; }
-.catalog-heading { align-items: center; }
 .filter-bar { display: grid; grid-template-columns: 1.7fr repeat(4, 1fr); gap: 1px; margin-bottom: 35px; background: #d7dfdd; border: 1px solid #d7dfdd; box-shadow: 0 8px 28px rgba(30,60,65,.06); }
 .filter-bar label { min-width: 0; height: 72px; padding: 12px 16px; background: white; }
 .filter-bar label > span { display: block; margin-bottom: 7px; color: #88969a; font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
