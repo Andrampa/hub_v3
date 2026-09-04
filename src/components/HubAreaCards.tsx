@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 interface HubArea {
@@ -6,7 +5,7 @@ interface HubArea {
   eyebrow: string
   title: string
   description: string
-  destination?: string
+  destination: string
   imageUrl: string
 }
 
@@ -37,24 +36,6 @@ const sectionAreas: HubArea[] = [
   },
 ]
 
-const portfolioAreas: HubArea[] = [
-  {
-    id: 'catalog', eyebrow: 'Complete collection', title: 'Explore DIEM products',
-    description: 'Search and filter the complete public collection of DIEM evidence and resources.',
-    destination: '/catalog',
-    imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/d923904e390c4d57a814c1ca77a9cbe1/data',
-  },
-  {
-    id: 'research', eyebrow: 'Applied research', title: 'DIEM-Research',
-    description: 'Action-oriented research for evidence use in fragile and risk-prone contexts.',
-    imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/ed74404106024315a20fb5ebbb73f53e/data',
-  },
-  {
-    id: 'risk', eyebrow: 'Anticipatory action', title: 'DIEM-Risk',
-    description: 'Risk assessments and scores supporting disaster risk reduction and anticipatory action.',
-    imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/f16cb09773494779b17eb4156c78e323/data',
-  },
-]
 
 function CardContent({ area }: { area: HubArea }) {
   return <>
@@ -63,37 +44,28 @@ function CardContent({ area }: { area: HubArea }) {
       <span className="kicker">{area.eyebrow}</span>
       <h3>{area.title}</h3>
       <p>{area.description}</p>
-      <span className="hub-area-action">{area.destination ? 'Explore' : 'Coming soon'}{area.destination && <span aria-hidden="true">→</span>}</span>
+      <span className="hub-area-action">Explore<span aria-hidden="true">→</span></span>
     </div>
   </>
 }
 
-function PortfolioCarousel() {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const area = portfolioAreas[activeIndex]
-  const move = (direction: number) => setActiveIndex((activeIndex + direction + portfolioAreas.length) % portfolioAreas.length)
-  const card = <CardContent area={area} />
-
+/**
+ * Replaces a three-slide carousel whose second and third slides were inert
+ * "Coming soon" panels, so two thirds of the control's states rewarded the
+ * reader with nothing, and whose first slide used a generated illustration on
+ * a page where every other image is field photography.
+ */
+function CatalogBand() {
   return (
-    <section className="hub-portfolio" aria-labelledby="hub-portfolio-title" aria-roledescription="carousel">
-      <div className="hub-portfolio-heading">
-        <div><span className="kicker">DIEM portfolio</span><h2 id="hub-portfolio-title">Products, research and risk</h2></div>
-        <div className="hub-carousel-controls">
-          <button type="button" onClick={() => move(-1)} aria-label="Previous portfolio card">←</button>
-          <span aria-live="polite"><strong>{activeIndex + 1}</strong> / {portfolioAreas.length}</span>
-          <button type="button" onClick={() => move(1)} aria-label="Next portfolio card">→</button>
-        </div>
+    <section className="hub-catalog-band" aria-labelledby="hub-catalog-band-title">
+      <div>
+        <span className="kicker">Complete collection</span>
+        <h2 id="hub-catalog-band-title">Every published DIEM product, in one place</h2>
+        <p>Search and filter the public catalogue by pillar, product type, country or year.</p>
       </div>
-      <div className="hub-carousel-viewport">
-        {area.destination ? (
-          <Link className="hub-area-card hub-carousel-card" to={area.destination} key={area.id}><CardContent area={area} /></Link>
-        ) : (
-          <article className="hub-area-card hub-area-card--upcoming hub-carousel-card" key={area.id}>{card}</article>
-        )}
-      </div>
-      <div className="hub-carousel-pagination" aria-label="Choose a portfolio card">
-        {portfolioAreas.map((item, index) => <button type="button" className={index === activeIndex ? 'is-active' : ''} aria-label={`Show ${item.title}`} aria-pressed={index === activeIndex} onClick={() => setActiveIndex(index)} key={item.id} />)}
-      </div>
+      <Link className="hub-catalog-band-action" to="/catalog">
+        Open the catalogue <span aria-hidden="true">→</span>
+      </Link>
     </section>
   )
 }
@@ -106,9 +78,9 @@ export function HubAreaCards() {
         <p>Move directly to household monitoring, hazard impacts, flood services or country evidence.</p>
       </div>
       <div className="hub-area-grid">
-        {sectionAreas.map((area) => <Link className="hub-area-card" to={area.destination!} key={area.id}><CardContent area={area} /></Link>)}
+        {sectionAreas.map((area) => <Link className="hub-area-card" to={area.destination} key={area.id}><CardContent area={area} /></Link>)}
       </div>
-      <PortfolioCarousel />
+      <CatalogBand />
     </section>
   )
 }
