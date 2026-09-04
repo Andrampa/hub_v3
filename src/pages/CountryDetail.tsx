@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import crossCountryHeroImage from '../assets/heroes/cyclone-freddy-madagascar-2023.jpg'
 import { CountryEditorial } from '../components/CountryEditorial'
@@ -190,6 +190,17 @@ export default function CountryDetail() {
 
   useEffect(() => setPage(1), [iso3, query, selectedPathway, selectedType, selectedYear, sort])
 
+  /** Brings the results heading back into view; see Catalog.tsx for the reason. */
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const previousPage = useRef(page)
+  useEffect(() => {
+    if (previousPage.current === page) return
+    previousPage.current = page
+    const target = resultsRef.current
+    if (!target) return
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY, behavior: 'instant' })
+  }, [page])
+
   useEffect(() => {
     if (!catalog || !country) return
     const controller = new AbortController()
@@ -357,7 +368,7 @@ export default function CountryDetail() {
                   <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently added</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
                   {(query || selectedPathway !== 'All pathways' || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={() => setSearchParams({}, { replace: true })}>Clear filters</button>}
                 </div>
-                <div className="country-results-meta"><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${selectedPathway}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
+                <div className="country-results-meta" ref={resultsRef}><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${selectedPathway}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
                 {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a product or year filter.</p></div>}
                 {pageCount > 1 && <nav className="pagination" aria-label="Country resource pages"><button disabled={page === 1} onClick={() => setPage((value) => value - 1)}>Previous</button><span>Page <strong>{page}</strong> of {pageCount}</span><button disabled={page === pageCount} onClick={() => setPage((value) => value + 1)}>Next</button></nav>}
               </div>

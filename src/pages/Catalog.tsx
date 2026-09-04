@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CatalogContentCard, pathwaySlug } from '../components/CatalogContentCard'
 import { SiteFooter } from '../components/SiteFooter'
@@ -74,6 +74,7 @@ export default function Catalog() {
     catalog?.items.some((item) => item.productTypes.includes(value))
   )), [catalog])
 
+  const resultsRef = useRef<HTMLDivElement>(null)
   const thumbnailIndex = useMemo(() => buildDistinctThumbnailIndex(catalog?.items || []), [catalog])
   const searchIndex = useMemo(() => buildCatalogSearchIndex(families), [families])
   const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
@@ -117,6 +118,31 @@ export default function Catalog() {
       setParams(next, { replace: true })
     }
   }, [page, pageCount, params, setParams])
+
+  /**
+   * Turning a page replaced the sixteen cards under the reader without moving
+   * the viewport, so Next landed them in the middle of a fresh page with no
+   * indication anything had changed. The results heading is brought back into
+   * view rather than the top of the document, so the filters stay put.
+   *
+   * This has to run after the new cards are painted: scrolling in the click
+   * handler is undone by the browser's scroll anchoring when the grid content
+   * changes underneath. "instant" rather than "auto" because "auto" defers to
+   * the CSS scroll-behavior, which is "smooth" on html, and animating six
+   * thousand pixels past the reader is worse than arriving.
+   *
+   * scrollTo with an explicit offset rather than scrollIntoView, because the
+   * header scrolls away with the page: there is no sticky offset to fight, and
+   * the explicit form is not subject to the element-visibility heuristics.
+   */
+  const previousPage = useRef(safePage)
+  useEffect(() => {
+    if (previousPage.current === safePage) return
+    previousPage.current = safePage
+    const target = resultsRef.current
+    if (!target) return
+    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY, behavior: 'instant' })
+  }, [safePage])
 
   const update = (key: string, value: string, defaultValue?: string) => {
     const next = new URLSearchParams(params)
@@ -204,7 +230,7 @@ export default function Catalog() {
                   )}
                 </div>
               )}
-              <div className="results-meta" aria-live="polite"><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
+              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
               <div className="card-grid">{visibleFamilies.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div>
               {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>}
               {pageCount > 1 && <nav className="pagination" aria-label="Catalog pages"><button disabled={safePage === 1} onClick={() => update('page', String(safePage - 1))}>Previous</button><span>Page <strong>{safePage}</strong> of {pageCount}</span><button disabled={safePage === pageCount} onClick={() => update('page', String(safePage + 1))}>Next</button></nav>}
