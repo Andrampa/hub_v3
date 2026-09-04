@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-09-03 - Design review phase 1: six quick wins
+
+Six independent changes drawn from the visual-craft, generated-copy and
+functionality lenses of `docs/design_review_2026-09-03.md`, each committed
+separately.
+
+- Every route sets its own page title. All fourteen were previously "DIEM Hub
+  3.0 | Data in Emergencies" in the tab, in history, in a bookmark and in a
+  shared link. Country and dataset pages hold the title back until their
+  subject resolves.
+- The catalogue states what it holds instead of announcing itself four times.
+  One heading replaces two, and the subtitle carries the live product and
+  country counts and names the content group. The filter bar moves from roughly
+  700 px down the page to 456 px.
+- The homepage portfolio carousel is replaced by a plain catalogue band. Two of
+  its three slides were inert "Coming soon" panels and the first used a
+  generated illustration among field photography. DIEM-Research and DIEM-Risk
+  are dropped rather than advertised as absent.
+- The footer gained three columns of site navigation above the FAO legal row;
+  it previously offered only ways off the site.
+- Turning a catalogue or country page returns the reader to the results
+  heading. This needed the scroll to run after paint, because scroll anchoring
+  undoes it in the click handler.
+- The `DM Sans` and `Source Serif 4` declarations are removed. No webfont is
+  loaded anywhere in the application, so neither ever rendered; the change is a
+  pure deletion with the reasoning recorded in `src/styles.css`.
+
 ## 2026-09-03 - Restore card thumbnails and apply design review item 10
 
 - Restored the thumbnail on every card that has one, reversing the part of item
