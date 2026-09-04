@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-09-04 - Product hero legibility, and no empty overview
+
+- The product type on the blue hero was FAO blue on deep blue, a contrast of
+  1.7:1 - present but effectively unreadable. It now uses the light tint the
+  homepage catalogue band already uses on the same ground, at 6.2:1.
+- "Opens the authoritative resource in a new tab" is now "Opens the resource in
+  a new tab".
+- A product with no description shows no overview at all, rather than a heading
+  over a line explaining that there is nothing to read. Most of the catalogue
+  carries no description, so that apology was often the largest block on the
+  page. Language editions moved out of the overview into their own section, so
+  they survive a product that has none.
+- The citation keeps its grey block and its wide layout in both cases: after the
+  overview where there is one, directly under the details band where there is
+  not.
+- Verified at 1200 px on a product with a full description and one with none.
+
 ## 2026-09-04 - Product details run across the page
 
 - Product details and the citation move out of the right-hand rail into a band

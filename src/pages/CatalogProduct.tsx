@@ -197,7 +197,7 @@ export default function CatalogProduct() {
                       {action.label}<i className="bi bi-box-arrow-up-right" aria-hidden="true" />
                     </a>
                   )}
-                  <p className="catalog-product-action-note">{item.type === 'PDF' ? 'Preview in the Hub or download the original file.' : 'Opens the authoritative resource in a new tab.'}</p>
+                  <p className="catalog-product-action-note">{item.type === 'PDF' ? 'Preview in the Hub or download the original file.' : 'Opens the resource in a new tab.'}</p>
                   {licence && (
                     <div className="catalog-product-licence">
                       {'label' in licence && licence.label ? (
@@ -235,22 +235,26 @@ export default function CatalogProduct() {
               </section>
 
               <div className="catalog-product-layout">
-                <section className="catalog-product-description" aria-labelledby="about-product">
-                  <span className="kicker">About this product</span>
-                  <h2 id="about-product">Overview</h2>
-                  {description
-                    ? <div dangerouslySetInnerHTML={{ __html: description }} />
-                    : <p>No detailed description has been supplied for this product. Download or open the resource to see its content.</p>}
+                {/* A product with no description says nothing rather than
+                    announcing that it has nothing to say: most of the catalogue
+                    carries no description, and a heading over one line of
+                    apology was the largest thing on the page. */}
+                {description && (
+                  <section className="catalog-product-description" aria-labelledby="about-product">
+                    <span className="kicker">About this product</span>
+                    <h2 id="about-product">Overview</h2>
+                    <div dangerouslySetInnerHTML={{ __html: description }} />
+                  </section>
+                )}
 
-                  {family && family.languages.length > 1 && (
-                    <div className="catalog-product-editions">
-                      <h2>Available languages</h2>
-                      <ul>{family.languages.map(({ language, item: variant }) => (
-                        <li key={variant.id}><Link aria-current={variant.id === item.id ? 'page' : undefined} to={`/catalog/${variant.id}`}>{language}</Link></li>
-                      ))}</ul>
-                    </div>
-                  )}
-                </section>
+                {family && family.languages.length > 1 && (
+                  <section className="catalog-product-editions" aria-labelledby="editions-heading">
+                    <h2 id="editions-heading">Available languages</h2>
+                    <ul>{family.languages.map(({ language, item: variant }) => (
+                      <li key={variant.id}><Link aria-current={variant.id === item.id ? 'page' : undefined} to={`/catalog/${variant.id}`}>{language}</Link></li>
+                    ))}</ul>
+                  </section>
+                )}
 
                 <section className="catalog-product-citation" aria-labelledby="citation-heading">
                   <div className="catalog-product-citation-head">

@@ -11,6 +11,10 @@
 .catalog-product-hero > div { padding: clamp(38px, 6vw, 72px); }
 .catalog-product-hero h1 { max-width: 780px; margin: 17px 0; color: #fff; font-size: clamp(2.25rem, 4.6vw, 4rem); line-height: 1.08; letter-spacing: -.045em; }
 .catalog-product-hero > div > p { max-width: 680px; color: #d7e5ea; line-height: 1.7; }
+/* The default kicker is FAO blue, which is 1.7:1 on the deep blue hero: the
+   product type was effectively invisible. This is the same light tint the
+   homepage catalogue band uses on the same ground, at 6.2:1. */
+.catalog-product-hero .kicker { color: #a8d5df; }
 .catalog-product-hero > img { width: 100%; height: 100%; min-height: 390px; object-fit: cover; }
 .catalog-product-hero-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
 .catalog-product-action { display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; padding: 13px 18px; border: 1px solid var(--fao-blue); background: var(--fao-blue); color: #fff; font-weight: 700; }
@@ -23,7 +27,9 @@
 .catalog-product-description :is(p, li) { color: var(--ink-muted); line-height: 1.75; }
 .catalog-product-description img { max-width: 100%; height: auto; }
 
-.catalog-product-editions { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--line-soft); }
+/* A section of the page column now, rather than a block inside the overview,
+   so it survives a product that has no description. */
+.catalog-product-editions h2 { margin: 0 0 14px; }
 .catalog-product-editions ul { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
 .catalog-product-editions a { display: block; padding: 8px 12px; border: 1px solid var(--fao-blue); color: var(--fao-blue); font-weight: 700; }
 .catalog-product-editions a[aria-current="page"] { background: var(--fao-blue); color: #fff; }
