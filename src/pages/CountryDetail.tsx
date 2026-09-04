@@ -376,7 +376,7 @@ export default function CountryDetail() {
                   </button>
                   {EVIDENCE_PATHWAYS.filter((pathway) => pathwayCounts.has(pathway)).map((pathway) => (
                     <button type="button" className={`country-pathway-filter--${pathway.toLowerCase().replace(/[^a-z]+/g, '-')}`} aria-pressed={selectedPathway === pathway} onClick={() => setFilter('pathway', pathway, 'All pathways')} key={pathway}>
-                      <span>{pathway}</span><strong>{pathwayCounts.get(pathway)}</strong>
+                      <span>{pathwayLabel(pathway)}</span><strong>{pathwayCounts.get(pathway)}</strong>
                     </button>
                   ))}
                 </div>

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-09-04 - Agricultural calendar everywhere it is read
+
+- The pathway stored as `Seasonal calendar` now reads "Agricultural calendar"
+  on every surface a reader sees it: the catalogue tabs, the pathway select, the
+  results line and the country page filter, as well as the card chips changed
+  earlier. The stored value is unchanged, so `?pathway=Seasonal+calendar` still
+  resolves and the content-group category is untouched. The `Crop calendar`
+  product type is a different axis and keeps its name.
+
 ## 2026-09-04 - Discovery metadata, and 217 kB off every route
 
 - The publication matrix moves directly above the country directory, and says

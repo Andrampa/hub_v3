@@ -14,6 +14,7 @@ import {
   EVIDENCE_PATHWAYS,
   PRODUCT_TYPES,
   countryDefinition,
+  pathwayLabel,
   type CountryResource,
   type EvidencePathway,
   type ProductType,
@@ -212,7 +213,7 @@ export default function Catalog() {
                 onValueChange={(next) => update('q', next)}
                 onCountrySelect={(iso3) => update('country', iso3, 'All countries')}
               />
-              <label><span>Evidence pathway</span><select value={pathway} onChange={(event) => update('pathway', event.target.value, 'All pathways')}><option>All pathways</option>{availablePathways.map((value) => <option key={value}>{value}</option>)}{unassignedCount > 0 && <option>{UNASSIGNED_PATHWAY}</option>}</select></label>
+              <label><span>Evidence pathway</span><select value={pathway} onChange={(event) => update('pathway', event.target.value, 'All pathways')}><option>All pathways</option>{availablePathways.map((value) => <option key={value} value={value}>{pathwayLabel(value)}</option>)}{unassignedCount > 0 && <option>{UNASSIGNED_PATHWAY}</option>}</select></label>
               <label><span>Product</span><select value={product} onChange={(event) => update('product', event.target.value, 'All products')}><option>All products</option>{availableProducts.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label><span>Country</span><select value={country} onChange={(event) => update('country', event.target.value, 'All countries')}><option>All countries</option>{countries.map((value) => <option value={value.iso3} key={value.iso3}>{value.name}</option>)}</select></label>
               <label><span>Format</span><select value={category} onChange={(event) => update('content', event.target.value, 'All content')}><option>All content</option>{Object.keys(typeGroups).map((value) => <option key={value}>{value}</option>)}</select></label>
@@ -257,7 +258,7 @@ export default function Catalog() {
                         onClick={() => update('pathway', value, 'All pathways')}
                         key={value}
                       >
-                        <span>{value}</span>
+                        <span>{pathwayLabel(value)}</span>
                         <strong>{count}</strong>
                       </button>
                     )
@@ -274,7 +275,7 @@ export default function Catalog() {
                   )}
                 </div>
               )}
-              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
+              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
               <div className="card-grid">{visibleFamilies.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div>
               {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>}
               {pageCount > 1 && <nav className="pagination" aria-label="Catalog pages"><button disabled={safePage === 1} onClick={() => update('page', String(safePage - 1))}>Previous</button><span>Page <strong>{safePage}</strong> of {pageCount}</span><button disabled={safePage === pageCount} onClick={() => update('page', String(safePage + 1))}>Next</button></nav>}
