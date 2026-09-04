@@ -253,3 +253,46 @@ settling the `_0` layer-suffix convention is a change in that repository.
 Also open: who maintains `/data/guide` now that it supersedes the same material
 in the dashboard user guide, and the dead CSS left in `src/data-access.css` from
 the retired guide-language panel, collection switch and access pathway.
+
+## Temporary microdata grants — in progress, resume Monday
+
+**Status: implemented, not working end to end.** Typecheck, `npm run build` and
+`npm test` (19 tests) all pass, but the feature has never resolved a real grant.
+Nothing about the Hub-side shape is confirmed against live ArcGIS.
+
+Written this session: `src/services/microdataGrants.ts` (discovery and bundle
+construction), `src/components/TemporaryMicrodataGrants.tsx` (the `/data`
+section), `fetchGrantDatasetDefinition` in `src/services/dataExplorer.ts`, the
+`/data/grants/:datasetId` route, `catalogueVisible` exclusion in
+`src/services/arcgis.ts` and `src/services/countries.ts`, and
+`src/services/microdataGrants.test.ts`. Behaviour and rationale are in
+`docs/temporary_microdata_grants.md`.
+
+**The unresolved question, and the exact next task.** Grants are FAO-owned items
+(`sjP4Ugu5s0dZWLjd`) while the Hub signs users in to the Community organization
+(`D5aXW6TZFpeM2wke`). Discovery therefore searches the global endpoint
+`https://www.arcgis.com/sharing/rest` with the Community token and no
+organization filter. **Nobody has verified that this crosses the organization
+boundary.** Provision a grant for a Community test account added as an external
+member of the private FAO grant group, sign in as that account, and check:
+
+1. the global tag search returns the FAO-owned views;
+2. an unrelated Community account gets nothing;
+3. a revoked grant disappears on the next check.
+
+If (1) fails, the group-enumeration fallback in `enumerateGrantItems` becomes the
+primary path rather than a safety net, and the search branch should be dropped
+rather than left as dead weight.
+
+Verification command: `npm test`, then `npm run build` and the dev server on
+port 5173 signed in as the test recipient.
+
+**Deliberate:** the grants section renders nothing at all when the account holds
+no grant — no empty state, no notice. Do not reintroduce one.
+
+**Still open:** expiry dates and countdowns are not shown, because that needs a
+secure server-side projection of the private registry and no backend exists. The
+Hub shows active versus unavailable only, derived from ArcGIS rather than a
+clock. There is no administration UI and none should be added; registering,
+approving, provisioning, suspending and expiring grants are FAO Management tasks
+run from the Python scripts in `hh_survey_v3/management/data_sharing`.

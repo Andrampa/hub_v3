@@ -56,6 +56,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/countries/:iso3" element={<CountryDetail />} />
             <Route path="/data" element={<DataAccess />} />
             <Route path="/data/guide" element={<DataGuide />} />
+            <Route path="/data/grants/:datasetId" element={<DatasetExplorer />} />
             <Route path="/data/:datasetId" element={<DatasetExplorer />} />
             <Route path="/monitoring-system" element={<HouseholdMonitoring />} />
             <Route path="/monitoring" element={<MonitoringSystem />} />

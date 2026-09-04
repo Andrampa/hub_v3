@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
+import { confirmGrantStillActive, describeSurveyScope } from '../services/microdataGrants'
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
@@ -17,6 +18,7 @@ import {
   downloadGeoJson,
   downloadXlsx,
   fetchDatasetDefinition,
+  fetchGrantDatasetDefinition,
   fetchFieldOptions,
   fieldSupportsOptions,
   fetchGeometryPreview,
@@ -130,6 +132,11 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
 export default function DatasetExplorer() {
   useDocumentTitle('Dataset explorer')
   const { datasetId = '' } = useParams()
+  // `/data/grants/<item-id>` opens a temporary grant view rather than a
+  // registered dataset. The distinction is only about where the definition
+  // comes from: both are authorized by ArcGIS on every request, so a hand-typed
+  // grant URL is exactly as harmless as a hand-typed dataset URL.
+  const isGrantRoute = useLocation().pathname.startsWith('/data/grants/')
   const [searchParams, setSearchParams] = useSearchParams()
   const auth = useAuth()
   const [definition, setDefinition] = useState<DatasetDefinition>()
@@ -157,7 +164,7 @@ export default function DatasetExplorer() {
   const [fieldOptions, setFieldOptions] = useState<Record<string, FieldOptions>>({})
   const [optionsLoading, setOptionsLoading] = useState(false)
 
-  const resource = resourceForDataset(datasetId)
+  const resource = isGrantRoute ? undefined : resourceForDataset(datasetId)
   const fields = useMemo(() => definition ? usableFields(definition.layer.fields) : [], [definition])
   const recommendedFields = useMemo(() => recommendedFilterFields(fields), [fields])
   const remainingFields = useMemo(() => fields.filter((field) => !recommendedFields.includes(field)), [fields, recommendedFields])
@@ -166,6 +173,12 @@ export default function DatasetExplorer() {
   const links = definition ? apiLinks(definition, where) : undefined
   const scripts = definition ? bulkDownloadScripts(definition, where) : undefined
   const overDownloadLimit = count !== undefined && count > BROWSER_EXPORT_LIMIT
+  // A grant whose approval did not include export gets no download controls, no
+  // packaging requests and no bulk-extraction scripts. This is a policy
+  // presentation, not a technical barrier: the view is Query-enabled, so an
+  // authorized technical user can still read it record by record. The copy
+  // below says exactly that rather than claiming the data cannot be retrieved.
+  const bulkExportBlocked = Boolean(definition?.grant && !definition.grant.bulkExportEnabled)
   const draftOptions = fieldOptions[draftField]
   // A dropdown is only honest for an exact match: "contains" and the numeric
   // comparisons are about values the list does not enumerate.
@@ -181,7 +194,10 @@ export default function DatasetExplorer() {
     let active = true
     setDefinition(undefined)
     setDefinitionError(undefined)
-    fetchDatasetDefinition(datasetId, auth.requestProtected)
+    const loadDefinition = isGrantRoute
+      ? fetchGrantDatasetDefinition(datasetId, auth.requestProtected)
+      : fetchDatasetDefinition(datasetId, auth.requestProtected)
+    loadDefinition
       .then((result) => {
         if (!active) return
         const layerFields = usableFields(result.layer.fields)
@@ -200,7 +216,7 @@ export default function DatasetExplorer() {
         if (active) setDefinitionError(error.message)
       })
     return () => { active = false }
-  }, [auth.requestProtected, auth.status, datasetId])
+  }, [auth.requestProtected, auth.status, datasetId, isGrantRoute])
 
   // Keep the country and round filters addressable, so a filtered view can be
   // shared and so a link handed to the dashboard round-trips back unchanged.
@@ -302,8 +318,25 @@ export default function DatasetExplorer() {
     downloadBlob(new Blob([source], { type }), filename)
   }
 
+  /**
+   * Re-ask ArcGIS whether this grant is still live, immediately before the
+   * export runs. ArcGIS would reject the underlying query anyway; this exists
+   * so a revoked grant produces a clear message instead of a mid-download
+   * failure, and so a stale tab cannot present a half-written file as complete.
+   */
+  async function grantStillOpen() {
+    if (!definition?.grant) return true
+    const current = await confirmGrantStillActive(definition.grant.itemId, auth.requestProtected)
+    if (current && current.bulkExportEnabled) return true
+    setDownloadState(current
+      ? 'Bulk export is no longer enabled for this grant.'
+      : 'This microdata grant is no longer available to your account.')
+    return false
+  }
+
   async function exportCsv() {
     if (!definition || count === undefined) return
+    if (!await grantStillOpen()) return
     setDownloadState('Preparing CSV download...')
     try {
       const blob = await downloadCsv(definition, where, count, auth.requestProtected)
@@ -316,6 +349,7 @@ export default function DatasetExplorer() {
 
   async function exportGeoJson() {
     if (!definition || count === undefined) return
+    if (!await grantStillOpen()) return
     setDownloadState('Preparing GeoJSON download...')
     try {
       const blob = await downloadGeoJson(definition, where, count, auth.requestProtected)
@@ -328,6 +362,7 @@ export default function DatasetExplorer() {
 
   async function exportXlsx() {
     if (!definition || count === undefined) return
+    if (!await grantStillOpen()) return
     setDownloadState('Preparing Excel workbook...')
     try {
       const blob = await downloadXlsx(definition, where, count, auth.requestProtected)
@@ -344,6 +379,7 @@ export default function DatasetExplorer() {
       setDownloadState(`Filter this result to ${BROWSER_EXPORT_LIMIT.toLocaleString()} records or fewer before downloading.`)
       return
     }
+    if (!await grantStillOpen()) return
     const { descriptor, url, params } = hubDownloadRequest(definition, format, where)
     setDownloadState(`Requesting ${descriptor.label} from the DIEM export service...`)
     try {
@@ -391,7 +427,14 @@ export default function DatasetExplorer() {
                   <h2 id="dataset-about-heading">{definition.resource.item?.title || definition.resource.fallbackTitle}</h2>
                   <p className="dataset-info-owner">Published by <strong>{definition.resource.item?.owner || 'FAO DIEM'}</strong></p>
                   {datasetId !== ADMIN_REFERENCE_DATASET_ID && <p className="dataset-admin-reference">Join geographic fields using the official ADM codes. <Link to={`/data/${ADMIN_REFERENCE_DATASET_ID}`}>Open the administrative reference boundaries <ExplorerIcon name="arrow"/></Link></p>}
-                  <p>{definition.resource.item?.snippet || definition.resource.description}</p>
+                  <p>{definition.grant ? definition.resource.description : (definition.resource.item?.snippet || definition.resource.description)}</p>
+                  {definition.grant && (
+                    <div className="dataset-grant-scope" role="note">
+                      <strong>Temporary approved access</strong>
+                      <p>Grant {definition.grant.grantId} — {describeSurveyScope(definition.grant.surveyScope)}. The service itself excludes every other survey, so no filter here can widen the result.</p>
+                      <p>{definition.grant.bulkExportEnabled ? 'Bulk export is enabled for this grant.' : 'Bulk export is not enabled for this grant.'}</p>
+                    </div>
+                  )}
                   <div className="dataset-info-actions"><a href="#dataset-table">View data table</a><a href="#dataset-download">Download options</a></div>
                   <a className="dataset-arcgis-link" href={links?.item} target="_blank" rel="noreferrer">View full dataset details <ExplorerIcon name="external"/></a>
                   <dl>
@@ -417,6 +460,13 @@ export default function DatasetExplorer() {
                 {draftOptions?.truncated && draftOperator === 'equals' && <p className="filter-option-note">This attribute has more than {FILTER_OPTION_LIMIT.toLocaleString()} distinct values, so type the value instead of choosing one.</p>}
                 <div className="active-filters" aria-live="polite">{filters.length ? filters.map((filter) => <span key={filter.id}>{fieldLabel(fields.find((field) => field.name === filter.fieldName) || { name: filter.fieldName, alias: filter.fieldName, type: '' })} <em>{filter.operator === 'contains' ? 'contains' : filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='}</em> {filter.value}<button type="button" onClick={() => setFilters((current) => current.filter((candidate) => candidate.id !== filter.id))} aria-label={`Remove ${filter.fieldName} filter`}><ExplorerIcon name="close"/></button></span>) : <p>No filters applied. Choose a country and round before downloading.</p>}</div>
                 {filters.length > 0 && <button className="clear-filters" type="button" onClick={() => setFilters([])}>Clear all filters</button>}
+                {bulkExportBlocked ? (
+                  <div className="download-panel download-panel--restricted" id="dataset-download">
+                    <div><ExplorerIcon name="download"/><strong>Bulk export is not enabled for this grant</strong></div>
+                    <p>Your approval covers querying and inspecting these surveys in place. File downloads, packaged formats and bulk-extraction scripts are not offered here.</p>
+                    <p className="download-restricted-note">If your work needs an extract, ask the DIEM Hub team to have export authorized on the grant.</p>
+                  </div>
+                ) : (
                 <div className="download-panel" id="dataset-download">
                   <div><ExplorerIcon name="download"/><strong>Download filtered data</strong><p>The portal prepares files only when the current result contains 20,000 records or fewer.</p></div>
                   <div className={`download-limit ${overDownloadLimit ? 'is-over-limit' : 'is-ready'}`} role="status">
@@ -449,10 +499,11 @@ export default function DatasetExplorer() {
                   </>}
                   {downloadState && <p className="download-status" role="status">{downloadState}</p>}
                 </div>
-                <details className="bulk-script-panel">
+                )}
+                {!bulkExportBlocked && <details className="bulk-script-panel">
                   <summary><ExplorerIcon name="code"/> Bulk API scripts <span>Python and R</span></summary>
                   {scripts && <div><p>For larger extractions, run a script with your own short-lived access token. The current filters are already included.</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
-                </details>
+                </details>}
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{API_LINK_LABELS[label] || label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>
               <div className="dataset-results-panel">

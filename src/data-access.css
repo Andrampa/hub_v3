@@ -409,3 +409,52 @@
   .data-gate-inventory { padding-block: 58px; }
   .data-inventory-line { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 }
+
+/* Temporary microdata grants.
+   Presented inside the microdata section, above the licence, because this is
+   the user's own approved data rather than a catalogue product. The card is
+   deliberately plainer than a dataset card: it carries a scope, a policy and a
+   short list of components, and nothing that suggests permanence. */
+.grant-section { margin: 34px 0 0; padding: 30px 32px; border: 1px solid var(--line); border-top: 3px solid var(--fao-blue); background: #fff; }
+.grant-section-head { display: flex; align-items: flex-start; gap: 24px; }
+.grant-section-head h3 { margin: 8px 0 0; color: var(--deep-blue); font-size: 24px; letter-spacing: -.01em; }
+.grant-section-head > div > p { max-width: 640px; margin: 10px 0 0; color: var(--ink-faint); font-size: 13px; line-height: 1.7; }
+.grant-section-head button { flex: none; margin-left: auto; padding: 9px 15px; border: 1px solid var(--line); background: #fff; color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; cursor: pointer; }
+.grant-section-head button:hover:not(:disabled) { border-color: var(--fao-blue); }
+.grant-section-head button:disabled { color: var(--ink-faint); cursor: default; }
+
+
+.grant-bundles { display: grid; gap: 20px; margin-top: 24px; }
+.grant-bundle { border: 1px solid var(--line); background: #fff; }
+.grant-bundle > header { display: flex; align-items: flex-start; gap: 14px; padding: 20px 22px; border-bottom: 1px solid var(--line-faint); }
+.grant-bundle > header h3 { margin: 0; color: var(--deep-blue); font-size: 17px; }
+.grant-bundle-scope { display: block; margin-top: 5px; color: var(--ink-muted); font-size: 13px; line-height: 1.6; }
+.grant-status { flex: none; margin-left: auto; padding: 3px 10px; border: 1px solid var(--line); color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.grant-status--active { border-color: #48a77e; color: #2f7d5c; }
+
+.grant-views { display: grid; gap: 1px; margin: 0; padding: 0; background: var(--line-faint); list-style: none; }
+.grant-views li { display: flex; align-items: center; gap: 16px; padding: 16px 22px; background: #fff; }
+.grant-views li strong { display: block; color: var(--deep-blue); font-size: 14px; }
+.grant-views li span { display: block; margin-top: 4px; color: var(--ink-faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--text-small); }
+.grant-views li .data-resource-action { margin-left: auto; }
+
+.grant-note { margin: 0; padding: 14px 22px; border-top: 1px solid var(--line-faint); color: var(--ink-faint); font-size: 13px; line-height: 1.65; }
+.grant-note code { color: var(--deep-blue); font-size: var(--text-small); }
+.grant-note--policy { color: var(--ink-muted); font-weight: 600; }
+
+.grant-docs { padding: 18px 22px 22px; border-top: 1px solid var(--line-faint); background: var(--line-faint); }
+.grant-docs h4 { margin: 0 0 12px; color: var(--deep-blue); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+.grant-doc { display: block; padding: 12px 14px; border: 1px solid var(--line); background: #fff; }
+.grant-doc + .grant-doc { margin-top: 8px; }
+.grant-doc:hover { border-color: var(--fao-blue); }
+.grant-doc strong { display: block; color: var(--deep-blue); font-size: 13px; }
+.grant-doc span { display: block; margin-top: 4px; color: var(--ink-faint); font-size: var(--text-small); line-height: 1.6; }
+.grant-doc-pending { margin: 0; padding: 14px 16px; border-left: 3px solid #b88d53; background: #fff; color: var(--ink-faint); font-size: 13px; line-height: 1.7; }
+
+@media (max-width: 720px) {
+  .grant-section { padding: 22px 18px; }
+  .grant-section-head { flex-direction: column; gap: 14px; }
+  .grant-section-head button { margin-left: 0; }
+  .grant-views li { flex-direction: column; align-items: stretch; gap: 10px; }
+  .grant-views li .data-resource-action { margin-left: 0; }
+}

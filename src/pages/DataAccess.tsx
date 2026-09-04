@@ -4,6 +4,7 @@ import '../data-access.css'
 import { useAuth } from '../auth/AuthContext'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { TemporaryMicrodataGrants } from '../components/TemporaryMicrodataGrants'
 import { formatDate } from '../lib/catalog'
 import {
   AGGREGATE_RESOURCES,
@@ -559,6 +560,8 @@ export default function DataAccess() {
               <a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">Open the request form <Icon name="external"/></a>
             </article>
           </div>
+
+          <TemporaryMicrodataGrants />
 
           <section className="microdata-licence" aria-labelledby="microdata-licence-heading">
             <div className="microdata-licence-head">

@@ -9,6 +9,12 @@ import {
 } from './protectedData'
 import { ALL_PROTECTED_DATA_RESOURCES } from './protectedData'
 import { COMMUNITY_PORTAL } from './auth'
+import {
+  describeSurveyScope,
+  resolveGrantView,
+  type GrantComponent,
+  type ResolvedGrantView,
+} from './microdataGrants'
 
 export const MAP_FEATURE_LIMIT = 250
 export const BROWSER_EXPORT_LIMIT = 20000
@@ -76,6 +82,12 @@ export interface DatasetDefinition {
   layerUrl: string
   layer: FeatureLayerInfo
   isTable: boolean
+  /**
+   * Present only for a temporary grant view. Carries the approved survey scope
+   * and the bulk-export policy, so the explorer can describe what this dataset
+   * is without inventing a registry entry for something that expires.
+   */
+  grant?: ResolvedGrantView
 }
 
 export interface DatasetFilter {
@@ -277,6 +289,60 @@ export async function fetchDatasetDefinition(
   const layerUrl = `${serviceUrl}/${layerReference.id}`
   const layer = await requester<FeatureLayerInfo>(layerUrl)
   return { resource: resolved, serviceUrl, layerUrl, layer, isTable }
+}
+
+const GRANT_COMPONENT_TITLES: Record<GrantComponent, string> = {
+  legacy: 'Household microdata — approved surveys',
+  core: 'Household microdata — mandatory indicators, approved surveys',
+  optional: 'Household microdata — optional indicators, approved surveys',
+}
+
+/**
+ * Open a temporary grant view by item ID.
+ *
+ * Unlike the static datasets, a grant item is not in the Hub's registry — it is
+ * created per request and deleted at expiry — so the definition is built from
+ * whatever ArcGIS returns for this identity right now. That resolution is the
+ * check: an item the user was never granted, or no longer holds, does not
+ * resolve, and every subsequent query is authorized again by ArcGIS on its own
+ * terms. The rows are further limited by the view's server-side definition
+ * query, so the explorer can only ever reach the approved surveys.
+ */
+export async function fetchGrantDatasetDefinition(
+  itemId: string,
+  requester: ProtectedRequester,
+): Promise<DatasetDefinition> {
+  const view = await resolveGrantView(itemId, requester)
+  if (!view) throw new Error('This microdata grant is no longer available to your account.')
+  if (!view.serviceUrl) throw new Error('This grant view does not expose a queryable data service.')
+
+  const resource: ResolvedDataResource = {
+    id: view.itemId,
+    version: view.questionnaireVersion,
+    fallbackTitle: GRANT_COMPONENT_TITLES[view.component],
+    description: `Approved surveys: ${describeSurveyScope(view.surveyScope)}. Rows outside this scope are excluded by the service itself.`,
+    kind: 'microdata',
+    access: 'available',
+    item: {
+      id: view.itemId,
+      title: view.title,
+      type: 'Feature Service',
+      owner: '',
+      modified: Date.now(),
+      url: view.serviceUrl,
+      access: 'private',
+    },
+  }
+
+  const serviceUrl = normalizedServiceUrl(view.serviceUrl)
+  const service = await requester<FeatureServiceInfo>(serviceUrl)
+  const layerReference = service.layers?.[0] || service.tables?.[0]
+  if (!layerReference) throw new Error('This grant view does not expose a feature layer or table for exploration.')
+
+  const isTable = !service.layers?.some((layer) => layer.id === layerReference.id)
+  const layerUrl = `${serviceUrl}/${layerReference.id}`
+  const layer = await requester<FeatureLayerInfo>(layerUrl)
+  return { resource, serviceUrl, layerUrl, layer, isTable, grant: view }
 }
 
 export async function fetchRecordCount(definition: DatasetDefinition, where: string, requester: ProtectedRequester) {

@@ -167,3 +167,15 @@
 .download-scope strong { color: var(--deep-blue); }
 .dataset-map-hint { position: absolute; left: 12px; bottom: 52px; z-index: 500; margin: 0; padding: 5px 9px; border-radius: 3px; background: rgba(255, 255, 255, .93); box-shadow: 0 1px 4px rgba(20, 50, 60, .22); color: var(--ink-muted); font-size: var(--text-micro); }
 .dataset-map-hint--busy { bottom: 82px; color: var(--deep-blue); }
+
+/* Temporary grant context in the explorer.
+   States the approved scope beside the dataset title, so an analyst reading a
+   filtered result knows the service itself is already narrower than the
+   product name suggests. */
+.dataset-grant-scope { margin: 14px 0; padding: 14px 16px; border-left: 3px solid var(--fao-blue); background: var(--line-faint); }
+.dataset-grant-scope strong { display: block; color: var(--deep-blue); font-size: 13px; text-transform: uppercase; letter-spacing: .06em; }
+.dataset-grant-scope p { margin: 8px 0 0; color: var(--ink-faint); font-size: 13px; line-height: 1.65; }
+
+.download-panel--restricted { border-left: 3px solid #b88d53; }
+.download-panel--restricted p { margin: 10px 0 0; color: var(--ink-faint); font-size: 13px; line-height: 1.7; }
+.download-restricted-note { color: var(--ink-muted) !important; }

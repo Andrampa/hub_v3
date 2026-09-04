@@ -1,4 +1,5 @@
 import type { ArcGISGroup, ArcGISItem, CatalogData } from '../types'
+import { hasRestrictedMicrodataTag } from './microdataGrants'
 
 export const ARCGIS_PORTAL = 'https://www.arcgis.com'
 export const CONTENT_GROUP_ID = 'ab8a43038b6347ac93507988f7e2a90b'
@@ -69,9 +70,22 @@ export async function fetchCatalog(
 
   return {
     group,
-    items: [firstPage, ...remainingPages].flatMap((page) => page.results),
+    items: [firstPage, ...remainingPages].flatMap((page) => page.results).filter(catalogueVisible),
     fetchedAt: new Date(),
   }
+}
+
+/**
+ * Temporary microdata grant views never belong in the ordinary catalogue.
+ *
+ * Provisioning already keeps them out by refusing to share them with this
+ * content group, so in a correct deployment this filter matches nothing. It
+ * stays because it is the check that survives a provisioning mistake: a view
+ * shared here by accident would otherwise become a public-facing catalogue card
+ * for one recipient's approved surveys.
+ */
+export function catalogueVisible(item: ArcGISItem) {
+  return !hasRestrictedMicrodataTag(item.tags)
 }
 
 export function itemThumbnail(item: ArcGISItem) {

@@ -1,7 +1,7 @@
 import countryMetadata from '@d3-maps/atlas/metadata/countries'
 import { groupProductFamilies } from '../lib/productFamilies'
 import type { ArcGISItem } from '../types'
-import { CONTENT_GROUP_ID } from './arcgis'
+import { CONTENT_GROUP_ID, catalogueVisible } from './arcgis'
 
 export const CROSS_COUNTRY_CODE = 'XXX'
 const REST_ROOT = 'https://www.arcgis.com/sharing/rest'
@@ -429,6 +429,7 @@ async function requestCatalog(): Promise<CountryCatalog> {
   const remaining = await Promise.all(starts.map((start) => fetchPage(start)))
   const normalized = [firstPage, ...remaining]
     .flatMap((page) => page.results)
+    .filter(catalogueVisible)
     .map(normalizeItem)
   const items = normalized.filter((entry) => entry.discoverable).map((entry) => entry.item)
 
