@@ -7,7 +7,7 @@ export default function NotFound() {
   useDocumentTitle('Page not found')
   return (
     <>
-      <SiteHeader active="home" />
+      <SiteHeader />
       <main className="route-not-found section-wrap">
         <span className="kicker">Page not found</span>
         <h1>This DIEM Hub page does not exist.</h1>

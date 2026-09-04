@@ -165,7 +165,7 @@ export default function HazardImpactAssessments() {
 
   return (
     <>
-      <SiteHeader active="impact" />
+      <SiteHeader />
       <main id="top" className="impact-page">
         <section className="impact-hero">
           <img className="impact-hero-image" src={hazardHeroImage} alt="" />

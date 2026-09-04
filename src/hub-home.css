@@ -9,6 +9,8 @@
 }
 
 .hub-area-card {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   overflow: hidden;
   border: 1px solid #d9d9d9;
@@ -29,6 +31,7 @@ a.hub-area-card:focus-visible {
 }
 
 .hub-area-image {
+  flex: none;
   height: 175px;
   overflow: hidden;
   background: #e5ecf4;
@@ -40,10 +43,13 @@ a.hub-area-card:focus-visible {
   object-fit: cover;
 }
 
-.hub-area-body { padding: 25px; }
+/* The four bodies run 2 to 3 lines, so a shared min-height left the Explore
+   affordance at three different heights. The column pins it to the card foot
+   instead, which holds whatever the live counts do to the line count. */
+.hub-area-body { display: flex; flex: 1; flex-direction: column; padding: 25px; }
 .hub-area-body h3 { margin: 8px 0 10px; color: var(--fao-navy); font-size: 1.3rem; line-height: 1.25; }
-.hub-area-body p { min-height: 4.8em; margin: 0 0 22px; font-size: .88rem; line-height: 1.6; }
-.hub-area-action { display: inline-flex; align-items: center; gap: 12px; color: var(--fao-blue); font-size: .77rem; font-weight: 700; }
+.hub-area-body p { margin: 0 0 22px; font-size: .88rem; line-height: 1.6; }
+.hub-area-action { display: inline-flex; margin-top: auto; align-items: center; gap: 12px; color: var(--fao-blue); font-size: .77rem; font-weight: 700; }
 .hub-catalog-band {
   margin-top: 68px;
   padding: 38px 42px;
@@ -141,7 +147,6 @@ a.hub-area-card:focus-visible {
   .hub-areas { padding-top: 56px; }
   .hub-area-grid, .featured-evidence-grid { grid-template-columns: 1fr; }
   .hub-area-image { height: 165px; }
-  .hub-area-body p { min-height: 0; }
   .featured-evidence { margin-top: 56px; padding: 56px 0; }
   .featured-evidence .section-heading > a { align-self: start; }
   .featured-evidence-grid .card-image { height: 165px; }

@@ -9,7 +9,7 @@ export default function HouseholdMonitoring() {
   useDocumentTitle('Surveys catalogue')
   return (
     <>
-      <SiteHeader active="monitoring" />
+      <SiteHeader />
       <main className="household-monitoring-page">
         <section className="household-explorer-banner" aria-labelledby="household-explorer-heading">
           <div className="section-wrap">

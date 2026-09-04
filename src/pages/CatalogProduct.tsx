@@ -38,7 +38,6 @@ export default function CatalogProduct() {
 
   useEffect(() => {
     let active = true
-    window.scrollTo({ top: 0, behavior: 'instant' })
     setPreviewOpen(false)
     setState({ status: 'loading' })
     void fetchCurrentCatalogProduct(itemId)
@@ -82,7 +81,7 @@ export default function CatalogProduct() {
 
   return (
     <>
-      <SiteHeader active="catalog" />
+      <SiteHeader />
       <main className="catalog-product-page" id="main-content">
         <div className="section-wrap">
           <nav className="catalog-product-breadcrumb" aria-label="Breadcrumb">

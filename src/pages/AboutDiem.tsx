@@ -23,7 +23,7 @@ export default function AboutDiem() {
   useDocumentTitle('About DIEM')
   return (
     <>
-      <SiteHeader active="about" />
+      <SiteHeader />
       <main className="about-page">
         <section className="about-hero">
           <img className="about-hero-image" src={aboutHeroImage} alt="Dry agricultural fields illustrating the conditions DIEM evidence helps assess" />

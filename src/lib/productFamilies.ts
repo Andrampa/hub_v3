@@ -36,6 +36,9 @@ function titleLanguage(title: string) {
   return 'English'
 }
 
+/** What `itemLanguage` returns when tag, title marker and category all miss. */
+export const UNRECORDED_LANGUAGE = 'Language not specified'
+
 export function itemLanguage(item: ArcGISItem) {
   const fromTag = item.tags
     ?.find((tag) => tag.trim().toLowerCase().startsWith(LANGUAGE_TAG_PREFIX))
@@ -49,7 +52,7 @@ export function itemLanguage(item: ArcGISItem) {
     value.toLowerCase().startsWith(LANGUAGE_CATEGORY_PREFIX)
   ))
   if (category) return category.slice(LANGUAGE_CATEGORY_PREFIX.length)
-  return 'Language not specified'
+  return UNRECORDED_LANGUAGE
 }
 
 const languageOrder = new Map([

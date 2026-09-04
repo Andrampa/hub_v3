@@ -8,7 +8,7 @@ export default function Contact() {
   useDocumentTitle('Contact us')
   return (
     <>
-      <SiteHeader active="about" />
+      <SiteHeader />
       <main className="contact-page">
         <section className="contact-hero">
           <div className="section-wrap">

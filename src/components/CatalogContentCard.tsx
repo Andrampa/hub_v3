@@ -4,11 +4,14 @@ import { distinctThumbnail, itemProductPath, itemThumbnail } from '../services/a
 import {
   CROSS_COUNTRY_CODE,
   EVIDENCE_PATHWAYS,
+  UNRECORDED_PRODUCT_TYPE,
+  pathwayLabel,
+  UNRECORDED_PRODUCT_TYPE_LABEL,
   countryDefinition,
   type CountryResource,
   type EvidencePathway,
 } from '../services/countries'
-import type { ProductFamily } from '../lib/productFamilies'
+import { UNRECORDED_LANGUAGE, itemLanguage, type ProductFamily } from '../lib/productFamilies'
 
 /** Shared with the country pages so one product is labelled identically wherever it appears. */
 const PATHWAY_ICONS: Record<EvidencePathway, string> = {
@@ -38,7 +41,8 @@ export function CatalogContentCard({
   // marked on those cards; a thumbnail that is unique to its product is left clean.
   const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
   const destination = itemProductPath(item)
-  const product = item.productTypes[0] || 'Unclassified'
+  const soleLanguage = itemLanguage(item)
+  const recordedType = item.productTypes.find((type) => type !== UNRECORDED_PRODUCT_TYPE)
   const pathways = EVIDENCE_PATHWAYS.filter((pathway) => (
     family.variants.some((variant) => variant.evidencePathways.includes(pathway))
   ))
@@ -65,7 +69,7 @@ export function CatalogContentCard({
           ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
           : <span className="card-image-plate">{edition}</span>}
         {thumbnail && edition && <span className="card-edition">{edition}</span>}
-        <span className={`type-badge${product === 'Unclassified' ? ' type-badge--unclassified' : ''}`}>{product}</span>
+        <span className={`type-badge${recordedType ? '' : ' type-badge--unclassified'}`}>{recordedType || UNRECORDED_PRODUCT_TYPE_LABEL}</span>
       </Link>
       <div className="card-body">
         {/* `created` is when the product entered the catalogue. `modified` is the
@@ -81,7 +85,7 @@ export function CatalogContentCard({
             {pathways.map((pathway) => (
               <li className={`catalog-pathway catalog-pathway--${pathwaySlug(pathway)}`} key={pathway}>
                 <i className={`bi ${PATHWAY_ICONS[pathway]}`} aria-hidden="true" />
-                {pathway}
+                {pathwayLabel(pathway)}
               </li>
             ))}
           </ul>
@@ -100,10 +104,18 @@ export function CatalogContentCard({
         </div>
         {/* A list, not a <nav>. As a landmark every card added an entry to the
             screen-reader landmark menu, burying the page's real regions under
-            one "Available languages for ..." per card. */}
-        {family.variants.length > 1 && (
-          <div className="card-languages">
-            <span id={`languages-${item.id}`}>Available in</span>
+            one "Available languages for ..." per card.
+
+            Shown for a single edition too, so that a one-language product can
+            be told from one whose other editions failed to group; a lone
+            edition is stated rather than linked, because the link would lead
+            back to the card the reader is already on. A record that declares no
+            language says nothing at all rather than announcing the gap to a
+            reader who cannot act on it. */}
+        {(family.variants.length > 1 || soleLanguage !== UNRECORDED_LANGUAGE) && (
+        <div className="card-languages">
+          <span id={`languages-${item.id}`}>Available in</span>
+          {family.variants.length > 1 ? (
             <ul aria-labelledby={`languages-${item.id}`}>
               {family.languages.map(({ language, item: variant }) => (
                 <li key={variant.id}>
@@ -113,7 +125,10 @@ export function CatalogContentCard({
                 </li>
               ))}
             </ul>
-          </div>
+          ) : (
+            <span className="card-language-only">{soleLanguage}</span>
+          )}
+        </div>
         )}
       </div>
     </article>

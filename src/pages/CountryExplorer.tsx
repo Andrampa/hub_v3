@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CountryMap } from '../components/CountryMap'
+import { CountryCoverageMatrix } from '../components/CountryCoverageMatrix'
 import { CountryFlag } from '../components/CountryFlag'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
@@ -8,10 +9,11 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { UNRECORDED_PRODUCT_TYPE } from '../services/countries'
 
 function topTypes(typeCounts: Record<string, number>) {
   return Object.entries(typeCounts)
-    .filter(([type]) => type !== 'Unclassified')
+    .filter(([type]) => type !== UNRECORDED_PRODUCT_TYPE)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
 }
@@ -30,12 +32,13 @@ export default function CountryExplorer() {
       region === 'All regions' || country.region === region
     ))
   }, [catalog, region])
+  const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
   const visibleIso = useMemo(() => new Set(visibleCountries.map((country) => country.iso3)), [visibleCountries])
   const latestUpdate = Math.max(...(catalog?.countries.map((country) => country.latestModified) || [0]))
 
   return (
     <>
-      <SiteHeader active="countries" />
+      <SiteHeader />
       <main id="top" className="countries-main">
         {!catalog && !error && (
           <section className="country-loading section-wrap" role="status">
@@ -75,7 +78,7 @@ export default function CountryExplorer() {
 
             <section className="country-facts" aria-label="Country catalog summary">
               <div><strong>{catalog.countries.length}</strong><span>countries with evidence</span></div>
-              <div><strong>{groupProductFamilies(catalog.items).length.toLocaleString()}</strong><span>curated products</span></div>
+              <div><strong>{families.length.toLocaleString()}</strong><span>curated products</span></div>
               <div><strong>{latestUpdate ? formatDate(latestUpdate) : '—'}</strong><span>latest update</span></div>
             </section>
 
@@ -110,6 +113,8 @@ export default function CountryExplorer() {
                 <div className="empty-state"><strong>No countries are available for this region</strong><p>Select another region to see its country evidence.</p></div>
               )}
             </section>
+
+            <CountryCoverageMatrix countries={visibleCountries} families={families} />
           </>
         )}
       </main>

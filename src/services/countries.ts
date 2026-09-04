@@ -7,6 +7,16 @@ export const CROSS_COUNTRY_CODE = 'XXX'
 const REST_ROOT = 'https://www.arcgis.com/sharing/rest'
 const PAGE_SIZE = 100
 
+/**
+ * 'Unclassified' is the sentinel a record carries when the content group holds
+ * no product type for it. It is a statement about the record, not a verdict on
+ * the product, so readers are shown this instead; the sentinel itself is a
+ * stored value and must not be renamed.
+ */
+export const UNRECORDED_PRODUCT_TYPE = 'Unclassified'
+
+export const UNRECORDED_PRODUCT_TYPE_LABEL = 'Type not recorded'
+
 export const PRODUCT_TYPES = [
   'Country Briefs',
   'Assessment Reports',
@@ -21,6 +31,19 @@ export const PRODUCT_TYPES = [
 ] as const
 
 export type ProductType = (typeof PRODUCT_TYPES)[number] | 'Unclassified'
+
+/**
+ * Reader-facing name for a pathway. The stored values are the content-group
+ * categories and travel in URLs, so they are never renamed here; only what a
+ * card prints changes.
+ */
+export const PATHWAY_LABELS: Partial<Record<EvidencePathway, string>> = {
+  'Seasonal calendar': 'Agricultural calendar',
+}
+
+export function pathwayLabel(pathway: EvidencePathway) {
+  return PATHWAY_LABELS[pathway] || pathway
+}
 
 export const EVIDENCE_PATHWAYS = [
   'Regular monitoring',

@@ -186,6 +186,68 @@ function LoadingWorkspace() {
  * protected metadata is requested and no dataset is listed, because item
  * titles and update dates are themselves protected metadata.
  */
+/**
+ * Signed out, the page listed no dataset at all: a visitor was asked to create
+ * an account to find out whether the account was worth creating. Every field
+ * shown here is already declared in `protectedData.ts` and is metadata about
+ * the collections, never a record, a preview or a download - the gate itself is
+ * unchanged, and what a signed-in account can actually open still depends on
+ * the permissions attached to it.
+ *
+ * Resources whose published service currently carries reference records rather
+ * than real survey data are counted separately and said so, because listing
+ * them publicly without that would advertise test data as available.
+ */
+function InventoryLine({ label, resources }: { label: string; resources: ProtectedDataResource[] }) {
+  if (!resources.length) return null
+  const preview = resources.filter((resource) => resource.preview).length
+  return (
+    <div className="data-inventory-line">
+      <dt>{label} <span>{resources.length}</span></dt>
+      <dd>
+        {resources.map((resource) => resource.fallbackTitle).join(' · ')}
+        {preview > 0 && (
+          <em>{preview === resources.length ? 'Published with reference records for review; real survey data follows.' : `${preview} of these are published with reference records for review.`}</em>
+        )}
+      </dd>
+    </div>
+  )
+}
+
+function PublicInventory() {
+  return (
+    <section className="data-gate-inventory section-wrap" aria-labelledby="data-inventory-heading">
+      <div className="data-gate-ladder-intro">
+        <span className="kicker">The collections</span>
+        <h2 id="data-inventory-heading">What an account opens</h2>
+        <p>Every collection DIEM publishes through this workspace, by questionnaire generation. Titles, themes and periods are public; the records and downloads are what require an account.</p>
+      </div>
+      <div className="data-inventory">
+        {[REFERENCE_GENERATION, ...ARCHIVE_GENERATIONS].map((id) => {
+          const generation = GENERATIONS[id]
+          return (
+            <article key={id} className="data-inventory-generation">
+              <header>
+                <strong>{generation.label}</strong>
+                <span>{generation.period}</span>
+              </header>
+              <dl>
+                <InventoryLine label="Aggregated survey data" resources={resourcesForGeneration(AGGREGATE_RESOURCES, id)} />
+                <InventoryLine label="Household microdata" resources={resourcesForGeneration(MICRODATA_RESOURCES, id)} />
+                <InventoryLine label="Reference boundaries" resources={resourcesForGeneration(REFERENCE_RESOURCES, id)} />
+                <InventoryLine label="Documentation" resources={resourcesForGeneration(DOCUMENTATION_RESOURCES, id)} />
+              </dl>
+            </article>
+          )
+        })}
+      </div>
+      <p className="data-inventory-note">
+        Aggregated data is published to the lowest administrative level each survey supports. Coverage - which countries and which rounds - is decided per survey and is listed inside each dataset. Household-level microdata follows the separate route described below.
+      </p>
+    </section>
+  )
+}
+
 function SignInGate() {
   const auth = useAuth()
   const reference = GENERATIONS[REFERENCE_GENERATION]
@@ -281,6 +343,8 @@ function SignInGate() {
         </div>
         <p className="generation-strip-note">Every generation keeps its own field descriptions and codebooks, so archived rounds stay reproducible. Comparisons across generations may be limited or impossible for some variables.</p>
       </section>
+
+      <PublicInventory />
 
       <section className="data-gate-microdata-note section-wrap">
         <div>
@@ -380,15 +444,15 @@ export default function DataAccess() {
     window.setTimeout(() => setCopied(undefined), 1800)
   }
 
-  if (!STYLE_PREVIEW && auth.status === 'loading') return <><SiteHeader active="data"/><LoadingWorkspace/><SiteFooter/></>
-  if (!STYLE_PREVIEW && auth.status !== 'authenticated') return <><SiteHeader active="data"/><SignInGate/><SiteFooter/></>
+  if (!STYLE_PREVIEW && auth.status === 'loading') return <><SiteHeader /><LoadingWorkspace/><SiteFooter/></>
+  if (!STYLE_PREVIEW && auth.status !== 'authenticated') return <><SiteHeader /><SignInGate/><SiteFooter/></>
 
   const referenceAggregates = aggregatesFor(REFERENCE_GENERATION)
   const referenceMicrodata = microdataFor(REFERENCE_GENERATION)
 
   return (
     <>
-      <SiteHeader active="data" />
+      <SiteHeader />
       <main className="data-page">
         <section className="data-workspace-hero">
           <div className="section-wrap">

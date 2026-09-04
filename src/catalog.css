@@ -3,6 +3,7 @@
 .catalog-hero p { max-width: 680px; margin: 0; color: #e5ecf4; font-size: 1rem; line-height: 1.65; }
 .catalog-filter-bar { grid-template-columns: minmax(220px, 1.35fr) repeat(5, minmax(120px, 1fr)); }
 .results-meta > div { display: flex; align-items: center; gap: 18px; }
+.results-read-at { color: var(--ink-muted); font-size: var(--text-small); white-space: nowrap; }
 .clear-filters { border: 0; background: transparent; color: var(--fao-blue); font-size: .76rem; font-weight: 700; text-decoration: underline; }
 .empty-state button { margin-top: 7px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); padding: 8px 13px; font-weight: 700; }
 .catalog-back { margin: 44px 0 0; }

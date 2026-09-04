@@ -3,6 +3,7 @@ import {
   MONITORING_COUNTRIES_COVERED,
   MONITORING_COUNTRIES_VERIFIED_LABEL,
   MONITORING_SINCE_LABEL,
+  MONITORING_STATISTICS_SOURCE_URL,
   type MonitoringStatistics,
 } from '../services/monitoring'
 
@@ -204,8 +205,13 @@ export function ProgrammeNumbers({
       </div>
 
       <p className="pn-footnote">
-        {statistics?.lastPublicationDate && <>Latest survey published {statistics.lastPublicationDate}. </>}
-        {MONITORING_COUNTRIES_VERIFIED_LABEL}; evidence figures are read live from the DIEM Hub content group.
+        Monitoring figures are the running totals for DIEM survey rounds
+        {' '}{MONITORING_SINCE_LABEL.replace('Since', 'since')}, read from the{' '}
+        <a href={MONITORING_STATISTICS_SOURCE_URL} target="_blank" rel="noreferrer">
+          DIEM monitoring statistics service <span aria-hidden="true">↗</span>
+        </a>.
+        {statistics?.lastPublicationDate && <> Latest survey published {statistics.lastPublicationDate}.</>}
+        {' '}{MONITORING_COUNTRIES_VERIFIED_LABEL}. Evidence figures are read live from the DIEM Hub content group.
       </p>
     </section>
   )

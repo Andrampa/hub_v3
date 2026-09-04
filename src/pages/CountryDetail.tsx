@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import crossCountryHeroImage from '../assets/heroes/cyclone-freddy-madagascar-2023.jpg'
 import { CountryEditorial } from '../components/CountryEditorial'
 import { CountryEveOverview } from '../components/CountryEveOverview'
+import { CountryRoundTimeline } from '../components/CountryRoundTimeline'
 import { CountryMonitoring } from '../components/CountryMonitoring'
 import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
@@ -12,7 +13,9 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
+  UNRECORDED_LANGUAGE,
   groupProductFamilies,
+  itemLanguage,
   type ProductFamily,
 } from '../lib/productFamilies'
 import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
@@ -24,7 +27,10 @@ import {
   CROSS_COUNTRY_CODE,
   EVIDENCE_PATHWAYS,
   PRODUCT_TYPES,
+  UNRECORDED_PRODUCT_TYPE,
+  UNRECORDED_PRODUCT_TYPE_LABEL,
   countryDefinition,
+  pathwayLabel,
   resourcesForCountry,
   type CountryResource,
   type EvidencePathway,
@@ -45,7 +51,8 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
   // Marked only where the image is a shared basemap or an ArcGIS default and so
   // cannot separate one product in a series from the next.
   const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
-  const product = item.productTypes[0] || 'Unclassified'
+  const soleLanguage = itemLanguage(item)
+  const product = item.productTypes.find((type) => type !== UNRECORDED_PRODUCT_TYPE) || UNRECORDED_PRODUCT_TYPE_LABEL
   const countryCodes = [...new Set(family.variants.flatMap((variant) => variant.countries))]
     .filter((code) => code !== CROSS_COUNTRY_CODE)
   const assignedCountries = countryCodes
@@ -81,7 +88,7 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
             {pathways.map((pathway) => (
               <li className={`country-pathway country-pathway--${pathway.toLowerCase().replace(/[^a-z]+/g, '-')}`} key={pathway}>
                 <i className={`bi ${pathwayIcons[pathway]}`} aria-hidden="true" />
-                {pathway}
+                {pathwayLabel(pathway)}
               </li>
             ))}
           </ul>
@@ -94,10 +101,12 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
           </span>
           <span title={countryLabel}>{countryLabel}</span>
         </div>
-        {/* A list, not a <nav>; see CatalogContentCard for why. */}
-        {family.variants.length > 1 && (
-          <div className="country-resource-languages">
-            <span id={`country-languages-${item.id}`}>Available in</span>
+        {/* A list, not a <nav>; see CatalogContentCard for why, and for why the
+            row is shown even when a product has a single edition. */}
+        {(family.variants.length > 1 || soleLanguage !== UNRECORDED_LANGUAGE) && (
+        <div className="country-resource-languages">
+          <span id={`country-languages-${item.id}`}>Available in</span>
+          {family.variants.length > 1 ? (
             <ul aria-labelledby={`country-languages-${item.id}`}>
               {family.languages.map(({ language, item: variant }) => (
                 <li key={variant.id}>
@@ -105,7 +114,10 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
                 </li>
               ))}
             </ul>
-          </div>
+          ) : (
+            <span className="card-language-only">{soleLanguage}</span>
+          )}
+        </div>
         )}
       </div>
     </article>
@@ -262,7 +274,7 @@ export default function CountryDetail() {
 
   return (
     <>
-      <SiteHeader active="countries" />
+      <SiteHeader />
       <main id="top" className="country-detail-main">
         {!catalog && !error && (
           <section className="country-loading section-wrap" role="status">
@@ -302,7 +314,7 @@ export default function CountryDetail() {
                   <p>{definition.iso3 === CROSS_COUNTRY_CODE ? 'Evidence and analysis that connect findings across multiple countries and crisis contexts.' : `Monitoring, assessments and practical evidence concerning food security and agricultural livelihoods in ${definition.name}.`}</p>
                   <div className="country-profile-stats">
                     <div><strong>{country.resourceCount}</strong><span>products</span></div>
-                    <div><strong>{Object.keys(country.typeCounts).filter((type) => type !== 'Unclassified').length}</strong><span>product types</span></div>
+                    <div><strong>{Object.keys(country.typeCounts).filter((type) => type !== UNRECORDED_PRODUCT_TYPE).length}</strong><span>product types</span></div>
                     <div><strong>{formatDate(latestUpdate)}</strong><span>latest update</span></div>
                   </div>
                 </div>
@@ -323,13 +335,15 @@ export default function CountryDetail() {
               </aside>
             )}
 
+            {eveMonitoringActive && (
+              <CountryEveOverview countryName={definition.name} iso3={definition.iso3} />
+            )}
+
             {monitoringCoverage && (
               <CountryMonitoring countryName={definition.name} coverage={monitoringCoverage} />
             )}
 
-            {eveMonitoringActive && (
-              <CountryEveOverview countryName={definition.name} iso3={definition.iso3} />
-            )}
+            <CountryRoundTimeline families={allResourceFamilies} countryName={definition.name} />
 
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">

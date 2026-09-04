@@ -203,7 +203,7 @@ export default function FloodServices() {
 
   return (
     <>
-      <SiteHeader active="flood" />
+      <SiteHeader />
       <main className="programme-page">
         <section className="programme-hero programme-hero--flood">
           <img className="programme-hero-image" src={floodHeroImage} alt="" />

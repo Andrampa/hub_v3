@@ -50,7 +50,7 @@ export default function App() {
 
   return (
     <>
-      <SiteHeader active="home" />
+      <SiteHeader />
       <main id="top">
         <section className="hero">
           <img className="hero-image" src={defaultProgrammeSlides[0].imageUrl} alt="" />
@@ -66,7 +66,7 @@ export default function App() {
 
         {catalog && <LatestEvidenceBanner items={families.map((family) => family.primary)} />}
         {error && <div className="home-catalog-notice section-wrap" role="alert"><p><strong>Latest public evidence is temporarily unavailable.</strong> The programme pathways remain available.</p><button type="button" onClick={retry}>Try again</button></div>}
-        <HubAreaCards />
+        <HubAreaCards counts={{ publicResources: stats.total, hazardImpactAssessments: stats.hazardImpactAssessments, countriesWithEvidence: catalog?.countries.length || 0, surveys: monitoringStatistics?.surveys || 0 }} />
         <FeaturedEvidence families={families} />
         <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} countriesWithEvidence={catalog?.countries.length || 0} catalogReady={Boolean(catalog)} />
 

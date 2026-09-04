@@ -116,3 +116,19 @@ export function itemEdition(item: ArcGISItem) {
   const year = item.title.match(/\b(20[1-3]\d)\b/)
   return year ? year[1] : undefined
 }
+
+/**
+ * The round number a title declares, or undefined when it declares none.
+ *
+ * Rounds are parsed from titles because the content group holds no round field,
+ * so anything built on this must show only what parses and say so: a title
+ * written differently is a missing number, not a missing product.
+ */
+export function itemRound(item: ArcGISItem) {
+  const match = item.title.match(/\b(?:round|cycle|ronde|ciclo)\s*#?\s*(\d+)\b/i)
+  if (!match) return undefined
+  const round = Number(match[1])
+  // A three-digit "round" is a period or a typo, never a survey round; DIEM is
+  // at round 14 after six years.
+  return Number.isFinite(round) && round > 0 && round < 100 ? round : undefined
+}

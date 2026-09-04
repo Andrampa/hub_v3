@@ -117,7 +117,7 @@ export default function MonitoringSystem() {
 
   return (
     <>
-      <SiteHeader active="monitoring" />
+      <SiteHeader />
       <main className="monitoring-page">
         <section className="monitoring-dashboard" aria-label="DIEM monitoring dashboards">
           <iframe

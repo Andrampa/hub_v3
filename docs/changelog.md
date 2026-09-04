@@ -1,5 +1,155 @@
 # Changelog
 
+## 2026-09-04 - Matrix grouping, reader-facing copy, calendar label
+
+- Cards print "Agricultural calendar" for the pathway stored as
+  `Seasonal calendar`. The stored value is a content-group category that travels
+  in shared URLs, so only the printed label changes; the catalogue facet still
+  reads and filters on the stored name.
+- A product that declares no language now shows no language row at all, instead
+  of announcing "Language not recorded" to a reader who cannot act on it. 102 of
+  766 products are in that state, so the row was appearing often and saying
+  nothing useful. Editions and single known languages are unchanged.
+- The coverage matrix is titled "Country publication matrix", and its
+  explanation of how the counts are derived is gone; what remains says how to
+  use it. The same was trimmed from the round timeline.
+- Dropped the `DIEM EVE` column from the matrix: it is a superseded tag holding
+  one product, against six under `EVE flood reports`, and two adjacent columns
+  invited a comparison between a live tag and a retired one.
+- Household monitoring columns - Country Briefs, Key Findings Presentations,
+  Questionnaires, Photo gallery - now sit together under one tint, so the survey
+  cycle reads as a block. Assessment and other products keep the neutral ground
+  until their own grouping is decided.
+- Verified: `npm run build` passes; the label, the omitted language row, the new
+  column order, the tint and the removed column were checked in the browser.
+
+## 2026-09-04 - Coverage matrix and a language badge on every card
+
+- Country pages were reordered, not changed: flood services, then the
+  monitoring system, then the round timeline, then the product tiles, then the
+  resource library.
+- A round cell holding more than one product now asks which one. It opened the
+  first silently before; it now expands a panel under the grid listing each
+  product with its language, and each row links to its own product page. Single
+  products still open in one click. The panel sits below the grid rather than
+  over the cell because the grid scrolls horizontally in its own container,
+  which would clip a popover at exactly the rounds a reader has to scroll to.
+- `/countries` carries a coverage matrix: 54 countries against ten product
+  types, every figure a link into the catalogue with that country and product
+  type already applied, an empty cell meaning nothing of that kind is
+  published. Learning this previously meant opening 54 country pages. It
+  follows the region filter, and the header row, the country column and the
+  totals row all stay put while the grid scrolls.
+- Matrix counts are product families, not records, so a figure agrees with the
+  catalogue when the reader follows it - verified: Afghanistan Country Briefs
+  reads 9 and the filtered catalogue reports 9 products found. The totals row
+  states how many countries have any of a type rather than summing the column,
+  because a product published for three countries would otherwise be counted
+  three times and disagree with the catalogue.
+- Every catalogue and country card now states its language, not only the ones
+  with more than one edition. A single-language product, a product whose other
+  editions failed to group, and a product whose language was never recorded all
+  looked identical before. A lone edition is stated rather than linked, since
+  the link would return to the card the reader is already on, and a record with
+  no language reads "Language not recorded" in a dashed chip.
+- This immediately surfaces records the tagging misses: "Mali - DIEM-Suivi -
+  Moyens d'existence agricoles des menages deplaces internes, avril 2026" is a
+  French document with no language tag, no title marker the parser recognizes
+  and no language category, so it now says so on its card instead of looking
+  like every English product around it.
+- Verified: `npm run build` passes; the matrix, its links, the chooser panel and
+  all four badge states were checked in the browser, and neither grid pushes the
+  page sideways.
+
+## 2026-09-04 - Public dataset inventory and the round timeline
+
+- `/data` now lists every collection it holds while signed out, by questionnaire
+  generation: aggregated survey themes, microdata tables, reference boundaries
+  and documentation, with counts. The page previously showed no dataset at all
+  to an anonymous visitor, who was asked to create an account to find out
+  whether the account was worth creating. Every value shown is metadata already
+  declared in `protectedData.ts` - never a record, a preview or a download - so
+  the access boundary is unchanged and what an account opens still depends on
+  the permissions attached to it. Collections published with reference records
+  rather than real survey data say so in the public list, because listing them
+  without that would advertise test data as available.
+- Country pages carry a coverage grid: rounds across, product types down, so a
+  gap in a row reads as "round 6 has no brief" at a glance. A list of 40
+  near-identical cards can state what exists but never what is missing, which is
+  the question a country analyst arrives with. Niger shows it immediately - no
+  Country Brief for rounds 2 and 4, no questionnaire for round 2.
+- Round numbers are parsed from titles, because the content group holds no round
+  field. Only products whose title states a round appear in the grid; the rest
+  are counted in a line above it rather than dropped, since an unparsed title
+  would otherwise render as a false gap. A country with fewer than two parsed
+  rounds gets no grid, because one column implies a series where there is none.
+  A cell with several products links to the first and shows the count; the grid
+  scrolls inside its own container, so fourteen rounds never push the page
+  sideways.
+- Verified: `npm run build` passes; the inventory renders for all three
+  generations with the V3 reference-record note, and the Niger and Somalia grids
+  were checked in the browser with no horizontal page overflow.
+
+## 2026-09-04 - Design review lenses 2, 6 and 7
+
+- Every in-app route change now returns the reader to the top of the page. A
+  client-side navigation keeps the scroll position, so following a link from
+  halfway down one page landed the next page mid-document; only the product page
+  handled it, which is why the fault kept reappearing elsewhere. Query-string
+  changes are left alone, so filters and pagination keep their own targeted
+  scroll to the results heading.
+- Homepage pathway cards state what is behind them - "54 countries, 735
+  products", "232 survey rounds across 42 countries", "122 hazard impact
+  assessments" - instead of inviting the reader to explore, and the paragraph
+  that re-listed the four card titles directly above the four cards is gone.
+  Country evidence leads, being the entry point a first-time visitor needs and
+  the only one of the four that opens a real index. Each sentence is written to
+  read correctly before its count arrives, because the three figures come from
+  three services at three moments.
+- The card footer is pinned to the bottom of the card rather than held by a
+  shared min-height, so the Explore affordance sits at one height whatever the
+  live counts do to the line count.
+- "DIEM in numbers" now says where its figures come from: the monitoring
+  statistics service is named and linked, and the period is stated.
+- The catalogue states when it last read the content group. `fetchedAt` was
+  captured on every load and rendered nowhere, so a count that changed between
+  two visits had no explanation; the group changes daily and the catalogue is
+  held in sessionStorage for fifteen minutes.
+- Renamed the catalogue's "Pillar" facet to "Evidence pathway", which is the
+  term already used on product, country and filter surfaces. "Pillar" is
+  institutional vocabulary implying an approved programme structure, while these
+  are content-group categories. Shared links carrying the old
+  `No pillar assigned` value still resolve.
+- Products with no product type in the record now read "Type not recorded"
+  rather than "Unclassified", which read as a verdict on the product instead of
+  a statement about the record. The stored sentinel is unchanged and is now
+  referenced through one exported constant.
+- Navigation dropdowns announce their state. They opened on `:hover` and
+  `:focus-within` with `aria-haspopup` and no `aria-expanded`, so a screen
+  reader was told a menu existed but never that it had opened, and Escape did
+  nothing. Open state now lives in React, Escape closes and returns focus to the
+  trigger, and the `:focus-within` rule had to go with it - it held the menu
+  visibly open after Escape, because Escape puts focus back inside it.
+- The header derives the active section from the route instead of taking it as a
+  prop from each of the twenty page components. The 404 had nothing to declare,
+  passed "home", and told the reader they were on the homepage; an unmapped path
+  now highlights nothing.
+- Dropped three unused Google Fonts `@import`s from the vendored FAO theme:
+  Montserrat and Noto Sans JP have no `font-family` rule in the theme at all,
+  and Cairo is reached only through `html[lang=ar|fa|sf]`, which this
+  English-only Hub never sets. Each was a serial round trip before first paint,
+  from inside a render-blocking stylesheet. Stripped by a Vite plugin rather
+  than in the file, so the theme stays a byte-exact vendor snapshot and an
+  upgrade is trimmed the same way.
+- Verified: `npm run build` passes; live counts, the read-at line, the renamed
+  facet, the legacy filter value, the new badge, Escape-to-close and the 404's
+  empty nav state were all checked in the browser, and the four Explore
+  affordances measured to a single height.
+- Not done: the 495 kB render-blocking `index.css` still bundles Bootstrap, the
+  FAO theme and six page stylesheets. Splitting it means moving page CSS into
+  the lazy route chunks, which changes cascade order against
+  `fao-adaptation.css`; that needs its own pass with visual checks per route.
+
 ## 2026-09-04 - Membership-checked catalogue product pages
 
 - Added stable `/catalog/:id` product pages with title, summary, sanitized full

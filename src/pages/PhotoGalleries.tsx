@@ -60,7 +60,7 @@ export default function PhotoGalleries() {
 
   return (
     <>
-      <SiteHeader active="about" />
+      <SiteHeader />
       <main className="gallery-page">
         <section className="gallery-hero">
           <div className="section-wrap">

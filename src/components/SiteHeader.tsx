@@ -1,10 +1,33 @@
 import { useState, type MouseEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { NavDropdown } from './NavDropdown'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 
-export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'about' }) {
+type NavSection = 'home' | 'catalog' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'about'
+
+/**
+ * Derived from the route rather than passed in per page. Every page component
+ * used to declare its own section by hand, so the 404 - which had nothing to
+ * declare - passed 'home' and told the reader they were on the homepage.
+ * An unmapped path now highlights nothing, which is the honest answer.
+ */
+function activeSection(pathname: string): NavSection | undefined {
+  if (pathname === '/') return 'home'
+  const section = pathname.split('/')[1]
+  if (section === 'catalog') return 'catalog'
+  if (section === 'countries') return 'countries'
+  if (section === 'data') return 'data'
+  if (section === 'monitoring' || section === 'monitoring-system') return 'monitoring'
+  if (section === 'hazard-impact-assessments') return 'impact'
+  if (section === 'flood-services') return 'flood'
+  if (section === 'about' || section === 'contact' || section === 'photo-galleries') return 'about'
+  return undefined
+}
+
+export function SiteHeader() {
   const auth = useAuth()
+  const active = activeSection(useLocation().pathname)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
@@ -42,12 +65,7 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
         </div>
         <div className="nav-links">
           <Link className={active === 'home' ? 'active' : ''} to="/">Home</Link>
-          <div className={`nav-dropdown${active === 'monitoring' || active === 'data' ? ' active' : ''}`}>
-            <button type="button" aria-haspopup="true">
-              Household Surveys
-              <span aria-hidden="true" />
-            </button>
-            <div className="nav-dropdown-menu">
+          <NavDropdown label="Household Surveys" active={active === 'monitoring' || active === 'data'}>
               <Link to="/monitoring-system">
                 <strong>Surveys catalogue</strong>
                 <small>Browse surveys and products</small>
@@ -60,18 +78,12 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
                 <strong>Data access</strong>
                 <small>Access household survey data and related resources</small>
               </Link>
-            </div>
-          </div>
+          </NavDropdown>
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
           <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
           <Link className={active === 'catalog' ? 'active' : ''} to="/catalog">Catalogue</Link>
-          <div className={`nav-dropdown${active === 'about' ? ' active' : ''}`}>
-            <button type="button" aria-haspopup="true">
-              About DIEM
-              <span aria-hidden="true" />
-            </button>
-            <div className="nav-dropdown-menu nav-dropdown-menu--end">
+          <NavDropdown label="About DIEM" active={active === 'about'} align="end">
               <Link to="/about">
                 <strong>What is DIEM?</strong>
                 <small>Purpose, approach and stories from users</small>
@@ -84,8 +96,7 @@ export function SiteHeader({ active }: { active: 'home' | 'catalog' | 'countries
                 <strong>Contact us</strong>
                 <small>Questions, support and collaboration</small>
               </Link>
-            </div>
-          </div>
+          </NavDropdown>
         </div>
         <button
           className="mobile-menu-toggle"

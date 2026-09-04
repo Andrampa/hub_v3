@@ -114,7 +114,7 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
   const auth = useAuth()
   return (
     <>
-      <SiteHeader active="data" />
+      <SiteHeader />
       <main className="dataset-explorer-gate section-wrap">
         <span className="kicker">Protected data explorer</span>
         <h1>Sign in to explore {resourceName}.</h1>
@@ -357,14 +357,14 @@ export default function DatasetExplorer() {
     }
   }
 
-  if (auth.status === 'loading') return <><SiteHeader active="data"/><main className="dataset-explorer-loading"><span className="loader"/><strong>Checking your DIEM session...</strong></main><SiteFooter/></>
+  if (auth.status === 'loading') return <><SiteHeader /><main className="dataset-explorer-loading"><span className="loader"/><strong>Checking your DIEM session...</strong></main><SiteFooter/></>
   if (auth.status !== 'authenticated') return <ExplorerGate resourceName={resource?.fallbackTitle || 'this dataset'} />
 
   const visibleColumns = fields.map((field) => field.name)
 
   return (
     <>
-      <SiteHeader active="data" />
+      <SiteHeader />
       <main className="dataset-explorer">
         <header className="dataset-explorer-header">
           <div className="section-wrap">

@@ -22,17 +22,31 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const PAGE_SIZE = 16
 /**
- * Filter value for products carrying no pillar category at all. Without it the
- * four pillar counts add up to less than the catalogue total with no way to see
- * the difference, which reads as a broken count rather than as missing metadata.
+ * Filter value for products carrying no pathway category at all. Without it the
+ * four counts add up to less than the catalogue total with no way to see the
+ * difference, which reads as a broken count rather than as missing metadata.
  */
-const UNASSIGNED_PATHWAY = 'No pillar assigned'
+const UNASSIGNED_PATHWAY = 'No pathway assigned'
+/** Shipped briefly under the institutional word; shared links still carry it. */
+const LEGACY_UNASSIGNED_PATHWAY = 'No pillar assigned'
 const typeGroups: Record<string, string[]> = {
   Data: ['Microsoft Excel', 'CSV', 'Shapefile', 'Feature Service', 'Service Definition'],
   Documents: ['Document Link', 'PDF', 'Microsoft Powerpoint'],
   'Maps & apps': ['StoryMap', 'Web Map', 'Dashboard', 'Web Experience', 'Web Mapping Application', 'Form'],
   Media: ['Image'],
   Pages: ['Hub Page'],
+}
+
+/**
+ * The catalogue sits over a group that changes daily and is held in
+ * sessionStorage for fifteen minutes, so a count can differ between two visits
+ * for reasons the reader cannot see. Stating when the group was actually read
+ * explains that, and UTC because the reader may be anywhere.
+ */
+function formatReadTime(fetchedAt: Date) {
+  const stamp = fetchedAt.toISOString()
+  const time = `at ${stamp.slice(11, 16)} UTC`
+  return stamp.slice(0, 10) === new Date().toISOString().slice(0, 10) ? time : `${stamp.slice(0, 10)} ${time}`
 }
 
 function categoryFor(item: CountryResource) {
@@ -46,7 +60,8 @@ export default function Catalog() {
   const query = params.get('q') || ''
   const category = params.get('content') || 'All content'
   const country = params.get('country') || 'All countries'
-  const pathway = params.get('pathway') || 'All pathways'
+  const requestedPathway = params.get('pathway') || 'All pathways'
+  const pathway = requestedPathway === LEGACY_UNASSIGNED_PATHWAY ? UNASSIGNED_PATHWAY : requestedPathway
   const product = params.get('product') || 'All products'
   const year = params.get('year') || 'All years'
   const requestedSort = params.get('sort') || 'newest'
@@ -62,7 +77,7 @@ export default function Catalog() {
       return a.name.localeCompare(b.name)
     }), [catalog])
   const years = useMemo(() => [...new Set(catalog?.items.map(itemYear) || [])].sort((a, b) => b - a), [catalog])
-  // Only offer a pillar or product filter that some published product actually
+  // Only offer a pathway or product filter that some published product actually
   // carries, so an empty result is never reachable from the controls.
   const availablePathways = useMemo(() => EVIDENCE_PATHWAYS.filter((value) => (
     catalog?.items.some((item) => item.evidencePathways.includes(value))
@@ -76,7 +91,7 @@ export default function Catalog() {
   const searchIndex = useMemo(() => buildCatalogSearchIndex(families), [families])
   const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
 
-  // Every filter except the pillar. The pillar tab counts are taken from this
+  // Every filter except the pathway. The pathway tab counts are taken from this
   // set so each tab states how many results choosing it would actually give,
   // rather than repeating a catalogue-wide total that ignores the other filters.
   const familiesBeforePathway = useMemo(() => families.filter((family) => (
@@ -154,13 +169,13 @@ export default function Catalog() {
 
   return (
     <>
-      <SiteHeader active="catalog" />
+      <SiteHeader />
       <main className="catalog-page" id="top">
         {/* One heading, not two. The page previously announced itself four
             times over before a product appeared: eyebrow, title, second
             eyebrow, second title. The subtitle now states what is in the
             catalogue and where it comes from instead of restating the title. */}
-        <section className="catalog-hero"><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${families.length.toLocaleString()} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by pillar, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by pillar, product type, country or year.'}</p></div></section>
+        <section className="catalog-hero"><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${families.length.toLocaleString()} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.'}</p></div></section>
         <section className="catalog-section" aria-labelledby="catalog-title">
           <div className="section-wrap">
             <div className="filter-bar catalog-filter-bar">
@@ -176,7 +191,7 @@ export default function Catalog() {
                 onValueChange={(next) => update('q', next)}
                 onCountrySelect={(iso3) => update('country', iso3, 'All countries')}
               />
-              <label><span>Pillar</span><select value={pathway} onChange={(event) => update('pathway', event.target.value, 'All pathways')}><option>All pathways</option>{availablePathways.map((value) => <option key={value}>{value}</option>)}{unassignedCount > 0 && <option>{UNASSIGNED_PATHWAY}</option>}</select></label>
+              <label><span>Evidence pathway</span><select value={pathway} onChange={(event) => update('pathway', event.target.value, 'All pathways')}><option>All pathways</option>{availablePathways.map((value) => <option key={value}>{value}</option>)}{unassignedCount > 0 && <option>{UNASSIGNED_PATHWAY}</option>}</select></label>
               <label><span>Product</span><select value={product} onChange={(event) => update('product', event.target.value, 'All products')}><option>All products</option>{availableProducts.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label><span>Country</span><select value={country} onChange={(event) => update('country', event.target.value, 'All countries')}><option>All countries</option>{countries.map((value) => <option value={value.iso3} key={value.iso3}>{value.name}</option>)}</select></label>
               <label><span>Format</span><select value={category} onChange={(event) => update('content', event.target.value, 'All content')}><option>All content</option>{Object.keys(typeGroups).map((value) => <option key={value}>{value}</option>)}</select></label>
@@ -203,7 +218,7 @@ export default function Catalog() {
               </div>
             </> : <>
               {availablePathways.length > 0 && (
-                <div className="catalog-pathway-filter" role="group" aria-label="Filter by pillar">
+                <div className="catalog-pathway-filter" role="group" aria-label="Filter by evidence pathway">
                   <button type="button" aria-pressed={pathway === 'All pathways'} onClick={() => update('pathway', 'All pathways', 'All pathways')}>
                     <span>All pathways</span><strong>{familiesBeforePathway.length}</strong>
                   </button>
@@ -238,7 +253,7 @@ export default function Catalog() {
                   )}
                 </div>
               )}
-              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
+              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
               <div className="card-grid">{visibleFamilies.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div>
               {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>}
               {pageCount > 1 && <nav className="pagination" aria-label="Catalog pages"><button disabled={safePage === 1} onClick={() => update('page', String(safePage - 1))}>Previous</button><span>Page <strong>{safePage}</strong> of {pageCount}</span><button disabled={safePage === pageCount} onClick={() => update('page', String(safePage + 1))}>Next</button></nav>}

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './auth/AuthContext'
+import ScrollToTop from './components/ScrollToTop'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './assets/fao/fao-theme.min.css'
 import './styles.css'
@@ -39,6 +40,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<RouteLoading />}>
           <Routes>
             <Route path="/" element={<App />} />

@@ -387,3 +387,25 @@
 .dataset-card-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .dataset-card-thumb--microdata { display: flex; align-items: center; justify-content: flex-start; height: 124px; padding: 12px 16px; background: #f2f6f5; }
 .dataset-card-thumb--microdata img { width: auto; max-width: 100%; height: 100%; object-fit: contain; object-position: left center; }
+
+/* The public inventory of collections on the anonymous gate. Every value comes
+   from the declared resource list, so a generation with nothing in a category
+   simply drops the row rather than showing an empty one. */
+.data-gate-inventory { padding-block: 84px; border-top: 1px solid var(--line); }
+.data-inventory { display: grid; gap: 18px; }
+.data-inventory-generation { border: 1px solid var(--line); background: #fff; padding: 22px 24px; }
+.data-inventory-generation header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line-faint); }
+.data-inventory-generation header strong { color: var(--deep-blue); font-size: 19px; letter-spacing: -.02em; }
+.data-inventory-generation header span { color: var(--ink-faint); font-size: var(--text-small); }
+.data-inventory-generation dl { display: grid; gap: 13px; margin: 0; }
+.data-inventory-line { display: grid; grid-template-columns: minmax(180px, 210px) minmax(0, 1fr); gap: 20px; }
+.data-inventory-line dt { color: var(--deep-blue); font-size: 13px; font-weight: 600; }
+.data-inventory-line dt span { display: inline-block; margin-left: 6px; padding: 1px 7px; border: 1px solid var(--line); color: var(--ink-faint); font-size: var(--text-small); font-weight: 600; }
+.data-inventory-line dd { margin: 0; color: var(--ink-faint); font-size: 13px; line-height: 1.6; }
+.data-inventory-line dd em { display: block; margin-top: 5px; color: var(--ink-muted); font-size: var(--text-small); font-style: normal; }
+.data-inventory-note { margin: 22px 0 0; color: var(--ink-faint); font-size: var(--text-small); line-height: 1.6; }
+
+@media (max-width: 720px) {
+  .data-gate-inventory { padding-block: 58px; }
+  .data-inventory-line { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}

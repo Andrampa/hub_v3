@@ -322,3 +322,74 @@
   .product-filter-grid { grid-template-columns: 1fr; }
   .region-filters button { flex: 1 1 auto; }
 }
+
+/* Round timeline. The grid scrolls inside its own container rather than pushing
+   the page sideways, because a country with fourteen rounds is wider than the
+   column at any viewport worth designing for. */
+.country-timeline { padding-block: 8px 46px; }
+.country-timeline-scroll { overflow-x: auto; border: 1px solid var(--line); background: #fff; }
+.country-timeline-grid { width: 100%; border-collapse: collapse; }
+.country-timeline-grid th, .country-timeline-grid td { border-bottom: 1px solid var(--line-faint); text-align: center; }
+.country-timeline-grid thead th { padding: 11px 6px; border-bottom: 1px solid var(--line); color: var(--ink-faint); font-size: var(--text-small); font-weight: 700; }
+.country-timeline-grid tbody tr:last-child th, .country-timeline-grid tbody tr:last-child td { border-bottom: 0; }
+.country-timeline-grid th[scope="row"] { position: sticky; left: 0; min-width: 190px; padding: 12px 16px; background: #fff; border-right: 1px solid var(--line); color: var(--deep-blue); font-size: 13px; font-weight: 600; text-align: left; }
+.country-timeline-grid thead th:first-child { position: sticky; left: 0; z-index: 1; background: #fff; border-right: 1px solid var(--line); text-align: left; padding-left: 16px; }
+.country-timeline-grid td { min-width: 46px; padding: 0; }
+.country-timeline-grid td.is-absent { background: repeating-linear-gradient(135deg, transparent, transparent 5px, var(--line-faint) 5px, var(--line-faint) 6px); }
+.country-timeline-grid td a { display: flex; align-items: center; justify-content: center; height: 42px; color: var(--fao-blue); font-size: 13px; font-weight: 700; }
+.country-timeline-grid td a:hover, .country-timeline-grid td a:focus-visible { background: #f2f6f5; text-decoration: none; }
+.country-timeline-legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 13px 0 0; color: var(--ink-faint); font-size: var(--text-small); }
+.country-timeline-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.country-timeline-key { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border: 1px solid var(--line); font-size: var(--text-small); font-style: normal; font-weight: 700; }
+.country-timeline-key--present { border-color: var(--fao-blue); background: radial-gradient(circle at center, var(--fao-blue) 0 2.5px, transparent 2.5px); }
+.country-timeline-key--multiple { color: var(--fao-blue); }
+.country-timeline-key--absent { background: repeating-linear-gradient(135deg, transparent, transparent 5px, var(--line-faint) 5px, var(--line-faint) 6px); }
+
+/* The chooser for a cell holding more than one product. It sits under the grid
+   rather than in a popover over it, because the grid scrolls horizontally in
+   its own container and anything anchored inside a cell would be clipped by
+   that overflow at exactly the rounds a reader has to scroll to reach. */
+.country-timeline-grid td button { display: flex; align-items: center; justify-content: center; width: 100%; height: 42px; border: 0; background: transparent; color: var(--fao-blue); font-size: 13px; font-weight: 700; cursor: pointer; }
+.country-timeline-grid td button:hover, .country-timeline-grid td button:focus-visible { background: #f2f6f5; }
+.country-timeline-grid td.is-chosen { background: var(--fao-blue); }
+.country-timeline-grid td.is-chosen button { color: #fff; }
+.country-timeline-choice { margin-top: 14px; border: 1px solid var(--fao-blue); background: #fff; }
+.country-timeline-choice-head { display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--line-faint); background: #f2f6f5; }
+.country-timeline-choice-head strong { color: var(--deep-blue); font-size: 13px; }
+.country-timeline-choice-head span { color: var(--ink-faint); font-size: var(--text-small); }
+.country-timeline-choice-head button { margin-left: auto; border: 0; background: transparent; color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; cursor: pointer; }
+.country-timeline-choice ul { margin: 0; padding: 0; list-style: none; }
+.country-timeline-choice li { display: flex; align-items: baseline; gap: 14px; padding: 11px 16px; }
+.country-timeline-choice li + li { border-top: 1px solid var(--line-faint); }
+.country-timeline-choice li a { color: var(--fao-blue); font-size: 13px; font-weight: 600; }
+.country-timeline-choice li span { color: var(--ink-faint); font-size: var(--text-small); }
+
+/* Coverage matrix. Country names and the header row stay put while the grid
+   scrolls inside its own container, because 54 rows against ten product types
+   is wider and taller than any viewport worth designing for, and a count means
+   nothing once its country or its column heading has scrolled away. */
+.coverage-matrix { padding-block: 8px 74px; }
+.coverage-matrix-scroll { max-height: 620px; overflow: auto; border: 1px solid var(--line); background: #fff; }
+.coverage-matrix-grid { width: 100%; border-collapse: separate; border-spacing: 0; }
+.coverage-matrix-grid thead th { position: sticky; top: 0; z-index: 2; padding: 10px 8px; border-bottom: 1px solid var(--line); background: #fff; color: var(--ink-faint); font-size: var(--text-small); font-weight: 700; text-align: center; vertical-align: bottom; }
+.coverage-matrix-grid thead th:first-child, .coverage-matrix-grid tbody th, .coverage-matrix-grid tfoot th { position: sticky; left: 0; min-width: 165px; padding: 9px 14px; background: #fff; border-right: 1px solid var(--line); text-align: left; }
+.coverage-matrix-grid thead th:first-child { z-index: 3; }
+.coverage-matrix-grid tbody th { z-index: 1; border-bottom: 1px solid var(--line-faint); color: var(--deep-blue); font-size: 13px; font-weight: 600; }
+.coverage-matrix-grid tbody th a { color: inherit; }
+.coverage-matrix-grid tbody th a:hover, .coverage-matrix-grid tbody th a:focus-visible { color: var(--fao-blue); text-decoration: underline; }
+.coverage-matrix-grid td { min-width: 58px; padding: 0; border-bottom: 1px solid var(--line-faint); text-align: center; }
+.coverage-matrix-grid td a { display: flex; align-items: center; justify-content: center; height: 38px; color: var(--fao-blue); font-size: 13px; font-weight: 600; }
+.coverage-matrix-grid td a:hover, .coverage-matrix-grid td a:focus-visible { background: #f2f6f5; text-decoration: none; }
+.coverage-matrix-grid td.is-absent { background: repeating-linear-gradient(135deg, transparent, transparent 5px, var(--line-faint) 5px, var(--line-faint) 6px); }
+.coverage-matrix-total { border-right: 1px solid var(--line); background: #f7f9f9; font-weight: 700; }
+.coverage-matrix-grid tfoot th, .coverage-matrix-grid tfoot td { position: sticky; bottom: 0; z-index: 2; padding: 9px 8px; border-top: 1px solid var(--line); background: #f2f6f5; color: var(--deep-blue); font-size: var(--text-small); font-weight: 700; }
+.coverage-matrix-grid tfoot th { z-index: 3; }
+
+@media (max-width: 720px) {
+  .coverage-matrix-scroll { max-height: 460px; }
+  .coverage-matrix-grid thead th:first-child, .coverage-matrix-grid tbody th, .coverage-matrix-grid tfoot th { min-width: 130px; }
+}
+.coverage-matrix-group--monitoring { background: #eef4f7; }
+.coverage-matrix-grid td.coverage-matrix-group--monitoring.is-absent { background: repeating-linear-gradient(135deg, #eef4f7, #eef4f7 5px, var(--line-faint) 5px, var(--line-faint) 6px); }
+.coverage-matrix-grid thead th.coverage-matrix-group--monitoring { background: #eef4f7; }
+.coverage-matrix-grid td.coverage-matrix-group--monitoring a:hover, .coverage-matrix-grid td.coverage-matrix-group--monitoring a:focus-visible { background: #dfeaef; }
