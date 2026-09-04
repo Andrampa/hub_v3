@@ -6,7 +6,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: stretch;
   overflow: hidden;
-  border: 1px solid #d8e2e3;
+  border: 1px solid #d7dfdd;
   background: white;
   box-shadow: 0 9px 30px rgba(19, 59, 72, .07);
 }
@@ -68,16 +68,16 @@
   min-height: 56px;
   padding: 0 21px;
   border-right: 1px solid #e5ebea;
-  color: #718188;
+  color: var(--ink-faint);
   font-size: var(--text-small);
   white-space: nowrap;
 }
 
 .latest-evidence-item > span:not(.latest-evidence-new) {
   padding: 3px 7px;
-  border: 1px solid #dce5e5;
+  border: 1px solid var(--line-soft);
   border-radius: 999px;
-  color: #586b72;
+  color: #536b74;
 }
 
 .latest-evidence-item a {
@@ -98,7 +98,7 @@
 .latest-evidence-new {
   padding: 3px 6px;
   border-radius: 2px;
-  background: #daf1e6;
+  background: #dff2e8;
   color: #236548;
   font-size: var(--text-micro);
   font-weight: 800;
@@ -110,7 +110,7 @@
   display: flex;
   align-items: center;
   padding: 0 17px;
-  border-left: 1px solid #e1e7e7;
+  border-left: 1px solid var(--line-soft);
   color: var(--fao-blue);
   font-size: var(--text-small);
   font-weight: 700;
@@ -148,7 +148,7 @@
 .programme-carousel-heading > p {
   max-width: 430px;
   margin: 0;
-  color: #697b81;
+  color: var(--ink-faint);
   font-size: 14px;
   line-height: 1.7;
 }
@@ -194,7 +194,7 @@
 }
 
 .programme-slide-content > span {
-  color: #9bd1dc;
+  color: #9dd0dd;
   font-size: var(--text-small);
   font-weight: 800;
   letter-spacing: .16em;
@@ -211,7 +211,7 @@
 .programme-slide-content p {
   max-width: 535px;
   margin: 0 0 27px;
-  color: #d7e5e9;
+  color: var(--line-soft);
   font-size: 16px;
   line-height: 1.65;
 }
@@ -302,7 +302,7 @@
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 10px;
-  background: #073d5c;
+  background: #043f61;
   color: white;
   box-shadow: 0 22px 55px rgba(0, 26, 41, .34);
   animation: editorial-popup-in .45s ease-out both;
@@ -363,7 +363,7 @@
 
 .editorial-popup-content p {
   margin: 0 0 17px;
-  color: #cfdee3;
+  color: #d2e2e6;
   font-size: 12px;
   line-height: 1.55;
 }
@@ -381,7 +381,7 @@
 
 .editorial-popup-content a:hover,
 .editorial-popup-content a:focus-visible {
-  background: #db641c;
+  background: #d76321;
 }
 
 @keyframes editorial-popup-in {

@@ -3,11 +3,11 @@
    digits align in columns the way a real flight board does. */
 
 .survey-board {
-  --board-face: #062231;
+  --board-face: #06222f;
   --board-flap: #0a2c3e;
   --board-flap-alt: #0c3245;
-  --board-edge: #143f56;
-  --board-screen: #e6f1f6;
+  --board-edge: #173d50;
+  --board-screen: #e5ecf4;
   --board-dim: #7ba2b3;
   --board-amber: #f9a63f;
   --board-cool: #8ecbe8;
@@ -20,7 +20,7 @@
   overflow: hidden;
   background:
     radial-gradient(120% 80% at 50% -20%, rgba(24, 92, 128, .55) 0%, transparent 60%),
-    linear-gradient(180deg, #073048 0%, var(--board-face) 42%, #041a27 100%);
+    linear-gradient(180deg, #0c3245 0%, var(--board-face) 42%, #041a27 100%);
   border: 1px solid #0a2c3e;
   box-shadow: 0 26px 60px -32px rgba(4, 26, 39, .85), inset 0 1px 0 rgba(255, 255, 255, .06);
 }
@@ -41,7 +41,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 14px 20px;
-  background: linear-gradient(180deg, #0a3a52 0%, #06283a 100%);
+  background: linear-gradient(180deg, #043753 0%, #0a2c3e 100%);
   border-bottom: 1px solid var(--board-edge);
 }
 
@@ -205,7 +205,7 @@
 .board-flap {
   display: inline-block;
   padding: 5px 10px;
-  background: #04202e;
+  background: #06222f;
   border-left: 2px solid currentColor;
   font-family: var(--board-mono);
   font-size: var(--text-small);
@@ -244,7 +244,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  background: #05202f;
+  background: #06222f;
   border-top: 1px solid var(--board-edge);
   grid-template-columns: none;
 }
@@ -300,7 +300,7 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #06283a;
+  background: #0a2c3e;
 }
 
 .board-bezel-end { display: flex; align-items: center; gap: 14px; }
@@ -399,7 +399,7 @@
 }
 
 .theme-picker h2 { margin: 8px 0 0; color: var(--deep-blue); font-size: 25px; letter-spacing: -.03em; }
-.theme-picker > p { margin: 10px 0 22px; color: #697b81; font-size: 13px; line-height: 1.7; }
+.theme-picker > p { margin: 10px 0 22px; color: var(--ink-faint); font-size: 13px; line-height: 1.7; }
 
 .theme-picker-close {
   position: absolute;
@@ -409,7 +409,7 @@
   height: 30px;
   border: 1px solid var(--line);
   background: white;
-  color: #5d7178;
+  color: var(--ink-muted);
   font-size: 17px;
   line-height: 1;
   cursor: pointer;
@@ -440,12 +440,12 @@
 
 .theme-picker-state { padding: 22px 0 6px; text-align: center; }
 .theme-picker-state strong { display: block; color: var(--deep-blue); font-size: 14px; }
-.theme-picker-state p { margin: 8px 0 0; color: #74858a; font-size: 12px; line-height: 1.7; }
+.theme-picker-state p { margin: 8px 0 0; color: var(--ink-faint); font-size: 12px; line-height: 1.7; }
 
 .theme-picker-state button {
   margin-top: 16px;
   padding: 10px 16px;
-  border: 1px solid #b9c8c8;
+  border: 1px solid #b9cbcb;
   background: white;
   color: var(--deep-blue);
   cursor: pointer;

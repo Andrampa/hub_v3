@@ -1,14 +1,14 @@
-.catalog-hero { padding: 64px 0 68px; background: #1c4767; color: #fff; }
+.catalog-hero { padding: 64px 0 68px; background: var(--fao-navy); color: #fff; }
 .catalog-hero h1 { margin: 12px 0 13px; color: #fff; font-size: clamp(2.3rem, 4.5vw, 3.55rem); font-weight: 600; }
 .catalog-hero p { max-width: 680px; margin: 0; color: #e5ecf4; font-size: 1rem; line-height: 1.65; }
 .catalog-filter-bar { grid-template-columns: minmax(220px, 1.35fr) repeat(5, minmax(120px, 1fr)); }
 .results-meta > div { display: flex; align-items: center; gap: 18px; }
-.clear-filters { border: 0; background: transparent; color: #116bac; font-size: .76rem; font-weight: 700; text-decoration: underline; }
-.empty-state button { margin-top: 7px; border: 1px solid #116bac; background: #fff; color: #116bac; padding: 8px 13px; font-weight: 700; }
+.clear-filters { border: 0; background: transparent; color: var(--fao-blue); font-size: .76rem; font-weight: 700; text-decoration: underline; }
+.empty-state button { margin-top: 7px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); padding: 8px 13px; font-weight: 700; }
 .catalog-back { margin: 44px 0 0; }
-.catalog-back a { color: #116bac; font-weight: 700; }
+.catalog-back a { color: var(--fao-blue); font-weight: 700; }
 .content-card h3 a { color: inherit; }
-.content-card h3 a:hover, .content-card h3 a:focus-visible { color: #116bac; text-decoration: underline; }
+.content-card h3 a:hover, .content-card h3 a:focus-visible { color: var(--fao-blue); text-decoration: underline; }
 .catalog-page .card-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 .catalog-page .content-card { display: flex; flex-direction: column; }
 .catalog-page .card-image { height: 138px; }
@@ -29,7 +29,7 @@
   height: auto;
   min-height: 2.9em;
   margin: 0 0 12px;
-  color: #606f74;
+  color: var(--ink-muted);
   font-size: var(--text-small);
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -66,24 +66,24 @@
 /* Publisher-assigned categorization on catalog cards.
    Named for the catalog rather than reusing the country page's classes, so the
    two surfaces can be restyled independently while showing the same labels. */
-.catalog-page .card-image--regular-monitoring { background: linear-gradient(135deg, #0b4a68, #4a92c0); }
+.catalog-page .card-image--regular-monitoring { background: linear-gradient(135deg, #05466c, #4a92c0); }
 .catalog-page .card-image--hazard-impact { background: linear-gradient(135deg, #913e1c, #ec9a5c); }
 .catalog-page .card-image--research-analysis { background: linear-gradient(135deg, #594774, #a699be); }
 .catalog-page .card-image--seasonal-calendar { background: linear-gradient(135deg, #355f3f, #88ad74); }
-.catalog-page .card-image--unclassified { background: linear-gradient(135deg, #46585e, #8a9aa0); }
+.catalog-page .card-image--unclassified { background: linear-gradient(135deg, #405961, var(--ink-faint)); }
 .catalog-page .type-badge--unclassified { background: rgba(70, 88, 94, .82); font-style: italic; }
 
 .catalog-pathways { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 0; padding: 0; list-style: none; }
-.catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: #eef3f5; border-left: 3px solid #8a9aa0; color: #40595f; font-size: var(--text-micro); font-weight: 700; letter-spacing: .03em; }
+.catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: var(--line-faint); border-left: 3px solid var(--ink-faint); color: #405961; font-size: var(--text-micro); font-weight: 700; letter-spacing: .03em; }
 .catalog-pathway i { font-size: var(--text-small); }
 .catalog-pathway--regular-monitoring { border-left-color: var(--fao-blue); }
 .catalog-pathway--hazard-impact { border-left-color: var(--orange); }
 .catalog-pathway--research-analysis { border-left-color: var(--deep-blue); }
 .catalog-pathway--seasonal-calendar { border-left-color: #5792c9; }
 
-.catalog-pathway-filter { margin-bottom: 22px; padding: 7px; display: flex; flex-wrap: wrap; gap: 6px; background: #f1f5f7; border: 1px solid #dbe4e8; }
+.catalog-pathway-filter { margin-bottom: 22px; padding: 7px; display: flex; flex-wrap: wrap; gap: 6px; background: #f2f6f5; border: 1px solid var(--line-soft); }
 .catalog-pathway-filter button { min-height: 40px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 10px; background: white; border: 1px solid transparent; color: #405961; cursor: pointer; font-size: var(--text-small); font-weight: 700; }
-.catalog-pathway-filter button::before { content: ''; width: 4px; align-self: stretch; background: #8a9aa0; }
+.catalog-pathway-filter button::before { content: ''; width: 4px; align-self: stretch; background: var(--ink-faint); }
 .catalog-pathway-filter button strong { color: inherit; font-size: 12px; }
 .catalog-pathway-filter button[aria-pressed="true"] { background: var(--deep-blue); color: white; }
 .catalog-pathway-filter--regular-monitoring::before { background: var(--fao-blue) !important; }
@@ -122,11 +122,11 @@
 
 /* Skeleton grid shown while the content group is being paged. It occupies the
    same geometry as a page of results, so nothing jumps when they arrive. */
-.results-meta--pending { color: #60747b; font-size: .8rem; }
-.content-card--skeleton { background: #fff; border: 1px solid #e3eaed; }
+.results-meta--pending { color: var(--ink-muted); font-size: .8rem; }
+.content-card--skeleton { background: #fff; border: 1px solid #e5ecf4; }
 .skeleton-block {
   display: block;
-  background: linear-gradient(90deg, #eef2f4 25%, #e3e9ec 50%, #eef2f4 75%) 0 0 / 300% 100%;
+  background: linear-gradient(90deg, var(--line-faint) 25%, var(--line-soft) 50%, var(--line-faint) 75%) 0 0 / 300% 100%;
 }
 .skeleton-block--image { height: 138px; }
 .skeleton-block--title { height: 13px; margin-top: 9px; }
@@ -138,7 +138,7 @@
 @keyframes catalog-skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @media (max-width: 620px) { .skeleton-block--image { height: 165px; } }
 .catalog-pathway-filter button:disabled { color: #93a3a9; cursor: default; }
-.catalog-pathway-filter button:disabled::before { background: #dbe2e5 !important; }
+.catalog-pathway-filter button:disabled::before { background: var(--line-soft) !important; }
 
 /* Round marker on cards whose thumbnail is a shared country basemap or an
    ArcGIS default. The image is back, but it cannot tell Round 8 from Round 11,
@@ -176,7 +176,7 @@
   background: #fff;
   border: 1px solid #b8b8b8;
 }
-.inline-search-caption { display: block; margin-bottom: 7px; color: #88969a; font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.inline-search-caption { display: block; margin-bottom: 7px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 .inline-search { display: flex; align-items: center; gap: 8px; width: 100%; }
 .inline-search:focus-within { outline: 2px solid var(--fao-blue); outline-offset: 6px; }
 .inline-search input { flex: 1; min-width: 0; padding: 0; border: 0; background: transparent; outline: 0; color: #545454; font-size: 12px; }
