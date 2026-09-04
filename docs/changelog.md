@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-04 - Audit: where a product click goes
+
+Documentation only; recorded as an addendum in
+`docs/design_review_2026-09-03.md`.
+
+- Measured what a card click actually opens. Of 991 records, 503 are uploaded
+  files whose click lands on an ArcGIS item page rather than the document -
+  about half the catalogue. 402 carry an external url and already go to the
+  real destination; 86 are ArcGIS apps for which the item page is correct.
+- Confirmed `/sharing/rest/content/items/<id>/data` serves the file itself with
+  the right content type and original filename, so a direct link is available.
+- Recorded four options with effort, and corrected two claims made when the
+  question was first answered: the file-size objection to an in-Hub preview was
+  a generalisation from one 6.6 MB outlier when the median PDF is 1.29 MB, and
+  the iframe feasibility test that appeared to pass had run against a 403 error
+  page, so whether ArcGIS permits framing is still unverified.
+- Noted that the content group shrank from 991 to 913 items during the session
+  and that the item prompting the question was withdrawn mid-session. A direct
+  file link therefore needs a Hub-side failure path, and the fifteen-minute
+  session cache means a stale card is a normal state to design for. Whether the
+  group change was expected needs confirming with the content owners.
+
 ## 2026-09-04 - Dataset explorer: map extent loading, download scope, cross-tab session
 
 - The map now loads geometry for the current extent rather than a fixed 250

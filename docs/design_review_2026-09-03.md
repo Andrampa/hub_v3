@@ -22,6 +22,7 @@ differs from the one first proposed.
 | Base commit | `113d271` |
 | Items agreed | Top 10 items 1-8, 10 |
 | Items shipped | Top 10 items 1-8 and 10; lens phases 1 and 2 (2026-09-03) |
+| Open, highest value | A Hub product page at `/catalog/:id`; see the 2026-09-04 addendum |
 
 Update the two rows above as work is selected and completed, and record shipped
 items in `docs/changelog.md`.
@@ -781,3 +782,95 @@ Tempting changes that would make this product worse.
 
 The authenticated `/data` workspace was **not** exercised; that pass remains
 open in `docs/handoff.md`.
+
+---
+
+# Addendum, 2026-09-04: where a product click goes
+
+Added after the review above was written and phases 1 and 2 were shipped.
+Triggered by a reader question: clicking a card opened a new tab on
+`arcgis.com/home/item.html?id=...`, leaving the Hub. Measurements are against
+the live content group on 2026-09-04 and the group is changing daily; re-count
+before acting on them.
+
+## The finding
+
+`itemDestination` (`src/services/arcgis.ts:82`) returns `item.url`, falling
+back to the ArcGIS item page when the item has none. For an uploaded file that
+fallback is a **detour, not a destination**: the reader lands on an ArcGIS
+interface and still has to click again to reach the document.
+
+Of 991 records in the group at time of measurement:
+
+| Kind | Count | Where a click lands today |
+|---|---|---|
+| Uploaded files: Excel 250, PDF 203, Image 44, PowerPoint 4, Shapefile 1, CSV 1 | **503** | ArcGIS item page - a detour |
+| ArcGIS apps: Web Map 37, Hub Page 26, Dashboard 14, Form 7, Service Definition 2 | 86 | item page - correct, the app lives there |
+| External `url`: openknowledge.fao.org 247, storymaps 84, services5 37, doi.org 20, other 14 | 402 | the real destination - already correct |
+
+**About half the catalogue sends the reader somewhere they did not ask for.**
+
+The file itself is one URL away. `GET /sharing/rest/content/items/<id>/data`
+was confirmed on several public items to return `200` with the correct type
+(`application/pdf`, `application/vnd.openxmlformats-...sheet`) and the original
+filename, for example `EVE_biweeklyreport_MOZ_period_55_en.pdf`.
+
+## Options
+
+**A. Link straight to the file.** Hours. For the 503 file items, point at
+`/data`. PDFs open in the browser's viewer, spreadsheets download under their
+real name, and the ArcGIS detour disappears. Gating is unchanged: ArcGIS
+enforces item sharing on that endpoint exactly as on the item page, and the
+catalogue lists only public items. Needs the failure path in the next section.
+
+**B. A Hub product page at `/catalog/:id`.** Three to five days. The
+structural fix already argued for in lens 4: description, provenance, dates,
+language editions, other rounds in the series, a citation and a download button
+using A's URL. Deep links, shareable products and related items all follow from
+it, and it is the only place a withdrawn item can fail gracefully.
+
+**C. Preview the document inside the Hub.** One to two days *on top of B*, not
+instead of it - a preview needs a page to sit on. Two corrections to the first
+assessment of this option:
+
+- The size objection was a generalisation from a single 6.6 MB outlier. Over a
+  40-item sample the median PDF is **1.29 MB**, p90 7.5 MB, max 17 MB, with 7 of
+  40 above 5 MB. The median case is fine to preview; only the tail is a problem,
+  which argues for a size threshold rather than for dropping the option.
+- Whether ArcGIS permits framing these files is **unverified**. A first iframe
+  test appeared to succeed but had run against a 403 error page, which also
+  fires `load`; a retry against a file that genuinely serves was inconclusive in
+  the review browser, which has no PDF viewer. Decide C by opening
+  `/sharing/rest/content/items/<id>/data` in an iframe in a real browser.
+
+**D. Label the link.** One hour. Mark it "opens in ArcGIS". Honest, but the
+detour remains.
+
+Suggested order: A with a failure path, then B, then C if the framing test
+passes, with a size cap and a download link above it.
+
+## Catalogue volatility, and what it means for A
+
+While this addendum was being written, the item that prompted the question was
+withdrawn from the group. Its metadata read normally at the start of the
+session - "Mozambique - EVE biweekly report for Period #55", public PDF, 6.6 MB
+- and twenty minutes later both the item endpoint and `/data` returned a
+genuine ArcGIS 403, with a full group scan no longer finding it.
+
+Over the same session the group went from **991 items to 913**. Either an
+editor was changing sharing at the time or a bulk operation was running; that
+should be confirmed with the content owners rather than assumed.
+
+Two consequences:
+
+1. **Option A needs a graceful failure.** A direct `/data` link for a withdrawn
+   item drops the reader on a bare ArcGIS 403 page, which is worse than the item
+   page it replaced, because the item page at least explains itself. The link
+   should resolve through a Hub route that can say "this product is no longer
+   published".
+2. **The session cache makes a stale card more likely to be seen.** The
+   catalogue is held in `sessionStorage` for fifteen minutes, so a reader can be
+   looking at a card for an item that has since been unshared. That is the right
+   trade for load time and it does not need reverting, but it does mean the
+   Hub should treat "the item is gone" as a normal state rather than an
+   exception.
