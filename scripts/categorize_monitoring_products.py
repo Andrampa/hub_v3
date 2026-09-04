@@ -144,6 +144,9 @@ def configured_integer(name: str, value: str) -> int:
 def normalized(value: Any) -> str:
     raw = html.unescape(str(value or ""))
     raw = re.sub(r"<[^>]+>", " ", raw)
+    # Titles mix typographic and straight quotes, so fold them together before
+    # any pattern that spans an apostrophe, such as "note d'information".
+    raw = raw.replace("’", "'").replace("‘", "'")
     decomposed = unicodedata.normalize("NFKD", raw)
     ascii_text = "".join(char for char in decomposed if not unicodedata.combining(char))
     return re.sub(r"\s+", " ", ascii_text).strip().lower()
@@ -232,15 +235,57 @@ def inferred_product_type(item: Any) -> str:
     return "Supporting material"
 
 
+# DIEM publishes a translated deliverable under a source-language title, marked
+# either with a parenthesised code — "(FR)", "(ES)" — or a trailing language
+# name. Translations are frequently copied from the English item and keep its
+# culture and its Languages category, so neither of those is trustworthy here:
+# an explicit marker, and distinctly French or Spanish title wording, both
+# outrank them. Of 42 titles confirmed as mislabelled, 11 carried an existing
+# Languages/English category.
+LANGUAGE_MARKERS = (
+    (
+        "French",
+        r"\((?:fr|fre|fra|french|francais)\)"
+        r"|\bfrench\s*/\s*francais\b"
+        r"|[-–]\s*french\s*$",
+    ),
+    (
+        "Spanish",
+        r"\((?:es|esp|spa|spanish|espanol)\)"
+        r"|\bspanish\s*/\s*espanol\b"
+        r"|[-–]\s*spanish\s*$",
+    ),
+    ("English", r"\((?:en|eng|english)\)|[-–]\s*english\s*$"),
+)
+
+# Title wording that appears only in a French or Spanish deliverable. Confined
+# to phrases DIEM actually publishes, so an English title is not misread as a
+# translation because a country name carries an accent.
+LANGUAGE_TITLE_WORDS = (
+    (
+        "French",
+        r"\b(bulletin de suivi|note d'information|questionnaire menage|enquete"
+        r"|rapport|resultats|suivi des donnees|mise a jour)\b",
+    ),
+    (
+        "Spanish",
+        r"\b(informe|cuestionario|resultados|encuesta|hogares|boletin"
+        r"|seguimiento)\b",
+    ),
+)
+
+
 def inferred_language(item: Any, existing_paths: list[str]) -> str:
+    title = normalized(item.get("title"))
+    for language, pattern in LANGUAGE_MARKERS + LANGUAGE_TITLE_WORDS:
+        if re.search(pattern, title):
+            return language
     configured = category_values(existing_paths, LANGUAGE_BRANCH)
     if configured:
         return configured[0]
-    culture = normalized(item.get("culture"))
-    title = normalized(item.get("title"))
-    if culture.startswith("fr") or re.search(r"\b(questionnaire menage|resultats|rapport)\b", title):
+    if normalized(item.get("culture")).startswith("fr"):
         return "French"
-    if culture.startswith("es") or re.search(r"\b(cuestionario|resultados|informe)\b", title):
+    if normalized(item.get("culture")).startswith("es"):
         return "Spanish"
     return "English"
 
