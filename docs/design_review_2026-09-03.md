@@ -21,7 +21,7 @@ differs from the one first proposed.
 | Reviewed | 2026-09-03 |
 | Base commit | `113d271` |
 | Items agreed | Top 10 items 1-8, 10 |
-| Items shipped | Top 10 items 1-8 and 10; lens phase 1 (2026-09-03) |
+| Items shipped | Top 10 items 1-8 and 10; lens phases 1 and 2 (2026-09-03) |
 
 Update the two rows above as work is selected and completed, and record shipped
 items in `docs/changelog.md`.

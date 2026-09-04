@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-09-03 - Design review phase 2: readability, colour and orange
+
+- Put a readability floor under the type scale. 241 declarations sat between
+  8 px and 11 px; two tokens replace the four sizes plus four sub-floor rem
+  values, and nothing renders below 11 px.
+- Consolidated the palette. 467 distinct hex values clustered into 131
+  perceptually distinguishable colours, so 336 were invisible duplicates;
+  they now collapse to their cluster's most-used member, and six with a real
+  role are named as tokens. Distinct hexes fall to 166.
+- Corrected the grey text ramp rather than only deduplicating it: three of its
+  five steps failed WCAG AA on white, at 4.17, 3.84 and 2.91 to one. Two steps
+  replace them at 6.91 and 5.88. Grey text failing 4.5:1 falls from 292
+  instances to zero; the 35 that remain are brand orange or a light accent on
+  blue, which is a decision about the brand colour.
+- Reserved orange for urgency, per AGENTS.md. It had become the general accent:
+  every section eyebrow, the decorative rails, the ISO code and arrow on all 54
+  country cards. Elements rendering orange text fall from 90 to a handful of
+  status markers. This also cleared a pre-existing 2.58:1 eyebrow.
+- Fixed the catalogue search cell, which had no frame and read as loose text on
+  the filter bar, and replaced its "paste an item ID" placeholder.
+
 ## 2026-09-03 - Item id search, and the type-ahead on the catalogue
 
 - Item ids are indexed and a complete id is treated as a lookup rather than as
