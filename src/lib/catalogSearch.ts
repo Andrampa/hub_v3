@@ -22,7 +22,22 @@ interface IndexedFamily {
   countries: string
   /** Item type, product types, shock types, monitoring products and editorial tags. */
   facets: string
+  /** Every variant's ArcGIS item id, so a pasted id or item URL resolves. */
+  ids: string
   modified: number
+}
+
+/**
+ * ArcGIS item ids found anywhere in the query.
+ *
+ * An id is a 32-character hex string. People arrive with one in three shapes:
+ * bare, inside an item URL (`.../home/item.html?id=<id>`), or inside a REST
+ * URL. Pulling the ids out first means the surrounding URL text never has to
+ * match anything, and a query that carries one is treated as a lookup rather
+ * than as words to search for.
+ */
+export function extractItemIds(query: string) {
+  return [...query.toLowerCase().matchAll(/\b[0-9a-f]{32}\b/g)].map((match) => match[0])
 }
 
 export type CatalogSearchIndex = IndexedFamily[]
@@ -59,6 +74,7 @@ export function buildCatalogSearchIndex(families: ProductFamily<CountryResource>
       title: foldText(family.variants.map((variant) => variant.title).join(' | ')),
       countries: foldText(countries.join(' ')),
       facets: foldText(facets.join(' ')),
+      ids: family.variants.map((variant) => variant.id.toLowerCase()).join(' '),
       modified: family.latestModified,
     }
   })
@@ -80,8 +96,21 @@ export function queryTokens(query: string) {
   return foldText(query.trim()).split(/\s+/).filter(Boolean)
 }
 
+/** Families carrying any of the given item ids, in the order the ids were given. */
+function matchesById(index: CatalogSearchIndex, ids: string[]) {
+  return index.filter((entry) => ids.some((id) => entry.ids.includes(id)))
+}
+
 /** Every token must match somewhere, so "questionnaire round 8" narrows instead of widening. */
 export function searchCatalog(index: CatalogSearchIndex, query: string, limit = 6): FamilyMatch[] {
+  // A complete id is an exact lookup, not a phrase: the query may be a whole
+  // item URL whose other words match nothing, and a partial id still falls
+  // through to the scored path below via the `ids` field.
+  const ids = extractItemIds(query)
+  if (ids.length) {
+    return matchesById(index, ids).slice(0, limit).map((entry) => ({ family: entry.family, score: 100 }))
+  }
+
   const tokens = queryTokens(query)
   if (!tokens.length) return []
   const matches: FamilyMatch[] = []
@@ -92,6 +121,9 @@ export function searchCatalog(index: CatalogSearchIndex, query: string, limit = 
       const tokenScore = fieldScore(entry.title, token) * 10
         + fieldScore(entry.countries, token) * 8
         + fieldScore(entry.facets, token) * 4
+        // Low weight: an id fragment is a deliberate lookup, never a word a
+        // reader would type by accident, so it only needs to break a tie.
+        + fieldScore(entry.ids, token) * 2
       if (!tokenScore) {
         matchesAll = false
         break
@@ -130,12 +162,20 @@ export function searchCountries(countries: CountrySummary[], query: string, limi
  * catalogue page and the homepage can never disagree about what a query means.
  */
 export function matchingFamilyIds(index: CatalogSearchIndex, query: string) {
+  const itemIds = extractItemIds(query)
+  if (itemIds.length) {
+    return new Set(matchesById(index, itemIds).map((entry) => entry.family.id))
+  }
+
   const tokens = queryTokens(query)
   if (!tokens.length) return undefined
   const ids = new Set<string>()
   for (const entry of index) {
     const matchesAll = tokens.every((token) => (
-      fieldScore(entry.title, token) || fieldScore(entry.countries, token) || fieldScore(entry.facets, token)
+      fieldScore(entry.title, token)
+      || fieldScore(entry.countries, token)
+      || fieldScore(entry.facets, token)
+      || fieldScore(entry.ids, token)
     ))
     if (matchesAll) ids.add(entry.family.id)
   }

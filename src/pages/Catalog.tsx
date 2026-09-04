@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CatalogContentCard, pathwaySlug } from '../components/CatalogContentCard'
+import { CatalogSearchBox } from '../components/CatalogSearchBox'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
@@ -36,10 +37,6 @@ const typeGroups: Record<string, string[]> = {
 
 function categoryFor(item: CountryResource) {
   return Object.entries(typeGroups).find(([, types]) => types.includes(item.type))?.[0] || 'Other'
-}
-
-function SearchIcon() {
-  return <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
 }
 
 export default function Catalog() {
@@ -167,7 +164,18 @@ export default function Catalog() {
         <section className="catalog-section" aria-labelledby="catalog-title">
           <div className="section-wrap">
             <div className="filter-bar catalog-filter-bar">
-              <label className="filter-search"><SearchIcon /><span className="sr-only">Search products</span><input type="search" placeholder="Search products" value={query} onChange={(event) => update('q', event.target.value)} /></label>
+              {/* Same component as the homepage, so a query means the same thing
+                  on both surfaces. Inline it drives the q parameter as you type,
+                  so the grid narrows underneath while the suggestions offer the
+                  jump to a country or straight to a product. */}
+              <CatalogSearchBox
+                families={families}
+                countries={catalog?.countries || []}
+                variant="inline"
+                value={query}
+                onValueChange={(next) => update('q', next)}
+                onCountrySelect={(iso3) => update('country', iso3, 'All countries')}
+              />
               <label><span>Pillar</span><select value={pathway} onChange={(event) => update('pathway', event.target.value, 'All pathways')}><option>All pathways</option>{availablePathways.map((value) => <option key={value}>{value}</option>)}{unassignedCount > 0 && <option>{UNASSIGNED_PATHWAY}</option>}</select></label>
               <label><span>Product</span><select value={product} onChange={(event) => update('product', event.target.value, 'All products')}><option>All products</option>{availableProducts.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label><span>Country</span><select value={country} onChange={(event) => update('country', event.target.value, 'All countries')}><option>All countries</option>{countries.map((value) => <option value={value.iso3} key={value.iso3}>{value.name}</option>)}</select></label>

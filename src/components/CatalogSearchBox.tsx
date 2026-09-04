@@ -1,6 +1,6 @@
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { buildCatalogSearchIndex, searchCatalog, searchCountries } from '../lib/catalogSearch'
+import { buildCatalogSearchIndex, extractItemIds, searchCatalog, searchCountries } from '../lib/catalogSearch'
 import type { ProductFamily } from '../lib/productFamilies'
 import { itemDestination } from '../services/arcgis'
 import type { CountryResource, CountrySummary } from '../services/countries'
@@ -13,6 +13,8 @@ interface Suggestion {
   /** Internal route, or an external product URL opened in a new tab. */
   to?: string
   href?: string
+  /** inline only: apply this country as a filter rather than navigating. */
+  iso3?: string
 }
 
 function SearchIcon() {
@@ -23,13 +25,41 @@ function ArrowIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
 }
 
-export function CatalogSearchBox({ families, countries }: {
+/**
+ * `hero` navigates away on selection: the homepage's job is to send the reader
+ * somewhere. `inline` is for a page that is already showing results, so the
+ * value is owned by the caller and typing narrows the grid underneath; a
+ * country suggestion applies that filter in place instead of leaving.
+ */
+type SearchVariant = 'hero' | 'inline'
+
+export function CatalogSearchBox({
+  families,
+  countries,
+  variant = 'hero',
+  value,
+  onValueChange,
+  onCountrySelect,
+}: {
   families: ProductFamily<CountryResource>[]
   countries: CountrySummary[]
+  variant?: SearchVariant
+  /** inline only: the query the page is filtering by. */
+  value?: string
+  /** inline only: called on every keystroke so the caller can drive the filter. */
+  onValueChange?: (value: string) => void
+  /** inline only: called when a country suggestion is chosen. */
+  onCountrySelect?: (iso3: string) => void
 }) {
+  const inline = variant === 'inline'
   const navigate = useNavigate()
   const listId = useId()
-  const [query, setQuery] = useState('')
+  const [ownQuery, setOwnQuery] = useState('')
+  const query = inline ? value ?? '' : ownQuery
+  const setQuery = (next: string) => {
+    if (inline) onValueChange?.(next)
+    else setOwnQuery(next)
+  }
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(-1)
   // Indexing waits for the first interaction so it never lands in homepage load.
@@ -54,7 +84,7 @@ export function CatalogSearchBox({ families, countries }: {
         kind: 'country' as const,
         label: country.name,
         detail: `${country.resourceCount} ${country.resourceCount === 1 ? 'product' : 'products'}`,
-        to: `/countries/${country.iso3.toLowerCase()}`,
+        ...(inline ? { iso3: country.iso3 } : { to: `/countries/${country.iso3.toLowerCase()}` }),
       })),
       ...matchedFamilies.map(({ family }) => ({
         key: `product-${family.id}`,
@@ -65,6 +95,10 @@ export function CatalogSearchBox({ families, countries }: {
       })),
     ]
     if (!items.length) return []
+    // The catalogue is already showing every result, so a "see all" row there
+    // would lead back to the page the reader is standing on. An id lookup has
+    // its answer in the list already, and the row would echo the pasted URL.
+    if (inline || extractItemIds(deferredQuery).length) return items
     return [...items, {
       key: 'all',
       kind: 'all',
@@ -72,7 +106,7 @@ export function CatalogSearchBox({ families, countries }: {
       detail: '',
       to: `/catalog?q=${encodeURIComponent(deferredQuery.trim())}`,
     }]
-  }, [countries, deferredQuery, index])
+  }, [countries, deferredQuery, index, inline])
 
   useEffect(() => setActive(-1), [deferredQuery])
 
@@ -92,7 +126,8 @@ export function CatalogSearchBox({ families, countries }: {
 
   const choose = (suggestion: Suggestion) => {
     setOpen(false)
-    if (suggestion.to) navigate(suggestion.to)
+    if (suggestion.iso3) onCountrySelect?.(suggestion.iso3)
+    else if (suggestion.to) navigate(suggestion.to)
     else if (suggestion.href) window.open(suggestion.href, '_blank', 'noopener,noreferrer')
   }
 
@@ -100,7 +135,8 @@ export function CatalogSearchBox({ families, countries }: {
     event.preventDefault()
     const selection = suggestions[active]
     if (selection) choose(selection)
-    else goToCatalog()
+    // Inline, the grid already reflects the query; there is nowhere to submit to.
+    else if (!inline) goToCatalog()
   }
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -124,29 +160,31 @@ export function CatalogSearchBox({ families, countries }: {
 
   const expanded = open && suggestions.length > 0
 
+  const inputId = `${listId}-input`
+
   return (
-    <div className="hero-search-wrap" ref={wrapper}>
-      <form className="hero-search" role="search" onSubmit={submit}>
+    <div className={inline ? 'filter-search inline-search-wrap' : 'hero-search-wrap'} ref={wrapper}>
+      <form className={inline ? 'inline-search' : 'hero-search'} role="search" onSubmit={submit}>
         <SearchIcon />
-        <label className="sr-only" htmlFor="homepage-search">Search the DIEM product catalog</label>
+        <label className="sr-only" htmlFor={inputId}>Search the DIEM product catalog</label>
         <input
-          id="homepage-search"
+          id={inputId}
           type="search"
           role="combobox"
           autoComplete="off"
           aria-expanded={expanded}
           aria-controls={listId}
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
-          placeholder="Search by country, theme or resource…"
+          placeholder={inline ? 'Search products, or paste an item ID' : 'Search by country, theme or resource…'}
           value={query}
           onFocus={() => { setIndexRequested(true); setOpen(true) }}
           onChange={(event) => { setIndexRequested(true); setQuery(event.target.value); setOpen(true) }}
           onKeyDown={onKeyDown}
         />
-        <button type="submit" aria-label="Search the product catalog"><ArrowIcon /></button>
+        {!inline && <button type="submit" aria-label="Search the product catalog"><ArrowIcon /></button>}
       </form>
       {expanded && (
-        <ul className="hero-suggestions" id={listId} role="listbox" aria-label="Search suggestions">
+        <ul className={`hero-suggestions${inline ? ' hero-suggestions--inline' : ''}`} id={listId} role="listbox" aria-label="Search suggestions">
           {suggestions.map((suggestion, position) => (
             <li
               className={`hero-suggestion hero-suggestion--${suggestion.kind}${position === active ? ' is-active' : ''}`}

@@ -158,3 +158,14 @@
   line-height: 1.25;
   white-space: nowrap;
 }
+
+/* The catalogue reuses the homepage search component. It keeps the filter
+   bar's own cell styling and drops the hero's submit button, since typing
+   already narrows the grid; the suggestion list is anchored to the cell. */
+.inline-search-wrap { position: relative; }
+.inline-search { display: flex; align-items: center; gap: 12px; width: 100%; height: 100%; }
+.inline-search input { flex: 1; min-width: 0; height: 100%; border: 0; background: transparent; outline: 0; color: var(--ink); }
+.inline-search svg { flex: 0 0 auto; color: var(--fao-blue); }
+/* Wider than its filter cell so product titles are readable, but never wider
+   than the viewport: min-width would beat max-width, so one width does both. */
+.hero-suggestions--inline { top: calc(100% + 4px); left: 0; right: auto; width: max(100%, min(380px, calc(100vw - 48px))); box-shadow: 0 14px 34px rgba(5, 55, 83, .18); }
