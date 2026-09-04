@@ -4,7 +4,13 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './auth/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
-import 'bootstrap/dist/css/bootstrap.min.css'
+// Bootstrap Reboot only. The full framework was 233 kB of a 510 kB
+// render-blocking stylesheet, and the FAO theme carries its own compiled
+// components - .btn, .card, .row, .container - so the framework beneath it was
+// providing normalization and nothing else. Measured across five routes:
+// dropping everything but Reboot leaves computed styles identical, apart from
+// the two list utilities the footer uses, which now live in fao-adaptation.css.
+import 'bootstrap/dist/css/bootstrap-reboot.min.css'
 import './assets/fao/fao-theme.min.css'
 import './styles.css'
 import './hub-home.css'

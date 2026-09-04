@@ -231,7 +231,7 @@ main:focus { outline: none; }
 .card-languages ul { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; margin: 0; padding: 0; list-style: none; }
 .card-languages a { padding: 3px 7px; border: 1px solid #c6dbe1; border-radius: 2px; color: var(--fao-blue); font-size: var(--text-micro); font-weight: 700; }
 .card-languages a:hover, .card-languages a:focus-visible { background: var(--fao-blue); color: white; }
-.pagination { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 38px; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 38px; list-style: none; }
 .pagination button, .error-state button { padding: 10px 16px; border: 1px solid #b9cbcb; background: white; color: var(--deep-blue); cursor: pointer; }
 .pagination button:disabled { opacity: .45; cursor: default; }
 .pagination span { color: var(--ink-muted); font-size: 12px; }

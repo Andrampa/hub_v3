@@ -10,14 +10,29 @@ import { ProgrammeNumbers } from './components/ProgrammeNumbers'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { useCountryCatalog } from './hooks/useCountryCatalog'
-import { useDocumentTitle } from './hooks/useDocumentTitle'
+import { usePageMetadata } from './hooks/usePageMetadata'
 import { isHazardImpactAssessment } from './lib/catalog'
 import { groupProductFamilies } from './lib/productFamilies'
 import { fetchMonitoringStatistics, type MonitoringStatistics } from './services/monitoring'
 import { defaultProgrammeSlides, fetchHubPromotions, promotionChannel, type HubPromotions } from './services/hubPromotions'
 
 export default function App() {
-  useDocumentTitle('Data in Emergencies')
+  usePageMetadata({
+    title: 'Data in Emergencies',
+    description: 'Regularly collected evidence on how shocks affect agricultural livelihoods and food security in fragile and risk-prone contexts: household monitoring, hazard impact assessments, flood services and country evidence.',
+    structuredData: {
+      '@type': 'WebSite',
+      name: 'DIEM Hub',
+      alternateName: 'Data in Emergencies Hub',
+      url: 'https://data-in-emergencies.fao.org',
+      publisher: {
+        '@type': 'Organization',
+        name: 'Food and Agriculture Organization of the United Nations',
+        alternateName: 'FAO',
+        url: 'https://www.fao.org',
+      },
+    },
+  })
   const auth = useAuth()
   const { catalog, error, retry } = useCountryCatalog()
   const [promotions, setPromotions] = useState<HubPromotions>({ slides: defaultProgrammeSlides, channel: promotionChannel })

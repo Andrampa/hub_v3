@@ -22,7 +22,7 @@ differs from the one first proposed.
 | Base commit | `113d271` |
 | Items agreed | Top 10 items 1-8, 10; lens 2, 6 and 7 items |
 | Items shipped | Top 10 items 1-8 and 10; lens phases 1 and 2 (2026-09-03); the 2026-09-04 addendum, options A, B and C, as the product page; lenses 2, 6 and 7 apart from the CSS bundle; public dataset metadata (lens 3); the round timeline, the coverage matrix and the language badge (lens 5) (2026-09-04) |
-| Open, highest value | None selected. Lens 4, item 9, series grouping, the metadata health panel, the change digest and the map-first catalogue were all declined by the editor; the CSS bundle split remains the one open technical item |
+| Open, highest value | Per-route metadata and the CSS bundle are done. None selected. Lens 4, item 9, series grouping, the metadata health panel, the change digest and the map-first catalogue were all declined by the editor; the render-blocking bundle is now 294 kB after dropping Bootstrap for its Reboot |
 
 Update the two rows above as work is selected and completed, and record shipped
 items in `docs/changelog.md`.

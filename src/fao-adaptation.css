@@ -23,7 +23,14 @@
 
 html { scroll-behavior: auto; }
 html, body { overflow-x: clip; }
-body { background: #fff; color: #545454; font-family: "Open Sans", Helvetica, Arial, sans-serif; }
+/* The two utilities the corporate footer's legal row uses, kept verbatim from
+   Bootstrap now that only Reboot is loaded. */
+.list-inline { padding-left: 0; list-style: none; }
+.list-inline-item { display: inline-block; }
+
+/* 1.5 came from Bootstrap's reboot, which the FAO theme does not restate. It
+   is kept here because it is the line height every page was designed against. */
+body { background: #fff; color: #545454; font-family: "Open Sans", Helvetica, Arial, sans-serif; line-height: 1.5; }
 button, input, select, textarea { font-family: inherit; }
 a { color: var(--fao-blue); }
 a:hover { color: var(--fao-navy); text-decoration: underline; }

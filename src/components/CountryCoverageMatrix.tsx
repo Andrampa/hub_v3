@@ -100,10 +100,12 @@ export function CountryCoverageMatrix({ countries, families }: {
           <span className="kicker">Coverage</span>
           <h2 id="coverage-matrix-heading">Country publication matrix</h2>
         </div>
-        <p>Select any figure to open the catalogue for that country and product type.</p>
+        <p>Select any figure to open the catalogue for that country and product type. Scroll inside the table for the rest of the {rows.length} countries and their product types.</p>
       </div>
 
-      <div className="coverage-matrix-scroll">
+      {/* Focusable and labelled, because a scroll container that only responds
+          to a pointer strands a keyboard user at the fourteenth of 54 rows. */}
+      <div className="coverage-matrix-scroll" tabIndex={0} role="region" aria-label="Country publication matrix, scrollable">
         <table className="coverage-matrix-grid">
           <caption className="sr-only">Product counts by country and product type</caption>
           <thead>

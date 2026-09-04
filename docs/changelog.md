@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-09-04 - Discovery metadata, and 217 kB off every route
+
+- The publication matrix moves directly above the country directory, and says
+  it scrolls: the container is focusable and labelled so a keyboard user is not
+  stranded at the fourteenth of 54 rows, scrollbars are forced visible because
+  the platform's overlay bars fade away, and the intro line names the row count.
+- Every route now sets its own description, canonical URL and social preview
+  tags, not only its title. Fourteen routes previously shared one description
+  and no canonical, so a crawler saw a single page and every shared link
+  previewed identically - on a site whose purpose is making evidence findable.
+  Canonical URLs drop the query string, since `?country=NER&page=3` is a view of
+  the catalogue rather than a page of its own.
+- Product pages carry `schema.org/CreativeWork` naming the publisher, the
+  catalogue date, the language, the format and the stable item id; the catalogue
+  declares itself a `DataCatalog`, country pages a `CollectionPage` about a
+  country, and the homepage a `WebSite` published by FAO.
+- Canonical URLs use the published origin rather than the serving one, so a link
+  shared from a preview deployment still points at the live site, and country
+  canonicals are built from the resolved country rather than the path as typed:
+  `/countries/NER` and `/countries/ner` are one page, and the pseudo-country
+  keeps its `cross-country` slug.
+- Replaced Bootstrap with Bootstrap Reboot. The full framework was 233 kB of a
+  511 kB render-blocking stylesheet, and the FAO theme carries its own compiled
+  `.btn`, `.card`, `.row` and `.container`, so what sat underneath it was
+  normalization and nothing else. The bundle falls to 294 kB, 75 kB to 48 kB
+  over the wire.
+- Verified by measurement, not by eye: 20 computed properties on every element
+  of five routes, before and against the change. The first pass found 411
+  differences on the homepage alone, all of them `line-height`, which Reboot
+  does set and the theme does not restate; the footer's legal row lost
+  `.list-inline`, and the pagination lost `list-style: none` from Bootstrap's
+  own `.pagination` component. With those three restored the diff is **0 of
+  481 elements on the homepage, 0 of 3,066 on countries, 0 of 649 on the
+  catalogue, 0 of 315 on data access and 0 of 333 on flood services**.
+
 ## 2026-09-04 - Matrix grouping, reader-facing copy, calendar label
 
 - Cards print "Agricultural calendar" for the pathway stored as

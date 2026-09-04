@@ -9,7 +9,7 @@ import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
@@ -148,7 +148,26 @@ export default function CountryDetail() {
     : undefined
   // Held back until the catalogue resolves, so the tab never flashes the ISO
   // code before the country name is known.
-  useDocumentTitle(country?.name)
+  // The route accepts any casing and the pseudo-country has its own slug, so
+  // the canonical URL is built from the resolved country rather than from the
+  // path the reader happened to type.
+  const canonicalSlug = country && (country.iso3 === CROSS_COUNTRY_CODE ? 'cross-country' : country.iso3.toLowerCase())
+
+  usePageMetadata({
+    title: country?.name,
+    canonicalPath: canonicalSlug ? `/countries/${canonicalSlug}` : undefined,
+    description: country
+      ? `${country.resourceCount} DIEM products for ${country.name}: monitoring rounds, hazard impact assessments and published evidence on food security and agricultural livelihoods.`
+      : undefined,
+    structuredData: country
+      ? {
+          '@type': 'CollectionPage',
+          name: `DIEM evidence for ${country.name}`,
+          url: `https://data-in-emergencies.fao.org/countries/${canonicalSlug}`,
+          about: { '@type': 'Country', name: country.name, identifier: country.iso3 },
+        }
+      : undefined,
+  })
   const allResources = useMemo(
     () => catalog ? resourcesForCountry(catalog, iso3) : [],
     [catalog, iso3],

@@ -393,3 +393,12 @@
 .coverage-matrix-grid td.coverage-matrix-group--monitoring.is-absent { background: repeating-linear-gradient(135deg, #eef4f7, #eef4f7 5px, var(--line-faint) 5px, var(--line-faint) 6px); }
 .coverage-matrix-grid thead th.coverage-matrix-group--monitoring { background: #eef4f7; }
 .coverage-matrix-grid td.coverage-matrix-group--monitoring a:hover, .coverage-matrix-grid td.coverage-matrix-group--monitoring a:focus-visible { background: #dfeaef; }
+
+/* The container is cut deliberately mid-row so the next row shows through as a
+   sliver: the strongest available signal that the table continues. Scrollbars
+   are forced visible because the platform's overlay bars fade out, taking the
+   only other cue with them. */
+.coverage-matrix-scroll { scrollbar-width: thin; scrollbar-color: #9fb4bc transparent; }
+.coverage-matrix-scroll::-webkit-scrollbar { width: 11px; height: 11px; }
+.coverage-matrix-scroll::-webkit-scrollbar-thumb { border: 3px solid #fff; border-radius: 6px; background: #9fb4bc; }
+.coverage-matrix-scroll:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 2px; }

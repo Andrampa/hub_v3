@@ -4,9 +4,9 @@ import { Link, useParams } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatDate } from '../lib/catalog'
-import { groupProductFamilies } from '../lib/productFamilies'
+import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
 import { itemResourceAction, itemThumbnail } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, type CountryResource } from '../services/countries'
 
@@ -54,7 +54,35 @@ export default function CatalogProduct() {
   }, [itemId])
 
   const item = state.status === 'available' ? state.item : undefined
-  useDocumentTitle(item?.title || (state.status === 'loading' ? undefined : 'Product unavailable'))
+  /**
+   * A product page is the one URL on the Hub worth indexing per product, so it
+   * carries structured data naming the publisher, the catalogue date and the
+   * stable item id. The id is cited rather than the title because titles are
+   * edited in the content group and the id is not.
+   */
+  usePageMetadata({
+    title: item?.title || (state.status === 'loading' ? undefined : 'Product unavailable'),
+    description: item?.snippet?.trim() || (item ? `A DIEM product published through the DIEM Hub content group in ${formatDate(item.created)}.` : undefined),
+    structuredData: item
+      ? {
+          '@type': 'CreativeWork',
+          name: item.title,
+          description: item.snippet?.trim(),
+          identifier: item.id,
+          url: `https://data-in-emergencies.fao.org/catalog/${item.id}`,
+          datePublished: new Date(item.created).toISOString().slice(0, 10),
+          inLanguage: itemLanguage(item),
+          encodingFormat: item.type,
+          isPartOf: { '@type': 'DataCatalog', name: 'DIEM Hub catalogue', url: 'https://data-in-emergencies.fao.org/catalog' },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Food and Agriculture Organization of the United Nations',
+            alternateName: 'FAO',
+            url: 'https://www.fao.org',
+          },
+        }
+      : undefined,
+  })
   const action = item ? itemResourceAction(item) : undefined
   const family = useMemo(() => {
     if (!catalog || !item) return undefined

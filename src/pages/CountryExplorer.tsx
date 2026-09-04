@@ -8,7 +8,7 @@ import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 import { UNRECORDED_PRODUCT_TYPE } from '../services/countries'
 
 function topTypes(typeCounts: Record<string, number>) {
@@ -19,7 +19,6 @@ function topTypes(typeCounts: Record<string, number>) {
 }
 
 export default function CountryExplorer() {
-  useDocumentTitle('Countries')
   const { catalog, error, retry } = useCountryCatalog()
   const [region, setRegion] = useState('All regions')
 
@@ -33,6 +32,14 @@ export default function CountryExplorer() {
     ))
   }, [catalog, region])
   const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+
+  usePageMetadata({
+    title: 'Countries',
+    description: catalog
+      ? `DIEM evidence for ${catalog.countries.length} countries: an atlas, a country directory and a publication matrix showing which products exist where.`
+      : 'DIEM evidence by country: an atlas, a country directory and a publication matrix showing which products exist where.',
+  })
+
   const visibleIso = useMemo(() => new Set(visibleCountries.map((country) => country.iso3)), [visibleCountries])
   const latestUpdate = Math.max(...(catalog?.countries.map((country) => country.latestModified) || [0]))
 
@@ -90,6 +97,8 @@ export default function CountryExplorer() {
               </section>
             )}
 
+            <CountryCoverageMatrix countries={visibleCountries} families={families} />
+
             <section className="country-directory section-wrap" aria-labelledby="directory-heading">
               <div className="country-section-heading country-section-heading--directory">
                 <div><span className="kicker">Country directory</span><h2 id="directory-heading">Browse the collection</h2></div>
@@ -113,8 +122,6 @@ export default function CountryExplorer() {
                 <div className="empty-state"><strong>No countries are available for this region</strong><p>Select another region to see its country evidence.</p></div>
               )}
             </section>
-
-            <CountryCoverageMatrix countries={visibleCountries} families={families} />
           </>
         )}
       </main>

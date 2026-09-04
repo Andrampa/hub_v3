@@ -18,7 +18,7 @@ import {
   type EvidencePathway,
   type ProductType,
 } from '../services/countries'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const PAGE_SIZE = 16
 /**
@@ -54,7 +54,6 @@ function categoryFor(item: CountryResource) {
 }
 
 export default function Catalog() {
-  useDocumentTitle('Catalogue')
   const { catalog, error, retry } = useCountryCatalog()
   const [params, setParams] = useSearchParams()
   const query = params.get('q') || ''
@@ -69,6 +68,28 @@ export default function Catalog() {
   const page = Math.max(1, Number(params.get('page')) || 1)
 
   const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+
+  usePageMetadata({
+    title: 'Catalogue',
+    description: catalog
+      ? `${families.length.toLocaleString()} published DIEM products from ${catalog.countries.length} countries: monitoring briefs, assessment reports, questionnaires, presentations and maps, filterable by evidence pathway, product type, country and year.`
+      : 'Published DIEM products: monitoring briefs, assessment reports, questionnaires, presentations and maps, filterable by evidence pathway, product type, country and year.',
+    // The query string carries filter state, so every combination would
+    // otherwise be indexed as a separate page over the same collection.
+    canonicalPath: '/catalog',
+    structuredData: {
+      '@type': 'DataCatalog',
+      name: 'DIEM Hub catalogue',
+      url: 'https://data-in-emergencies.fao.org/catalog',
+      publisher: {
+        '@type': 'Organization',
+        name: 'Food and Agriculture Organization of the United Nations',
+        alternateName: 'FAO',
+        url: 'https://www.fao.org',
+      },
+    },
+  })
+
   const countries = useMemo(() => [...new Set(catalog?.items.flatMap((item) => item.countries) || [])]
     .map(countryDefinition)
     .sort((a, b) => {
