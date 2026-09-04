@@ -163,7 +163,10 @@ export function CatalogSearchBox({
   const inputId = `${listId}-input`
 
   return (
-    <div className={inline ? 'filter-search inline-search-wrap' : 'hero-search-wrap'} ref={wrapper}>
+    <div className={inline ? 'inline-search-wrap' : 'hero-search-wrap'} ref={wrapper}>
+      {/* Carries the same caption and frame as the five filter cells beside it,
+          so the search reads as one of the controls rather than as loose text. */}
+      {inline && <span className="inline-search-caption" aria-hidden="true">Search</span>}
       <form className={inline ? 'inline-search' : 'hero-search'} role="search" onSubmit={submit}>
         <SearchIcon />
         <label className="sr-only" htmlFor={inputId}>Search the DIEM product catalog</label>
@@ -175,7 +178,7 @@ export function CatalogSearchBox({
           aria-expanded={expanded}
           aria-controls={listId}
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
-          placeholder={inline ? 'Search products, or paste an item ID' : 'Search by country, theme or resource…'}
+          placeholder={inline ? 'Search products, countries or topics…' : 'Search by country, theme or resource…'}
           value={query}
           onFocus={() => { setIndexRequested(true); setOpen(true) }}
           onChange={(event) => { setIndexRequested(true); setQuery(event.target.value); setOpen(true) }}
