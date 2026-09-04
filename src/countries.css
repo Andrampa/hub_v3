@@ -49,7 +49,7 @@
 .country-card { min-width: 0; padding: 23px; background: white; border: 1px solid #dfe6e4; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .country-card:hover { transform: translateY(-3px); border-color: #b6cbca; box-shadow: 0 13px 27px rgba(28,68,78,.09); }
 .country-card-top { display: flex; justify-content: space-between; gap: 15px; color: #87969a; font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-.country-card-top span:first-child { color: var(--orange); }
+.country-card-top span:first-child { color: var(--fao-blue); }
 .country-card h3 { min-height: 45px; margin: 10px 0 13px; color: var(--deep-blue); font-size: 20px; letter-spacing: -.025em; }
 .country-flag { display: inline-block; width: 24px; height: 18px; margin-right: 8px; vertical-align: -.08em; object-fit: cover; box-shadow: 0 0 0 1px rgba(5, 70, 108, .12); }
 .country-card-count { display: flex; align-items: baseline; gap: 7px; margin-bottom: 17px; }
@@ -59,7 +59,7 @@
 .country-card-types span { display: flex; justify-content: space-between; }
 .country-card-types b { color: var(--deep-blue); }
 .country-card-footer { display: flex; justify-content: space-between; margin-top: 14px; color: #849297; font-size: var(--text-micro); }
-.country-card-footer span:last-child { color: var(--orange); font-size: 15px; }
+.country-card-footer span:last-child { color: var(--fao-blue); font-size: 15px; }
 
 .country-profile-hero { position: relative; overflow: hidden; background: var(--deep-blue); color: white; }
 .country-profile-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
@@ -90,7 +90,7 @@
 .country-editorial-banner-title span { padding: 7px 9px; background: var(--orange); color: white; font-size: var(--text-micro); font-weight: 800; letter-spacing: .14em; }
 .country-editorial-banner-title strong { font-size: clamp(30px, 4.2vw, 48px); line-height: 1; letter-spacing: -.045em; text-shadow: 0 2px 16px rgba(0,0,0,.3); }
 .country-editorial-story-copy { width: min(850px, 100%); padding: 48px 58px 54px; }
-.country-editorial-story-copy .kicker { color: var(--orange); }
+.country-editorial-story-copy .kicker { color: var(--deep-blue); }
 .country-editorial-story-copy h2 { margin: 10px 0 22px; color: var(--deep-blue); font-size: clamp(32px, 4vw, 46px); line-height: 1.05; letter-spacing: -.045em; }
 .country-editorial-richtext { color: #405860; font-size: 16px; line-height: 1.75; }
 .country-editorial-richtext--plain { white-space: pre-line; }
@@ -214,7 +214,7 @@
 .country-product-badge { position: absolute; left: 13px; top: 13px; max-width: calc(100% - 26px); padding: 6px 8px; overflow: hidden; background: rgba(3,49,72,.9); color: white; font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; }
 .country-resource-body { padding: 17px 18px 16px; }
 .country-resource-meta { display: flex; justify-content: space-between; gap: 10px; color: #809095; font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; }
-.country-resource-meta span { color: var(--orange); }
+.country-resource-meta span { color: var(--fao-blue); }
 .country-resource-pathways { min-height: 21px; margin: 9px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; list-style: none; }
 .country-pathway { padding: 4px 6px; display: inline-flex; align-items: center; gap: 4px; background: #e9f2f7; border-left: 3px solid var(--fao-blue); color: #245a73; font-size: var(--text-micro); font-weight: 800; letter-spacing: .035em; line-height: 1.2; text-transform: uppercase; }
 .country-pathway i { font-size: var(--text-small); }
@@ -281,7 +281,7 @@
   .country-profile-map { display: none; }
   .country-editorial { padding-top: 48px; }
   .country-editorial-banner-title { left: 18px; right: 18px; bottom: 14px; }
-  .country-editorial-banner-title span { padding: 5px 7px; font-size: 7px; }
+  .country-editorial-banner-title span { padding: 5px 7px; font-size: var(--text-micro); }
   .country-editorial-banner-title strong { font-size: 24px; }
   .country-editorial-story-copy { width: 100%; padding: 30px 25px 34px; }
   .country-editorial-story-copy h2 { font-size: 32px; }

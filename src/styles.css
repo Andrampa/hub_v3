@@ -75,7 +75,7 @@ main:focus { outline: none; }
 .nav-dropdown:hover > button > span, .nav-dropdown:focus-within > button > span { transform: rotate(180deg); }
 .nav-dropdown-menu a { display: block; padding: 14px 15px; border-left: 2px solid transparent; }
 .nav-dropdown-menu a + a { border-top: 1px solid #edf1f1; }
-.nav-dropdown-menu a:hover, .nav-dropdown-menu a:focus-visible { border-left-color: var(--orange); background: #f3f8f9; }
+.nav-dropdown-menu a:hover, .nav-dropdown-menu a:focus-visible { border-left-color: var(--fao-blue); background: #f3f8f9; }
 .nav-dropdown-menu strong, .nav-dropdown-menu small { display: block; }
 .nav-dropdown-menu strong { color: var(--deep-blue); font-size: 13px; }
 .nav-dropdown-menu small { margin-top: 4px; color: #708188; font-size: var(--text-small); font-weight: 500; line-height: 1.4; }
@@ -102,9 +102,35 @@ main:focus { outline: none; }
 .hero::before { content: ''; position: absolute; width: 650px; height: 650px; right: -150px; top: -330px; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; box-shadow: 0 0 0 70px rgba(255,255,255,.018), 0 0 0 140px rgba(255,255,255,.018); }
 .hero-grid { position: absolute; inset: 0; opacity: .14; background-image: linear-gradient(rgba(255,255,255,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.16) 1px, transparent 1px); background-size: 70px 70px; mask-image: linear-gradient(90deg, transparent, black 75%); }
 .hero-content { position: relative; z-index: 1; width: min(1180px, calc(100% - 48px)); margin: auto; padding-top: 75px; }
-.eyebrow, .kicker { color: var(--orange); font-size: var(--text-small); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+/*
+ * Orange is reserved for urgency and action, per AGENTS.md. It had drifted into
+ * being the site's general accent: every section eyebrow on every page, the
+ * decorative rails, the stat-tier markers. When the label above each heading is
+ * orange, orange stops meaning anything. Section labels are deep blue; the
+ * hazard-impact pillar, warnings, limits and the primary search action keep it.
+ *
+ * On the deep-blue heroes an eyebrow needs a light tint instead, or it would be
+ * invisible against its own ground.
+ */
+.eyebrow, .kicker { color: var(--deep-blue); font-size: var(--text-small); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.hero :is(.eyebrow, .kicker),
+.catalog-hero :is(.eyebrow, .kicker),
+.countries-hero :is(.eyebrow, .kicker),
+.country-profile-hero :is(.eyebrow, .kicker),
+.hub-catalog-band :is(.eyebrow, .kicker),
+.cross-country-strip :is(.eyebrow, .kicker),
+.data-gate-hero :is(.eyebrow, .kicker),
+.guide-hero :is(.eyebrow, .kicker),
+.about-hero :is(.eyebrow, .kicker),
+.about-contact :is(.eyebrow, .kicker),
+.programme-hero :is(.eyebrow, .kicker),
+.flood-reference :is(.eyebrow, .kicker),
+.impact-hero :is(.eyebrow, .kicker),
+.impact-atlas :is(.eyebrow, .kicker),
+.contact-hero :is(.eyebrow, .kicker),
+.gallery-hero :is(.eyebrow, .kicker) { color: #83bfd1; }
 .eyebrow { display: flex; align-items: center; gap: 10px; }
-.eyebrow span { width: 28px; height: 2px; background: var(--orange); }
+.eyebrow span { width: 28px; height: 2px; background: currentColor; }
 .hero h1 { max-width: 730px; margin: 20px 0 18px; font-size: clamp(49px, 6vw, 76px); line-height: .99; letter-spacing: -.055em; }
 .hero h1 em { font-weight: 600; color: #a8d5df; }
 .hero-content > p { max-width: 570px; margin: 0 0 30px; color: #d4e4e9; font-size: 17px; line-height: 1.65; }
@@ -125,7 +151,7 @@ main:focus { outline: none; }
 .pn-heading > span { color: #8b999e; font-size: var(--text-small); font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
 .pn-tier { display: grid; grid-template-columns: 150px 1fr; gap: 30px; padding: 26px 0; }
 .pn-tier + .pn-tier { border-top: 1px solid var(--line); }
-.pn-tier-label { margin: 0; padding-left: 13px; border-left: 3px solid var(--orange); color: var(--deep-blue); font-size: 12px; font-weight: 600; line-height: 1.35; }
+.pn-tier-label { margin: 0; padding-left: 13px; border-left: 3px solid var(--fao-blue); color: var(--deep-blue); font-size: 12px; font-weight: 600; line-height: 1.35; }
 .pn-figures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 .pn-figure { display: flex; flex-direction: column; }
 .pn-figure strong { min-height: 34px; color: var(--deep-blue); font-size: 29px; font-variant-numeric: tabular-nums; letter-spacing: -.04em; line-height: 1.15; }
