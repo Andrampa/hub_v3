@@ -7,6 +7,7 @@ import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 function topTypes(typeCounts: Record<string, number>) {
   return Object.entries(typeCounts)
@@ -16,6 +17,7 @@ function topTypes(typeCounts: Record<string, number>) {
 }
 
 export default function CountryExplorer() {
+  useDocumentTitle('Countries')
   const { catalog, error, retry } = useCountryCatalog()
   const [region, setRegion] = useState('All regions')
 

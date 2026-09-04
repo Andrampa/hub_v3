@@ -1,9 +1,11 @@
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const CONTACT_FORM_URL = 'https://arcg.is/0Df1Ca'
 
 export default function Contact() {
+  useDocumentTitle('Contact us')
   return (
     <>
       <SiteHeader active="about" />

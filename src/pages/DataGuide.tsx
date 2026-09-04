@@ -4,6 +4,7 @@ import '../data-access.css'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION } from '../services/protectedData'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
@@ -25,6 +26,7 @@ const SECTIONS = [
 ]
 
 export default function DataGuide() {
+  useDocumentTitle('Data access guide')
   const [activeSection, setActiveSection] = useState('about')
 
   useEffect(() => {

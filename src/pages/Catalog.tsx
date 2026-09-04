@@ -17,6 +17,7 @@ import {
   type EvidencePathway,
   type ProductType,
 } from '../services/countries'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const PAGE_SIZE = 16
 /**
@@ -42,6 +43,7 @@ function SearchIcon() {
 }
 
 export default function Catalog() {
+  useDocumentTitle('Catalogue')
   const { catalog, error, retry } = useCountryCatalog()
   const [params, setParams] = useSearchParams()
   const query = params.get('q') || ''

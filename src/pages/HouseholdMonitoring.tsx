@@ -3,8 +3,10 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { MonitoringProducts } from '../components/MonitoringProducts'
 import { SurveyReleases } from '../components/SurveyReleases'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function HouseholdMonitoring() {
+  useDocumentTitle('Surveys catalogue')
   return (
     <>
       <SiteHeader active="monitoring" />

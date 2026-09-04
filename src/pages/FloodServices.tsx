@@ -19,6 +19,7 @@ import { itemDestination } from '../services/arcgis'
 import { countryDefinition } from '../services/countries'
 import { fetchImpactAssessmentCatalog } from '../services/impactAssessments'
 import type { ImpactAssessmentResource } from '../services/impactAssessments'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const EVE_URL = 'https://diem-eve.apps.fao.org/'
 const VISTA_EXPLORER_URL = 'https://fao-oer.projects.earthengine.app/view/vistaproductscomparisonapp'
@@ -180,6 +181,7 @@ function briefMeta(item: ImpactAssessmentResource) {
 }
 
 export default function FloodServices() {
+  useDocumentTitle('Flood services')
   const [briefs, setBriefs] = useState<ImpactAssessmentResource[]>()
   const [briefsError, setBriefsError] = useState<string>()
   const [reloadKey, setReloadKey] = useState(0)

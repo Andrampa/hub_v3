@@ -11,6 +11,7 @@ import {
   type ImpactAssessmentResource,
 } from '../services/impactAssessments'
 import { itemDestination, itemThumbnail } from '../services/arcgis'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 type ResultsView = 'details' | 'timeline'
 const RESULTS_STEP = 18
@@ -91,6 +92,7 @@ function latestAssessments(items: ImpactAssessmentResource[]) {
 }
 
 export default function HazardImpactAssessments() {
+  useDocumentTitle('Hazard impact assessments')
   const [catalog, setCatalog] = useState<ImpactAssessmentCatalog>()
   const [error, setError] = useState<string>()
   const [reloadKey, setReloadKey] = useState(0)

@@ -10,12 +10,14 @@ import { ProgrammeNumbers } from './components/ProgrammeNumbers'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { useCountryCatalog } from './hooks/useCountryCatalog'
+import { useDocumentTitle } from './hooks/useDocumentTitle'
 import { isHazardImpactAssessment } from './lib/catalog'
 import { groupProductFamilies } from './lib/productFamilies'
 import { fetchMonitoringStatistics, type MonitoringStatistics } from './services/monitoring'
 import { defaultProgrammeSlides, fetchHubPromotions, promotionChannel, type HubPromotions } from './services/hubPromotions'
 
 export default function App() {
+  useDocumentTitle('Data in Emergencies')
   const auth = useAuth()
   const { catalog, error, retry } = useCountryCatalog()
   const [promotions, setPromotions] = useState<HubPromotions>({ slides: defaultProgrammeSlides, channel: promotionChannel })

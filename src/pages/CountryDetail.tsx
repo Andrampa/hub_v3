@@ -8,6 +8,7 @@ import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { NO_SUMMARY_LABEL, distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
@@ -133,6 +134,9 @@ export default function CountryDetail() {
       ? catalog.crossCountry
       : catalog.countries.find((candidate) => candidate.iso3 === iso3)
     : undefined
+  // Held back until the catalogue resolves, so the tab never flashes the ISO
+  // code before the country name is known.
+  useDocumentTitle(country?.name)
   const allResources = useMemo(
     () => catalog ? resourcesForCountry(catalog, iso3) : [],
     [catalog, iso3],

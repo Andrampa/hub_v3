@@ -15,6 +15,7 @@ import {
   monitoringDashboardUrl,
   normalizeVisualizationSearch,
 } from '../services/monitoringEmbed'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 // Re-send the token this far before it expires so the embedded dashboard never
 // runs on a dead credential, and never schedule a tighter loop than the floor.
@@ -22,6 +23,7 @@ const AUTH_REFRESH_LEAD_MS = 120_000
 const AUTH_REFRESH_MIN_MS = 30_000
 
 export default function MonitoringSystem() {
+  useDocumentTitle('Household Survey Explorer')
   const location = useLocation()
   const { status, embedCredential } = useAuth()
   const iframeRef = useRef<HTMLIFrameElement>(null)

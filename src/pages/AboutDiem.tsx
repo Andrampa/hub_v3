@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import aboutHeroImage from '../assets/heroes/zambia-drought-2024.jpg'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const CREATE_ACCOUNT_URL = 'https://hqfao.maps.arcgis.com/sharing/rest/oauth2/signup?client_id=aEXLMtXxljlIrgPN&response_type=token&redirect_uri=https%3A%2F%2Fdata-in-emergencies.fao.org%2Ftorii-provider-arcgis%2Fhub-redirect.html'
 
@@ -19,6 +20,7 @@ const videos = [
 ]
 
 export default function AboutDiem() {
+  useDocumentTitle('About DIEM')
   return (
     <>
       <SiteHeader active="about" />

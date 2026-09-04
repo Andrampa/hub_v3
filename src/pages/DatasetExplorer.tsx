@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { DatasetGeometryMap } from '../components/DatasetGeometryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
@@ -112,6 +113,7 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
 }
 
 export default function DatasetExplorer() {
+  useDocumentTitle('Dataset explorer')
   const { datasetId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
   const auth = useAuth()
