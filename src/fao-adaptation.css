@@ -236,17 +236,17 @@ h1, h2, h3, h4, h5, h6,
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: .42;
+  opacity: .7;
 }
 .hero::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(28, 71, 103, .96) 0%, rgba(28, 71, 103, .82) 52%, rgba(28, 71, 103, .38) 100%);
+  background: linear-gradient(90deg, rgba(28, 71, 103, .96) 0%, rgba(28, 71, 103, .82) 42%, rgba(28, 71, 103, .32) 72%, rgba(28, 71, 103, .14) 100%);
 }
 .hero-content { z-index: 2; width: min(1200px, calc(100% - 48px)); padding-top: 65px; }
 .hero .eyebrow { color: #fff; }
-.hero .eyebrow::after { content: ""; display: block; width: 42px; margin-top: 12px; border-top: 3px solid #f58320; }
+.hero .eyebrow::after { content: ""; display: block; width: 32px; height: 1px; background: rgba(168, 213, 223, .85); }
 .hero h1 {
   max-width: 720px;
   margin: 18px 0 16px;
