@@ -165,7 +165,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm ci --prefix functions
 
       - name: Build
         run: npm run build

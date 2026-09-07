@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-07 - Install Firebase Function dependencies during deployment
+
+- The manual deployment workflow now installs the separately locked
+  `functions/` dependencies before invoking Firebase. Previously it installed
+  only the React application's root dependencies, so Firebase could not find
+  `firebase-functions` and stopped before deploying either Functions or Hosting.
+
 ## 2026-09-07 - Validate private microdata invitations inside the Hub
 
 - Added a narrow Firebase Function contract for batching pending private-group
