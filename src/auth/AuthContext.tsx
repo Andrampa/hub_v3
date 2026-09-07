@@ -21,6 +21,7 @@ interface AuthContextValue {
   signOut: () => Promise<void>
   clearError: () => void
   requestProtected: ProtectedRequester
+  validateMicrodataInvitations: (groupIds: string[]) => Promise<string[]>
   downloadProtected: (url: string, params?: Record<string, unknown>) => Promise<Blob>
   // Authenticated image fetch for item thumbnails. Separate from
   // `downloadProtected`, which speaks the Hub export API's 202-polling
@@ -170,6 +171,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }) as Promise<T>
   }, [manager, status])
 
+  const validateMicrodataInvitations = useCallback(async (groupIds: string[]) => {
+      if (!manager || status !== 'authenticated') {
+        throw new Error('Sign in with a DIEM community account to validate this invitation.')
+      }
+      const token = await manager.getToken(manager.portal)
+      const response = await fetch('/api/microdata/invitations/validate', {
+        method: 'POST',
+        credentials: 'omit',
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ groupIds }),
+      })
+      const payload = await response.json().catch(() => null) as { validGroupIds?: unknown; error?: unknown } | null
+      if (!response.ok || !payload || !Array.isArray(payload.validGroupIds)) {
+        throw new Error(typeof payload?.error === 'string' ? payload.error : 'The invitation could not be validated.')
+      }
+      return payload.validGroupIds.filter((id): id is string => typeof id === 'string')
+  }, [manager, status])
+
   const downloadProtected = useCallback(async (url: string, params: Record<string, unknown> = {}) => {
       if (!manager || status !== 'authenticated') {
         throw new Error('Sign in with a DIEM community account to download this resource.')
@@ -262,10 +285,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     clearError,
     requestProtected,
+    validateMicrodataInvitations,
     downloadProtected,
     fetchProtectedImage,
     embedCredential,
-  }), [clearError, downloadProtected, embedCredential, error, fetchProtectedImage, requestProtected, signIn, signOut, status, user])
+  }), [clearError, downloadProtected, embedCredential, error, fetchProtectedImage, requestProtected, signIn, signOut, status, user, validateMicrodataInvitations])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

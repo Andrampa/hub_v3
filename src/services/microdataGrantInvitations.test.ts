@@ -113,6 +113,37 @@ describe('pending grant invitations', () => {
     expect(ARCGIS_NOTIFICATIONS_URL).toBe('https://hqfao-hub.maps.arcgis.com/home/notifications.html')
   })
 
+  it('promotes only unreadable groups confirmed by the server projection', async () => {
+    const requester = fakeRequester({
+      invitations: [
+        { id: 'inv-3', targetType: 'group', groupId: 'hidden-grant' },
+        { id: 'inv-4', targetType: 'group', groupId: 'hidden-other' },
+      ],
+      unreadableGroups: ['hidden-grant', 'hidden-other'],
+    })
+    const validate = vi.fn(async (groupIds: string[]) => {
+      expect(groupIds).toEqual(['hidden-grant', 'hidden-other'])
+      return ['hidden-grant']
+    })
+
+    const check = await fetchPendingGrantInvitations(USERNAME, requester, validate)
+
+    expect(check.invitations).toEqual([expect.objectContaining({ id: 'inv-3', groupId: 'hidden-grant' })])
+    expect(check.unverified).toBe(1)
+  })
+
+  it('fails back to ArcGIS when server validation is unavailable', async () => {
+    const requester = fakeRequester({
+      invitations: [{ id: 'inv-3', targetType: 'group', groupId: 'hidden-group' }],
+      unreadableGroups: ['hidden-group'],
+    })
+    const check = await fetchPendingGrantInvitations(USERNAME, requester, async () => {
+      throw new Error('backend unavailable')
+    })
+    expect(check.invitations).toEqual([])
+    expect(check.unverified).toBe(1)
+  })
+
   it('reports a failed check instead of claiming there is nothing waiting', async () => {
     const check = await fetchPendingGrantInvitations(USERNAME, fakeRequester({ failInvitations: true }))
     expect(check.error).toBeTruthy()

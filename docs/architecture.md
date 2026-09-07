@@ -11,9 +11,15 @@ Browser
   -> public ArcGIS light-gray basemap tiles
   -> existing DIEM Hub packaged-download generator (transitional)
   -> authoritative item/resource links
+  -> same-origin Firebase invitation-validation function
 ```
 
-The initial release is a static single-page app with no custom backend or database. Packaged dataset formats temporarily reuse the existing DIEM Hub download generator; this is an external runtime dependency, not a competing data store.
+The application is a static single-page app except for one deliberately narrow
+Firebase HTTPS function at `POST /api/microdata/invitations/validate`. That
+function projects only whether candidate private-group IDs are live grants for
+the authenticated recipient; it does not proxy data or expose registry fields.
+Packaged dataset formats temporarily reuse the existing DIEM Hub download
+generator; this is an external runtime dependency, not a competing data store.
 
 ## Startup / Execution Sequence
 
@@ -130,7 +136,15 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 
 ## Infrastructure
 
-Any static host that supports the Vite `dist/` output and rewrites SPA routes to `index.html` is sufficient. Packaged downloads also require the existing DIEM Hub generator to remain reachable and the source items to retain their export configuration. Hosting and deployment are not yet selected.
+Firebase Hosting serves the Vite `dist/` output and rewrites the exact
+invitation-validation API path to a second-generation Firebase Function in
+`europe-west1`; the remaining routes fall back to `index.html`. The function
+requires two Secret Manager values, `DIEM_ARCGIS_ADMIN_CLIENT_ID` and
+`DIEM_ARCGIS_ADMIN_CLIENT_SECRET`, for an ArcGIS application identity explicitly
+granted read access to the private registry item. No administrative credential
+is built into or returned to the SPA. Packaged downloads also require the
+existing DIEM Hub generator to remain reachable and the source items to retain
+their export configuration.
 
 ## Monitoring embed-link contract
 

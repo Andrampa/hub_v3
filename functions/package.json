@@ -1,0 +1,14 @@
+{
+  "name": "diem-hub-functions",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test invitation-validation.node-test.js"
+  },
+  "dependencies": {
+    "firebase-functions": "^7.0.0"
+  }
+}

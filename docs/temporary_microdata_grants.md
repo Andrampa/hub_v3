@@ -282,12 +282,29 @@ the check that survives a provisioning mistake: a view shared there by accident
 would otherwise become a public-facing catalogue card for one recipient's
 approved surveys.
 
+## Pending invitation validation
+
+When ArcGIS refuses to show a private group's tags to its invited nonmember,
+the Hub batches the unreadable group IDs to the same-origin validation endpoint.
+The endpoint authenticates the bearer token independently, derives the caller's
+ArcGIS username, and returns only group IDs backed by a live, complete registry
+row for that recipient and its registry-recorded grant group. A group title,
+invitation sender, browser-supplied identity, or client allowlist is never
+accepted as evidence.
+
+Once validated, the existing acceptance path remains authoritative: the SPA
+POSTs the exact invitation acceptance with the recipient's own ArcGIS token and
+does not announce success until `/community/self` confirms membership. If the
+validation function is unavailable, the invitation remains unverified and the
+safe ArcGIS notifications fallback remains available.
+
 ## No registry writes from the browser
 
-There is no secure Hub-to-registry adapter, and the Hub is a static SPA with no
-backend. Access requests and all administration remain Python-script tasks for
-FAO Management members. The Hub shows only active versus unavailable, which it
-derives from ArcGIS rather than from a clock.
+The validation adapter is read-only and returns no registry content beyond a
+yes/no projection for caller-owned candidate group IDs. Access requests and all
+administration remain Python-script tasks for FAO Management members. The Hub
+shows only active versus unavailable, which it derives from ArcGIS rather than
+from a clock.
 
 An exact expiry date is not a missing feature waiting on plumbing. Displaying
 one would require a trustworthy server-side projection of the private registry,

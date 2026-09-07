@@ -10,6 +10,7 @@ $sourceRepository = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $expectedRemote = 'https://github.com/un-fao/fao-oer-diem-hub.git'
 $allowedPaths = @(
   'src',
+  'functions',
   '.gitignore',
   'index.html',
   'oauth-callback.html',
@@ -84,10 +85,14 @@ Thumbs.db
 
   @'
 {
+  "functions": [{ "source": "functions", "codebase": "default", "runtime": "nodejs22" }],
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+    "rewrites": [
+      { "source": "/api/microdata/invitations/validate", "function": { "functionId": "validateMicrodataInvitations", "region": "europe-west1" } },
+      { "source": "**", "destination": "/index.html" }
+    ]
   }
 }
 '@ | Set-Content -LiteralPath (Join-Path $stagingDirectory 'firebase.json') -NoNewline
@@ -181,7 +186,7 @@ jobs:
         run: |
           jq --arg site "${{ vars.SITE_ID }}" '.hosting.site = $site' firebase.json > /tmp/firebase.json \
             && mv /tmp/firebase.json firebase.json
-          firebase deploy --project ${{ vars.PROJECT_ID }} --only hosting
+          firebase deploy --project ${{ vars.PROJECT_ID }} --only hosting,functions
 
       - name: Create Issue on Failure
         if: failure()

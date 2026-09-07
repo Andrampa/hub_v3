@@ -29,6 +29,32 @@ origin from `localhost` and needs its own registration.
 
 The client ID is public application configuration. No client secret belongs in this browser application.
 
+## Temporary invitation validation endpoint
+
+`POST /api/microdata/invitations/validate` is the sole server-side projection
+of the private microdata registry. The SPA sends a bounded list of group IDs and
+its short-lived ArcGIS access token in the `Authorization` header. The function
+calls ArcGIS `/community/self`, derives the username from that response, and
+requires an enabled member of Community organization `D5aXW6TZFpeM2wke`; it
+never accepts a browser-supplied username.
+
+With a server-only ArcGIS application credential, the function then requires an
+unexpired `invited` registry row for that recipient, the fixed 168-hour policy,
+the complete version-specific view IDs, and the registry-recorded grant group.
+It returns only matching group IDs. It
+does not return recipients, grant IDs, survey scope, item IDs, approval data, or
+dates. Requests are same-origin, POST-only, capped at 20 group IDs and 4 KiB,
+and subject to a per-instance authenticated-user rate limit. The runtime also
+caps function instances; a shared/distributed rate limiter is not introduced
+because the repository has no existing backend datastore or rate-limit service.
+
+Secrets are named `DIEM_ARCGIS_ADMIN_CLIENT_ID` and
+`DIEM_ARCGIS_ADMIN_CLIENT_SECRET`. They must identify a least-privilege ArcGIS
+application explicitly granted read access only to registry item
+`e186ea5b20774a94914bfeda23242f43`. Configure them in each Firebase environment
+before the function is deployed. Never use a user password, a long-lived token,
+or either secret as a Vite variable.
+
 ## Runtime Flow
 
 1. User selects **Sign in** or **Create account**.

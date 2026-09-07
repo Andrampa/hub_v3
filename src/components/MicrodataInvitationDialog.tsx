@@ -43,9 +43,13 @@ function usePendingGrantInvitations() {
       return
     }
     const run = ++runId.current
-    const result = await fetchPendingGrantInvitations(auth.user.username, auth.requestProtected)
+    const result = await fetchPendingGrantInvitations(
+      auth.user.username,
+      auth.requestProtected,
+      auth.validateMicrodataInvitations,
+    )
     if (runId.current === run) setCheck(result)
-  }, [auth.requestProtected, auth.status, auth.user])
+  }, [auth.requestProtected, auth.status, auth.user, auth.validateMicrodataInvitations])
 
   useEffect(() => {
     if (auth.status !== 'authenticated') {

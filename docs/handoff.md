@@ -1,5 +1,25 @@
 # Handoff
 
+## Pending deployment: direct temporary-microdata invitation validation
+
+The Hub frontend and Firebase Function scaffold now implement the same-origin
+`POST /api/microdata/invitations/validate` contract. No credentials were added
+and nothing was deployed. Before publishing, an FAO ArcGIS administrator must
+create or select least-privilege OAuth credentials with explicit read access to
+private registry item `e186ea5b20774a94914bfeda23242f43`, then configure
+Firebase secrets `DIEM_ARCGIS_ADMIN_CLIENT_ID` and
+`DIEM_ARCGIS_ADMIN_CLIENT_SECRET` in each intended environment. The credentials
+must not use `Andrea.Amparore_hqfaohub`; that account has no role.
+
+After the infrastructure decision is approved, the exact next deployment file
+is `scripts/sync-web-repository.ps1`: run it to prepare
+`C:\git\fao-oer-diem-hub`, inspect both repository diffs, and verify with
+`npm test`, `npm test --prefix functions`, and `npm run build`. Then perform a
+real acceptance test with an invited, enabled Community nonmember and confirm
+that the Hub validates, accepts with the recipient token, reads membership back,
+and reveals only that recipient's temporary views. The Manual Deploy workflow
+must not be triggered without explicit authorization.
+
 ## In Progress
 
 The `/flood-services` page was restructured on 2026-08-25 to match the

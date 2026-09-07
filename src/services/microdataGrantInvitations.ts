@@ -89,6 +89,13 @@ export interface GrantInvitationCheck {
   error?: string
 }
 
+/**
+ * Same-origin server projection of the private registry. The implementation
+ * authenticates the caller from their ArcGIS bearer token; the browser never
+ * supplies a username and receives no registry fields.
+ */
+export type GrantInvitationValidator = (groupIds: string[]) => Promise<string[]>
+
 interface InvitationsResponse {
   userInvitations?: Array<{
     id?: string
@@ -139,6 +146,7 @@ interface SelfGroupsResponse {
 export async function fetchPendingGrantInvitations(
   username: string,
   requester: ProtectedRequester,
+  validate?: GrantInvitationValidator,
 ): Promise<GrantInvitationCheck> {
   let response: InvitationsResponse
   try {
@@ -153,7 +161,7 @@ export async function fetchPendingGrantInvitations(
     (invitation) => invitation.id && invitation.groupId && (invitation.targetType || 'group') === 'group',
   )
 
-  type CheckedInvitation = PendingGrantInvitation | 'unverified' | 'other'
+  type CheckedInvitation = PendingGrantInvitation | { unverified: PendingGrantInvitation } | 'other'
 
   const checked: CheckedInvitation[] = await Promise.all(groupInvitations.map(async (invitation): Promise<CheckedInvitation> => {
     let group = invitation.group
@@ -162,8 +170,17 @@ export async function fetchPendingGrantInvitations(
         group = await requester<GroupResponse>(`${GLOBAL_REST}/community/groups/${invitation.groupId}`)
       } catch {
         // A private group that refuses to describe itself to a non-member. The
-        // invitation is real, but nothing here proves it is a DIEM grant.
-        return 'unverified' as const
+        // invitation is real, but only the server-side registry projection can
+        // prove it is a DIEM grant.
+        return {
+          unverified: {
+            id: String(invitation.id),
+            groupId: String(invitation.groupId),
+            groupTitle: GRANT_GROUP_TAG,
+            fromUsername: invitation.fromUsername,
+            received: invitation.received ?? invitation.created,
+          },
+        }
       }
     }
     if (!isGrantGroup(group.tags)) return 'other' as const
@@ -176,9 +193,28 @@ export async function fetchPendingGrantInvitations(
     }
   }))
 
-  return {
-    invitations: checked.filter((entry): entry is PendingGrantInvitation => typeof entry === 'object'),
-    unverified: checked.filter((entry) => entry === 'unverified').length,
+  const directlyConfirmed = checked.filter(
+    (entry): entry is PendingGrantInvitation => typeof entry === 'object' && !('unverified' in entry),
+  )
+  const unreadable = checked.flatMap((entry) => (
+    typeof entry === 'object' && 'unverified' in entry ? [entry.unverified] : []
+  ))
+
+  if (!validate || unreadable.length === 0) {
+    return { invitations: directlyConfirmed, unverified: unreadable.length }
+  }
+
+  try {
+    const validated = new Set((await validate(unreadable.map(({ groupId }) => groupId))).map((id) => id.toLowerCase()))
+    const serverConfirmed = unreadable.filter(({ groupId }) => validated.has(groupId.toLowerCase()))
+    return {
+      invitations: [...directlyConfirmed, ...serverConfirmed],
+      unverified: unreadable.length - serverConfirmed.length,
+    }
+  } catch {
+    // Validation is an enhancement, never a reason to hide the existing safe
+    // ArcGIS fallback. A backend outage leaves invitations unverified.
+    return { invitations: directlyConfirmed, unverified: unreadable.length }
   }
 }
 
