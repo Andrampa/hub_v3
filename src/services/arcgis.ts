@@ -88,9 +88,22 @@ export function catalogueVisible(item: ArcGISItem) {
   return !hasRestrictedMicrodataTag(item.tags)
 }
 
+/**
+ * Cards render the thumbnail in a 285 x 138 box, so 400 px covers a 1.4x
+ * display and most of a 2x one.
+ *
+ * It used to ask for 800. ArcGIS honours the width by upscaling, and the group's
+ * thumbnails are 500 x 500 source images, so `?w=800` bought no detail that
+ * exists: measured on the live group, the same file is 6,943 bytes unsized,
+ * 26,524 at `?w=400` and 66,582 at `?w=800`. Across a sixteen-card page that
+ * was about 0.95 MB of upscaling, on the slow connections this catalogue is
+ * most often read over.
+ */
+const THUMBNAIL_WIDTH = 400
+
 export function itemThumbnail(item: ArcGISItem) {
   if (!item.thumbnail) return undefined
-  return `${REST_ROOT}/content/items/${item.id}/info/${item.thumbnail}?w=800`
+  return `${REST_ROOT}/content/items/${item.id}/info/${item.thumbnail}?w=${THUMBNAIL_WIDTH}`
 }
 
 /**

@@ -55,7 +55,11 @@ function categoryFor(item: CountryResource) {
 }
 
 export default function Catalog() {
-  const { catalog, error, retry } = useCountryCatalog()
+  // The catalogue is the one surface whose reader is waiting on the grid rather
+  // than on a headline figure, so it renders each page of the content group as
+  // it arrives instead of holding a skeleton for all nine. Counts move while
+  // that happens, and say so.
+  const { catalog, error, retry } = useCountryCatalog({ progressive: true })
   const [params, setParams] = useSearchParams()
   const query = params.get('q') || ''
   const category = params.get('content') || 'All content'
@@ -275,7 +279,12 @@ export default function Catalog() {
                   )}
                 </div>
               )}
-              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
+              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && (catalog.complete
+  ? <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>
+  // Counts, facet options and page total are all a floor until the last page
+  // lands. Saying so is cheaper than freezing the controls, and it is the only
+  // honest way to show a number that is about to change.
+  : <span className="results-read-at results-read-at--loading">Still reading the content group — counts will rise</span>)}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
               <div className="card-grid">{visibleFamilies.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div>
               {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>}
               {pageCount > 1 && <nav className="pagination" aria-label="Catalog pages"><button disabled={safePage === 1} onClick={() => update('page', String(safePage - 1))}>Previous</button><span>Page <strong>{safePage}</strong> of {pageCount}</span><button disabled={safePage === pageCount} onClick={() => update('page', String(safePage + 1))}>Next</button></nav>}

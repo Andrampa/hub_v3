@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-07 - Validate private microdata invitations inside the Hub
+
+- Added a narrow Firebase Function contract for batching pending private-group
+  IDs. It authenticates the caller with their own ArcGIS bearer token, derives
+  their identity from `/community/self`, reads the private registry with
+  server-only secrets, and returns only group IDs for live, complete grants.
+- An unreadable private invitation that passes that validation now uses the
+  existing direct POST acceptance and membership-confirmation flow. Backend
+  failure continues to fail closed to the ArcGIS notifications fallback.
+- Extended the guarded web sync and manual deployment scaffold for the exact
+  same-origin API rewrite. No credential was added and nothing was deployed.
+
 ## 2026-09-07 - The microdata invitation becomes a modal
 
 - A pending grant invitation was a thin strip under the header. That is the
@@ -35,6 +47,140 @@
   otherwise resolves to a CommonJS file that cannot load. The tests render with
   React and `happy-dom` directly rather than Testing Library, whose CommonJS
   build cannot load this project's ES-module dependencies either.
+
+## 2026-09-07 - Off the CDNs, first page first, and the catalogue under test
+
+From `docs/design_review_2026-09-07.md`, recommendations 4, 7, 8, 9 and 17.
+
+**No render-blocking third-party dependency remains.** The vendored FAO theme
+opened with six `@import`s: five Google Fonts families and the Bootstrap Icons
+stylesheet from jsDelivr. An `@import` at the head of a render-blocking sheet is
+the worst place a dependency can sit - the browser cannot discover it until it
+has parsed the whole bundle, then has to resolve a new origin, fetch a second
+stylesheet and only then the font, which is four to six serial round trips
+before first paint. It also sent every visitor's IP to Google and to a
+commercial CDN from a page carrying FAO's own data-protection link, and made the
+site's typography and every icon depend on two third-party origins staying
+reachable in the contexts DIEM serves.
+
+All six are now stripped at build time by `dropThemeNetworkImports`, extending
+the plugin that already dropped three unused families. Open Sans and
+Merriweather are self-hosted in `src/assets/fonts` (three woff2, 177 kB, all
+variable so one file covers every weight; latin and latin-ext for Open Sans,
+latin only for Merriweather, which the theme reaches only through blockquote and
+story-card rules). Bootstrap Icons is replaced by `src/icons.css`: the seven
+`bi-*` glyphs the codebase actually uses, as mask-image data URIs, 8.5 kB
+against a 134 kB webfont. Regenerate either with `scripts/vendor-fonts.mjs` or
+`scripts/generate-icons.mjs`.
+
+Measured on the built stylesheet: `@import` count 3 to 0, and references to
+`fonts.googleapis.com`, `fonts.gstatic.com` and `cdn.jsdelivr.net` all to zero.
+Verified in the browser that both typefaces and all seven icons still render,
+with no request to any of those origins on `/`, `/catalog`, `/data/guide` or a
+product page. The masks use `mask-image` longhand, not the `mask` shorthand: a
+`var()` inside a shorthand is validated only at computed-value time and resets
+the whole declaration when it fails, which renders every icon as a solid square.
+
+**Thumbnails stopped being upscaled.** `itemThumbnail` asked ArcGIS for `?w=800`
+against 500 x 500 source images displayed in a 285 x 138 box. Measured on one
+live file: 6,943 bytes unsized, 26,524 at `?w=400`, 66,582 at `?w=800` - so a
+sixteen-card page spent about 0.95 MB on detail that does not exist in the
+source. Now `?w=400`.
+
+**The catalogue renders its first page instead of waiting for all nine.** A cold
+load pages 900 records and transfers about 1.86 MB before anything useful
+appears; on a 400 kbps link that is roughly 37 seconds of skeleton for a reader
+who needed sixteen cards. `fetchCountryCatalog` now takes an optional
+`onProgress` and publishes a usable catalogue after page one and after each page
+that follows. Pages are still requested in parallel, so time to a complete
+catalogue is unchanged.
+
+This is opt-in and only `/catalog` opts in. A growing catalogue is right for a
+result grid someone is waiting on and wrong for a surface that publishes a
+figure: the homepage's "DIEM in numbers" would count up on screen, and a country
+page would re-run its editorial and monitoring lookups against a new
+`allResources` array on every page. Those four consumers are unchanged.
+`CountryCatalog` gained `complete`, only complete catalogues are written to the
+session cache, and while incomplete the results line reads "Still reading the
+content group - counts will rise" rather than presenting a floor as a total.
+
+**Discoverability.** `public/robots.txt` and a build-time `sitemap.xml`: 821
+URLs - 12 static routes, 54 countries and 755 products - emitted by
+`emitSitemap`. It gates on the same `Catalog role/Discoverable product` category
+the product page enforces, so no URL that would answer "no longer published" is
+advertised. The build reads the group over the network, which can never fail a
+build: an unreachable group was tested and produced a warning plus a 12-route
+sitemap, not an error. This is not a competing source of truth - the file holds
+URLs and nothing else, and is rebuilt on every deploy.
+
+`usePageMetadata` gained `noindex`, applied to the withdrawn-product and 404
+states. Both answer HTTP 200 because the host serves `index.html` for every
+path, so without the tag a withdrawn product stays indexed under a title it no
+longer has. The tag is removed, not set to "index", when navigating client-side
+to a real page.
+
+**The catalogue's pure logic is under test**, and the tests found two live bugs.
+
+`npm test` now runs 136 tests across 7 files, up from 38 across 2. New:
+`lib/catalog.test.ts`, `lib/productFamilies.test.ts`, `lib/citation.test.ts`,
+`lib/catalogSearch.test.ts` and `services/countries.test.ts` - covering date and
+round inference, summary de-duplication, family grouping and language
+precedence, citation form in three languages, search tokenising, the category
+extractors, `itemHubLink`, and the progressive loader's contract. `happy-dom`
+was added as a devDependency for the one function that parses HTML; it does not
+enter the bundle.
+
+Two defects the tests exposed, both fixed:
+
+- **`itemRound` did not know the Spanish word.** The pattern covered `round`,
+  `cycle`, `ronde` and `ciclo` but not `ronda`, so the nine Honduras, Colombia
+  and Guatemala reports titled "Informe de seguimiento DIEM - Ronda N" carried
+  no round at all: no edition badge, and an unsequenced row on the country round
+  timeline, for all three Spanish-language countries. The two copies of the
+  pattern are now one constant. Verified on `/countries/hnd`: four cards that
+  showed no badge now read Round 5, 4, 3 and 4.
+- **`itemTheme` and `itemCountry` were dead code with a latent bug.** Neither
+  had a caller anywhere in `src/`; both were left behind when the homepage and
+  catalogue moved onto publisher-assigned categories. `itemCountry` returned the
+  entire title as a country name whenever the title had no " - " separator,
+  which is 171 of the 900 records now in the group ("Flooding in Chad, 2023",
+  "EVE 2.0 app"). Removed rather than tested, with a note saying why they should
+  not come back.
+
+**A correction to `docs/design_review_2026-09-07.md`.** Its reconciliation table
+credits commit `3b94562` with making `itemLanguage` read the title marker before
+the `DIEM-LANGUAGE` tag. That is wrong: `3b94562` changed
+`scripts/categorize_monitoring_products.py` and the ArcGIS data, never
+`src/lib/productFamilies.ts`. The runtime still trusts the tag first with no
+cross-check. The 2026-09-03 finding was resolved in data, not in code - a live
+check on 2026-09-07 found 0 of 75 tagged items disagreeing with their title
+marker - so there is currently nothing for a cross-check to catch, but the guard
+that review asked for does not exist. `productFamilies.test.ts` records the
+precedence as it actually is.
+
+Changed: `vite.config.ts`, `src/main.tsx`, `src/icons.css` (new),
+`src/assets/fonts/` (new), `public/robots.txt` (new),
+`scripts/generate-icons.mjs` and `scripts/vendor-fonts.mjs` (new),
+`src/services/arcgis.ts`, `src/services/countries.ts`,
+`src/hooks/useCountryCatalog.ts`, `src/hooks/usePageMetadata.ts`,
+`src/lib/catalog.ts`, `src/pages/Catalog.tsx`, `src/pages/CatalogProduct.tsx`,
+`src/pages/NotFound.tsx`, `src/catalog.css`, plus five new test files and
+`happy-dom` in devDependencies.
+
+Verification: `npm run build` and `npx tsc -b --force` pass; `npm test` runs 136
+tests, all passing. Render-blocking CSS is 303.76 kB / 50.12 kB gzip, up 8.8 kB
+for the inlined icons and down one webfont and two origins. Anonymous browser
+checks at 375, 768 and 1440 px on `/`, `/catalog`, `/countries/ner`,
+`/countries/hnd`, `/data`, `/data/guide`, `/hazard-impact-assessments`, a
+product page, the withdrawn-product state and the 404: counts unchanged at 715
+products and 54 countries, no console errors beyond the dev-server HMR socket,
+and `document.body.scrollWidth` equal to `documentElement.clientWidth`
+everywhere.
+
+Still open from the same review: the mobile filter disclosure, the duplicate tab
+stop per card, and the 251 FAO flag rules and 369 `www.fao.org` asset references
+the theme still carries - those were left alone because trimming them to the 54
+countries in use would break the moment a 55th appears.
 
 ## 2026-09-07 - The access window runs from issuance, not from acceptance
 

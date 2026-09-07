@@ -1,0 +1,15 @@
+# DIEM Hub 3.0
+#
+# The Hub is a public catalogue: everything it serves is already public in the
+# DIEM Hub content group, and its whole purpose is to be findable. Nothing here
+# is disallowed. Protected data is not withheld by this file - it is withheld by
+# ArcGIS sharing and the reader's own token, which a crawler does not have.
+#
+# /oauth-callback.html only ever receives a redirect carrying a token fragment.
+# It has no content to index and no reason to appear in a result page.
+
+User-agent: *
+Allow: /
+Disallow: /oauth-callback.html
+
+Sitemap: https://data-in-emergencies.fao.org/sitemap.xml

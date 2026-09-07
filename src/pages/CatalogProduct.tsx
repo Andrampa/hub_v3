@@ -98,6 +98,9 @@ export default function CatalogProduct() {
    */
   usePageMetadata({
     title: item?.title || (state.status === 'loading' ? undefined : 'Product unavailable'),
+    // A withdrawn or mistyped product still answers 200, so the tag is what
+    // keeps it out of the index. `follow` because its recovery links are good.
+    noindex: state.status === 'unavailable' || state.status === 'error',
     description: item?.snippet?.trim() || (item ? `A DIEM product published through the DIEM Hub content group in ${formatDate(item.created)}.` : undefined),
     structuredData: item
       ? {

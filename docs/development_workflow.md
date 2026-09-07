@@ -30,7 +30,32 @@ The build performs TypeScript project checking before producing `dist/`.
 
 ## Tests
 
-No automated test framework is configured yet. Add one when behavior is complex enough to justify the dependency; do not treat build success as UI verification.
+Vitest is configured. Run `npm test`; it executes every `*.test.ts` under
+`src/`. Build success is not UI verification — keep doing the manual pass below.
+
+The isolated Firebase invitation-validation scaffold has dependency-free Node
+contract tests. Run them separately with:
+
+```powershell
+npm test --prefix functions
+```
+
+Tests run in node by default. A file that needs a DOM declares it per file with
+`// @vitest-environment happy-dom` on the first line; only `lib/catalog.test.ts`
+does, because `cleanText` parses HTML.
+
+The catalogue's pure logic is covered: date and round inference, summary
+de-duplication, product-family grouping and language precedence, citation form,
+search tokenising, the ArcGIS category extractors, and the progressive loader's
+contract. Add to these before changing any of them — two live defects were found
+by writing them, and both were invisible to the type checker.
+
+Two generated files must be regenerated rather than hand-edited:
+
+```powershell
+node scripts/generate-icons.mjs   # src/icons.css, after adding a bi-* class
+node scripts/vendor-fonts.mjs     # src/assets/fonts, after a theme font change
+```
 
 ## Hub Catalog Category Audit
 
@@ -87,7 +112,9 @@ Production hosts must provide an SPA fallback to `index.html` for direct country
 ## Web Publishing
 
 The FAO deployment repository is a deliberately minimal source-only checkout at
-`C:\git\fao-oer-diem-hub`; it is not a second development workspace. To prepare
+`C:\git\fao-oer-diem-hub`; it is not a second development workspace. The sync
+allowlist includes `functions/` and generates the exact Hosting-to-Function
+rewrite before the SPA fallback. To prepare
 it after an approved change, run:
 
 ```powershell

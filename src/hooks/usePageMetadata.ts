@@ -25,6 +25,16 @@ export interface PageMetadata {
   structuredData?: Record<string, unknown>
   /** Overrides the canonical path, for a route whose URL carries filter state. */
   canonicalPath?: string
+  /**
+   * Keeps a page out of search results.
+   *
+   * A single-page application cannot answer 404: the host serves index.html for
+   * every path, so a withdrawn product and a mistyped address both return 200
+   * and a crawler treats them as real pages. Withdrawn products are routine
+   * here - the group loses items weekly - so without this the index fills with
+   * "no longer published" pages that once ranked for a real title.
+   */
+  noindex?: boolean
 }
 
 function upsert(selector: string, create: () => HTMLElement, apply: (element: HTMLElement) => void) {
@@ -59,7 +69,7 @@ function meta(name: string, value: string, attribute: 'name' | 'property' = 'nam
  * view of the catalogue, not a separate page, and indexing each combination
  * would bury the catalogue under thousands of near-duplicates.
  */
-export function usePageMetadata({ title, description, structuredData, canonicalPath }: PageMetadata) {
+export function usePageMetadata({ title, description, structuredData, canonicalPath, noindex }: PageMetadata) {
   const path = canonicalPath ?? (typeof window === 'undefined' ? '/' : window.location.pathname)
 
   useEffect(() => {
@@ -80,6 +90,13 @@ export function usePageMetadata({ title, description, structuredData, canonicalP
       meta('og:description', description, 'property')
       meta('twitter:description', description)
     }
+    // Removed rather than set to "index" when a page is indexable again, so a
+    // client-side navigation off a withdrawn product does not leave the tag
+    // behind on the next route.
+    const robots = document.head.querySelector('meta[name="robots"]')
+    if (noindex) meta('robots', 'noindex, follow')
+    else robots?.remove()
+
     meta('og:title', fullTitle, 'property')
     meta('og:url', canonical, 'property')
     meta('og:type', 'website', 'property')
@@ -103,5 +120,5 @@ export function usePageMetadata({ title, description, structuredData, canonicalP
     }
     // Structured data is an object literal at every call site, so it is compared
     // by value here rather than by identity, which would re-run on every render.
-  }, [title, description, path, JSON.stringify(structuredData)])
+  }, [title, description, path, noindex, JSON.stringify(structuredData)])
 }

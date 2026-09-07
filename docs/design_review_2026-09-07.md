@@ -19,10 +19,12 @@ place; record shipped work in `docs/changelog.md`.
 | Field | Value |
 |---|---|
 | Reviewed | 2026-09-07, commit `84ba9cb` |
-| Applied 2026-09-07 | Recommendation **2** (PDF zoom, §7.2), **3** (four surfaces bypassing the product page, §7.3), **5** (filter target size, §7.5), **6** (data-generation contrast, §7.6) |
+| Applied 2026-09-07 | Recommendations **2** (PDF zoom, §7.2), **3** (four surfaces bypassing the product page, §7.3), **4** (thumbnail upscaling, §7.4), **5** (filter target size, §7.5), **6** (data-generation contrast, §7.6), **7** (progressive catalogue loading, §7.7), **8** (third-party CDN imports, §7.8), **9** (tests, §7.9), **17** (sitemap, robots, noindex, §7.14) |
 | Open, highest value | **1** — the undated bilingual country editorial block (§7.1). Nothing else on this list has its ratio of institutional risk removed to effort spent. |
-| Partially applied | **5**: targets now clear 24 px, but the mobile filter bar grew 522 → 575 px. The "Filters" disclosure with active-filter chips, which is what fixes that, is still open. |
+| Partially applied | **5**: targets now clear 24 px, but the mobile filter bar grew 522 → 575 px. The "Filters" disclosure with active-filter chips, which is what fixes that, is still open. **7**: progressive delivery is opt-in and only `/catalog` opts in, deliberately (see the changelog). **8**: fonts and icons are self-hosted, but the theme's 251 flag rules and 369 `www.fao.org` asset references were left alone — trimming them to the 54 countries in use breaks when a 55th appears. **17**: descriptions for the remaining 11 routes (recommendation 18) are still open. |
 | Residual after **3** | One item — the "Mozambique Floods January 2026" Dashboard — carries neither a catalog role nor a `url`, so it still resolves to an ArcGIS item page. That is an editorial fix in the content group, not a code fix. |
+| **Correction to §3** | The reconciliation table credits commit `3b94562` with making `itemLanguage` read the title marker before the `DIEM-LANGUAGE` tag. **That is wrong.** `3b94562` changed `scripts/categorize_monitoring_products.py` and the ArcGIS data, never `src/lib/productFamilies.ts`; the runtime still trusts the tag first with no cross-check. The 2026-09-03 finding was resolved in data, not in code — a live check on 2026-09-07 found 0 of 75 tagged items disagreeing with their title marker — so nothing is currently mislabelled, but the guard that review asked for does not exist. Pinned in `src/lib/productFamilies.test.ts`. |
+| Found while testing | Two live defects, both fixed 2026-09-07: `itemRound` did not recognise Spanish `Ronda`, so nine Honduras, Colombia and Guatemala reports carried no round; and `itemTheme`/`itemCountry` were unreferenced dead code in which `itemCountry` returned the whole title as a country name for 171 of the 900 records. Neither appears anywhere in the findings below — writing the tests is what surfaced them. |
 
 ---
 

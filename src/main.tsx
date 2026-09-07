@@ -11,7 +11,12 @@ import ScrollToTop from './components/ScrollToTop'
 // dropping everything but Reboot leaves computed styles identical, apart from
 // the two list utilities the footer uses, which now live in fao-adaptation.css.
 import 'bootstrap/dist/css/bootstrap-reboot.min.css'
+// Before the theme, so its @font-face declarations are already registered when
+// the theme's font-family rules are parsed. Both replace network @imports the
+// build strips out of the theme; see dropThemeNetworkImports in vite.config.ts.
+import './assets/fonts/fonts.css'
 import './assets/fao/fao-theme.min.css'
+import './icons.css'
 import './styles.css'
 import './hub-home.css'
 import './catalog.css'

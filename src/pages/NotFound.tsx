@@ -1,10 +1,13 @@
 import { Link } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 export default function NotFound() {
-  useDocumentTitle('Page not found')
+  // The host serves index.html for every unmatched path, so this page answers
+  // 200. The tag is the only thing that keeps a mistyped address out of the
+  // index; 'follow' because the two recovery links are worth crawling.
+  usePageMetadata({ title: 'Page not found', noindex: true })
   return (
     <>
       <SiteHeader />

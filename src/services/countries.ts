@@ -90,6 +90,14 @@ export interface CountryCatalog {
   countries: CountrySummary[]
   crossCountry?: CountrySummary
   fetchedAt: Date
+  /**
+   * False while later pages of the content group are still arriving.
+   *
+   * A caller that opted into progressive delivery must not present counts from
+   * an incomplete catalogue as final: they are a floor, and they will rise.
+   * Always true for a cached copy and for the resolved promise.
+   */
+  complete: boolean
   diagnostics: {
     withoutCountry: number
     withoutType: number
@@ -409,6 +417,7 @@ function assembleCatalog(
   items: CountryResource[],
   diagnostics: CountryCatalog['diagnostics'],
   fetchedAt: Date,
+  complete = true,
 ): CountryCatalog {
   const countryCodes = [...new Set(items.flatMap((item) => item.countries))]
   return {
@@ -421,14 +430,43 @@ function assembleCatalog(
       ? summarizeCountry(CROSS_COUNTRY_CODE, items.filter((item) => item.countries.includes(CROSS_COUNTRY_CODE)))
       : undefined,
     fetchedAt,
+    complete,
     diagnostics,
   }
 }
 
 let catalogPromise: Promise<CountryCatalog> | undefined
+/**
+ * The most complete catalogue built so far by the in-flight request, so a
+ * caller that subscribes after page three still starts from page three rather
+ * than from a skeleton.
+ */
+let latestPartial: CountryCatalog | undefined
 
-export function fetchCountryCatalog(): Promise<CountryCatalog> {
-  if (catalogPromise) return catalogPromise
+/** Notified as each page of an in-flight request is folded in. */
+export type CatalogProgress = (catalog: CountryCatalog) => void
+
+/**
+ * Resolves with the whole content group, and - for a caller that asks -
+ * publishes each intermediate state on the way there.
+ *
+ * A cold load pages 900 records in nine requests and transfers about 1.86 MB
+ * before the promise settles; on a 400 kbps link that is roughly 37 seconds of
+ * skeleton for a reader who only needed the first sixteen cards. `onProgress`
+ * receives a usable catalogue after the first page, then after each subsequent
+ * one, so the wait becomes a refinement rather than a wall.
+ *
+ * ArcGIS stays authoritative and the contract is unchanged for everyone else:
+ * the returned promise still resolves once, with the complete group, and only a
+ * complete catalogue is ever written to the session cache.
+ */
+export function fetchCountryCatalog(onProgress?: CatalogProgress): Promise<CountryCatalog> {
+  if (catalogPromise) {
+    // A late subscriber to a request already in flight gets whatever has landed
+    // so far, rather than waiting for the rest in front of a skeleton.
+    if (onProgress && latestPartial) onProgress(latestPartial)
+    return catalogPromise
+  }
 
   const cached = readCache()
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
@@ -436,30 +474,34 @@ export function fetchCountryCatalog(): Promise<CountryCatalog> {
       assembleCatalog(cached.items, cached.diagnostics, new Date(cached.fetchedAt)),
     )
     // Refresh in the background so the next load starts from current data. The
-    // page already has its records, so a failure here is not surfaced.
+    // page already has its records, so a failure here is not surfaced, and no
+    // progress is published: replacing a complete catalogue under the reader
+    // with a one-page partial would be a regression, not an improvement.
     void requestCatalog().then(writeCache).catch(() => undefined)
     return catalogPromise
   }
 
-  catalogPromise = requestCatalog()
+  catalogPromise = requestCatalog((partial) => {
+    latestPartial = partial
+    onProgress?.(partial)
+  })
     .then((catalog) => {
+      latestPartial = undefined
       writeCache(catalog)
       return catalog
     })
     .catch((error) => {
       catalogPromise = undefined
+      latestPartial = undefined
       throw error
     })
 
   return catalogPromise
 }
 
-async function requestCatalog(): Promise<CountryCatalog> {
-  const firstPage = await fetchPage(1)
-  const starts: number[] = []
-  for (let start = PAGE_SIZE + 1; start <= firstPage.total; start += PAGE_SIZE) starts.push(start)
-  const remaining = await Promise.all(starts.map((start) => fetchPage(start)))
-  const normalized = [firstPage, ...remaining]
+/** Everything a catalogue needs from a set of raw group records. */
+function buildCatalog(pages: GroupSearchResponse[], complete: boolean): CountryCatalog {
+  const normalized = pages
     .flatMap((page) => page.results)
     .filter(catalogueVisible)
     .map(normalizeItem)
@@ -470,7 +512,32 @@ async function requestCatalog(): Promise<CountryCatalog> {
     withoutType: items.filter((item) => item.productTypes.includes('Unclassified')).length,
     malformedTypes: normalized.filter((entry) => entry.discoverable && entry.malformed).length,
     excludedByCatalogRole: normalized.filter((entry) => !entry.discoverable).length,
-  }, new Date())
+  }, new Date(), complete)
+}
+
+async function requestCatalog(onProgress?: CatalogProgress): Promise<CountryCatalog> {
+  const firstPage = await fetchPage(1)
+  const starts: number[] = []
+  for (let start = PAGE_SIZE + 1; start <= firstPage.total; start += PAGE_SIZE) starts.push(start)
+
+  if (!starts.length) return buildCatalog([firstPage], true)
+
+  const pages = [firstPage]
+  onProgress?.(buildCatalog(pages, false))
+
+  // Still fired together rather than in sequence, so the total time to a
+  // complete catalogue is unchanged; only the time to the first card moves.
+  let settled = 0
+  const remaining = await Promise.all(starts.map((start) => fetchPage(start).then((page) => {
+    pages.push(page)
+    settled += 1
+    // The last page is published as the resolved, complete catalogue instead,
+    // so the reader is never handed the same set twice.
+    if (onProgress && settled < starts.length) onProgress(buildCatalog(pages, false))
+    return page
+  })))
+
+  return buildCatalog([firstPage, ...remaining], true)
 }
 
 export function resourcesForCountry(catalog: CountryCatalog, iso3: string) {
