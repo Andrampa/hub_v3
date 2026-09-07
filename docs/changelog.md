@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-09-07 - Grant discovery through group membership, and the invitation gap
+
+- Temporary-grant discovery now starts from the group memberships the signed-in
+  identity actually holds: only groups tagged exactly
+  `DIEM restricted microdata grant` are read, and only items tagged exactly
+  `DIEM restricted microdata` are kept. The global tag search still runs, but as
+  a supplement whose results are merged and deduplicated, not as the path the
+  feature depends on. A group-path failure is reported; a search-path failure is
+  not. `GrantDiscovery.source` records which path found the items, so the live
+  cross-organization test can tell whether search contributes anything.
+- Item metadata is validated rather than read: an unsupported `schemaVersion`,
+  a component the questionnaire version never produces, or a managed block with
+  no survey scope now drops the item instead of displaying it with a guessed
+  scope.
+- A recipient who has been approved but has not accepted their ArcGIS invitation
+  holds nothing and previously saw nothing. The header notice band now shows a
+  pending-access notification, read from that user's own ArcGIS invitations. When
+  the group is confirmed by exact tag it can be accepted in place, on the user's
+  own token, through the documented per-user accept operation; when the group
+  cannot be read before joining it, the notice says an invitation is pending and
+  links to ArcGIS notifications rather than inferring a grant from a title. After
+  acceptance the `/data` grants section re-runs discovery in the same visit.
+- The explorer names which V3 component is open and states that its counterpart
+  covers the same households and joins only on `survey_id + hh_id`.
+- Community-only sign-in is now enforced by an exported, tested
+  `assertCommunityAccount`. There is still one portal, one OAuth application and
+  no FAO organizational login.
+- `npm test` covers 38 cases across grant discovery and invitations, all against
+  mocked ArcGIS responses. No live ArcGIS change was made.
+
 ## 2026-09-04 - Shorter homepage provenance line
 
 - The "DIEM in numbers" footnote no longer names or links the monitoring

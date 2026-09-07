@@ -254,38 +254,52 @@ Also open: who maintains `/data/guide` now that it supersedes the same material
 in the dashboard user guide, and the dead CSS left in `src/data-access.css` from
 the retired guide-language panel, collection switch and access pathway.
 
-## Temporary microdata grants — in progress, resume Monday
+## Temporary microdata grants — code complete, live test outstanding
 
-**Status: implemented, not working end to end.** Typecheck, `npm run build` and
-`npm test` (19 tests) all pass, but the feature has never resolved a real grant.
-Nothing about the Hub-side shape is confirmed against live ArcGIS.
+**Status: implemented, never resolved a real grant.** Typecheck, `npm run build`
+and `npm test` (38 tests) pass. Every ArcGIS response in the tests is mocked, so
+nothing about the Hub-side shape is confirmed against live ArcGIS.
 
-Written this session: `src/services/microdataGrants.ts` (discovery and bundle
-construction), `src/components/TemporaryMicrodataGrants.tsx` (the `/data`
-section), `fetchGrantDatasetDefinition` in `src/services/dataExplorer.ts`, the
-`/data/grants/:datasetId` route, `catalogueVisible` exclusion in
-`src/services/arcgis.ts` and `src/services/countries.ts`, and
-`src/services/microdataGrants.test.ts`. Behaviour and rationale are in
-`docs/temporary_microdata_grants.md`.
+Part 1 wrote `src/services/microdataGrants.ts`,
+`src/components/TemporaryMicrodataGrants.tsx`, `fetchGrantDatasetDefinition` in
+`src/services/dataExplorer.ts`, the `/data/grants/:datasetId` route and the
+`catalogueVisible` exclusion. Part 2 (2026-09-07) reordered discovery to lead
+with group membership, hardened metadata validation, and added
+`src/services/microdataGrantInvitations.ts`,
+`src/components/MicrodataInvitationNotice.tsx`, `assertCommunityAccount` in
+`src/services/auth.ts` and `src/services/microdataGrantInvitations.test.ts`.
+Behaviour and rationale are in `docs/temporary_microdata_grants.md`.
 
-**The unresolved question, and the exact next task.** Grants are FAO-owned items
-(`sjP4Ugu5s0dZWLjd`) while the Hub signs users in to the Community organization
-(`D5aXW6TZFpeM2wke`). Discovery therefore searches the global endpoint
-`https://www.arcgis.com/sharing/rest` with the Community token and no
-organization filter. **Nobody has verified that this crosses the organization
-boundary.** Provision a grant for a Community test account added as an external
-member of the private FAO grant group, sign in as that account, and check:
+**The exact next task: the live pass with
+`andrea.amparore_faohub_testaccount`.** Provision a grant for that Community
+account from the FAO side, then, signed in as it, confirm in order:
 
-1. the global tag search returns the FAO-owned views;
-2. an unrelated Community account gets nothing;
-3. a revoked grant disappears on the next check.
-
-If (1) fails, the group-enumeration fallback in `enumerateGrantItems` becomes the
-primary path rather than a safety net, and the search branch should be dropped
-rather than left as dead weight.
+1. before accepting, the header shows the pending-access notice, and `/data`
+   shows no grants section at all;
+2. the notice's group is tag-confirmed and offers in-place acceptance — if the
+   group is unreadable before joining, the notice falls back to the ArcGIS
+   notifications link and that is the supported behaviour, not a bug to fix;
+3. accepting inside the Hub succeeds and the `/data` grants section appears
+   without a reload;
+4. `GrantDiscovery.source` — group membership is expected to carry it. If it
+   reports `search` only, group enumeration failed and that is the finding worth
+   recording; if it reports `groups` only, the supplementary search contributes
+   nothing across organizations and can be removed.
+5. the bundle shows the exact approved `(country, round)` pairs, the V3 core and
+   optional views both open, and no filter in the explorer returns a row outside
+   the approved scope;
+6. download controls appear only if the grant was provisioned with
+   `--allow-export`;
+7. an unrelated Community account sees no notice and no grants section;
+8. after revocation, the grant disappears on the next check.
 
 Verification command: `npm test`, then `npm run build` and the dev server on
 port 5173 signed in as the test recipient.
+
+**Not verifiable offline.** The exact response shape of
+`/community/users/<username>/invitations` and whether an invited non-member can
+read a private FAO group are both assumptions; the code degrades to the ArcGIS
+notifications link if either is wrong, and the live pass is what settles them.
 
 **Deliberate:** the grants section renders nothing at all when the account holds
 no grant — no empty state, no notice. Do not reintroduce one.

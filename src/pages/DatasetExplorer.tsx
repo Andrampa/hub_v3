@@ -433,6 +433,16 @@ export default function DatasetExplorer() {
                       <strong>Temporary approved access</strong>
                       <p>Grant {definition.grant.grantId} — {describeSurveyScope(definition.grant.surveyScope)}. The service itself excludes every other survey, so no filter here can widen the result.</p>
                       <p>{definition.grant.bulkExportEnabled ? 'Bulk export is enabled for this grant.' : 'Bulk export is not enabled for this grant.'}</p>
+                      {/* V3 splits one household interview across a mandatory
+                          and an optional table over the same approved surveys.
+                          Saying which one is open, and how the two line up,
+                          keeps them from being read as two populations. */}
+                      {definition.grant.questionnaireVersion === 'v3' && (
+                        <p>
+                          This is the {definition.grant.component === 'core' ? 'mandatory (core)' : 'optional'} component. Its counterpart covers the same
+                          households over the same approved surveys and joins on <code>survey_id + hh_id</code>; no other key relates the two.
+                        </p>
+                      )}
                     </div>
                   )}
                   <div className="dataset-info-actions"><a href="#dataset-table">View data table</a><a href="#dataset-download">Download options</a></div>

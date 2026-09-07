@@ -5,6 +5,7 @@ import {
   describeExportPolicy,
   describeSurveyScope,
   fetchCurrentUserMicrodataGrants,
+  onGrantAccessChanged,
   type GrantBundle,
   type GrantDiscovery,
   type ResolvedGrantView,
@@ -67,6 +68,14 @@ function useMicrodataGrants() {
     const onFocus = () => { void check() }
     window.addEventListener('focus', onFocus)
     return () => window.removeEventListener('focus', onFocus)
+  }, [auth.status, check])
+
+  // Accepting an invitation in the header creates the membership discovery
+  // depends on, so the grant appears in the same visit rather than after a
+  // restart the user has no reason to guess at.
+  useEffect(() => {
+    if (auth.status !== 'authenticated') return
+    return onGrantAccessChanged(() => { void check() })
   }, [auth.status, check])
 
   return { discovery, checking, check }

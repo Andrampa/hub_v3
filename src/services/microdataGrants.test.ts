@@ -1,11 +1,21 @@
 import { describe, expect, it, vi } from 'vitest'
 import { catalogueVisible } from './arcgis'
-import { deriveCommunityCapabilities, DIEM_ACCESS_GROUPS } from './auth'
+import {
+  assertCommunityAccount,
+  COMMUNITY_ORG_ID,
+  CommunityAccessError,
+  deriveCommunityCapabilities,
+  DIEM_ACCESS_GROUPS,
+} from './auth'
 import {
   ACCESS_TAG,
+  GRANT_GROUP_TAG,
   buildGrantBundles,
   fetchCurrentUserMicrodataGrants,
   hasRestrictedMicrodataTag,
+  isGrantGroup,
+  notifyGrantAccessChanged,
+  onGrantAccessChanged,
   parseGrantMetadata,
   resolveGrantView,
   describeExportPolicy,
@@ -104,6 +114,29 @@ function fakeRequester(options: {
   }) as unknown as <T>(url: string, params?: Record<string, unknown>) => Promise<T>
 }
 
+describe('who may hold a Hub session', () => {
+  it('accepts a DIEM Community account', () => {
+    expect(() => assertCommunityAccount({ orgId: COMMUNITY_ORG_ID })).not.toThrow()
+  })
+
+  it('rejects an FAO organizational account, which manages grants outside the Hub', () => {
+    // `sjP4Ugu5s0dZWLjd` owns the grant items and runs the provisioning
+    // scripts. It has no Hub role, and admitting it would mean a second portal
+    // and a second OAuth application for no user-facing capability.
+    try {
+      assertCommunityAccount({ orgId: 'sjP4Ugu5s0dZWLjd' })
+      throw new Error('an FAO organizational account was admitted')
+    } catch (error) {
+      expect(error).toBeInstanceOf(CommunityAccessError)
+      expect((error as CommunityAccessError).reason).toBe('wrong-organization')
+    }
+  })
+
+  it('rejects a disabled Community account', () => {
+    expect(() => assertCommunityAccount({ orgId: COMMUNITY_ORG_ID, disabled: true })).toThrow(CommunityAccessError)
+  })
+})
+
 describe('access matrix', () => {
   it('keeps the legacy household capability independent of temporary grants', () => {
     const legacyOnly = deriveCommunityCapabilities([DIEM_ACCESS_GROUPS.householdData])
@@ -168,6 +201,58 @@ describe('grant metadata', () => {
   it('rejects an item whose component or version cannot be determined', () => {
     expect(parseGrantMetadata({ ...V3_CORE_ITEM, properties: undefined, tags: [ACCESS_TAG] })).toBeNull()
     expect(parseGrantMetadata({ ...V3_CORE_ITEM, tags: ['something else'] })).toBeNull()
+  })
+
+  it('rejects a schema version this Hub does not know how to read', () => {
+    const future = {
+      ...V3_CORE_ITEM,
+      properties: {
+        diemRestrictedMicrodata: {
+          ...(V3_CORE_ITEM.properties as { diemRestrictedMicrodata: Record<string, unknown> }).diemRestrictedMicrodata,
+          schemaVersion: 2,
+        },
+      },
+    }
+    expect(parseGrantMetadata(future)).toBeNull()
+  })
+
+  it('rejects a component the questionnaire version never produces', () => {
+    const impossible = {
+      ...V3_CORE_ITEM,
+      tags: [ACCESS_TAG, 'diem-microdata-component-core', 'DIEM V2'],
+      properties: {
+        diemRestrictedMicrodata: {
+          schemaVersion: 1,
+          grantId: 'request-2026-001',
+          questionnaireVersion: 'v2',
+          component: 'core',
+          surveyScope: [{ adm0_iso3: 'SOM', round: 4 }],
+        },
+      },
+    }
+    expect(parseGrantMetadata(impossible)).toBeNull()
+  })
+
+  it('rejects a managed item that carries no survey scope to display', () => {
+    const scopeless = {
+      ...V3_CORE_ITEM,
+      properties: {
+        diemRestrictedMicrodata: {
+          schemaVersion: 1,
+          grantId: 'request-2026-001',
+          questionnaireVersion: 'v3',
+          component: 'core',
+          surveyScope: [],
+        },
+      },
+    }
+    expect(parseGrantMetadata(scopeless)).toBeNull()
+  })
+
+  it('matches a grant group only on the exact group tag', () => {
+    expect(isGrantGroup([' DIEM Restricted Microdata Grant '])).toBe(true)
+    expect(isGrantGroup([ACCESS_TAG])).toBe(false)
+    expect(isGrantGroup(undefined)).toBe(false)
   })
 })
 
@@ -235,29 +320,76 @@ describe('bundle construction', () => {
 })
 
 describe('discovery', () => {
-  it('finds grants through the global authenticated search', async () => {
+  it('discovers a grant through the externally owned group the user was invited to', async () => {
+    const requester = fakeRequester({
+      searchResults: [],
+      groups: [
+        { id: 'grant-group', tags: [GRANT_GROUP_TAG, 'diem-microdata-grant-request-2026-001'] },
+        { id: 'unrelated-group', tags: ['DIEM'] },
+      ],
+      groupContent: { 'grant-group': [V3_CORE_ITEM, V3_OPTIONAL_ITEM] },
+      items: [V3_CORE_ITEM, V3_OPTIONAL_ITEM],
+    })
+    const discovery = await fetchCurrentUserMicrodataGrants(requester)
+    expect(discovery.source).toBe('groups')
+    expect(discovery.bundles).toHaveLength(1)
+    expect(discovery.bundles[0].views).toHaveLength(2)
+  })
+
+  it('reads only groups carrying the exact grant tag', async () => {
+    const requester = fakeRequester({
+      searchResults: [],
+      groups: [
+        { id: 'grant-group', tags: [GRANT_GROUP_TAG] },
+        // A near miss and an ordinary DIEM group must never be walked.
+        { id: 'lookalike-group', tags: ['DIEM restricted microdata'] },
+        { id: 'ordinary-group', tags: ['DIEM', 'household survey'] },
+      ],
+      groupContent: {
+        'grant-group': [V2_LEGACY_ITEM],
+        'lookalike-group': [V3_CORE_ITEM],
+        'ordinary-group': [V3_OPTIONAL_ITEM],
+      },
+      items: [V2_LEGACY_ITEM, V3_CORE_ITEM, V3_OPTIONAL_ITEM],
+    })
+    const discovery = await fetchCurrentUserMicrodataGrants(requester)
+    expect(discovery.bundles).toHaveLength(1)
+    expect(discovery.bundles[0].questionnaireVersion).toBe('v2')
+  })
+
+  it('still finds a grant the group path missed but the index carries', async () => {
     const requester = fakeRequester({
       searchResults: [V3_CORE_ITEM, V3_OPTIONAL_ITEM],
+      groups: [],
       items: [V3_CORE_ITEM, V3_OPTIONAL_ITEM],
     })
     const discovery = await fetchCurrentUserMicrodataGrants(requester)
     expect(discovery.source).toBe('search')
     expect(discovery.bundles).toHaveLength(1)
-    expect(discovery.bundles[0].views).toHaveLength(2)
   })
 
-  it('falls back to private grant groups when search returns nothing', async () => {
+  it('merges both paths without listing the same view twice', async () => {
     const requester = fakeRequester({
-      searchResults: [],
-      groups: [
-        { id: 'grant-group', tags: ['DIEM restricted microdata grant', 'diem-microdata-grant-request-2026-001'] },
-        { id: 'unrelated-group', tags: ['DIEM'] },
-      ],
+      searchResults: [V3_CORE_ITEM, V2_LEGACY_ITEM],
+      groups: [{ id: 'grant-group', tags: [GRANT_GROUP_TAG] }],
+      groupContent: { 'grant-group': [V3_CORE_ITEM, V3_OPTIONAL_ITEM] },
+      items: [V3_CORE_ITEM, V3_OPTIONAL_ITEM, V2_LEGACY_ITEM],
+    })
+    const discovery = await fetchCurrentUserMicrodataGrants(requester)
+    expect(discovery.source).toBe('groups+search')
+    const v3 = discovery.bundles.find((bundle) => bundle.questionnaireVersion === 'v3')
+    expect(v3?.views.map((entry) => entry.itemId)).toEqual(['core-item', 'optional-item'])
+  })
+
+  it('keeps working when the supplementary search fails', async () => {
+    const requester = fakeRequester({
+      failSearch: true,
+      groups: [{ id: 'grant-group', tags: [GRANT_GROUP_TAG] }],
       groupContent: { 'grant-group': [V2_LEGACY_ITEM] },
       items: [V2_LEGACY_ITEM],
     })
     const discovery = await fetchCurrentUserMicrodataGrants(requester)
-    expect(discovery.source).toBe('groups')
+    expect(discovery.error).toBeUndefined()
     expect(discovery.bundles[0].questionnaireVersion).toBe('v2')
   })
 
@@ -338,5 +470,45 @@ describe('V3 source replacement', () => {
     expect(discovery.bundles).toHaveLength(1)
     expect(discovery.bundles[0].questionnaireVersion).toBe('v3')
     expect(discovery.bundles[0].views.map((entry) => entry.component)).toEqual(['core', 'optional'])
+  })
+})
+
+describe('stale access', () => {
+  it('drops a revoked grant on the next check rather than keeping it on screen', async () => {
+    const denied = new Set<string>()
+    const requester = vi.fn(async (url: string) => {
+      if (url.endsWith('/community/self')) return { groups: [{ id: 'grant-group', tags: [GRANT_GROUP_TAG] }] }
+      if (url.endsWith('/sharing/rest/search')) return { results: [] }
+      if (/\/content\/groups\/grant-group\/search$/.test(url)) {
+        return { results: denied.size ? [] : [V2_LEGACY_ITEM] }
+      }
+      const itemMatch = url.match(/\/content\/items\/(.+)$/)
+      if (itemMatch) {
+        if (denied.has(itemMatch[1])) throw new Error('403 access denied')
+        return V2_LEGACY_ITEM
+      }
+      if (url.endsWith('/FeatureServer')) return { capabilities: 'Query' }
+      throw new Error(`unexpected request: ${url}`)
+    }) as unknown as <T>(url: string, params?: Record<string, unknown>) => Promise<T>
+
+    expect((await fetchCurrentUserMicrodataGrants(requester)).bundles).toHaveLength(1)
+
+    // The expiry worker removes the member and deletes the view.
+    denied.add('legacy-v2-item')
+    const afterRevocation = await fetchCurrentUserMicrodataGrants(requester)
+    expect(afterRevocation.bundles).toEqual([])
+    expect(afterRevocation.error).toBeUndefined()
+  })
+
+  it('lets an acceptance elsewhere in the page trigger a re-check', () => {
+    const listener = vi.fn()
+    const stop = onGrantAccessChanged(listener)
+    notifyGrantAccessChanged()
+    expect(listener).toHaveBeenCalledTimes(1)
+
+    // Unsubscribing has to hold, or a signed-out view keeps re-checking.
+    stop()
+    notifyGrantAccessChanged()
+    expect(listener).toHaveBeenCalledTimes(1)
   })
 })

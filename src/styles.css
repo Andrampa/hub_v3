@@ -109,6 +109,14 @@ main:focus { outline: none; }
 .auth-notice { min-height: 45px; padding: 9px max(24px, calc((100% - 1180px) / 2)); display: flex; align-items: center; gap: 15px; background: #fff5eb; border-bottom: 1px solid #f2c9a9; color: #70401f; font-size: 12px; }
 .auth-notice-action { padding: 0; border: 0; background: transparent; color: #9c430d; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .auth-notice > button:last-child { margin-left: auto; border: 0; background: transparent; color: #70401f; font-size: 20px; cursor: pointer; }
+/* A pending microdata grant invitation is an offer, not a problem, so it reads
+   in the institutional blue rather than the warning amber of a sign-in error. */
+.invitation-notice { background: #eef4fb; border-bottom-color: #c3d7ec; color: var(--deep-blue); }
+.invitation-notice .invitation-notice-body { flex: 1 1 auto; line-height: 1.6; }
+.invitation-notice em { font-style: normal; font-weight: 700; }
+.invitation-notice .auth-notice-action { flex: none; color: var(--fao-blue); }
+.invitation-notice .auth-notice-action:disabled { color: var(--ink-faint); cursor: default; }
+.invitation-notice-failure { display: block; color: #9c430d; }
 .mobile-nav-heading { grid-column: 1 / -1; padding: 11px 13px; color: var(--deep-blue); font-size: var(--text-small); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 
 .hero { position: relative; min-height: 545px; overflow: hidden; background: var(--deep-blue); color: white; }

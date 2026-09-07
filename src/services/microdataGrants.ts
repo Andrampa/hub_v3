@@ -94,13 +94,45 @@ export interface GrantBundle {
 export interface GrantDiscovery {
   bundles: GrantBundle[]
   /** How the items were found, so live cross-org acceptance can be verified. */
-  source: 'search' | 'groups' | 'none'
+  source: GrantDiscoverySource
   /** Set when discovery itself failed, as distinct from finding no grants. */
   error?: string
 }
 
+/**
+ * Which path produced the candidates, recorded for live acceptance testing.
+ *
+ * `groups` is the designed path. `search` alone means group membership did not
+ * surface the grant, which is worth knowing during the cross-organization test.
+ */
+export type GrantDiscoverySource = 'groups' | 'search' | 'groups+search' | 'none'
+
 const KNOWN_COMPONENTS: GrantComponent[] = ['legacy', 'core', 'optional']
 const KNOWN_VERSIONS: DataGeneration[] = ['v1', 'v2', 'v3']
+
+/**
+ * Schema versions of `properties.diemRestrictedMicrodata` this Hub understands.
+ *
+ * A future provisioning release may change what the fields mean. Reading an
+ * unknown schema as though it were this one could show the wrong survey scope
+ * beside real microdata, so an unrecognised version is dropped rather than
+ * interpreted.
+ */
+export const SUPPORTED_METADATA_SCHEMA_VERSIONS = [1]
+
+/**
+ * Which components a questionnaire generation is allowed to produce.
+ *
+ * V1 and V2 are one filtered view over the legacy master; V3 is a matched
+ * core/optional pair joined on `survey_id + hh_id`. An item claiming a
+ * combination the provisioning script never creates is not a grant this Hub
+ * knows how to present.
+ */
+const COMPONENTS_BY_VERSION: Record<DataGeneration, GrantComponent[]> = {
+  v1: ['legacy'],
+  v2: ['legacy'],
+  v3: ['core', 'optional'],
+}
 
 function tagValue(tags: string[] | undefined, prefix: string) {
   const match = (tags || []).find((tag) => tag.toLowerCase().startsWith(prefix))
@@ -129,14 +161,24 @@ function readSurveyScope(value: unknown): SurveyScopeEntry[] {
  *
  * The provisioning script writes both, but `properties` is only returned by a
  * full item fetch, while a search result may carry tags alone. Reading either
- * keeps discovery working without a second round trip per candidate, and the
- * item is re-fetched before use anyway.
+ * keeps discovery candidates cheap, and every candidate is re-fetched — with
+ * its `properties` block — before it is shown or queried.
+ *
+ * Validation is deliberately strict. An item that cannot be read confidently is
+ * dropped rather than guessed at: presenting the wrong questionnaire
+ * generation, the wrong component or the wrong survey scope beside real
+ * microdata is worse than not listing it at all.
  */
 export function parseGrantMetadata(item: GrantArcGISItem): GrantItemMetadata | null {
   if (!hasRestrictedMicrodataTag(item.tags)) return null
 
   const container = item.properties as { diemRestrictedMicrodata?: Record<string, unknown> } | undefined
   const managed = container?.diemRestrictedMicrodata
+
+  // Absent only on a tag-only search candidate, where the default is this
+  // module's own contract version; present, it has to be one this Hub reads.
+  const schemaVersion = managed ? Number(managed.schemaVersion) : SUPPORTED_METADATA_SCHEMA_VERSIONS[0]
+  if (!SUPPORTED_METADATA_SCHEMA_VERSIONS.includes(schemaVersion)) return null
 
   const grantId = String(managed?.grantId ?? tagValue(item.tags, GRANT_ID_TAG_PREFIX) ?? '').trim()
   const rawComponent = String(managed?.component ?? tagValue(item.tags, COMPONENT_TAG_PREFIX) ?? '').trim().toLowerCase()
@@ -147,18 +189,17 @@ export function parseGrantMetadata(item: GrantArcGISItem): GrantItemMetadata | n
   const component = KNOWN_COMPONENTS.find((known) => known === rawComponent)
   const questionnaireVersion = KNOWN_VERSIONS.find((known) => known === rawVersion)
 
-  // A managed item that cannot be read confidently is dropped rather than
-  // guessed at: presenting the wrong questionnaire generation or the wrong
-  // survey scope beside real microdata is worse than not listing it.
   if (!grantId || !component || !questionnaireVersion) return null
+  if (!COMPONENTS_BY_VERSION[questionnaireVersion].includes(component)) return null
 
-  return {
-    schemaVersion: Number(managed?.schemaVersion ?? 1),
-    grantId,
-    questionnaireVersion,
-    component,
-    surveyScope: readSurveyScope(managed?.surveyScope),
-  }
+  // The scope is what the user is told they were approved for, so a managed
+  // block that carries none is incomplete rather than unrestricted. A tag-only
+  // candidate has no scope to carry and is allowed through; it is re-read from
+  // the full item, which does carry the block, before anything is shown.
+  const surveyScope = readSurveyScope(managed?.surveyScope)
+  if (managed && !surveyScope.length) return null
+
+  return { schemaVersion, grantId, questionnaireVersion, component, surveyScope }
 }
 
 interface SearchResponse {
@@ -171,12 +212,15 @@ interface SelfGroups {
 }
 
 /**
- * Ask ArcGIS globally, with the user's own token, for managed grant views.
+ * Supplementary sweep: ask ArcGIS globally, with the user's own token, for
+ * managed grant views.
  *
- * The search is deliberately unfiltered by organization: the items are FAO
- * property and the signed-in identity is a Community account, so an org filter
- * would exclude exactly the items being looked for. Access scoping is ArcGIS's
- * job — the response contains only what this identity may already see.
+ * The search is deliberately unfiltered by organization, because the items are
+ * FAO property and the signed-in identity is a Community account. It is second,
+ * not first: a cross-organization search over an externally shared, freshly
+ * created private item depends on index timing and on how ArcGIS scopes the
+ * query, neither of which the Hub controls. It runs anyway so that a grant
+ * reachable only through the index is still found.
  */
 async function searchGrantItems(requester: ProtectedRequester): Promise<GrantArcGISItem[]> {
   const response = await requester<SearchResponse>(`${GLOBAL_REST}/search`, {
@@ -188,22 +232,30 @@ async function searchGrantItems(requester: ProtectedRequester): Promise<GrantArc
   return (response.results || []).filter((item) => hasRestrictedMicrodataTag(item.tags))
 }
 
+/** Exact-tag match on a group the provisioning script created. */
+export function isGrantGroup(tags: string[] | undefined) {
+  const wanted = GRANT_GROUP_TAG.toLowerCase()
+  return (tags || []).some((tag) => String(tag).trim().toLowerCase() === wanted)
+}
+
 /**
- * Fallback for the case the global search index has not caught up with a
- * freshly provisioned grant, or cross-organization search proves unreliable in
- * production. It walks the user's own private grant groups instead, which is
- * slower but reads the group content directly rather than an index.
+ * The primary discovery path: the memberships this identity actually holds.
  *
- * Live cross-org verification with a real Community test account remains an
- * acceptance requirement; until it passes, this path is what guarantees a
- * newly approved recipient sees their grant.
+ * A grant is only reachable once its recipient has accepted the invitation to
+ * the private FAO group, so membership in a group carrying the exact
+ * `DIEM restricted microdata grant` tag is the fact the whole feature turns on.
+ * Reading that group's content asks ArcGIS directly rather than through a
+ * search index, which is what makes it reliable for externally shared,
+ * FAO-owned items that a Community identity reaches across an organization
+ * boundary.
+ *
+ * Only script-managed groups are walked. A group without the exact tag is
+ * skipped entirely, so an ordinary DIEM group the user belongs to is never
+ * scanned for microdata.
  */
 async function enumerateGrantItems(requester: ProtectedRequester): Promise<GrantArcGISItem[]> {
   const self = await requester<SelfGroups>(`${GLOBAL_REST}/community/self`)
-  const wanted = GRANT_GROUP_TAG.toLowerCase()
-  const grantGroups = (self.groups || []).filter((group) => (
-    (group.tags || []).some((tag) => String(tag).trim().toLowerCase() === wanted)
-  ))
+  const grantGroups = (self.groups || []).filter((group) => isGrantGroup(group.tags))
 
   const pages = await Promise.all(grantGroups.map(async (group) => {
     if (!group.id) return []
@@ -321,32 +373,46 @@ export function buildGrantBundles(views: ResolvedGrantView[]): GrantBundle[] {
 /**
  * Discover and resolve every temporary grant the signed-in identity holds.
  *
- * Search first, group enumeration second. Both paths converge on the same
- * per-item re-resolution, so the fallback is a discovery convenience and never
- * a second authorization path.
+ * Group membership is the primary path and the index search is a supplement;
+ * the two run together and their candidates are merged. Neither is an
+ * authorization decision — both converge on the same per-item re-resolution,
+ * which is where ArcGIS decides. Discovery only ever narrows what is asked
+ * about, so a broader sweep cannot reveal anything the token could not already
+ * reach.
+ *
+ * The group path failing is a real failure to report; the search path failing
+ * is not, because it was never expected to carry the feature on its own.
  */
 export async function fetchCurrentUserMicrodataGrants(
   requester: ProtectedRequester,
 ): Promise<GrantDiscovery> {
-  let candidates: GrantArcGISItem[] = []
-  let source: GrantDiscovery['source'] = 'none'
+  const [grouped, searched] = await Promise.all([
+    enumerateGrantItems(requester).then(
+      (items) => ({ items, error: undefined as Error | undefined }),
+      (error: Error) => ({ items: [] as GrantArcGISItem[], error }),
+    ),
+    searchGrantItems(requester).then(
+      (items) => ({ items, error: undefined as Error | undefined }),
+      (error: Error) => ({ items: [] as GrantArcGISItem[], error }),
+    ),
+  ])
 
-  try {
-    candidates = await searchGrantItems(requester)
-    if (candidates.length) source = 'search'
-  } catch {
-    candidates = []
-  }
-
-  if (!candidates.length) {
-    try {
-      candidates = await enumerateGrantItems(requester)
-      if (candidates.length) source = 'groups'
-    } catch (error) {
-      return { bundles: [], source: 'none', error: (error as Error)?.message || 'Access could not be checked.' }
+  if (grouped.error && searched.error) {
+    return {
+      bundles: [],
+      source: 'none',
+      error: grouped.error.message || 'Access could not be checked.',
     }
   }
 
+  const groupedIds = new Set(grouped.items.map((item) => item.id))
+  const searchOnly = searched.items.filter((item) => !groupedIds.has(item.id))
+  const source: GrantDiscoverySource = grouped.items.length && searchOnly.length ? 'groups+search'
+    : grouped.items.length ? 'groups'
+    : searchOnly.length ? 'search'
+    : 'none'
+
+  const candidates = [...grouped.items, ...searchOnly]
   const uniqueIds = [...new Set(candidates.map((item) => item.id).filter(Boolean))]
   const resolved = await Promise.all(uniqueIds.map((id) => resolveGrantView(id, requester)))
   const views = resolved.filter((view): view is ResolvedGrantView => view !== null)
@@ -383,4 +449,23 @@ export function describeExportPolicy(bundle: GrantBundle) {
   return bundle.bulkExportEnabled
     ? 'Bulk export is enabled for this grant.'
     : 'Bulk export is not enabled for this grant.'
+}
+
+/**
+ * Grant access changing inside this page, rather than between page loads.
+ *
+ * Accepting an invitation makes a grant discoverable seconds later, and asking
+ * the user to restart the browser to see it would be a poor answer to an act
+ * they just performed in the Hub. Listeners re-run discovery; the module holds
+ * no grant state of its own, so there is nothing to invalidate.
+ */
+const accessChangeListeners = new Set<() => void>()
+
+export function onGrantAccessChanged(listener: () => void) {
+  accessChangeListeners.add(listener)
+  return () => { accessChangeListeners.delete(listener) }
+}
+
+export function notifyGrantAccessChanged() {
+  for (const listener of [...accessChangeListeners]) listener()
 }

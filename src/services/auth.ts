@@ -114,26 +114,44 @@ async function confirmGroupMembership(
   }
 }
 
+/**
+ * The Hub admits exactly one organization: DIEM Community.
+ *
+ * FAO organizational accounts provision and approve grants outside the Hub, in
+ * ArcGIS and in the Management scripts, so there is no second portal here and no
+ * portal selector. An FAO account signing in would gain nothing the Hub could
+ * honestly offer it, and adding a second OAuth application would double the
+ * authentication surface for no user-facing capability.
+ *
+ * This is a gate on who may hold a Hub session, never an authorization decision
+ * about data: ArcGIS item sharing decides that, for every account.
+ */
+export function assertCommunityAccount(user: { disabled?: boolean; orgId?: string }) {
+  if (user.disabled) {
+    throw new CommunityAccessError(
+      'This DIEM community account is disabled. Contact the DIEM community administrator.',
+      'disabled-account',
+    )
+  }
+  if (user.orgId !== COMMUNITY_ORG_ID) {
+    throw new CommunityAccessError(
+      `This account is not a member of the ${COMMUNITY_ORG_NAME}.`,
+      'wrong-organization',
+    )
+  }
+}
+
 async function validateCommunityUser(manager: ArcGISIdentityManager) {
   const user = await request(`${COMMUNITY_PORTAL_REST}/community/self`, {
     authentication: manager,
     params: { f: 'json' },
   }) as CommunitySelf
 
-  if (user.disabled) {
+  try {
+    assertCommunityAccount(user)
+  } catch (error) {
     await revokeQuietly(manager)
-    throw new CommunityAccessError(
-      'This DIEM community account is disabled. Contact the DIEM community administrator.',
-      'disabled-account',
-    )
-  }
-
-  if (user.orgId !== COMMUNITY_ORG_ID) {
-    await revokeQuietly(manager)
-    throw new CommunityAccessError(
-      `This account is not a member of the ${COMMUNITY_ORG_NAME}.`,
-      'wrong-organization',
-    )
+    throw error
   }
 
   const directGroupIds = Array.isArray(user.groups)
