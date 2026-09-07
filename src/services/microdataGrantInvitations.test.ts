@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 import { GRANT_GROUP_TAG, onGrantAccessChanged } from './microdataGrants'
 import {
   ARCGIS_NOTIFICATIONS_URL,
-  INVITATION_ACCESS_WINDOW_NOTE,
+  INVITATION_COPY,
   MEMBERSHIP_RETRY_DELAYS_MS,
-  UNCONFIRMED_INVITATION_NOTE,
+
   acceptGrantInvitation,
   fetchPendingGrantInvitations,
 } from './microdataGrantInvitations'
@@ -314,33 +314,51 @@ describe('embedded group details', () => {
   })
 })
 
-describe('what the notice says about the access window', () => {
-  const notices = [INVITATION_ACCESS_WINDOW_NOTE, UNCONFIRMED_INVITATION_NOTE]
+describe('what the dialog says about the access window', () => {
+  const states = [INVITATION_COPY.confirmed, INVITATION_COPY.unverified]
+  const everything = states.flatMap((copy) => [copy.title, copy.message, copy.warning, copy.action])
 
   it('counts the seven days from issuance, not from acceptance', () => {
-    expect(INVITATION_ACCESS_WINDOW_NOTE).toContain('seven-day access period started when this invitation was issued')
-    expect(UNCONFIRMED_INVITATION_NOTE).toContain('seven days from when the invitation was issued')
+    expect(INVITATION_COPY.confirmed.warning).toContain('seven-day access period started when the invitation was issued')
+    expect(INVITATION_COPY.unverified.warning).toContain('seven-day access period has already started')
   })
 
-  it('says plainly that accepting late does not buy more time', () => {
-    for (const notice of notices) expect(notice).toMatch(/accepting later does not extend/i)
+  it('tells a confirmed recipient that accepting late buys no more time', () => {
+    expect(INVITATION_COPY.confirmed.warning).toMatch(/accepting later does not extend/i)
   })
 
   it('never repeats the retired promise that access starts on acceptance', () => {
     // ArcGIS used to start the clock at verified acceptance. It no longer does,
     // so this wording would be a promise the platform does not keep.
-    for (const notice of notices) {
-      expect(notice).not.toMatch(/access starts when you accept/i)
-      expect(notice).not.toMatch(/starts? (when|once|after) you accept/i)
+    for (const text of everything) {
+      expect(text).not.toMatch(/access starts when you accept/i)
+      expect(text).not.toMatch(/starts? (when|once|after) you accept/i)
     }
   })
 
   it('shows no date, because the browser cannot know one it could trust', () => {
     // The end date lives in the private registry, which the client never reads.
-    for (const notice of notices) {
-      expect(notice).not.toMatch(/\d{4}-\d{2}-\d{2}/)
-      expect(notice).not.toMatch(/\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\b/i)
-      expect(notice).not.toMatch(/expires on|expiry date|expires at|days? (left|remaining)/i)
+    for (const text of everything) {
+      expect(text).not.toMatch(/\d{4}-\d{2}-\d{2}/)
+      expect(text).not.toMatch(/\b\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\b/i)
+      expect(text).not.toMatch(/expires on|expiry date|expires at|days? (left|remaining)/i)
     }
+  })
+
+  it('keeps platform jargon out of the headings', () => {
+    // "Pending ArcGIS group invitation" describes the plumbing, not the offer.
+    for (const copy of states) {
+      expect(copy.title).not.toMatch(/arcgis group|pending .*group invitation|grant group/i)
+    }
+    expect(INVITATION_COPY.confirmed.title).toBe('Your microdata access is ready')
+    expect(INVITATION_COPY.unverified.title).toBe('Action required: accept your data invitation')
+  })
+
+  it('offers acceptance only where the group was confirmed', () => {
+    expect(INVITATION_COPY.confirmed.action).toBe('Accept invitation and open data')
+    // An unconfirmed group cannot be accepted here at any price, so its action
+    // must not even suggest that the Hub could do it.
+    expect(INVITATION_COPY.unverified.action).toBe('Open ArcGIS notifications')
+    expect(INVITATION_COPY.unverified.action).not.toMatch(/accept/i)
   })
 })

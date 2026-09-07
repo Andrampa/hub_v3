@@ -1,5 +1,41 @@
 # Changelog
 
+## 2026-09-07 - The microdata invitation becomes a modal
+
+- A pending grant invitation was a thin strip under the header. That is the
+  wrong shape for what it is: the seven days start when the invitation is
+  issued, so a recipient who scrolls past the notice loses time they cannot get
+  back, and the accept button sat far enough from the sentence explaining it
+  that the two read as unrelated. It is now a centred modal with the action
+  beside the explanation, styled as an important action rather than an error —
+  an approved grant is good news that happens to arrive on a clock.
+- Confirmed grants offer "Accept invitation and open data". On success the
+  dialog closes, a success notice appears, and the Hub navigates to
+  `/data#temporary-microdata`; the grants section scrolls itself into view once
+  discovery has produced the bundle, so the button ends where it promises.
+- An unverified private-group invitation offers "Open ArcGIS notifications" and
+  no acceptance control at all. ArcGIS will not describe a private group to a
+  non-member, a title is not evidence of who created the group, and that
+  restraint is now asserted in the tests rather than only in the code.
+- "Remind me later" closes the dialog for the visit and leaves a header
+  indicator that reopens it; the dialog returns on the next authenticated visit.
+  The dismissal lives in React state and is written nowhere — on disk it would
+  go on hiding a live, expiring grant, and the recipient would never learn why
+  nothing arrived. An accepted, withdrawn or expired invitation removes both.
+- Accessibility: dialog semantics with `aria-modal` and labelled title and
+  description, focus moved in on open, trapped while open and restored on close,
+  Escape to dismiss, a warning that carries an icon and the words "Time limited"
+  rather than relying on colour, and an entry animation behind
+  `prefers-reduced-motion`. Nearly full-screen below 640 px.
+- The acceptance path is untouched: the user's own token, POST only, strict
+  response validation, membership read-back with bounded retry, and the
+  access-change event only after a confirmed membership.
+- Component tests are new here, so `vitest.config.ts` now exists to hold the
+  test-side setup. It asks for React Router's module build, which Vitest
+  otherwise resolves to a CommonJS file that cannot load. The tests render with
+  React and `happy-dom` directly rather than Testing Library, whose CommonJS
+  build cannot load this project's ES-module dependencies either.
+
 ## 2026-09-07 - The access window runs from issuance, not from acceptance
 
 - ArcGIS policy changed: a temporary grant expires seven days after the

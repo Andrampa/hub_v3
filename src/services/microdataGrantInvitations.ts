@@ -27,25 +27,41 @@ import type { ProtectedRequester } from './protectedData'
 export const ARCGIS_NOTIFICATIONS_URL = `${COMMUNITY_PORTAL}/home/notifications.html`
 
 /**
- * What the Hub tells a recipient about their access window.
+ * Everything the invitation dialog says, in one tested place.
  *
- * Kept here, and tested, so the policy is stated once. Two things it must never
- * say: that access starts on acceptance, which was true of an earlier ArcGIS
- * policy and is not true now; and an exact end date, which the browser cannot
- * know. The registry holding it is deliberately unreachable from the client,
- * and the invitation response carries no timestamp this Hub would trust as
- * policy — a date shown wrongly is worse than no date, because a recipient
- * would plan their work around it.
+ * Two things this copy must never say. That access starts on acceptance: true
+ * of an earlier ArcGIS policy, false now, and believing it costs the recipient
+ * days they thought they had. And an exact end date: the registry holding it is
+ * deliberately unreachable from the client, and the invitation response carries
+ * no timestamp this Hub would trust as policy, so a date here could only be a
+ * guess — and a guess is worse than silence, because a recipient would plan
+ * their work around it.
  *
- * The wording therefore gives the one fact that is both true and actionable:
- * the clock is already running, so accept now.
+ * What is left is the one fact that is both true and actionable: the clock is
+ * already running, so act now.
+ *
+ * The two states are not variations on a theme. A confirmed grant can be
+ * accepted here; an unconfirmed one can only be pointed at, because ArcGIS will
+ * not describe a private group to a non-member and a group title is not
+ * evidence of who created it. The wording differs accordingly, and neither
+ * heading uses the administrative vocabulary the platform uses internally.
  */
-export const INVITATION_ACCESS_WINDOW_NOTE =
-  'Your seven-day access period started when this invitation was issued. Accept it before it expires; accepting later does not extend the end date.'
+export const INVITATION_COPY = {
+  confirmed: {
+    title: 'Your microdata access is ready',
+    message: 'You have been granted temporary access to requested DIEM microdata.',
+    warning: 'Your seven-day access period started when the invitation was issued. Accept promptly—accepting later does not extend the end date.',
+    action: 'Accept invitation and open data',
+  },
+  unverified: {
+    title: 'Action required: accept your data invitation',
+    message: 'A temporary microdata invitation is waiting for you in ArcGIS.',
+    warning: 'Your seven-day access period has already started.',
+    action: 'Open ArcGIS notifications',
+  },
+} as const
 
-/** The same policy, for an invitation the Hub could not confirm as a grant. */
-export const UNCONFIRMED_INVITATION_NOTE =
-  'The Hub cannot read the group before you join it, so accept it in ArcGIS if it is your approved microdata grant. A microdata access period runs for seven days from when the invitation was issued, and accepting later does not extend it.'
+export type InvitationState = keyof typeof INVITATION_COPY
 
 export interface PendingGrantInvitation {
   /** ArcGIS invitation id, the target of the documented accept operation. */

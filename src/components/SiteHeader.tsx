@@ -2,7 +2,7 @@ import { useState, type MouseEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { NavDropdown } from './NavDropdown'
-import { MicrodataInvitationNotice } from './MicrodataInvitationNotice'
+import { MicrodataInvitationDialog } from './MicrodataInvitationDialog'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 
 type NavSection = 'home' | 'catalog' | 'countries' | 'data' | 'monitoring' | 'impact' | 'flood' | 'about'
@@ -159,7 +159,7 @@ export function SiteHeader() {
         <Link className={active === 'about' ? 'active' : ''} to="/photo-galleries" onClick={() => setMobileMenuOpen(false)}>Photo galleries</Link>
         <Link className={active === 'about' ? 'active' : ''} to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact us</Link>
       </nav>
-      <MicrodataInvitationNotice />
+      <MicrodataInvitationDialog />
       {auth.error && (
         <div className="auth-notice" role="alert">
           <span>{auth.error}</span>

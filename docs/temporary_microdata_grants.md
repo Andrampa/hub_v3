@@ -91,23 +91,45 @@ DIEM recipients have never opened.
 
 `src/services/microdataGrantInvitations.ts` reads the signed-in user's own
 pending invitations (`/community/users/<username>/invitations`, scoped by ArcGIS
-to the caller) and `src/components/MicrodataInvitationNotice.tsx` renders the
-result in the existing header notice band, in institutional blue rather than the
-amber of a sign-in error, because a waiting grant is an offer and not a problem.
+to the caller) and `src/components/MicrodataInvitationDialog.tsx` presents them.
+
+It is a **modal**, not a banner. The first version was a thin strip under the
+header, and it was the wrong shape for the situation: a recipient losing a day
+of a seven-day window to a notice they scrolled past has been failed by the
+interface, not informed by it. The dialog is styled as an important action
+rather than an error — blue frame, one amber warning panel — because an
+approved grant is good news that happens to arrive on a clock.
 
 Two states, and the difference matters:
 
 - **Confirmed.** The invitation's group carries the exact
-  `DIEM restricted microdata grant` tag. The notice names the grant and offers
-  acceptance in place, through the documented per-user accept operation on the
-  user's own token — the same call the ArcGIS notifications page makes.
-- **Unconfirmed.** The group cannot be read before joining it. The notice says
-  an invitation is pending and links to ArcGIS notifications, and offers no
-  button. A group title is not a fact about who created the group, so the Hub
-  never infers a grant from one.
+  `DIEM restricted microdata grant` tag. The dialog names the grant and offers
+  **Accept invitation and open data**, through the documented per-user accept
+  operation on the user's own token. On success it closes, shows a success
+  notice, and navigates to `/data#temporary-microdata`; the grants section
+  scrolls itself into view once discovery has produced the bundle, so the button
+  ends where it promises.
+- **Unverified.** The group cannot be read before joining it, so the dialog
+  offers **Open ArcGIS notifications** and no acceptance control of any kind. A
+  group title is not a fact about who created the group, and the Hub never
+  infers a grant from one. Returning to the Hub re-reads invitations, membership
+  and grants on window focus, so acceptance in ArcGIS lands here without a
+  reload.
 
-The link to ArcGIS notifications is always present, so the documented fallback
-is available even when in-Hub acceptance fails.
+**Remind me later** closes the dialog for the current visit only. It is held in
+React state and written nowhere: a dismissal on disk would go on hiding a live,
+expiring grant on every later visit, and the recipient would never learn why
+nothing arrived. A header indicator stays for the rest of the visit and reopens
+the dialog, and the next authenticated visit shows the dialog again while the
+invitation is still pending. An accepted, withdrawn or expired invitation
+removes both.
+
+Accessibility: `role="dialog"`, `aria-modal`, `aria-labelledby` and
+`aria-describedby`; focus moves to the dialog on open, is trapped while it is
+open and restored on close; Escape closes it like Remind me later; the warning
+carries an icon and the words "Time limited" so it never depends on colour; and
+the entry animation is behind `prefers-reduced-motion`. The dialog is
+nearly full-screen below 640 px.
 
 The accept call is sent over **POST**, which is the only method the ArcGIS
 operation takes. `requestProtected` accepts a per-call `method` and defaults to
@@ -276,8 +298,8 @@ already say, at the cost of a new path out of the registry.
 
 ## Tests
 
-`npm test` (Vitest, 55 tests over `microdataGrants.test.ts` and
-`microdataGrantInvitations.test.ts`) covers:
+`npm test` (Vitest; the grant suites are `microdataGrants.test.ts`,
+`microdataGrantInvitations.test.ts` and `MicrodataInvitationDialog.test.tsx`) covers:
 
 - Community login accepted, FAO organizational login rejected, disabled account
   rejected;
@@ -306,6 +328,12 @@ already say, at the cost of a new path out of the registry.
   extending it, no date of any shape, and an explicit guard against the retired
   "access starts when you accept";
 - no bundle or view carrying a field shaped like a deadline, and expiry reaching
-  the Hub the same way revocation does — the item stops resolving.
+  the Hub the same way revocation does — the item stops resolving;
+- the dialog itself: both states and their primary actions, no acceptance
+  control for an unverified group, "Remind me later" closing for the visit only
+  while the indicator stays, the dialog returning on the next visit, the focus
+  refresh, the success refresh and navigation, the invitation disappearing,
+  dialog semantics, focus management, the focus trap, Escape, and that no
+  dismissal is written to `localStorage` or `sessionStorage`.
 
 All ArcGIS responses are mocked. No test performs a live ArcGIS call.

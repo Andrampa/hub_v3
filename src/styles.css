@@ -109,14 +109,84 @@ main:focus { outline: none; }
 .auth-notice { min-height: 45px; padding: 9px max(24px, calc((100% - 1180px) / 2)); display: flex; align-items: center; gap: 15px; background: #fff5eb; border-bottom: 1px solid #f2c9a9; color: #70401f; font-size: 12px; }
 .auth-notice-action { padding: 0; border: 0; background: transparent; color: #9c430d; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .auth-notice > button:last-child { margin-left: auto; border: 0; background: transparent; color: #70401f; font-size: 20px; cursor: pointer; }
-/* A pending microdata grant invitation is an offer, not a problem, so it reads
-   in the institutional blue rather than the warning amber of a sign-in error. */
-.invitation-notice { background: #eef4fb; border-bottom-color: #c3d7ec; color: var(--deep-blue); }
-.invitation-notice .invitation-notice-body { flex: 1 1 auto; line-height: 1.6; }
-.invitation-notice em { font-style: normal; font-weight: 700; }
-.invitation-notice .auth-notice-action { flex: none; color: var(--fao-blue); }
-.invitation-notice .auth-notice-action:disabled { color: var(--ink-faint); cursor: default; }
-.invitation-notice-failure { display: block; color: #9c430d; }
+/* An approved grant is good news arriving on a clock, so the dialog reads as an
+   important action in institutional blue, with the deadline carried by a single
+   amber panel. Orange stays reserved for the urgency, per AGENTS.md. */
+.invitation-notice-body { flex: 1 1 auto; display: flex; align-items: baseline; gap: 8px; line-height: 1.6; }
+.invitation-indicator { background: #fff5eb; border-bottom-color: #f2c9a9; color: #70401f; }
+.invitation-indicator .auth-notice-action { flex: none; }
+.invitation-success { background: #eef7f2; border-bottom-color: #b9dcc9; color: #1f5d41; }
+.invitation-success-mark { flex: none; font-weight: 700; }
+
+.invitation-warning-mark {
+  flex: none; width: 17px; height: 17px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: #b5610d; color: #fff; font-size: 11px; font-weight: 800; line-height: 1;
+}
+
+.invitation-overlay {
+  position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(11, 40, 66, .55);
+}
+.invitation-dialog {
+  width: min(520px, 100%); max-height: calc(100vh - 48px); overflow-y: auto; padding: 30px 32px 26px;
+  border-top: 4px solid var(--fao-blue); background: #fff; box-shadow: 0 24px 60px rgba(11, 40, 66, .28);
+}
+.invitation-dialog:focus { outline: none; }
+.invitation-dialog:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 3px; }
+.invitation-dialog-kicker {
+  display: block; color: var(--fao-blue); font-size: var(--text-micro); font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.invitation-dialog h2 { margin: 10px 0 0; color: var(--deep-blue); font-size: 25px; line-height: 1.25; letter-spacing: -.01em; }
+.invitation-dialog > p { margin: 12px 0 0; color: var(--ink-muted); font-size: 15px; line-height: 1.65; }
+.invitation-dialog-grant {
+  margin-top: 10px !important; padding: 9px 12px; background: var(--line-faint);
+  color: var(--deep-blue) !important; font-size: 13px !important; font-weight: 700; overflow-wrap: anywhere;
+}
+
+/* The mark and the words carry the warning; the amber only reinforces them. */
+.invitation-warning {
+  display: flex; align-items: flex-start; gap: 10px; margin: 18px 0 0 !important; padding: 14px 15px;
+  border-left: 3px solid #b5610d; background: #fff5eb; color: #70401f !important;
+  font-size: 13px !important; line-height: 1.6;
+}
+.invitation-dialog-failure {
+  margin: 14px 0 0 !important; padding: 12px 14px; border-left: 3px solid #a3341a; background: #fdf1ef;
+  color: #8d2c14 !important; font-size: 13px !important;
+}
+
+.invitation-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.invitation-dialog-primary {
+  flex: 1 1 260px; min-height: 46px; padding: 12px 20px; border: 0; background: var(--fao-blue);
+  color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.invitation-dialog-primary:hover:not(:disabled) { background: var(--deep-blue); }
+.invitation-dialog-primary:disabled { background: var(--ink-faint); cursor: default; }
+.invitation-dialog-secondary {
+  flex: 0 1 auto; min-height: 46px; padding: 12px 18px; border: 1px solid var(--line); background: #fff;
+  color: var(--ink-muted); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.invitation-dialog-secondary:hover { border-color: var(--fao-blue); color: var(--fao-blue); }
+.invitation-dialog-alternative { margin: 16px 0 0 !important; color: var(--ink-faint) !important; font-size: 12px !important; }
+.invitation-dialog-alternative a { color: var(--fao-blue); font-weight: 700; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .invitation-dialog { animation: invitation-dialog-in .18s ease-out both; }
+  @keyframes invitation-dialog-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+}
+
+/* Nearly full-screen on a phone: the decision deserves the whole viewport, and
+   a 520 px card inset by 24 px would leave slivers of unusable page behind it. */
+@media (max-width: 640px) {
+  .invitation-overlay { padding: 0; align-items: stretch; }
+  .invitation-dialog { width: 100%; max-height: 100vh; min-height: 100vh; padding: 26px 18px 22px; border-top-width: 5px; }
+  .invitation-dialog h2 { font-size: 22px; }
+  /* Stacked, the row's `flex-basis` would be read as a height and stretch the
+     primary button to 260 px. Both buttons size to their content instead. */
+  .invitation-dialog-actions { flex-direction: column; }
+  .invitation-dialog-primary,
+  .invitation-dialog-secondary { flex: none; }
+}
 .mobile-nav-heading { grid-column: 1 / -1; padding: 11px 13px; color: var(--deep-blue); font-size: var(--text-small); font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 
 .hero { position: relative; min-height: 545px; overflow: hidden; background: var(--deep-blue); color: white; }

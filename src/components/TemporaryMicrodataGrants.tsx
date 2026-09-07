@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import {
   describeExportPolicy,
@@ -10,6 +10,7 @@ import {
   type GrantDiscovery,
   type ResolvedGrantView,
 } from '../services/microdataGrants'
+import { GRANTS_SECTION_ID } from './MicrodataInvitationDialog'
 import { GENERATIONS, authoritativeResourceUrl, type ProtectedDataResource } from '../services/protectedData'
 
 const COMPONENT_LABELS: Record<ResolvedGrantView['component'], string> = {
@@ -142,8 +143,35 @@ function GrantBundleCard({ bundle }: { bundle: GrantBundle }) {
   )
 }
 
+/**
+ * Brings the section into view when the dialog has just sent the user here.
+ *
+ * The dialog navigates to `/data#temporary-microdata` the moment ArcGIS
+ * confirms the membership, but the grant it points at is still being
+ * discovered, so there is nothing to scroll to yet. Waiting for the bundles to
+ * render and scrolling then is what makes "accept and open data" actually open
+ * the data. The hash is cleared afterwards so a later reload does not jump.
+ */
+function useScrollToGrantsOnArrival(ready: boolean) {
+  const sectionRef = useRef<HTMLElement>(null)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!ready || location.hash !== `#${GRANTS_SECTION_ID}`) return
+    const section = sectionRef.current
+    if (!section) return
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    section.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' })
+    navigate(location.pathname, { replace: true })
+  }, [location.hash, location.pathname, navigate, ready])
+
+  return sectionRef
+}
+
 export function TemporaryMicrodataGrants() {
   const { discovery, checking, check } = useMicrodataGrants()
+  const sectionRef = useScrollToGrantsOnArrival(Boolean(discovery?.bundles.length))
 
   // Most signed-in users have no temporary grant and never will: the ordinary
   // route to microdata is FAM or a request. Telling them they have no access
@@ -153,7 +181,7 @@ export function TemporaryMicrodataGrants() {
   if (!discovery?.bundles.length) return null
 
   return (
-    <section className="grant-section" aria-labelledby="temporary-microdata-heading">
+    <section id={GRANTS_SECTION_ID} className="grant-section" aria-labelledby="temporary-microdata-heading" ref={sectionRef}>
       <div className="grant-section-head">
         <div>
           <span className="kicker">Approved for your account</span>
