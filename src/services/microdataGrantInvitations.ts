@@ -64,12 +64,20 @@ interface GroupResponse {
   tags?: string[]
 }
 
+/**
+ * The documented Accept Invitation response.
+ *
+ * ArcGIS names the invitation `id`, not `invitationId`. `invitationId` is kept
+ * only as an undocumented compatibility alias for a deployment that returns it;
+ * it is never the field this Hub expects, and when both appear both must match.
+ */
 interface AcceptResponse {
   success?: boolean
-  /** ArcGIS echoes some subset of these; whatever it echoes has to match. */
-  invitationId?: string
+  id?: string
   groupId?: string
   username?: string
+  /** Undocumented alias. Checked when present, never required. */
+  invitationId?: string
   error?: { message?: string }
 }
 
@@ -144,9 +152,41 @@ function echoMatches(response: AcceptResponse, invitation: PendingGrantInvitatio
   const mismatched = (echoed: string | undefined, expected: string) => (
     typeof echoed === 'string' && echoed.toLowerCase() !== expected.toLowerCase()
   )
-  return !mismatched(response.invitationId, invitation.id)
+  return !mismatched(response.id, invitation.id)
+    && !mismatched(response.invitationId, invitation.id)
     && !mismatched(response.groupId, invitation.groupId)
     && !mismatched(response.username, username)
+}
+
+/**
+ * Waits between membership checks. Ordered, bounded, and short enough that a
+ * failed acceptance still reports back inside a second and a half.
+ */
+export const MEMBERSHIP_RETRY_DELAYS_MS = [250, 500, 750]
+
+const sleep = (ms: number) => new Promise<void>((resolve) => { setTimeout(resolve, ms) })
+
+/** One read of the membership: joined, not yet, or a response that fails closed. */
+async function readMembership(
+  groupId: string,
+  username: string,
+  requester: ProtectedRequester,
+): Promise<'joined' | 'not-yet' | 'refused'> {
+  let self: SelfGroupsResponse
+  try {
+    self = await requester<SelfGroupsResponse>(`${GLOBAL_REST}/community/self`)
+  } catch {
+    // Transient, and worth another look: the acceptance may have landed.
+    return 'not-yet'
+  }
+
+  // An authenticated `/community/self` always names the caller. One that does
+  // not is a response this code cannot reason about, and an unidentified
+  // response must never be read as agreement.
+  if (!self.username) return 'refused'
+  if (self.username.toLowerCase() !== username.toLowerCase()) return 'refused'
+
+  return (self.groups || []).some((group) => group.id === groupId) ? 'joined' : 'not-yet'
 }
 
 /**
@@ -156,15 +196,26 @@ function echoMatches(response: AcceptResponse, invitation: PendingGrantInvitatio
  * itself, and it is what discovery will read a moment later. Confirming it
  * proves the group and the user independently of whatever the operation chose
  * to echo, so a sparse but genuine success is accepted and a hollow one is not.
+ *
+ * A new membership can take a moment to appear on `/community/self`, so a
+ * `not yet` answer is retried a few times over about a second and a half. That
+ * covers propagation without ever inventing a membership: the event still waits
+ * for ArcGIS to say the user is in the group. A response naming somebody else,
+ * or naming nobody, is refused immediately — retrying cannot make an
+ * unidentified response trustworthy.
  */
-async function confirmMembership(groupId: string, username: string, requester: ProtectedRequester) {
-  try {
-    const self = await requester<SelfGroupsResponse>(`${GLOBAL_REST}/community/self`)
-    const joined = (self.groups || []).some((group) => group.id === groupId)
-    const sameUser = !self.username || self.username.toLowerCase() === username.toLowerCase()
-    return joined && sameUser
-  } catch {
-    return false
+async function confirmMembership(
+  groupId: string,
+  username: string,
+  requester: ProtectedRequester,
+  wait: (ms: number) => Promise<void>,
+) {
+  for (let attempt = 0; ; attempt += 1) {
+    const state = await readMembership(groupId, username, requester)
+    if (state === 'joined') return true
+    if (state === 'refused') return false
+    if (attempt >= MEMBERSHIP_RETRY_DELAYS_MS.length) return false
+    await wait(MEMBERSHIP_RETRY_DELAYS_MS[attempt])
   }
 }
 
@@ -191,6 +242,8 @@ export async function acceptGrantInvitation(
   invitation: PendingGrantInvitation,
   username: string,
   requester: ProtectedRequester,
+  /** Injected by tests so the retry schedule can be proven without waiting. */
+  wait: (ms: number) => Promise<void> = sleep,
 ): Promise<void> {
   const response = await requester<AcceptResponse>(
     `${GLOBAL_REST}/community/users/${encodeURIComponent(username)}/invitations/${invitation.id}/accept`,
@@ -201,7 +254,7 @@ export async function acceptGrantInvitation(
   if (!response || typeof response !== 'object') throw new Error(ACCEPT_FAILED)
   if (response.success !== true) throw new Error(response.error?.message || ACCEPT_FAILED)
   if (!echoMatches(response, invitation, username)) throw new Error(ACCEPT_FAILED)
-  if (!await confirmMembership(invitation.groupId, username, requester)) throw new Error(ACCEPT_FAILED)
+  if (!await confirmMembership(invitation.groupId, username, requester, wait)) throw new Error(ACCEPT_FAILED)
 
   notifyGrantAccessChanged()
 }

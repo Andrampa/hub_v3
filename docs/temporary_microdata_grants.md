@@ -119,16 +119,32 @@ Acceptance is confirmed, not assumed. The Hub raises the access-change event
 only when all of these hold:
 
 1. `success` is exactly `true`;
-2. every field ArcGIS echoed — invitation ID, group ID, username — matches the
-   invitation that was sent, ignoring case;
+2. every field ArcGIS echoed matches the invitation that was sent, ignoring
+   case. The documented response is
+   `{"success": true, "id": …, "username": …, "groupId": …}`, so the invitation
+   is checked against `id`; `invitationId` is tolerated as an undocumented alias
+   and checked when present, but it is never what the Hub expects;
 3. the membership itself reads back from `/community/self` as this user in that
    group.
 
 Check 3 is what actually proves the group and the user, so a genuine response
-that omits the echo fields still succeeds while a hollow one does not. Anything
-missing, malformed or mismatched leaves the notice standing and sends the user
-to ArcGIS: whether an invitation was accepted is ArcGIS's to confirm, never the
-Hub's to declare.
+that omits the echoed fields still succeeds while a hollow one does not.
+
+A new membership does not always appear on `/community/self` immediately, so a
+`not yet` answer — and a failed read — is retried on a fixed, bounded schedule
+of 250 ms, 500 ms and 750 ms: four reads over at most a second and a half. That
+covers propagation without inventing anything, because the event still waits for
+ArcGIS to say the user is in the group.
+
+Two answers are refused outright rather than retried, since waiting cannot make
+them trustworthy: one naming a different user, and one naming nobody at all. An
+authenticated `/community/self` always identifies its caller, so a response
+without a username is malformed, and a malformed answer must never be read as
+agreement.
+
+Anything missing, malformed or mismatched leaves the notice standing and sends
+the user to ArcGIS: whether an invitation was accepted is ArcGIS's to confirm,
+never the Hub's to declare.
 
 Acceptance grants nothing by itself: it establishes the membership ArcGIS then
 uses to decide what the identity may read. On success the module raises the
@@ -226,7 +242,7 @@ active versus unavailable, which it derives from ArcGIS rather than from a clock
 
 ## Tests
 
-`npm test` (Vitest, 45 tests over `microdataGrants.test.ts` and
+`npm test` (Vitest, 49 tests over `microdataGrants.test.ts` and
 `microdataGrantInvitations.test.ts`) covers:
 
 - Community login accepted, FAO organizational login rejected, disabled account
@@ -245,7 +261,12 @@ active versus unavailable, which it derives from ArcGIS rather than from a clock
 - invitation listing, ignoring non-grant groups, refusing to infer a grant from
   a title, and the in-page access-change refresh;
 - acceptance sending POST, being impossible over GET against a method-gated
-  endpoint, and rejecting missing, false, non-object, mismatched and
-  membership-contradicted responses with no access-change event raised.
+  endpoint, matching the documented `id` field and the `invitationId` alias, and
+  rejecting missing, false, non-object, mismatched and membership-contradicted
+  responses with no access-change event raised;
+- membership confirmation retrying a not-yet-propagated membership on the exact
+  bounded schedule, giving up after it, and failing closed without retrying when
+  `/community/self` names nobody. The delay is injected, so the retry schedule
+  is asserted rather than waited out.
 
 All ArcGIS responses are mocked. No test performs a live ArcGIS call.

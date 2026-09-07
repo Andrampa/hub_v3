@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-09-07 - Accept the documented invitation response, and wait for the membership
+
+- ArcGIS names the invitation `id` in its Accept Invitation response, not
+  `invitationId`. The Hub was comparing a field the documented response never
+  carries, so a returned invitation ID went unchecked. It now matches on `id`;
+  `invitationId` is tolerated as an undocumented alias and checked when present,
+  never required. A mismatched `id` is refused.
+- A new group membership can take a moment to appear on `/community/self`, and
+  reporting a failure for an acceptance that actually worked would send the user
+  to ArcGIS to redo something already done. Membership confirmation now retries
+  on a fixed, bounded schedule — 250 ms, 500 ms, 750 ms, four reads over at most
+  a second and a half — before giving up. The access-change event still waits
+  for ArcGIS to say the user is in the group; nothing is assumed from the delay.
+- `/community/self` must name the signed-in user. A response naming somebody
+  else, or naming nobody at all, is refused immediately rather than retried: an
+  authenticated call always identifies its caller, so an unidentified answer is
+  malformed, and waiting cannot make it trustworthy.
+- Tests: 49 cases. The delay is injected, so the retry schedule and its bound
+  are asserted without any real waiting.
+
 ## 2026-09-07 - Invitation acceptance states its method and proves its result
 
 - ArcGIS accepts the invitation operation over POST only. `requestProtected`

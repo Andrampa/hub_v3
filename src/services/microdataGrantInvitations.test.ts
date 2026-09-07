@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { GRANT_GROUP_TAG, onGrantAccessChanged } from './microdataGrants'
 import {
   ARCGIS_NOTIFICATIONS_URL,
+  MEMBERSHIP_RETRY_DELAYS_MS,
   acceptGrantInvitation,
   fetchPendingGrantInvitations,
 } from './microdataGrantInvitations'
@@ -24,9 +25,16 @@ function fakeRequester(options: {
   failAccept?: boolean
   /** Groups `/community/self` reports after the acceptance. */
   memberOf?: string[]
-  selfUsername?: string
+  /**
+   * Membership as ArcGIS reports it on successive reads, so a propagation
+   * delay can be modelled: the first entries are what it says before the new
+   * group appears. The last entry repeats once the list is exhausted.
+   */
+  memberOfSequence?: string[][]
+  selfUsername?: string | null
   failSelf?: boolean
 }) {
+  let selfReads = 0
   const unreadable = new Set(options.unreadableGroups || [])
   return vi.fn(async (url: string, _params?: Record<string, unknown>, requestOptions?: RequestOptions) => {
     if (url.endsWith(`/community/users/${encodeURIComponent(USERNAME)}/invitations`)) {
@@ -43,9 +51,16 @@ function fakeRequester(options: {
     }
     if (url.endsWith('/community/self')) {
       if (options.failSelf) throw new Error('network down')
+      const sequence = options.memberOfSequence
+      const groups = sequence
+        ? sequence[Math.min(selfReads, sequence.length - 1)]
+        : options.memberOf ?? ['grant-group']
+      selfReads += 1
       return {
-        username: options.selfUsername ?? USERNAME,
-        groups: (options.memberOf ?? ['grant-group']).map((id) => ({ id })),
+        // `null` models a response with no identity at all; `undefined` here
+        // means "the ordinary case", which is the signed-in user.
+        username: options.selfUsername === null ? undefined : options.selfUsername ?? USERNAME,
+        groups: groups.map((id) => ({ id })),
       }
     }
     const groupMatch = url.match(/\/community\/groups\/([^/]+)$/)
@@ -111,12 +126,15 @@ describe('accepting an invitation', () => {
     return (requester as { mock: { calls: [string, unknown, RequestOptions | undefined][] } }).mock.calls
   }
 
+  /** The retry schedule is asserted from the recorded delays, never waited out. */
+  const recordedWait = () => vi.fn(async (_ms: number) => {})
+
   /** Asserts the rejection left the user's access untouched as far as the Hub is concerned. */
   async function expectRejectedWithoutEvent(requester: Parameters<typeof acceptGrantInvitation>[2]) {
     const changed = vi.fn()
     const stop = onGrantAccessChanged(changed)
     try {
-      await expect(acceptGrantInvitation(invitation, USERNAME, requester)).rejects.toThrow()
+      await expect(acceptGrantInvitation(invitation, USERNAME, requester, recordedWait())).rejects.toThrow()
       expect(changed).not.toHaveBeenCalled()
     } finally {
       stop()
@@ -124,7 +142,7 @@ describe('accepting an invitation', () => {
   }
 
   it('sends the accept operation over POST', async () => {
-    const requester = fakeRequester({ acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: USERNAME } })
+    const requester = fakeRequester({ acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: USERNAME } })
     await acceptGrantInvitation(invitation, USERNAME, requester)
 
     const acceptCall = calls(requester).find(([url]) => url === ACCEPT_URL)
@@ -137,7 +155,7 @@ describe('accepting an invitation', () => {
     // succeeding against it is only possible over POST — and the direct call
     // below shows the gate is real rather than a fake that lets anything past.
     const postOnly = fakeRequester({
-      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: USERNAME },
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: USERNAME },
     })
     await expect(acceptGrantInvitation(invitation, USERNAME, postOnly)).resolves.toBeUndefined()
 
@@ -150,7 +168,7 @@ describe('accepting an invitation', () => {
 
   it('accepts a success that names the same invitation, group and user, and announces the change', async () => {
     const requester = fakeRequester({
-      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: USERNAME },
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: USERNAME },
       memberOf: ['grant-group'],
     })
     const changed = vi.fn()
@@ -164,7 +182,7 @@ describe('accepting an invitation', () => {
   })
 
   it('rejects a response with no success flag', async () => {
-    await expectRejectedWithoutEvent(fakeRequester({ acceptResponse: { invitationId: 'inv-1', groupId: 'grant-group' } }))
+    await expectRejectedWithoutEvent(fakeRequester({ acceptResponse: { id: 'inv-1', groupId: 'grant-group' } }))
   })
 
   it('rejects an explicit failure and reports what ArcGIS said', async () => {
@@ -180,13 +198,13 @@ describe('accepting an invitation', () => {
 
   it('rejects a success naming a different invitation, group or user', async () => {
     await expectRejectedWithoutEvent(fakeRequester({
-      acceptResponse: { success: true, invitationId: 'inv-9', groupId: 'grant-group', username: USERNAME },
+      acceptResponse: { success: true, id: 'inv-9', groupId: 'grant-group', username: USERNAME },
     }))
     await expectRejectedWithoutEvent(fakeRequester({
-      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'someone-elses-group', username: USERNAME },
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'someone-elses-group', username: USERNAME },
     }))
     await expectRejectedWithoutEvent(fakeRequester({
-      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: 'another.user' },
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: 'another.user' },
     }))
   })
 
@@ -207,6 +225,73 @@ describe('accepting an invitation', () => {
 
   it('surfaces a transport rejection without announcing a change', async () => {
     await expectRejectedWithoutEvent(fakeRequester({ failAccept: true }))
+  })
+
+  it('tolerates the undocumented invitationId alias, and still checks it', async () => {
+    const aliased = fakeRequester({ acceptResponse: { success: true, invitationId: 'inv-1', username: USERNAME } })
+    await expect(acceptGrantInvitation(invitation, USERNAME, aliased, recordedWait())).resolves.toBeUndefined()
+
+    await expectRejectedWithoutEvent(fakeRequester({
+      acceptResponse: { success: true, invitationId: 'inv-9', username: USERNAME },
+    }))
+  })
+
+  it('waits for a membership that has not propagated yet, then announces it', async () => {
+    // ArcGIS can take a moment to show a new membership on /community/self.
+    // Giving up on the first read would report a failure for an acceptance
+    // that in fact succeeded.
+    const requester = fakeRequester({
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: USERNAME },
+      memberOfSequence: [[], [], ['grant-group']],
+    })
+    const wait = recordedWait()
+    const changed = vi.fn()
+    const stop = onGrantAccessChanged(changed)
+
+    await acceptGrantInvitation(invitation, USERNAME, requester, wait)
+
+    expect(wait.mock.calls.map(([ms]) => ms)).toEqual(MEMBERSHIP_RETRY_DELAYS_MS.slice(0, 2))
+    expect(changed).toHaveBeenCalledTimes(1)
+    stop()
+  })
+
+  it('gives up after a bounded number of retries, announcing nothing', async () => {
+    const requester = fakeRequester({
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: USERNAME },
+      memberOf: [],
+    })
+    const wait = recordedWait()
+    const changed = vi.fn()
+    const stop = onGrantAccessChanged(changed)
+
+    await expect(acceptGrantInvitation(invitation, USERNAME, requester, wait)).rejects.toThrow()
+
+    const delays = wait.mock.calls.map(([ms]) => ms)
+    expect(delays).toEqual(MEMBERSHIP_RETRY_DELAYS_MS)
+    // Modest enough that a real failure still reports back promptly.
+    expect(delays.reduce((total, ms) => total + ms, 0)).toBeLessThanOrEqual(2000)
+    expect(changed).not.toHaveBeenCalled()
+    stop()
+  })
+
+  it('fails closed, and does not retry, when self names nobody', async () => {
+    // An authenticated /community/self always names its caller. One that does
+    // not is a response this code cannot reason about, and waiting cannot make
+    // an unidentified answer trustworthy.
+    const requester = fakeRequester({
+      acceptResponse: { success: true, id: 'inv-1', groupId: 'grant-group', username: USERNAME },
+      memberOf: ['grant-group'],
+      selfUsername: null,
+    })
+    const wait = recordedWait()
+    const changed = vi.fn()
+    const stop = onGrantAccessChanged(changed)
+
+    await expect(acceptGrantInvitation(invitation, USERNAME, requester, wait)).rejects.toThrow()
+
+    expect(wait).not.toHaveBeenCalled()
+    expect(changed).not.toHaveBeenCalled()
+    stop()
   })
 })
 
