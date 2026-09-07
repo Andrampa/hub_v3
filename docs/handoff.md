@@ -291,7 +291,13 @@ account from the FAO side, then, signed in as it, confirm in order:
 6. download controls appear only if the grant was provisioned with
    `--allow-export`;
 7. an unrelated Community account sees no notice and no grants section;
-8. after revocation, the grant disappears on the next check.
+8. after revocation, the grant disappears on the next check;
+9. the pending notice says the seven days started when the invitation was
+   issued, and shows no date. Do not read the live test as confirming a
+   seven-day window from acceptance: the clock started at issuance, so a grant
+   provisioned days before the test may have less time left than expected, or
+   none. If nothing resolves after a confirmed acceptance, check the issue date
+   before treating it as a discovery failure.
 
 Verification command: `npm test`, then `npm run build` and the dev server on
 port 5173 signed in as the test recipient.

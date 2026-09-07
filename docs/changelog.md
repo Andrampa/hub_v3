@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-09-07 - The access window runs from issuance, not from acceptance
+
+- ArcGIS policy changed: a temporary grant expires seven days after the
+  invitation is **issued**. Acceptance no longer starts the clock, accepting
+  late does not extend it, and a daily backend worker deletes the due views and
+  groups. The Hub's pending-access notice still said "Access starts when you
+  accept", which was a promise the platform no longer keeps and would have cost
+  a recipient days they thought they had.
+- The notice now reads "Your seven-day access period started when this
+  invitation was issued. Accept it before it expires; accepting later does not
+  extend the end date." The unconfirmed-invitation variant carries the same
+  policy. Both live in `INVITATION_ACCESS_WINDOW_NOTE` and
+  `UNCONFIRMED_INVITATION_NOTE`, stated once and covered by tests, including an
+  explicit guard against the retired wording returning.
+- No date is displayed, deliberately. The end date is in the private registry,
+  which the browser must never read, and the invitation response carries no
+  timestamp this Hub would trust as policy. A date rendered from a guess is
+  worse than none, because a recipient would plan around it.
+- No code change was needed to handle expiry itself, and none was made. Expiry
+  reaches the Hub exactly as revocation already did — the item stops resolving —
+  so nothing here calculates, counts down or enforces a deadline. Tests now
+  guard that: no bundle or view carries a field shaped like one.
+- Everything the feature rests on is unchanged: Community-only login,
+  group-first discovery, acceptance on the user's own token over POST, strict
+  response and membership validation, legacy-group behaviour, V1/V2/V3 bundles,
+  no registry access from the browser, and no management functionality.
+- Tests: 55 cases.
+
 ## 2026-09-07 - Accept the documented invitation response, and wait for the membership
 
 - ArcGIS names the invitation `id` in its Accept Invitation response, not

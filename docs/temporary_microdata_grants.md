@@ -158,6 +158,34 @@ administrator token, and has no management interface. Approving, provisioning,
 suspending and expiring grants remain FAO Management operations in the Python
 scripts.
 
+## The access window runs from issuance
+
+Seven days, counted from when the invitation was **issued**. Acceptance does not
+start the clock and accepting late does not extend it, so a recipient who
+accepts on day five has two days rather than seven. A daily backend worker
+deletes the temporary views and the grant group when they fall due.
+
+This reverses an earlier ArcGIS policy under which the window began at verified
+acceptance, and any Hub copy still saying "access starts when you accept" is now
+a promise the platform does not keep. The wording lives in
+`INVITATION_ACCESS_WINDOW_NOTE` and `UNCONFIRMED_INVITATION_NOTE` in
+`src/services/microdataGrantInvitations.ts`, stated once and covered by tests, so
+the policy cannot drift back into the interface unnoticed.
+
+**No exact date is displayed, deliberately.** The end date lives in the private
+registry, which the browser must never read, and the ArcGIS invitation response
+carries no timestamp this Hub would trust as policy. A date rendered from a
+guess is worse than no date at all, because a recipient would plan their work
+around it. The notice gives the fact that is both true and actionable instead:
+the clock is already running, so accept now.
+
+The Hub therefore calculates nothing, counts down nothing and enforces nothing.
+The ArcGIS items and the group remain the authorization boundary: when the
+worker deletes them, the views stop resolving and the grant disappears from the
+workspace on the next check, exactly as a revocation already did. Expiry needs
+no separate handling in this codebase because it is indistinguishable, from the
+browser, from any other withdrawal of access.
+
 ## Item metadata contract
 
 The provisioning script writes both a `properties` block and tags. The Hub reads
@@ -236,13 +264,19 @@ approved surveys.
 
 There is no secure Hub-to-registry adapter, and the Hub is a static SPA with no
 backend. Access requests and all administration remain Python-script tasks for
-FAO Management members. A future expiry-date or countdown display needs a secure
-server-side projection of the registry; until that exists the Hub shows only
-active versus unavailable, which it derives from ArcGIS rather than from a clock.
+FAO Management members. The Hub shows only active versus unavailable, which it
+derives from ArcGIS rather than from a clock.
+
+An exact expiry date is not a missing feature waiting on plumbing. Displaying
+one would require a trustworthy server-side projection of the private registry,
+and the registry is private precisely because it carries recipients, approval
+references and deadlines. Since the seven days run from issuance and the daily
+worker removes access on time, a countdown would add nothing the notice does not
+already say, at the cost of a new path out of the registry.
 
 ## Tests
 
-`npm test` (Vitest, 49 tests over `microdataGrants.test.ts` and
+`npm test` (Vitest, 55 tests over `microdataGrants.test.ts` and
 `microdataGrantInvitations.test.ts`) covers:
 
 - Community login accepted, FAO organizational login rejected, disabled account
@@ -267,6 +301,11 @@ active versus unavailable, which it derives from ArcGIS rather than from a clock
 - membership confirmation retrying a not-yet-propagated membership on the exact
   bounded schedule, giving up after it, and failing closed without retrying when
   `/community/self` names nobody. The delay is injected, so the retry schedule
-  is asserted rather than waited out.
+  is asserted rather than waited out;
+- the access-window wording: seven days from issuance, accepting late not
+  extending it, no date of any shape, and an explicit guard against the retired
+  "access starts when you accept";
+- no bundle or view carrying a field shaped like a deadline, and expiry reaching
+  the Hub the same way revocation does — the item stops resolving.
 
 All ArcGIS responses are mocked. No test performs a live ArcGIS call.

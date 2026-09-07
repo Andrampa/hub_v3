@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import {
   ARCGIS_NOTIFICATIONS_URL,
+  INVITATION_ACCESS_WINDOW_NOTE,
+  UNCONFIRMED_INVITATION_NOTE,
   acceptGrantInvitation,
   fetchPendingGrantInvitations,
   type GrantInvitationCheck,
@@ -88,12 +90,12 @@ export function MicrodataInvitationNotice() {
                 <em>{invitation.groupTitle}</em>
               </span>
             ))}
-            {' '}to see the surveys you were approved for. Access starts when you accept.
+            {' '}to see the surveys you were approved for. {INVITATION_ACCESS_WINDOW_NOTE}
           </>
         ) : (
           <>
             <strong>You have {check.unverified === 1 ? 'a pending ArcGIS group invitation' : 'pending ArcGIS group invitations'}.</strong>{' '}
-            The Hub cannot read the group before you join it, so accept it in ArcGIS if it is your approved microdata grant.
+            {UNCONFIRMED_INVITATION_NOTE}
           </>
         )}
         {failure && <span className="invitation-notice-failure"> {failure}</span>}

@@ -2,10 +2,17 @@
  * Pending invitations to a temporary microdata grant group.
  *
  * A recipient is invited, never added: the provisioning script sends an ArcGIS
- * group invitation and the access clock only starts once that person accepts it
- * themselves. Until they do, they hold no membership, discover no content, and
- * — before this module existed — saw nothing in the Hub to tell them an
- * approved grant was waiting for them in a different application.
+ * group invitation, and until that person accepts it themselves they hold no
+ * membership, discover no content, and — before this module existed — saw
+ * nothing in the Hub to tell them an approved grant was waiting for them in a
+ * different application.
+ *
+ * The seven-day access window runs from when the invitation was **issued**, not
+ * from acceptance. Accepting late does not extend it, so a recipient who
+ * accepts on day five has two days rather than seven. Nothing in the Hub
+ * calculates, enforces or displays that deadline: a daily backend worker
+ * deletes the views and the group when they fall due, and the Hub simply stops
+ * resolving them.
  *
  * Everything here runs on the signed-in user's own token and does exactly what
  * that user could do in the ArcGIS web interface: read their own invitations,
@@ -18,6 +25,27 @@ import type { ProtectedRequester } from './protectedData'
 
 /** Where the user accepts an invitation the Hub cannot confirm or accept itself. */
 export const ARCGIS_NOTIFICATIONS_URL = `${COMMUNITY_PORTAL}/home/notifications.html`
+
+/**
+ * What the Hub tells a recipient about their access window.
+ *
+ * Kept here, and tested, so the policy is stated once. Two things it must never
+ * say: that access starts on acceptance, which was true of an earlier ArcGIS
+ * policy and is not true now; and an exact end date, which the browser cannot
+ * know. The registry holding it is deliberately unreachable from the client,
+ * and the invitation response carries no timestamp this Hub would trust as
+ * policy — a date shown wrongly is worse than no date, because a recipient
+ * would plan their work around it.
+ *
+ * The wording therefore gives the one fact that is both true and actionable:
+ * the clock is already running, so accept now.
+ */
+export const INVITATION_ACCESS_WINDOW_NOTE =
+  'Your seven-day access period started when this invitation was issued. Accept it before it expires; accepting later does not extend the end date.'
+
+/** The same policy, for an invitation the Hub could not confirm as a grant. */
+export const UNCONFIRMED_INVITATION_NOTE =
+  'The Hub cannot read the group before you join it, so accept it in ArcGIS if it is your approved microdata grant. A microdata access period runs for seven days from when the invitation was issued, and accepting later does not extend it.'
 
 export interface PendingGrantInvitation {
   /** ArcGIS invitation id, the target of the documented accept operation. */

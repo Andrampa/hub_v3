@@ -512,3 +512,27 @@ describe('stale access', () => {
     expect(listener).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('expiry belongs to ArcGIS, not to the Hub', () => {
+  it('derives no deadline, countdown or end date from a resolved grant', () => {
+    // The seven days run from when the invitation was issued and a daily
+    // backend worker deletes the artifacts when they fall due. The browser
+    // cannot read the registry that holds the date, so any field shaped like a
+    // deadline here would have to have been guessed.
+    const [bundle] = buildGrantBundles([view({ itemId: 'core-item' })])
+    const fields = [...Object.keys(bundle), ...Object.keys(bundle.views[0])]
+    expect(fields.filter((field) => /expir|deadline|countdown|daysleft|endsat|until|issued/i.test(field))).toEqual([])
+  })
+
+  it('reports only active or unavailable, which comes from ArcGIS resolving the item', async () => {
+    const requester = fakeRequester({ searchResults: [V3_CORE_ITEM], items: [V3_CORE_ITEM] })
+    const [live] = (await fetchCurrentUserMicrodataGrants(requester)).bundles
+    expect(live.status).toBe('active')
+
+    // Expiry reaches the Hub exactly as revocation does: the item stops
+    // resolving. Nothing distinguishes the two from the browser, and nothing
+    // needs to.
+    const expired = fakeRequester({ searchResults: [V3_CORE_ITEM], items: [V3_CORE_ITEM], denied: ['core-item'] })
+    expect((await fetchCurrentUserMicrodataGrants(expired)).bundles).toEqual([])
+  })
+})
