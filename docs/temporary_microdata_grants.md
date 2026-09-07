@@ -109,6 +109,27 @@ Two states, and the difference matters:
 The link to ArcGIS notifications is always present, so the documented fallback
 is available even when in-Hub acceptance fails.
 
+The accept call is sent over **POST**, which is the only method the ArcGIS
+operation takes. `requestProtected` accepts a per-call `method` and defaults to
+`POST`, which is what every caller already sent; GET is never the default,
+because the ArcGIS SDK encodes parameters — the token among them — into the
+query string for GET requests.
+
+Acceptance is confirmed, not assumed. The Hub raises the access-change event
+only when all of these hold:
+
+1. `success` is exactly `true`;
+2. every field ArcGIS echoed — invitation ID, group ID, username — matches the
+   invitation that was sent, ignoring case;
+3. the membership itself reads back from `/community/self` as this user in that
+   group.
+
+Check 3 is what actually proves the group and the user, so a genuine response
+that omits the echo fields still succeeds while a hollow one does not. Anything
+missing, malformed or mismatched leaves the notice standing and sends the user
+to ArcGIS: whether an invitation was accepted is ArcGIS's to confirm, never the
+Hub's to declare.
+
 Acceptance grants nothing by itself: it establishes the membership ArcGIS then
 uses to decide what the identity may read. On success the module raises the
 `onGrantAccessChanged` event, the `/data` grants section re-runs discovery, and
@@ -205,7 +226,7 @@ active versus unavailable, which it derives from ArcGIS rather than from a clock
 
 ## Tests
 
-`npm test` (Vitest, 38 tests over `microdataGrants.test.ts` and
+`npm test` (Vitest, 45 tests over `microdataGrants.test.ts` and
 `microdataGrantInvitations.test.ts`) covers:
 
 - Community login accepted, FAO organizational login rejected, disabled account
@@ -222,7 +243,9 @@ active versus unavailable, which it derives from ArcGIS rather than from a clock
   the next check;
 - export controls derived from the ArcGIS `Extract` capability;
 - invitation listing, ignoring non-grant groups, refusing to infer a grant from
-  a title, acceptance calling the documented per-user operation, ArcGIS refusals
-  being surfaced, and the in-page access-change refresh.
+  a title, and the in-page access-change refresh;
+- acceptance sending POST, being impossible over GET against a method-gated
+  endpoint, and rejecting missing, false, non-object, mismatched and
+  membership-contradicted responses with no access-change event raised.
 
 All ArcGIS responses are mocked. No test performs a live ArcGIS call.

@@ -130,7 +130,31 @@ export interface ResolvedDataResource extends ProtectedDataResource {
   item?: ProtectedArcGISItem
 }
 
-export type ProtectedRequester = <T>(url: string, params?: Record<string, unknown>) => Promise<T>
+/**
+ * Per-call transport options for an authenticated request.
+ *
+ * Only the HTTP method is exposed, and only because some ArcGIS operations
+ * accept exactly one. The token stays inside the auth provider: a caller can
+ * say how a request is sent, never what it is authenticated with.
+ */
+export interface ProtectedRequestOptions {
+  /**
+   * Defaults to `POST`, which is what every existing caller already sent.
+   *
+   * `POST` also keeps the token in the request body. Under `GET` the ArcGIS
+   * SDK encodes every parameter — the token included — into the query string,
+   * where it would reach browser history, referrers and server logs, which
+   * `docs/authentication.md` forbids. Pass `GET` only for an operation that
+   * requires it, and never for one carrying sensitive parameters.
+   */
+  method?: 'GET' | 'POST'
+}
+
+export type ProtectedRequester = <T>(
+  url: string,
+  params?: Record<string, unknown>,
+  options?: ProtectedRequestOptions,
+) => Promise<T>
 
 export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
   {

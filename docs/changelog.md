@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-09-07 - Invitation acceptance states its method and proves its result
+
+- ArcGIS accepts the invitation operation over POST only. `requestProtected`
+  never exposed a method and inherited one from the request library, so the call
+  was correct by accident rather than by intent. The provider now states
+  `httpMethod` explicitly and takes a per-call `method` option, and the accept
+  call passes `POST`. **POST remains the default for every existing caller,
+  which is what they already sent** — `@esri/arcgis-rest-request` has always
+  defaulted to POST. Making GET the default would have changed every
+  authenticated request and, worse, moved the token into the query string, since
+  the SDK encodes parameters into the URL for GET.
+- Acceptance is no longer inferred from the absence of an error. The
+  access-change event is raised only when `success` is exactly `true`, nothing
+  ArcGIS echoed back contradicts the invitation that was sent (invitation ID,
+  group ID, username), and the resulting membership can then be read back from
+  `/community/self`. A missing, malformed or mismatched response leaves the
+  notice standing and points the user at ArcGIS.
+- The membership read-back is what confirms the group and the user, rather than
+  requiring ArcGIS to echo fields the documented response may omit. A genuine
+  but sparse `{"success": true}` is accepted only because the membership exists;
+  a hollow one is not accepted at all.
+- Tests: 45 cases. New coverage proves POST is sent, that acceptance could not
+  have used GET against a method-gated endpoint, and that missing, false,
+  non-object, mismatched and membership-contradicted responses are all rejected
+  with no access-change event.
+
 ## 2026-09-07 - Grant discovery through group membership, and the invitation gap
 
 - Temporary-grant discovery now starts from the group memberships the signed-in

@@ -64,9 +64,18 @@ interface GroupResponse {
   tags?: string[]
 }
 
-interface OperationResponse {
+interface AcceptResponse {
   success?: boolean
+  /** ArcGIS echoes some subset of these; whatever it echoes has to match. */
+  invitationId?: string
+  groupId?: string
+  username?: string
   error?: { message?: string }
+}
+
+interface SelfGroupsResponse {
+  username?: string
+  groups?: Array<{ id?: string }>
 }
 
 /**
@@ -121,27 +130,78 @@ export async function fetchPendingGrantInvitations(
   }
 }
 
+const ACCEPT_FAILED = 'The invitation could not be accepted. Open your ArcGIS notifications and accept it there.'
+
+/**
+ * Anything ArcGIS echoes back has to describe the invitation that was sent.
+ *
+ * A response naming a different invitation, group or user is not this
+ * operation's result, whatever its `success` flag says, so it is refused rather
+ * than reconciled. Fields ArcGIS omits are not invented here — the membership
+ * check below is what proves the outcome.
+ */
+function echoMatches(response: AcceptResponse, invitation: PendingGrantInvitation, username: string) {
+  const mismatched = (echoed: string | undefined, expected: string) => (
+    typeof echoed === 'string' && echoed.toLowerCase() !== expected.toLowerCase()
+  )
+  return !mismatched(response.invitationId, invitation.id)
+    && !mismatched(response.groupId, invitation.groupId)
+    && !mismatched(response.username, username)
+}
+
+/**
+ * Ask ArcGIS whether this identity is now a member of the group.
+ *
+ * The accept response is a claim about what happened; membership is the thing
+ * itself, and it is what discovery will read a moment later. Confirming it
+ * proves the group and the user independently of whatever the operation chose
+ * to echo, so a sparse but genuine success is accepted and a hollow one is not.
+ */
+async function confirmMembership(groupId: string, username: string, requester: ProtectedRequester) {
+  try {
+    const self = await requester<SelfGroupsResponse>(`${GLOBAL_REST}/community/self`)
+    const joined = (self.groups || []).some((group) => group.id === groupId)
+    const sameUser = !self.username || self.username.toLowerCase() === username.toLowerCase()
+    return joined && sameUser
+  } catch {
+    return false
+  }
+}
+
 /**
  * Accept one invitation with the user's own token.
  *
  * This is the documented per-user accept operation, the same one the ArcGIS
- * notifications page calls. If ArcGIS declines it — an invitation that lapsed
- * after the page was loaded, say — the error is surfaced so the user can go and
- * look at their notifications rather than being told nothing happened.
+ * notifications page calls, and ArcGIS accepts it **only over POST** — hence
+ * the explicit method rather than whatever the request library happens to
+ * default to.
  *
- * Acceptance does not itself grant anything: it establishes the membership that
- * lets ArcGIS decide, on the next request, what this identity may read.
+ * Success is not assumed from the absence of an error. The event that makes the
+ * Hub re-read a user's access is raised only when `success` is exactly `true`,
+ * nothing ArcGIS echoed contradicts the invitation that was sent, and the
+ * membership itself can then be read back. A missing, malformed or mismatched
+ * response leaves the notice standing and sends the user to ArcGIS, which is
+ * the honest outcome: acceptance is ArcGIS's to confirm, not the Hub's to
+ * declare.
+ *
+ * Acceptance grants nothing by itself. It establishes the membership that lets
+ * ArcGIS decide, on every later request, what this identity may read.
  */
 export async function acceptGrantInvitation(
   invitation: PendingGrantInvitation,
   username: string,
   requester: ProtectedRequester,
 ): Promise<void> {
-  const response = await requester<OperationResponse>(
+  const response = await requester<AcceptResponse>(
     `${GLOBAL_REST}/community/users/${encodeURIComponent(username)}/invitations/${invitation.id}/accept`,
+    {},
+    { method: 'POST' },
   )
-  if (response?.success === false) {
-    throw new Error(response.error?.message || 'ArcGIS did not accept this invitation.')
-  }
+
+  if (!response || typeof response !== 'object') throw new Error(ACCEPT_FAILED)
+  if (response.success !== true) throw new Error(response.error?.message || ACCEPT_FAILED)
+  if (!echoMatches(response, invitation, username)) throw new Error(ACCEPT_FAILED)
+  if (!await confirmMembership(invitation.groupId, username, requester)) throw new Error(ACCEPT_FAILED)
+
   notifyGrantAccessChanged()
 }

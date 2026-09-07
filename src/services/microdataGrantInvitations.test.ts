@@ -8,6 +8,13 @@ import {
 
 const USERNAME = 'andrea.amparore_faohub_testaccount'
 
+interface RequestOptions { method?: 'GET' | 'POST' }
+
+/**
+ * Stands in for the authenticated requester, and models the one thing the live
+ * endpoint is strict about: ArcGIS accepts the invitation operation over POST
+ * only, so this fake refuses anything else exactly as the service would.
+ */
 function fakeRequester(options: {
   invitations?: unknown[]
   groups?: Record<string, { title?: string; tags?: string[] }>
@@ -15,16 +22,31 @@ function fakeRequester(options: {
   failInvitations?: boolean
   acceptResponse?: unknown
   failAccept?: boolean
+  /** Groups `/community/self` reports after the acceptance. */
+  memberOf?: string[]
+  selfUsername?: string
+  failSelf?: boolean
 }) {
   const unreadable = new Set(options.unreadableGroups || [])
-  return vi.fn(async (url: string) => {
+  return vi.fn(async (url: string, _params?: Record<string, unknown>, requestOptions?: RequestOptions) => {
     if (url.endsWith(`/community/users/${encodeURIComponent(USERNAME)}/invitations`)) {
       if (options.failInvitations) throw new Error('invitations unavailable')
       return { userInvitations: options.invitations ?? [] }
     }
     if (/\/invitations\/[^/]+\/accept$/.test(url)) {
+      if (requestOptions?.method !== 'POST') {
+        throw new Error('HTTP 405: the accept operation is POST only')
+      }
       if (options.failAccept) throw new Error('403 the invitation has expired')
-      return options.acceptResponse ?? { success: true }
+      // `in` rather than `??`, so a test can model a null or empty response.
+      return 'acceptResponse' in options ? options.acceptResponse : { success: true }
+    }
+    if (url.endsWith('/community/self')) {
+      if (options.failSelf) throw new Error('network down')
+      return {
+        username: options.selfUsername ?? USERNAME,
+        groups: (options.memberOf ?? ['grant-group']).map((id) => ({ id })),
+      }
     }
     const groupMatch = url.match(/\/community\/groups\/([^/]+)$/)
     if (groupMatch) {
@@ -35,7 +57,7 @@ function fakeRequester(options: {
       return { id, ...group }
     }
     throw new Error(`unexpected request: ${url}`)
-  }) as unknown as <T>(url: string, params?: Record<string, unknown>) => Promise<T>
+  }) as unknown as <T>(url: string, params?: Record<string, unknown>, options?: RequestOptions) => Promise<T>
 }
 
 describe('pending grant invitations', () => {
@@ -83,29 +105,108 @@ describe('pending grant invitations', () => {
 
 describe('accepting an invitation', () => {
   const invitation = { id: 'inv-1', groupId: 'grant-group', groupTitle: 'DIEM restricted microdata grant request-2026-001' }
+  const ACCEPT_URL = `https://www.arcgis.com/sharing/rest/community/users/${encodeURIComponent(USERNAME)}/invitations/inv-1/accept`
 
-  it('calls the per-user accept operation with the user own token and announces the change', async () => {
-    const requester = fakeRequester({ acceptResponse: { success: true } })
+  function calls(requester: unknown) {
+    return (requester as { mock: { calls: [string, unknown, RequestOptions | undefined][] } }).mock.calls
+  }
+
+  /** Asserts the rejection left the user's access untouched as far as the Hub is concerned. */
+  async function expectRejectedWithoutEvent(requester: Parameters<typeof acceptGrantInvitation>[2]) {
+    const changed = vi.fn()
+    const stop = onGrantAccessChanged(changed)
+    try {
+      await expect(acceptGrantInvitation(invitation, USERNAME, requester)).rejects.toThrow()
+      expect(changed).not.toHaveBeenCalled()
+    } finally {
+      stop()
+    }
+  }
+
+  it('sends the accept operation over POST', async () => {
+    const requester = fakeRequester({ acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: USERNAME } })
+    await acceptGrantInvitation(invitation, USERNAME, requester)
+
+    const acceptCall = calls(requester).find(([url]) => url === ACCEPT_URL)
+    expect(acceptCall).toBeDefined()
+    expect(acceptCall?.[2]).toEqual({ method: 'POST' })
+  })
+
+  it('cannot have used GET, because the endpoint refuses it', async () => {
+    // The fake gates on the method the way the live service does. Acceptance
+    // succeeding against it is only possible over POST — and the direct call
+    // below shows the gate is real rather than a fake that lets anything past.
+    const postOnly = fakeRequester({
+      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: USERNAME },
+    })
+    await expect(acceptGrantInvitation(invitation, USERNAME, postOnly)).resolves.toBeUndefined()
+
+    await expect(
+      (postOnly as (url: string, params?: Record<string, unknown>, options?: RequestOptions) => Promise<unknown>)(
+        ACCEPT_URL, {}, { method: 'GET' },
+      ),
+    ).rejects.toThrow(/POST only/)
+  })
+
+  it('accepts a success that names the same invitation, group and user, and announces the change', async () => {
+    const requester = fakeRequester({
+      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: USERNAME },
+      memberOf: ['grant-group'],
+    })
     const changed = vi.fn()
     const stop = onGrantAccessChanged(changed)
 
     await acceptGrantInvitation(invitation, USERNAME, requester)
 
-    const called = (requester as unknown as { mock: { calls: string[][] } }).mock.calls.map((call) => call[0])
-    expect(called).toEqual([
-      `https://www.arcgis.com/sharing/rest/community/users/${encodeURIComponent(USERNAME)}/invitations/inv-1/accept`,
-    ])
     // Discovery re-runs in the same visit, so the grant appears without a reload.
     expect(changed).toHaveBeenCalledTimes(1)
     stop()
   })
 
-  it('surfaces an ArcGIS refusal rather than reporting success', async () => {
+  it('rejects a response with no success flag', async () => {
+    await expectRejectedWithoutEvent(fakeRequester({ acceptResponse: { invitationId: 'inv-1', groupId: 'grant-group' } }))
+  })
+
+  it('rejects an explicit failure and reports what ArcGIS said', async () => {
     const declined = fakeRequester({ acceptResponse: { success: false, error: { message: 'Invitation is no longer valid.' } } })
     await expect(acceptGrantInvitation(invitation, USERNAME, declined)).rejects.toThrow('Invitation is no longer valid.')
+    await expectRejectedWithoutEvent(declined)
+  })
 
-    const rejected = fakeRequester({ failAccept: true })
-    await expect(acceptGrantInvitation(invitation, USERNAME, rejected)).rejects.toThrow(/expired/)
+  it('rejects a success that is not JSON, or not an object at all', async () => {
+    await expectRejectedWithoutEvent(fakeRequester({ acceptResponse: 'OK' }))
+    await expectRejectedWithoutEvent(fakeRequester({ acceptResponse: null }))
+  })
+
+  it('rejects a success naming a different invitation, group or user', async () => {
+    await expectRejectedWithoutEvent(fakeRequester({
+      acceptResponse: { success: true, invitationId: 'inv-9', groupId: 'grant-group', username: USERNAME },
+    }))
+    await expectRejectedWithoutEvent(fakeRequester({
+      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'someone-elses-group', username: USERNAME },
+    }))
+    await expectRejectedWithoutEvent(fakeRequester({
+      acceptResponse: { success: true, invitationId: 'inv-1', groupId: 'grant-group', username: 'another.user' },
+    }))
+  })
+
+  it('rejects a success that the membership does not bear out', async () => {
+    // ArcGIS says yes but the identity is not in the group. Whatever happened,
+    // it was not this acceptance, so nothing is announced.
+    await expectRejectedWithoutEvent(fakeRequester({
+      acceptResponse: { success: true },
+      memberOf: ['some-other-group'],
+    }))
+    await expectRejectedWithoutEvent(fakeRequester({ acceptResponse: { success: true }, failSelf: true }))
+    await expectRejectedWithoutEvent(fakeRequester({
+      acceptResponse: { success: true },
+      memberOf: ['grant-group'],
+      selfUsername: 'another.user',
+    }))
+  })
+
+  it('surfaces a transport rejection without announcing a change', async () => {
+    await expectRejectedWithoutEvent(fakeRequester({ failAccept: true }))
   })
 })
 

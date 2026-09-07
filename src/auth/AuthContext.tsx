@@ -9,6 +9,7 @@ import {
   startSessionSharing,
   type CommunityUser,
 } from '../services/auth'
+import type { ProtectedRequestOptions, ProtectedRequester } from '../services/protectedData'
 
 type AuthStatus = 'loading' | 'anonymous' | 'authenticating' | 'authenticated'
 
@@ -19,7 +20,7 @@ interface AuthContextValue {
   signIn: () => Promise<void>
   signOut: () => Promise<void>
   clearError: () => void
-  requestProtected: <T>(url: string, params?: Record<string, unknown>) => Promise<T>
+  requestProtected: ProtectedRequester
   downloadProtected: (url: string, params?: Record<string, unknown>) => Promise<Blob>
   // Authenticated image fetch for item thumbnails. Separate from
   // `downloadProtected`, which speaks the Hub export API's 202-polling
@@ -143,12 +144,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearError = useCallback(() => setError(null), [])
 
-  const requestProtected = useCallback(async <T,>(url: string, params: Record<string, unknown> = {}) => {
+  /**
+   * The method is now stated rather than inherited.
+   *
+   * `@esri/arcgis-rest-request` defaults to POST, so every protected call has
+   * always been a POST; nothing about the wire behaviour changes here. Relying
+   * on that default meant a POST-only ArcGIS operation was correct by accident,
+   * which is not a property worth depending on before a live access test.
+   *
+   * POST stays the default deliberately. Under GET the SDK encodes parameters
+   * into the query string, and the token is one of them.
+   */
+  const requestProtected = useCallback(async <T,>(
+    url: string,
+    params: Record<string, unknown> = {},
+    options: ProtectedRequestOptions = {},
+  ) => {
       if (!manager || status !== 'authenticated') {
         throw new Error('Sign in with a DIEM community account to access this resource.')
       }
       return request(url, {
         authentication: manager,
+        httpMethod: options.method || 'POST',
         params: { f: 'json', ...params },
       }) as Promise<T>
   }, [manager, status])
