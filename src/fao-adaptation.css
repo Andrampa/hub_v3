@@ -316,7 +316,25 @@ h1, h2, h3, h4, h5, h6,
   border: 1px solid #d9d9d9;
   box-shadow: none;
 }
-.filter-bar label, .country-filter-bar label { height: 64px; padding: 10px 12px; border: 1px solid #b8b8b8; }
+/* A fixed 64 px label with a 24 px caption above left the control itself
+   291 x 19 px, measured on /catalog at 375 px - under the 24 px minimum of
+   WCAG 2.2 SC 2.5.8, on the six controls that are the whole filtering
+   interface of the largest surface on the site. The label is now a column that
+   can grow, and the control takes the rest of it, so the visible frame is
+   unchanged while the pointer target is the full remaining height. */
+/* Direct children only: the search cell carries its own frame, and its
+   visually-hidden <label> is not a filter control - styling that one gave it a
+   border and a 64 px floor inside the search box. */
+.filter-bar > label, .country-filter-bar > label {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid #b8b8b8;
+}
+.filter-bar > label > :is(select, input),
+.country-filter-bar > label > :is(select, input) { flex: 1 1 auto; min-height: 26px; }
 .filter-bar select, .filter-bar input, .country-filter-bar select, .country-filter-bar input { color: #545454; font-weight: 400; }
 .card-grid, .country-resource-grid { gap: 24px; }
 .content-card, .country-resource-card, .country-card, .country-highlight-card, .country-editorial-story, .country-monitoring-card {

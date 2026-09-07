@@ -334,7 +334,14 @@ function SignInGate() {
             const generation = GENERATIONS[id]
             return (
               <article key={id} className={id === REFERENCE_GENERATION ? 'generation-strip-card generation-strip-card--reference' : 'generation-strip-card'}>
-                <div className="generation-strip-topline"><strong>{generation.label}</strong><span>{id === REFERENCE_GENERATION ? 'Current standard' : 'Archived'}</span></div>
+                {/* Current and archived used to share one orange, so the flag
+                    carried no information and failed contrast at 2.42:1. */}
+                <div className="generation-strip-topline">
+                  <strong>{generation.label}</strong>
+                  {id === REFERENCE_GENERATION
+                    ? <span className="generation-strip-flag generation-strip-flag--current">Current standard</span>
+                    : <span className="generation-strip-flag">Archived</span>}
+                </div>
                 <h3>{generation.name}</h3>
                 <p className="generation-strip-period">{generation.period}</p>
                 <p>{generation.summary}</p>

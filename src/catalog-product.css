@@ -64,7 +64,10 @@
 .catalog-pdf-toolbar button:disabled { opacity: .42; }
 .catalog-pdf-toolbar span { min-width: 72px; text-align: center; font-size: var(--text-small); font-weight: 700; }
 .catalog-pdf-canvas-wrap { height: min(75vh, 860px); min-height: 500px; overflow: auto; padding: 22px; text-align: center; }
-.catalog-pdf-canvas-wrap canvas { max-width: 100%; height: auto; background: #fff; box-shadow: 0 5px 22px rgba(3,49,72,.18); }
+/* Width and height are set from the fitted page size in PdfPreview, so the
+   zoom control moves the rendered size. A max-width here would clamp it back
+   and make Zoom in a no-op, which is what it used to be. */
+.catalog-pdf-canvas-wrap canvas { display: inline-block; background: #fff; box-shadow: 0 5px 22px rgba(3,49,72,.18); }
 @media (max-width: 850px) {
   .catalog-product-hero, .catalog-product-layout { grid-template-columns: 1fr; }
   .catalog-product-hero > img { max-height: 330px; min-height: 0; }

@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ImpactAtlasMap } from '../components/ImpactAtlasMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import hazardHeroImage from '../assets/heroes/zambia-drought-2024.jpg'
 import { cleanText, formatDate } from '../lib/catalog'
-import { countryDefinition } from '../services/countries'
+import { countryDefinition, itemHubLink } from '../services/countries'
 import {
   fetchImpactAssessmentCatalog,
   type ImpactAssessmentCatalog,
   type ImpactAssessmentResource,
 } from '../services/impactAssessments'
-import { itemDestination, itemThumbnail } from '../services/arcgis'
+import { itemThumbnail } from '../services/arcgis'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 type ResultsView = 'details' | 'timeline'
@@ -37,19 +38,34 @@ function DossierCard({ item, compact = false }: { item: ImpactAssessmentResource
   const thumbnail = itemThumbnail(item)
   const summary = cleanText(item.snippet || item.description)
   const shock = item.shockTypes[0] || 'Hazard impact'
+  // An assessment is a product, so a dossier opens the Hub product page and its
+  // citation, licence and preview, rather than leaving for ArcGIS on the first
+  // click. The three assessments published as ArcGIS applications carry no
+  // catalog role and keep their direct link; see itemHubLink.
+  const link = itemHubLink(item)
+  const image = thumbnail
+    ? <img src={thumbnail} alt="" loading="lazy" />
+    : <span aria-hidden="true">DIEM</span>
 
   return (
     <article className={`impact-dossier${compact ? ' impact-dossier--compact' : ''}`}>
-      <a
-        className="impact-dossier-image"
-        href={itemDestination(item)}
-        target="_blank"
-        rel="noreferrer"
-        aria-label={`Open ${item.title.trim()}`}
-      >
-        {thumbnail ? <img src={thumbnail} alt="" loading="lazy" /> : <span aria-hidden="true">DIEM</span>}
-        <span className="impact-dossier-shock">{shock}</span>
-      </a>
+      {link.kind === 'product' ? (
+        <Link className="impact-dossier-image" to={link.to} aria-label={`Open ${item.title.trim()}`}>
+          {image}
+          <span className="impact-dossier-shock">{shock}</span>
+        </Link>
+      ) : (
+        <a
+          className="impact-dossier-image"
+          href={link.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Open ${item.title.trim()}`}
+        >
+          {image}
+          <span className="impact-dossier-shock">{shock}</span>
+        </a>
+      )}
       <div className="impact-dossier-body">
         <div className="impact-dossier-meta">
           <span>{countryLabel(item)}</span>
@@ -73,9 +89,13 @@ function DossierCard({ item, compact = false }: { item: ImpactAssessmentResource
           ))}
           {item.languages[0] && item.languages[0] !== 'English' && <span>{item.languages[0]}</span>}
         </div>
-        <a className="impact-dossier-link" href={itemDestination(item)} target="_blank" rel="noreferrer">
-          Open assessment <ExternalIcon />
-        </a>
+        {link.kind === 'product' ? (
+          <Link className="impact-dossier-link" to={link.to}>Open assessment</Link>
+        ) : (
+          <a className="impact-dossier-link" href={link.href} target="_blank" rel="noreferrer">
+            Open assessment <ExternalIcon />
+          </a>
+        )}
       </div>
     </article>
   )

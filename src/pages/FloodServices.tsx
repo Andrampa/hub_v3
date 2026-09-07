@@ -15,8 +15,7 @@ import rwthLogo from '../assets/partners/rwth-aachen.png'
 import wfpLogo from '../assets/partners/wfp.png'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { itemDestination } from '../services/arcgis'
-import { countryDefinition } from '../services/countries'
+import { countryDefinition, itemHubLink } from '../services/countries'
 import { fetchImpactAssessmentCatalog } from '../services/impactAssessments'
 import type { ImpactAssessmentResource } from '../services/impactAssessments'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -402,15 +401,25 @@ export default function FloodServices() {
           {briefs && visibleBriefs.length > 0 && (
             <>
               <ul className="brief-list">
-                {visibleBriefs.map((item) => (
-                  <li key={item.id}>
-                    <a href={itemDestination(item)} target="_blank" rel="noreferrer">
+                {visibleBriefs.map((item) => {
+                  // Same routing rule as the hazard-impacts page these
+                  // assessments are drawn from; see itemHubLink.
+                  const link = itemHubLink(item)
+                  const body = (
+                    <>
                       <span className="brief-meta">{briefMeta(item)}</span>
                       <strong>{item.title}</strong>
                       <span className="brief-type">{item.contentRoles[0] || item.type}</span>
-                    </a>
-                  </li>
-                ))}
+                    </>
+                  )
+                  return (
+                    <li key={item.id}>
+                      {link.kind === 'product'
+                        ? <Link to={link.to}>{body}</Link>
+                        : <a href={link.href} target="_blank" rel="noreferrer">{body}</a>}
+                    </li>
+                  )
+                })}
               </ul>
               <Link className="source-link" to="/hazard-impact-assessments">
                 Browse all {briefs.length} flood assessments, and other hazards →

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { cleanText, formatDate } from '../lib/catalog'
-import { itemDestination } from '../services/arcgis'
+import { itemHubLink } from '../services/countries'
 import {
   fetchMonitoringProductCatalog,
   type MonitoringProduct,
@@ -21,6 +21,10 @@ function countryName(item: MonitoringProduct, countries: MonitoringProductCatalo
 
 function ProductRow({ item }: { item: MonitoringProduct }) {
   const summary = cleanText(item.snippet || item.description)
+  // Public monitoring products all carry the catalog role, so this is the Hub
+  // product page. A contributor-only row that an anonymous group search cannot
+  // resolve falls back to the direct link; see itemHubLink.
+  const link = itemHubLink(item)
   return (
     <article className="monitoring-product-row">
       <div className="monitoring-product-main">
@@ -32,9 +36,13 @@ function ProductRow({ item }: { item: MonitoringProduct }) {
         <h4>{item.title.trim()}</h4>
         {summary && <p>{summary}</p>}
       </div>
-      <a href={itemDestination(item)} target="_blank" rel="noreferrer">
-        Open product <span aria-hidden="true">↗</span>
-      </a>
+      {link.kind === 'product' ? (
+        <Link to={link.to}>Open product</Link>
+      ) : (
+        <a href={link.href} target="_blank" rel="noreferrer">
+          Open product <span aria-hidden="true">↗</span>
+        </a>
+      )}
     </article>
   )
 }

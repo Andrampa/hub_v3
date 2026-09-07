@@ -170,13 +170,19 @@
    be a <label> because it wraps a form and a listbox. */
 .filter-bar .inline-search-wrap {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  height: 64px;
+  height: auto;
+  min-height: 64px;
   padding: 10px 12px;
   background: #fff;
   border: 1px solid #b8b8b8;
 }
+/* The search is the seventh control on the bar and gets the same 24 px floor
+   as the six selects; it was 182 x 18 px. */
+.filter-bar .inline-search { flex: 1 1 auto; }
+.filter-bar .inline-search input { min-height: 26px; }
 .inline-search-caption { display: block; margin-bottom: 7px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 .inline-search { display: flex; align-items: center; gap: 8px; width: 100%; }
 .inline-search:focus-within { outline: 2px solid var(--fao-blue); outline-offset: 6px; }

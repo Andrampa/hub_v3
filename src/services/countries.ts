@@ -1,7 +1,7 @@
 import countryMetadata from '@d3-maps/atlas/metadata/countries'
 import { groupProductFamilies } from '../lib/productFamilies'
 import type { ArcGISItem } from '../types'
-import { CONTENT_GROUP_ID, catalogueVisible } from './arcgis'
+import { CONTENT_GROUP_ID, catalogueVisible, itemDestination, itemProductPath } from './arcgis'
 
 export const CROSS_COUNTRY_CODE = 'XXX'
 const REST_ROOT = 'https://www.arcgis.com/sharing/rest'
@@ -224,6 +224,38 @@ function isDiscoverableProduct(categories: string[]) {
   return categories.some((category) => (
     category.toLowerCase() === '/categories/catalog role/discoverable product'
   ))
+}
+
+/**
+ * Where a card should send the reader.
+ *
+ * Every discovery surface should land on the Hub product page: it is the only
+ * place a reader gets the description, the licence, the citation, the other
+ * language editions, a PDF preview, and - when an item leaves the group - a Hub
+ * page saying so instead of a bare ArcGIS 403.
+ *
+ * It cannot be used unconditionally, because `fetchCurrentCatalogProduct`
+ * resolves an item through the content group and requires the exact
+ * `Catalog role/Discoverable product` category. Linking an item without it
+ * would render "no longer published" for something that is in fact published.
+ * Measured against the live group on 2026-09-07: of 125 hazard impact
+ * assessments 122 carry the role and three do not, and of 240 publicly tagged
+ * monitoring products all 240 do. The three exceptions are ArcGIS applications
+ * - one Dashboard and two Web Experiences - for which the external URL is the
+ * destination anyway, not a detour, so they keep the direct link.
+ *
+ * The signed-in monitoring library can also list items an anonymous group
+ * search cannot see; those carry no catalog role here either and therefore take
+ * the same direct-link branch, which is the only one that can work for them.
+ */
+export type HubLinkTarget =
+  | { kind: 'product', to: string }
+  | { kind: 'external', href: string }
+
+export function itemHubLink(item: ArcGISItem): HubLinkTarget {
+  return isDiscoverableProduct(item.groupCategories || [])
+    ? { kind: 'product', to: itemProductPath(item) }
+    : { kind: 'external', href: itemDestination(item) }
 }
 
 function isMultiCountry(categories: string[]) {

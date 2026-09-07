@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { formatDate } from '../lib/catalog'
-import { itemDestination } from '../services/arcgis'
+import { itemHubLink } from '../services/countries'
 import type { ArcGISItem } from '../types'
 
 const FEATURED_TAGS = new Set(['impact assessment', 'country brief'])
@@ -19,19 +19,28 @@ function BannerItems({ items, duplicate = false }: { items: ArcGISItem[], duplic
         // "New" means new to the catalogue, so it tracks `created`. Using
         // `modified` would badge the whole group after a re-categorization run.
         const recent = Date.now() - item.created <= NEW_WINDOW_MS
+        // The strip is the most prominent set of product links on the site, so
+        // it goes to the Hub product page like every other discovery surface.
+        const link = itemHubLink(item)
         return (
           <article className="latest-evidence-item" key={`${duplicate ? 'duplicate-' : ''}${item.id}`}>
             {recent && <span className="latest-evidence-new">New</span>}
             <time dateTime={new Date(item.created).toISOString()}>{formatDate(item.created)}</time>
             <span>{item.type}</span>
-            <a
-              href={itemDestination(item)}
-              target="_blank"
-              rel="noreferrer"
-              tabIndex={duplicate ? -1 : undefined}
-            >
-              {item.title.trim()}
-            </a>
+            {link.kind === 'product' ? (
+              <Link to={link.to} tabIndex={duplicate ? -1 : undefined}>
+                {item.title.trim()}
+              </Link>
+            ) : (
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                tabIndex={duplicate ? -1 : undefined}
+              >
+                {item.title.trim()}
+              </a>
+            )}
           </article>
         )
       })}

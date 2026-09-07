@@ -46,6 +46,94 @@
   non-object, mismatched and membership-contradicted responses are all rejected
   with no access-change event.
 
+## 2026-09-07 - Every surface opens the product page, and three contrast/target fixes
+
+From `docs/design_review_2026-09-07.md`, recommendations 2, 3, 5 and 6.
+
+**Four surfaces stopped bypassing the product page.** The homepage "Latest
+evidence" strip, `/hazard-impact-assessments`, the monitoring product library
+and the `/flood-services` assessment list all linked straight to ArcGIS, so
+none of their products offered a citation, a licence, a PDF preview, other
+language editions, or the Hub's "no longer published" page when an item leaves
+the group - and for the roughly half of the group that is an uploaded file with
+no `url`, the link was the ArcGIS item-page detour recorded in the 2026-09-04
+addendum.
+
+The switch could not be unconditional. `fetchCurrentCatalogProduct` resolves an
+item through the content group and requires the exact
+`Catalog role/Discoverable product` category, so a card without it would have
+rendered "no longer published" for something that is in fact published.
+Measured against the live group on 2026-09-07: 122 of 125 hazard impact
+assessments carry the role, as do all 240 publicly tagged monitoring products;
+the three exceptions are ArcGIS applications - one Dashboard and two Web
+Experiences - for which the external URL is the destination rather than a
+detour. A new `itemHubLink` in `src/services/countries.ts` makes that decision
+once, and `itemDestination` now has exactly one caller.
+
+Verified anonymously: 19 of 20 visible dossiers, 12 of 12 homepage strip links,
+22 of 22 monitoring rows and 5 of 6 flood assessments now open `/catalog/:id`;
+the exceptions are the applications above. Four sampled dossier ids were
+checked against the same group query the product page runs, and two were opened
+end to end and rendered a full product page with a citation.
+
+**PDF zoom now zooms.** The control set the pdf.js scale while the canvas
+carried `max-width: 100%`, so it enlarged the backing store and never the
+rendered page: measured at 1440 px, 125 % drew a 1200 px canvas displayed at
+1006 px and 200 % drew a 1920 px canvas displayed at the same 1006 px - a
+sharper image at identical size and four times the render cost, for the only
+reader the control exists for. Zoom is now a multiple of the page's fitted
+width, so 100 % means "fits the frame" at any viewport and anything above it
+magnifies and scrolls inside the frame. Measured after: 1440 px 100 % = 1006 px
+and 200 % = 2012 px; 375 px 100 % = 273 px and 200 % = 546 px, with the frame
+scrolling and no page-level horizontal overflow at either width. Backing store
+is capped at 4096 px per edge so a tail-case page at 300 % on a high-density
+phone degrades in density rather than failing to allocate.
+
+**Filter controls cleared the 24 px target minimum** (WCAG 2.2 AA SC 2.5.8).
+A fixed 64 px label with a 24 px caption above it left each `<select>`
+291 x 19 px on `/catalog` at 375 px - the six controls that are the whole
+filtering interface of the largest surface on the site. The label is now a
+column that grows and the control takes the rest of it, so the visible frame is
+unchanged: 291 x 26 px at 375 px and 148 x 26 px at 1440 px, on `/catalog` and
+`/countries/:iso3` alike. The catalogue search field, previously 182 x 18 px,
+got the same floor. The first attempt scoped the rule too broadly and put a
+border and a 64 px floor on the search box's visually-hidden `<label>`; the
+selectors are now direct-child only.
+
+Cost, stated plainly: taller controls make a taller bar. The mobile filter bar
+grew from 522 px to 575 px and the first product card moved from y=1397 to
+y=1450. Collapsing the bar behind a "Filters" disclosure with active-filter
+chips - the other half of recommendation 5 - is still open and is what actually
+fixes that.
+
+**The data-generation flags cleared contrast** (WCAG 1.4.3). "Current standard"
+and "Archived" were both orange `#f58320` at 11 px on the card's `#f4f9f8`
+ground: 2.42:1 against a required 4.5:1, on the label that decides which
+questionnaire generation a reader uses - and the shared colour meant the flag
+distinguished nothing, while AGENTS.md reserves orange for urgency. Now deep
+blue at 9.20:1 for the current generation and neutral grey at 5.88:1 for the
+archived ones, at 12 px. The guide card's caption moved from `#cfe4f1` to
+`#dceef8`, 4.36:1 to 4.80:1. `/data` now returns no contrast failure at any
+size, as `/`, `/catalog` and `/hazard-impact-assessments` already did.
+
+Changed: `src/services/countries.ts`, `src/components/LatestEvidenceBanner.tsx`,
+`src/components/MonitoringProducts.tsx`, `src/components/PdfPreview.tsx`,
+`src/pages/HazardImpactAssessments.tsx`, `src/pages/FloodServices.tsx`,
+`src/pages/DataAccess.tsx`, `src/catalog-product.css`, `src/catalog.css`,
+`src/data-access.css`, `src/fao-adaptation.css`.
+
+Verification: `npm run build` and `npx tsc -b --force` pass; `npm test` runs 38
+tests in 2 files, all passing. Anonymous browser checks at 375, 768 and 1440 px
+on `/`, `/catalog`, `/countries/ner`, `/data`, `/hazard-impact-assessments`,
+`/flood-services`, `/monitoring-system` and a PDF product page: no console
+errors beyond the dev-server HMR socket, and `document.body.scrollWidth` equal
+to `documentElement.clientWidth` on every route and width.
+
+Not done, and still open from the same review: the duplicate tab stop per card,
+the mobile filter disclosure, and the one Mozambique flood Dashboard that has
+neither a catalog role nor a `url` and therefore still resolves to an ArcGIS
+item page - that one is an editorial fix, not a code fix.
+
 ## 2026-09-07 - Grant discovery through group membership, and the invitation gap
 
 - Temporary-grant discovery now starts from the group memberships the signed-in
