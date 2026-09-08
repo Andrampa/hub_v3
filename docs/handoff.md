@@ -1,5 +1,36 @@
 # Handoff
 
+## MUST BE REVERTED: hosting-only deploy while ArcGIS secrets are pending
+
+On 2026-09-08 the deployment repository `C:\git\fao-oer-diem-hub` was changed to
+deploy **Hosting only**, so that the rest of the Hub could be published while
+the Firebase Function secrets were still unavailable. CSI (Eugenio) had not yet
+enabled Gen 2 Function deployment or configured `DIEM_ARCGIS_ADMIN_CLIENT_ID`
+and `DIEM_ARCGIS_ADMIN_CLIENT_SECRET`, and `firebase deploy --only
+hosting,functions` fails without them.
+
+Two changes, both in `fao-oer-diem-hub`, neither in this repository:
+
+- `.github/workflows/manual_deploy.yml` — `firebase deploy ... --only hosting`
+  instead of `--only hosting,functions`.
+- `firebase.json` — the `/api/microdata/invitations/validate` rewrite was
+  removed, so the path is not routed at a function that is not deployed.
+
+No frontend change was needed. `fetchPendingGrantInvitations` already treats the
+server projection as an enhancement: when the validator fails, an invitation to
+an unreadable private group stays `unverified` and the dialog sends the
+recipient to their ArcGIS notifications. Nothing errors and nothing is hidden.
+The only lost capability is the in-Hub accept button for invitations to private
+grant groups.
+
+**To undo once CSI confirms the secrets exist**, in `fao-oer-diem-hub`:
+
+    git revert 6e92caf5   # chore(deploy): deploy hosting only while ArcGIS secrets are pending
+
+then re-run Manual Deploy and verify `POST /api/microdata/invitations/validate`
+returns JSON rather than the SPA shell.
+
+
 ## Pending deployment: direct temporary-microdata invitation validation
 
 The Hub frontend and Firebase Function scaffold now implement the same-origin
