@@ -83,6 +83,9 @@ Thumbs.db
 }
 '@ | Set-Content -LiteralPath (Join-Path $stagingDirectory '.firebaserc') -NoNewline
 
+  # TEMPORARY (2026-09-08): the /api/microdata/invitations/validate rewrite and
+  # the functions deploy target are removed until CSI configures the ArcGIS
+  # admin secrets. See docs/handoff.md before editing either template below.
   @'
 {
   "functions": [{ "source": "functions", "codebase": "default", "runtime": "nodejs22" }],
@@ -90,7 +93,6 @@ Thumbs.db
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
-      { "source": "/api/microdata/invitations/validate", "function": { "functionId": "validateMicrodataInvitations", "region": "europe-west1" } },
       { "source": "**", "destination": "/index.html" }
     ]
   }
@@ -188,7 +190,7 @@ jobs:
         run: |
           jq --arg site "${{ vars.SITE_ID }}" '.hosting.site = $site' firebase.json > /tmp/firebase.json \
             && mv /tmp/firebase.json firebase.json
-          firebase deploy --project ${{ vars.PROJECT_ID }} --only hosting,functions
+          firebase deploy --project ${{ vars.PROJECT_ID }} --only hosting
 
       - name: Create Issue on Failure
         if: failure()
