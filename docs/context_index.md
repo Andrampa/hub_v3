@@ -16,6 +16,7 @@
 | `docs/country_editorial.md` | Editor-managed country introductions, highlights, HTML, images, and AGOL provisioning |
 | `docs/hub_promotions.md` | Homepage carousel, latest-evidence strip, popup campaigns, staging and editor workflow |
 | `docs/editor_guide.md` | Human-facing instructions for all country, popup, carousel, banner, and catalog curation |
+| `docs/editor_guide_current.md` | Shareable editor guide limited to workflows available now, with direct ArcGIS links, HTML rules, and existing examples |
 | `docs/catalog_categorization.md` | Whole-catalog category audit, Excel review, additive application and verification |
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/temporary_microdata_grants.md` | User-specific temporary microdata grants: cross-org discovery, bundles, export policy, catalogue exclusion |

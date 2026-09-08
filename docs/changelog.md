@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-08 - Add a shareable guide for current editors
+
+- Added `docs/editor_guide_current.md`, limited to editorial actions available
+  now. It gives direct links to each editable ArcGIS resource, exact publishing
+  steps, field-specific HTML rules, rollback guidance and concrete examples
+  checked against the current public country, popup, catalogue and photo-gallery
+  records. Future or unprovisioned workflows are deliberately excluded.
+
 ## 2026-09-08 - Design review 2026-09-07: accessibility findings and the mobile journey
 
 Third batch: the three accessibility defects the previous batch's axe pass
