@@ -60,17 +60,19 @@ export function CatalogContentCard({
 
   return (
     <article className="content-card">
-      <Link
-        className={`card-image card-image--${accent}`}
-        to={destination}
-        aria-label={`Open ${item.title}`}
-      >
+      {/* The image is a pointer shortcut to the destination the title links to,
+          not a second keyboard stop to the same URL: it is an empty overlay
+          link, out of the tab order and out of the accessibility tree. The
+          product type, edition and image sit outside it, so nothing a reader
+          needs is hidden along with the duplicate stop. */}
+      <div className={`card-image card-image--${accent}`}>
         {thumbnail
           ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
           : <span className="card-image-plate">{edition}</span>}
         {thumbnail && edition && <span className="card-edition">{edition}</span>}
         <span className={`type-badge${recordedType ? '' : ' type-badge--unclassified'}`}>{recordedType || UNRECORDED_PRODUCT_TYPE_LABEL}</span>
-      </Link>
+        <Link className="card-media-link" to={destination} tabIndex={-1} aria-hidden="true" />
+      </div>
       <div className="card-body">
         {/* `created` is when the product entered the catalogue. `modified` is the
             last edit to the ArcGIS record, which bulk re-categorization rewrites,

@@ -1,0 +1,12 @@
+{
+  "$comment": "Single source of truth for the hero variants. scripts/optimize_hero_images.mjs writes exactly these files from assets-source/heroes; src/components/HeroImage.tsx reads the same numbers to build its srcset. Regenerate with `npm run optimize:heroes` after changing anything here.",
+  "sourceDirectory": "assets-source/heroes",
+  "widths": [640, 1024, 1600, 2048],
+  "fallbackWidth": 1600,
+  "quality": { "avif": 50, "webp": 74, "jpeg": 74 },
+  "heroes": {
+    "bangladesh-flood-2020": { "source": "bangladesh-flood-2020.jpg", "width": 4000, "height": 2250 },
+    "cyclone-freddy-madagascar-2023": { "source": "cyclone-freddy-madagascar-2023.jpg", "width": 5693, "height": 4091 },
+    "zambia-drought-2024": { "source": "zambia-drought-2024.jpg", "width": 4032, "height": 2268 }
+  }
+}

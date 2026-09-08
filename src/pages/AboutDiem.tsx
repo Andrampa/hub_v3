@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import aboutHeroImage from '../assets/heroes/zambia-drought-2024.jpg'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { HeroImage } from '../components/HeroImage'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const CREATE_ACCOUNT_URL = 'https://hqfao.maps.arcgis.com/sharing/rest/oauth2/signup?client_id=aEXLMtXxljlIrgPN&response_type=token&redirect_uri=https%3A%2F%2Fdata-in-emergencies.fao.org%2Ftorii-provider-arcgis%2Fhub-redirect.html'
 
@@ -20,13 +20,16 @@ const videos = [
 ]
 
 export default function AboutDiem() {
-  useDocumentTitle('About DIEM')
+  usePageMetadata({
+    title: 'About DIEM',
+    description: 'What Data in Emergencies is: an FAO information system that collects primary household data in food crisis countries so decisions about agricultural livelihoods rest on current evidence, and how its monitoring, assessment and analysis work fits together.',
+  })
   return (
     <>
       <SiteHeader />
       <main className="about-page">
         <section className="about-hero">
-          <img className="about-hero-image" src={aboutHeroImage} alt="Dry agricultural fields illustrating the conditions DIEM evidence helps assess" />
+          <HeroImage name="zambia-drought-2024" className="about-hero-image" alt="Dry agricultural fields illustrating the conditions DIEM evidence helps assess" />
           <div className="about-hero-overlay" />
           <div className="section-wrap">
             <span className="eyebrow"><span /> About DIEM</span>

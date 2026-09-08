@@ -402,3 +402,18 @@
 .coverage-matrix-scroll::-webkit-scrollbar { width: 11px; height: 11px; }
 .coverage-matrix-scroll::-webkit-scrollbar-thumb { border: 3px solid #fff; border-radius: 6px; background: #9fb4bc; }
 .coverage-matrix-scroll:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 2px; }
+
+.country-pathway-filter--unassigned::before { background: #b0bcc1 !important; }
+
+/* The directory's text filter. Sits in the section heading beside the title, so
+   its scope — the country cards below, not the atlas above — is visible. */
+.country-directory-search { display: flex; flex-direction: column; gap: 6px; min-width: min(320px, 100%); }
+.country-directory-search > span { color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.country-directory-search input { min-height: 44px; padding: 10px 13px; border: 1px solid var(--line); background: white; color: var(--ink); font-size: var(--text-small); }
+.country-directory-search input:focus-visible { border-color: var(--fao-blue); outline: 2px solid var(--fao-blue); outline-offset: 1px; }
+.country-directory-count { margin: 0 0 18px; color: var(--ink-faint); font-size: 13px; }
+.country-directory-count strong { color: var(--deep-blue); font-size: 18px; }
+
+@media (max-width: 720px) {
+  .country-directory-search { width: 100%; }
+}

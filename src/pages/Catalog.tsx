@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { CatalogContentCard, pathwaySlug } from '../components/CatalogContentCard'
 import { CatalogSearchBox } from '../components/CatalogSearchBox'
@@ -8,6 +8,16 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { itemYear } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
+import {
+  LEGACY_UNASSIGNED_PATHWAY,
+  UNASSIGNED_PATHWAY,
+  readFilters,
+  stripUnsupportedFilters,
+  unsupportedFilterKey,
+  unsupportedFilterMessage,
+  type FilterSpec,
+  type UnsupportedFilter,
+} from '../lib/catalogFilters'
 import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
@@ -22,14 +32,7 @@ import {
 import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const PAGE_SIZE = 16
-/**
- * Filter value for products carrying no pathway category at all. Without it the
- * four counts add up to less than the catalogue total with no way to see the
- * difference, which reads as a broken count rather than as missing metadata.
- */
-const UNASSIGNED_PATHWAY = 'No pathway assigned'
-/** Shipped briefly under the institutional word; shared links still carry it. */
-const LEGACY_UNASSIGNED_PATHWAY = 'No pillar assigned'
+const SORT_VALUES = ['newest', 'oldest', 'title'] as const
 const typeGroups: Record<string, string[]> = {
   Data: ['Microsoft Excel', 'CSV', 'Shapefile', 'Feature Service', 'Service Definition'],
   Documents: ['Document Link', 'PDF', 'Microsoft Powerpoint'],
@@ -62,14 +65,6 @@ export default function Catalog() {
   const { catalog, error, retry } = useCountryCatalog({ progressive: true })
   const [params, setParams] = useSearchParams()
   const query = params.get('q') || ''
-  const category = params.get('content') || 'All content'
-  const country = params.get('country') || 'All countries'
-  const requestedPathway = params.get('pathway') || 'All pathways'
-  const pathway = requestedPathway === LEGACY_UNASSIGNED_PATHWAY ? UNASSIGNED_PATHWAY : requestedPathway
-  const product = params.get('product') || 'All products'
-  const year = params.get('year') || 'All years'
-  const requestedSort = params.get('sort') || 'newest'
-  const sort = requestedSort === 'oldest' || requestedSort === 'title' ? requestedSort : 'newest'
   const page = Math.max(1, Number(params.get('page')) || 1)
 
   const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
@@ -111,6 +106,50 @@ export default function Catalog() {
   const availableProducts = useMemo(() => PRODUCT_TYPES.filter((value) => (
     catalog?.items.some((item) => item.productTypes.includes(value))
   )), [catalog])
+  const hasUnassignedProducts = useMemo(
+    () => families.some((family) => !family.variants.some((item) => item.evidencePathways.length)),
+    [families],
+  )
+
+  /**
+   * The values the controls can currently produce. Only asserted once the whole
+   * content group has been read: the catalogue pages in, so a value missing from
+   * the first page is not yet evidence that it is gone from the group.
+   */
+  const settled = Boolean(catalog?.complete)
+  const filterSpecs = useMemo<FilterSpec[]>(() => [
+    { key: 'content', defaultValue: 'All content', allowed: settled ? Object.keys(typeGroups) : undefined },
+    { key: 'country', defaultValue: 'All countries', allowed: settled ? countries.map((entry) => entry.iso3) : undefined },
+    {
+      key: 'pathway',
+      defaultValue: 'All pathways',
+      allowed: settled ? [...availablePathways, ...(hasUnassignedProducts ? [UNASSIGNED_PATHWAY] : [])] : undefined,
+      aliases: { [LEGACY_UNASSIGNED_PATHWAY]: UNASSIGNED_PATHWAY },
+    },
+    { key: 'product', defaultValue: 'All products', allowed: settled ? [...availableProducts] : undefined },
+    { key: 'year', defaultValue: 'All years', allowed: settled ? years.map(String) : undefined },
+    { key: 'sort', defaultValue: 'newest', allowed: [...SORT_VALUES] },
+  ], [availablePathways, availableProducts, countries, hasUnassignedProducts, settled, years])
+
+  const { values: filterValues, unsupported } = useMemo(() => readFilters(params, filterSpecs), [filterSpecs, params])
+  const category = filterValues.content
+  const country = filterValues.country
+  const pathway = filterValues.pathway
+  const product = filterValues.product
+  const year = filterValues.year
+  const sort = filterValues.sort
+
+  // Dropped filters are held in state because the notice has to outlive the
+  // parameters it describes: they are removed from the URL on the next tick.
+  const [removedFilters, setRemovedFilters] = useState<UnsupportedFilter[]>([])
+  const unsupportedKey = unsupportedFilterKey(unsupported)
+  useEffect(() => {
+    if (!unsupported.length) return
+    setRemovedFilters(unsupported)
+    setParams(stripUnsupportedFilters(params, unsupported), { replace: true })
+    // `unsupported` is rebuilt every render; its contents are the dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unsupportedKey])
 
   const resultsRef = useRef<HTMLDivElement>(null)
   const thumbnailIndex = useMemo(() => buildDistinctThumbnailIndex(catalog?.items || []), [catalog])
@@ -150,12 +189,16 @@ export default function Catalog() {
   const visibleFamilies = filteredFamilies.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   useEffect(() => {
+    // The filter validation writes the URL in this same commit and drops the
+    // page along with the values it removes; clamping here as well would write
+    // the rejected values straight back.
+    if (unsupported.length) return
     if (page > pageCount) {
       const next = new URLSearchParams(params)
       next.set('page', String(pageCount))
       setParams(next, { replace: true })
     }
-  }, [page, pageCount, params, setParams])
+  }, [page, pageCount, params, setParams, unsupported.length])
 
   /**
    * Turning a page replaced the sixteen cards under the reader without moving
@@ -190,7 +233,10 @@ export default function Catalog() {
     setParams(next, { replace: key === 'q' })
   }
 
-  const clearFilters = () => setParams({})
+  const clearFilters = () => {
+    setRemovedFilters([])
+    setParams({})
+  }
   const hasFilters = Boolean(query || category !== 'All content' || country !== 'All countries' || pathway !== 'All pathways' || product !== 'All products' || year !== 'All years' || sort !== 'newest')
 
   return (
@@ -224,6 +270,12 @@ export default function Catalog() {
               <label><span>Year added</span><select value={year} onChange={(event) => update('year', event.target.value, 'All years')}><option>All years</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
               <label><span>Sort</span><select value={sort} onChange={(event) => update('sort', event.target.value, 'newest')}><option value="newest">Recently added</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
             </div>
+            {removedFilters.length > 0 && (
+              <div className="filter-notice" role="status">
+                <p>{unsupportedFilterMessage(removedFilters)}</p>
+                <button type="button" onClick={() => setRemovedFilters([])}>Dismiss</button>
+              </div>
+            )}
             {error ? <div className="error-state" role="alert"><strong>The public catalog could not be reached.</strong><p>{error}. Check your connection and try again.</p><button type="button" onClick={retry}>Retry</button></div> : !catalog ? <>
               {/* The page shape is drawn immediately rather than behind a
                   spinner, so the reader sees where results will land while the

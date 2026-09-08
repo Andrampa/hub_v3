@@ -3,6 +3,7 @@ import {
   CROSS_COUNTRY_CODE,
   countryDefinition,
   fetchCountryCatalog,
+  isCatalogItemId,
   itemCountryCodes,
   itemHasMultiCountryScope,
   itemHubLink,
@@ -235,5 +236,29 @@ describe('resourcesForCountry', () => {
     } as unknown as CountryCatalog
     expect(resourcesForCountry(catalog, 'ner')).toHaveLength(1)
     expect(resourcesForCountry(catalog, 'NER')[0].id).toBe(id(1))
+  })
+})
+
+/**
+ * The product route renders three different pages from this answer: a valid id
+ * that resolves, a valid id that no longer resolves ("no longer published"),
+ * and an address that was never an id at all. The first two are the same code
+ * path; only this predicate separates the third.
+ */
+describe('isCatalogItemId', () => {
+  it('accepts a 32-character hexadecimal id in either case', () => {
+    expect(isCatalogItemId('499917f1518141209c2a6de55a79d991')).toBe(true)
+    expect(isCatalogItemId('499917F1518141209C2A6DE55A79D991')).toBe(true)
+  })
+
+  it('rejects an address that cannot be an item id', () => {
+    expect(isCatalogItemId('not-an-id')).toBe(false)
+    expect(isCatalogItemId('')).toBe(false)
+    // Truncated by a mail client, and one character too long.
+    expect(isCatalogItemId('499917f1518141209c2a6de55a79d99')).toBe(false)
+    expect(isCatalogItemId('499917f1518141209c2a6de55a79d991a')).toBe(false)
+    // Right length and shape, wrong alphabet.
+    expect(isCatalogItemId('499917g1518141209c2a6de55a79d991')).toBe(false)
+    expect(isCatalogItemId(' 499917f1518141209c2a6de55a79d991')).toBe(false)
   })
 })

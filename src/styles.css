@@ -378,3 +378,50 @@ footer a:hover { color: white; }
   .results-meta { align-items: start; flex-direction: column; gap: 9px; }
 }
 .card-language-only { padding: 3px 7px; border: 1px solid var(--line); border-radius: 2px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; }
+
+/* WCAG 2.2 AA 2.5.8: the language chips measured 55 x 23 px, one pixel under
+   the 24 px minimum target. The row is inline-flex so the extra pixel is taken
+   as height rather than as leading. */
+.card-languages a,
+.country-resource-languages a,
+.card-language-only {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* An unsupported filter arriving in a shared link is removed rather than
+   applied behind a control that shows its default, and says so here. */
+.filter-notice {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--line-soft);
+  border-left: 4px solid var(--orange);
+  background: #fdf6ee;
+}
+.filter-notice p { margin: 0; color: var(--ink); font-size: var(--text-small); }
+.filter-notice button {
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  font-size: var(--text-small);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* The card image is a second link to the destination its title already names.
+   It stays a pointer target and leaves the tab order, so sixteen cards cost
+   sixteen stops rather than thirty-two; the badges it covers stay in the
+   accessibility tree because they sit outside it. */
+.card-media-link { position: absolute; inset: 0; display: block; }
+
+/* The hero <picture> is a delivery wrapper, not a box: the image inside keeps
+   positioning itself against the hero section exactly as it did. */
+.hero-picture { display: contents; }

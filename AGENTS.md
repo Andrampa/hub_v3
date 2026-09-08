@@ -59,7 +59,8 @@ source required to build and deploy the React app: `src/`, the Vite entry HTML,
 TypeScript/Vite configuration, package manifests, Firebase configuration, and
 the deployment GitHub Actions workflow. Do not copy AI/agent context,
 `.agents/`, `AGENTS.md`, `CLAUDE.md`, `CODEX.md`, internal documentation,
-handoff material, local environment files, or generated `dist/` output.
+handoff material, local environment files, `assets-source/` image masters, or
+generated `dist/` output.
 
 The deployment workflow builds the app in GitHub Actions and Firebase publishes
 `dist/`. Before committing there, inspect the diff and verify `npm run build`.

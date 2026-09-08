@@ -4,7 +4,7 @@ import '../data-access.css'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION } from '../services/protectedData'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
@@ -26,7 +26,10 @@ const SECTIONS = [
 ]
 
 export default function DataGuide() {
-  useDocumentTitle('Data access guide')
+  usePageMetadata({
+    title: 'Data access guide',
+    description: 'How to find, download, interpret and cite DIEM monitoring data: what is published, which questionnaire generation produced it, how access is granted, and the required citation. Public guide; the data itself needs a DIEM community account.',
+  })
   const [activeSection, setActiveSection] = useState('about')
 
   useEffect(() => {

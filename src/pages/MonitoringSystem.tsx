@@ -15,7 +15,7 @@ import {
   monitoringDashboardUrl,
   normalizeVisualizationSearch,
 } from '../services/monitoringEmbed'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 // Re-send the token this far before it expires so the embedded dashboard never
 // runs on a dead credential, and never schedule a tighter loop than the floor.
@@ -23,7 +23,10 @@ const AUTH_REFRESH_LEAD_MS = 120_000
 const AUTH_REFRESH_MIN_MS = 30_000
 
 export default function MonitoringSystem() {
-  useDocumentTitle('Household Survey Explorer')
+  usePageMetadata({
+    title: 'Household Survey Explorer',
+    description: 'The full-screen DIEM Household Survey Explorer: compare indicators, countries and monitoring rounds from the household survey series in one interactive application.',
+  })
   const location = useLocation()
   const { status, embedCredential } = useAuth()
   const iframeRef = useRef<HTMLIFrameElement>(null)

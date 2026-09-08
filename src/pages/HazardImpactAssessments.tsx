@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ImpactAtlasMap } from '../components/ImpactAtlasMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import hazardHeroImage from '../assets/heroes/zambia-drought-2024.jpg'
+import { HeroImage } from '../components/HeroImage'
 import { cleanText, formatDate } from '../lib/catalog'
 import { countryDefinition, itemHubLink } from '../services/countries'
 import {
@@ -12,7 +12,7 @@ import {
   type ImpactAssessmentResource,
 } from '../services/impactAssessments'
 import { itemThumbnail } from '../services/arcgis'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 type ResultsView = 'details' | 'timeline'
 const RESULTS_STEP = 18
@@ -49,23 +49,21 @@ function DossierCard({ item, compact = false }: { item: ImpactAssessmentResource
 
   return (
     <article className={`impact-dossier${compact ? ' impact-dossier--compact' : ''}`}>
-      {link.kind === 'product' ? (
-        <Link className="impact-dossier-image" to={link.to} aria-label={`Open ${item.title.trim()}`}>
-          {image}
-          <span className="impact-dossier-shock">{shock}</span>
-        </Link>
-      ) : (
-        <a
-          className="impact-dossier-image"
-          href={link.href}
-          target="_blank"
-          rel="noreferrer"
-          aria-label={`Open ${item.title.trim()}`}
-        >
-          {image}
-          <span className="impact-dossier-shock">{shock}</span>
-        </a>
-      )}
+      {/* One tab stop per card: the image was a second focusable link to the
+          destination "Open assessment" already reaches. It is now an empty
+          overlay, out of the tab order and out of the accessibility tree, and
+          still clickable with a pointer. The shock badge sits outside it, so it
+          stays in the accessibility tree, and the assessment's title moves onto
+          the accessible name of the link that remains. */}
+      <div className="impact-dossier-image">
+        {image}
+        <span className="impact-dossier-shock">{shock}</span>
+        {link.kind === 'product' ? (
+          <Link className="card-media-link" to={link.to} tabIndex={-1} aria-hidden="true" />
+        ) : (
+          <a className="card-media-link" href={link.href} target="_blank" rel="noreferrer" tabIndex={-1} aria-hidden="true" />
+        )}
+      </div>
       <div className="impact-dossier-body">
         <div className="impact-dossier-meta">
           <span>{countryLabel(item)}</span>
@@ -89,10 +87,13 @@ function DossierCard({ item, compact = false }: { item: ImpactAssessmentResource
           ))}
           {item.languages[0] && item.languages[0] !== 'English' && <span>{item.languages[0]}</span>}
         </div>
+        {/* The accessible name leads with the visible words and then names the
+            assessment, so a list of links read out of context is not sixteen
+            identical "Open assessment" entries. */}
         {link.kind === 'product' ? (
-          <Link className="impact-dossier-link" to={link.to}>Open assessment</Link>
+          <Link className="impact-dossier-link" to={link.to} aria-label={`Open assessment: ${item.title.trim()}`}>Open assessment</Link>
         ) : (
-          <a className="impact-dossier-link" href={link.href} target="_blank" rel="noreferrer">
+          <a className="impact-dossier-link" href={link.href} target="_blank" rel="noreferrer" aria-label={`Open assessment: ${item.title.trim()}`}>
             Open assessment <ExternalIcon />
           </a>
         )}
@@ -112,7 +113,10 @@ function latestAssessments(items: ImpactAssessmentResource[]) {
 }
 
 export default function HazardImpactAssessments() {
-  useDocumentTitle('Hazard impact assessments')
+  usePageMetadata({
+    title: 'Hazard impact assessments',
+    description: 'DIEM rapid assessments of how floods, droughts, conflict and other hazards affect agriculture, food security and rural livelihoods, with a shock atlas, per-assessment dossiers and an evidence timeline.',
+  })
   const [catalog, setCatalog] = useState<ImpactAssessmentCatalog>()
   const [error, setError] = useState<string>()
   const [reloadKey, setReloadKey] = useState(0)
@@ -188,7 +192,7 @@ export default function HazardImpactAssessments() {
       <SiteHeader />
       <main id="top" className="impact-page">
         <section className="impact-hero">
-          <img className="impact-hero-image" src={hazardHeroImage} alt="" />
+          <HeroImage name="zambia-drought-2024" className="impact-hero-image" />
           <div className="impact-hero-overlay" />
           <a
             className="impact-hero-credit"

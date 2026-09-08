@@ -173,6 +173,9 @@ export function CatalogSearchBox({
           type="search"
           role="combobox"
           autoComplete="off"
+          // Suggestions appear in the listbox below rather than being written
+          // into the field, which is what "list" states.
+          aria-autocomplete="list"
           aria-expanded={expanded}
           aria-controls={listId}
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}

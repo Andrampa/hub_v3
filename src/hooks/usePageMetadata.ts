@@ -17,6 +17,20 @@ const SOCIAL_IMAGE = 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/9
 /** Marks the tags this hook owns, so cleanup never removes a static one. */
 const OWNED = 'data-page-meta'
 
+/**
+ * The description `index.html` ships, captured before any route overwrites it.
+ *
+ * Meta tags are updated in place rather than removed on unmount, because a
+ * route that replaces them immediately would otherwise flicker. The cost is
+ * that a route with no description of its own used to keep the previous route's
+ * text: navigating from a product page to the 404 left the product's
+ * description describing the 404. Restoring this baseline is the honest answer
+ * for a page that does not describe itself.
+ */
+const BASELINE_DESCRIPTION = typeof document === 'undefined'
+  ? ''
+  : document.head.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+
 export interface PageMetadata {
   /** Undefined while a page is still resolving its subject. */
   title?: string
@@ -85,17 +99,19 @@ export function usePageMetadata({ title, description, structuredData, canonicalP
       return element
     }, (element) => element.setAttribute('href', canonical))
 
-    if (description) {
-      meta('description', description)
-      meta('og:description', description, 'property')
-      meta('twitter:description', description)
+    const effectiveDescription = description || BASELINE_DESCRIPTION
+    if (effectiveDescription) {
+      meta('description', effectiveDescription)
+      meta('og:description', effectiveDescription, 'property')
+      meta('twitter:description', effectiveDescription)
     }
     // Removed rather than set to "index" when a page is indexable again, so a
     // client-side navigation off a withdrawn product does not leave the tag
     // behind on the next route.
-    const robots = document.head.querySelector('meta[name="robots"]')
+    // Only a tag this hook wrote is removed: a robots directive added to
+    // index.html would be a deployment decision, not this route's to undo.
     if (noindex) meta('robots', 'noindex, follow')
-    else robots?.remove()
+    else document.head.querySelector(`meta[name="robots"][${OWNED}]`)?.remove()
 
     meta('og:title', fullTitle, 'property')
     meta('og:url', canonical, 'property')

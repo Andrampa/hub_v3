@@ -1,11 +1,14 @@
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const CONTACT_FORM_URL = 'https://arcg.is/0Df1Ca'
 
 export default function Contact() {
-  useDocumentTitle('Contact us')
+  usePageMetadata({
+    title: 'Contact us',
+    description: 'Contact the FAO Data in Emergencies team about DIEM products, data and community access, flood-service access, or collaboration on monitoring and impact assessment.',
+  })
   return (
     <>
       <SiteHeader />

@@ -4,7 +4,7 @@ import eveExposureImage from '../assets/eve/eve-exposure-model-mozambique.jpg'
 import eveFieldDataImage from '../assets/eve/eve-field-data-madagascar.jpg'
 import eveOverviewImage from '../assets/eve/eve-overview-mozambique.jpg'
 import vistaExplorerImage from '../assets/eve/vista-comparison-explorer.jpg'
-import floodHeroImage from '../assets/heroes/bangladesh-flood-2020.jpg'
+import { HeroImage } from '../components/HeroImage'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 import columbiaLogo from '../assets/partners/columbia-climate-school.png'
 import dfoLogo from '../assets/partners/dartmouth-flood-observatory.png'
@@ -18,7 +18,7 @@ import { SiteHeader } from '../components/SiteHeader'
 import { countryDefinition, itemHubLink } from '../services/countries'
 import { fetchImpactAssessmentCatalog } from '../services/impactAssessments'
 import type { ImpactAssessmentResource } from '../services/impactAssessments'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const EVE_URL = 'https://diem-eve.apps.fao.org/'
 const VISTA_EXPLORER_URL = 'https://fao-oer.projects.earthengine.app/view/vistaproductscomparisonapp'
@@ -180,7 +180,10 @@ function briefMeta(item: ImpactAssessmentResource) {
 }
 
 export default function FloodServices() {
-  useDocumentTitle('Flood services')
+  usePageMetadata({
+    title: 'Flood services',
+    description: 'DIEM flood services: the EVE 2.0 exposure model and field data modes, VISTA satellite products and flood impact assessments, connecting hazard, exposure, observation and field evidence into one traceable workflow.',
+  })
   const [briefs, setBriefs] = useState<ImpactAssessmentResource[]>()
   const [briefsError, setBriefsError] = useState<string>()
   const [reloadKey, setReloadKey] = useState(0)
@@ -205,7 +208,7 @@ export default function FloodServices() {
       <SiteHeader />
       <main className="programme-page">
         <section className="programme-hero programme-hero--flood">
-          <img className="programme-hero-image" src={floodHeroImage} alt="" />
+          <HeroImage name="bangladesh-flood-2020" className="programme-hero-image" />
           <a
             className="programme-hero-credit"
             href="https://commons.wikimedia.org/wiki/File:Flood_of_Bangladesh_01.jpg"

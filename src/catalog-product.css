@@ -114,3 +114,12 @@
 @media (max-width: 720px) {
   .catalog-product-citation { padding: 22px 20px; }
 }
+
+/* The last crumb carries the product's own title, which can run to a full line.
+   It is clipped visually and stays complete in the accessibility tree. */
+.catalog-product-breadcrumb-current {
+  max-width: min(100%, 46ch);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

@@ -23,7 +23,7 @@ import {
   type ProtectedDataResource,
   type ResolvedDataResource,
 } from '../services/protectedData'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
@@ -392,7 +392,10 @@ function GenerationHeader({ id, reference }: { id: DataGeneration; reference: bo
 }
 
 export default function DataAccess() {
-  useDocumentTitle('Data access')
+  usePageMetadata({
+    title: 'Data access',
+    description: 'The DIEM data workspace: aggregated household survey results, administrative reference boundaries, technical documentation and the data API for DIEM community members, with the separate documented route to household-level microdata.',
+  })
   const auth = useAuth()
   const [resources, setResources] = useState<ResolvedDataResource[]>()
   const [copied, setCopied] = useState<string>()

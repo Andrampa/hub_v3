@@ -5,7 +5,8 @@ import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
 import { ADMIN_REFERENCE_DATASET_ID } from '../services/protectedData'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
+import NotFound from './NotFound'
 import { DatasetGeometryMap } from '../components/DatasetGeometryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
@@ -130,13 +131,33 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
 }
 
 export default function DatasetExplorer() {
-  useDocumentTitle('Dataset explorer')
   const { datasetId = '' } = useParams()
   // `/data/grants/<item-id>` opens a temporary grant view rather than a
   // registered dataset. The distinction is only about where the definition
   // comes from: both are authorized by ArcGIS on every request, so a hand-typed
   // grant URL is exactly as harmless as a hand-typed dataset URL.
   const isGrantRoute = useLocation().pathname.startsWith('/data/grants/')
+  /**
+   * An id absent from the protected-data manifest is a dead address, not a
+   * permissions problem: `/data/garbageid` used to render "Sign in to explore
+   * this dataset", so a mistyped link read as something a sign-in would fix.
+   * This says nothing about any id — the manifest is the public list of
+   * registered datasets — and leaves authorization for known ids untouched.
+   * Grant routes are exempt: their ids are temporary views, never registered.
+   */
+  const unknownDataset = !isGrantRoute && !resourceForDataset(datasetId)
+  // Declares `noindex` itself rather than leaving it to the not-found page it
+  // renders: this hook runs after that page's own and would otherwise remove
+  // the tag the child had just set.
+  usePageMetadata({
+    title: unknownDataset ? 'Page not found' : 'Dataset explorer',
+    // Deliberately says nothing about which dataset: the description is written
+    // into the document for anyone, and the workspace itself is authorized.
+    description: unknownDataset
+      ? undefined
+      : 'Filter, preview, map and download a DIEM data resource, and copy the API links needed to query it directly. Available to signed-in DIEM community members with access to the dataset.',
+    noindex: unknownDataset,
+  })
   const [searchParams, setSearchParams] = useSearchParams()
   const auth = useAuth()
   const [definition, setDefinition] = useState<DatasetDefinition>()
@@ -190,7 +211,7 @@ export default function DatasetExplorer() {
     : []
 
   useEffect(() => {
-    if (auth.status !== 'authenticated' || !datasetId) return
+    if (auth.status !== 'authenticated' || !datasetId || unknownDataset) return
     let active = true
     setDefinition(undefined)
     setDefinitionError(undefined)
@@ -216,7 +237,7 @@ export default function DatasetExplorer() {
         if (active) setDefinitionError(error.message)
       })
     return () => { active = false }
-  }, [auth.requestProtected, auth.status, datasetId, isGrantRoute])
+  }, [auth.requestProtected, auth.status, datasetId, isGrantRoute, unknownDataset])
 
   // Keep the country and round filters addressable, so a filtered view can be
   // shared and so a link handed to the dashboard round-trips back unchanged.
@@ -393,6 +414,9 @@ export default function DatasetExplorer() {
     }
   }
 
+  // Ahead of the session check, so a dead address answers the same way whether
+  // or not anyone is signed in.
+  if (unknownDataset) return <NotFound />
   if (auth.status === 'loading') return <><SiteHeader /><main className="dataset-explorer-loading"><span className="loader"/><strong>Checking your DIEM session...</strong></main><SiteFooter/></>
   if (auth.status !== 'authenticated') return <ExplorerGate resourceName={resource?.fallbackTitle || 'this dataset'} />
 

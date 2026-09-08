@@ -309,12 +309,23 @@ async function fetchPage(start: number, query?: string): Promise<GroupSearchResp
 }
 
 /**
+ * Whether a string can be an ArcGIS item id at all.
+ *
+ * A malformed id and a withdrawn product are different answers to the reader:
+ * one address was never valid, the other names a product that was published and
+ * is not any more. The check is exposed so the product route can say which.
+ */
+export function isCatalogItemId(id: string) {
+  return /^[a-f0-9]{32}$/i.test(id)
+}
+
+/**
  * Resolves a product from the live Hub group rather than the catalogue cache.
  * A public ArcGIS item that has left the group must not remain discoverable via
  * a copied Hub URL, even when its item metadata is still public.
  */
 export async function fetchCurrentCatalogProduct(id: string): Promise<CountryResource | undefined> {
-  if (!/^[a-f0-9]{32}$/i.test(id)) return undefined
+  if (!isCatalogItemId(id)) return undefined
   const response = await fetchPage(1, `id:${id}`)
   const exact = response.results.find((item) => item.id.toLowerCase() === id.toLowerCase())
   if (!exact) return undefined

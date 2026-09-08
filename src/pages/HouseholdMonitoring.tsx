@@ -3,10 +3,13 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { MonitoringProducts } from '../components/MonitoringProducts'
 import { SurveyReleases } from '../components/SurveyReleases'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 export default function HouseholdMonitoring() {
-  useDocumentTitle('Surveys catalogue')
+  usePageMetadata({
+    title: 'Surveys catalogue',
+    description: 'DIEM household survey rounds: which countries are in the field, which rounds have been released, and the published briefs, presentations, questionnaires and datasets that belong to each round.',
+  })
   return (
     <>
       <SiteHeader />

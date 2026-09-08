@@ -146,3 +146,7 @@
 @media (prefers-reduced-motion: reduce) {
   .impact-dossier, .impact-dossier-image img, .impact-map-country--covered { transition: none; }
 }
+
+/* Above the card's own gradient pseudo-element, which is painted last and would
+   otherwise swallow the pointer. */
+.impact-dossier-image .card-media-link { z-index: 2; }

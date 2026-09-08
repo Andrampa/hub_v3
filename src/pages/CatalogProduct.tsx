@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
@@ -9,11 +9,13 @@ import { formatDate } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
 import { CITATION_LANGUAGES, citationFor, citationRound, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { itemResourceAction, itemThumbnail } from '../services/arcgis'
-import { countryDefinition, fetchCurrentCatalogProduct, pathwayLabel, type CountryResource } from '../services/countries'
+import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
 
 type ProductState =
   | { status: 'loading' }
   | { status: 'available'; item: CountryResource }
+  /** The address cannot be an ArcGIS item id, so no product was ever here. */
+  | { status: 'invalid' }
   | { status: 'unavailable' }
   | { status: 'error'; message: string }
 
@@ -60,12 +62,20 @@ export default function CatalogProduct() {
   const { itemId = '' } = useParams()
   const { catalog } = useCountryCatalog()
   const [state, setState] = useState<ProductState>({ status: 'loading' })
-  const [copied, setCopied] = useState(false)
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const citationRef = useRef<HTMLParagraphElement>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
 
   useEffect(() => {
     let active = true
     setPreviewOpen(false)
+    // A mistyped or truncated address is not a withdrawal. Both used to render
+    // "no longer published in the DIEM Hub catalogue", which told a reader whose
+    // link was simply cut in half that a product had been removed.
+    if (!isCatalogItemId(itemId)) {
+      setState({ status: 'invalid' })
+      return
+    }
     setState({ status: 'loading' })
     void fetchCurrentCatalogProduct(itemId)
       .then((item) => {
@@ -97,10 +107,13 @@ export default function CatalogProduct() {
    * edited in the content group and the id is not.
    */
   usePageMetadata({
-    title: item?.title || (state.status === 'loading' ? undefined : 'Product unavailable'),
-    // A withdrawn or mistyped product still answers 200, so the tag is what
-    // keeps it out of the index. `follow` because its recovery links are good.
-    noindex: state.status === 'unavailable' || state.status === 'error',
+    title: item?.title || (state.status === 'loading'
+      ? undefined
+      : state.status === 'invalid' ? 'Page not found' : 'Product unavailable'),
+    // A withdrawn, malformed or mistyped product still answers 200, so the tag
+    // is what keeps it out of the index. `follow` because its recovery links
+    // are good.
+    noindex: state.status === 'unavailable' || state.status === 'invalid' || state.status === 'error',
     description: item?.snippet?.trim() || (item ? `A DIEM product published through the DIEM Hub content group in ${formatDate(item.created)}.` : undefined),
     structuredData: item
       ? {
@@ -139,11 +152,30 @@ export default function CatalogProduct() {
     ? DOMPurify.sanitize(item.description, { USE_PROFILES: { html: true } })
     : undefined
 
+  /**
+   * The clipboard is a permission, not a guarantee: it is denied outright in
+   * some browsers and unavailable on an insecure origin, and an unhandled
+   * rejection left the button doing nothing at all. On failure the citation is
+   * selected instead, so the manual copy is one keystroke away, and the button
+   * says which keystroke.
+   */
   const copyCitation = async () => {
     if (!citation) return
-    await navigator.clipboard.writeText(citation)
-    setCopied(true)
-    window.setTimeout(() => setCopied(false), 2200)
+    try {
+      await navigator.clipboard.writeText(citation)
+      setCopyState('copied')
+    } catch {
+      const node = citationRef.current
+      if (node) {
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      }
+      setCopyState('failed')
+    }
+    window.setTimeout(() => setCopyState('idle'), 6000)
   }
 
   const openPreview = () => {
@@ -159,7 +191,12 @@ export default function CatalogProduct() {
           <nav className="catalog-product-breadcrumb" aria-label="Breadcrumb">
             <Link to="/">Home</Link><span aria-hidden="true">/</span>
             <Link to="/catalog">Catalogue</Link><span aria-hidden="true">/</span>
-            <span aria-current="page">Product</span>
+            {/* The last crumb names the product rather than its category. The
+                full title stays in the DOM for assistive technology; the
+                truncation is a CSS ellipsis, not a shortened string. */}
+            <span className="catalog-product-breadcrumb-current" aria-current="page" title={item ? item.title.trim() : undefined}>
+              {item ? item.title.trim() : state.status === 'invalid' ? 'Page not found' : state.status === 'unavailable' ? 'Product unavailable' : 'Product'}
+            </span>
           </nav>
 
           {state.status === 'loading' && (
@@ -173,6 +210,14 @@ export default function CatalogProduct() {
               <span className="kicker">Catalogue unavailable</span>
               <h1>We could not check this product</h1><p>{state.message}</p>
               <button type="button" onClick={() => window.location.reload()}>Try again</button>
+            </section>
+          )}
+          {state.status === 'invalid' && (
+            <section className="catalog-product-status">
+              <span className="kicker">Page not found</span>
+              <h1>This product address is not a valid DIEM Hub link</h1>
+              <p>A product address ends in a 32-character ArcGIS item ID. This one does not, so it was never a product page — the link was probably shortened, wrapped or mistyped in transit.</p>
+              <div><Link to="/catalog">Browse the current catalogue</Link><Link to="/contact">Contact DIEM</Link></div>
             </section>
           )}
           {state.status === 'unavailable' && (
@@ -273,8 +318,13 @@ export default function CatalogProduct() {
                       ))}
                     </div>
                   </div>
-                  <p>{citation}</p>
-                  <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>{copied ? 'Citation copied' : 'Copy citation'}</button>
+                  <p ref={citationRef}>{citation}</p>
+                  <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>
+                    {copyState === 'copied' ? 'Citation copied' : copyState === 'failed' ? 'Copy blocked — press Ctrl+C' : 'Copy citation'}
+                  </button>
+                  <p className="sr-only" role="status">
+                    {copyState === 'copied' ? 'Citation copied to the clipboard.' : copyState === 'failed' ? 'This browser blocked the clipboard. The citation is selected; press Control or Command and C to copy it.' : ''}
+                  </p>
                 </section>
               </div>
 

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { fetchPhotoGalleries, type PhotoGallery } from '../services/photoGalleries'
-import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { usePageMetadata } from '../hooks/usePageMetadata'
 
 function formatGalleryDate(date: Date) {
   return new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(date)
@@ -35,7 +35,10 @@ function GalleryCard({ gallery }: { gallery: PhotoGallery }) {
 }
 
 export default function PhotoGalleries() {
-  useDocumentTitle('Photo galleries')
+  usePageMetadata({
+    title: 'Photo galleries',
+    description: 'Photographs from DIEM field work: how teams and partners collect evidence with farming communities in countries affected by food crises and shocks, drawn from the FAO emergencies albums.',
+  })
   const [galleries, setGalleries] = useState<PhotoGallery[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)

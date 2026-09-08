@@ -50,12 +50,38 @@ search tokenising, the ArcGIS category extractors, and the progressive loader's
 contract. Add to these before changing any of them — two live defects were found
 by writing them, and both were invisible to the type checker.
 
-Two generated files must be regenerated rather than hand-edited:
+Three generated outputs must be regenerated rather than hand-edited:
 
 ```powershell
 node scripts/generate-icons.mjs   # src/icons.css, after adding a bi-* class
 node scripts/vendor-fonts.mjs     # src/assets/fonts, after a theme font change
+npm run optimize:heroes           # src/assets/heroes/*, after a hero change
 ```
+
+## Hero Images
+
+The hero photographs have two homes, and the distinction matters:
+
+- `assets-source/heroes` holds the camera masters (4,000-5,700 px, 9.18 MB
+  together). They are committed, are the input to the optimizer, and are
+  deliberately outside `src` so `scripts/sync-web-repository.ps1` never copies
+  them into the deployment repository.
+- `src/assets/heroes` holds only generated variants — AVIF and WebP at each
+  width in `heroes.json`, plus one JPEG fallback — and they are committed, so a
+  clean checkout builds without running the optimizer.
+
+`src/assets/heroes/heroes.json` is the single source of truth for the widths,
+the fallback width, the encoder quality and each master's pixel dimensions.
+`scripts/optimize_hero_images.mjs` writes exactly what it declares and deletes
+anything else in that directory; `src/components/HeroImage.tsx` reads the same
+file to build its `srcset` and the fallback's intrinsic size, so the two cannot
+drift. To add or resize a hero: put the master in `assets-source/heroes`, record
+it in `heroes.json`, run `npm run optimize:heroes`, and commit the manifest and
+the files it wrote. The optimizer refuses to run if a recorded dimension does not
+match its master. `src/components/HeroImage.test.ts` asserts that every declared
+variant is present on disk.
+
+`sharp` is a pinned devDependency used only by that script.
 
 ## Hub Catalog Category Audit
 

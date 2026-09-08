@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { CountryMap } from '../components/CountryMap'
 import { CountryCoverageMatrix } from '../components/CountryCoverageMatrix'
 import { CountryFlag } from '../components/CountryFlag'
@@ -9,7 +9,18 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
 import { usePageMetadata } from '../hooks/usePageMetadata'
+import { countryMatchesQuery } from '../lib/countryDirectory'
+import {
+  readFilters,
+  stripUnsupportedFilters,
+  unsupportedFilterKey,
+  unsupportedFilterMessage,
+  type FilterSpec,
+  type UnsupportedFilter,
+} from '../lib/catalogFilters'
 import { UNRECORDED_PRODUCT_TYPE } from '../services/countries'
+
+const ALL_REGIONS = 'All regions'
 
 function topTypes(typeCounts: Record<string, number>) {
   return Object.entries(typeCounts)
@@ -20,18 +31,68 @@ function topTypes(typeCounts: Record<string, number>) {
 
 export default function CountryExplorer() {
   const { catalog, error, retry } = useCountryCatalog()
-  const [region, setRegion] = useState('All regions')
+  const [params, setParams] = useSearchParams()
+  const query = params.get('q') || ''
 
   const regions = useMemo(
-    () => ['All regions', ...new Set(catalog?.countries.map((country) => country.region) || [])],
+    () => [ALL_REGIONS, ...new Set(catalog?.countries.map((country) => country.region) || [])],
     [catalog],
   )
+
+  /**
+   * The region is in the URL, so a filtered atlas can be shared and Back
+   * restores it, and it is validated on the same contract as `/catalog`: a
+   * region no country carries is read as "All regions", named to the reader and
+   * dropped, rather than applied behind buttons that all show unpressed.
+   */
+  const filterSpecs = useMemo<FilterSpec[]>(() => [
+    { key: 'region', defaultValue: ALL_REGIONS, allowed: catalog ? regions : undefined },
+  ], [catalog, regions])
+  const { values: filterValues, unsupported } = useMemo(() => readFilters(params, filterSpecs), [filterSpecs, params])
+  const region = filterValues.region
+
+  const [removedFilters, setRemovedFilters] = useState<UnsupportedFilter[]>([])
+  const unsupportedKey = unsupportedFilterKey(unsupported)
+  useEffect(() => {
+    if (!unsupported.length) return
+    setRemovedFilters(unsupported)
+    setParams(stripUnsupportedFilters(params, unsupported), { replace: true })
+    // `unsupported` is rebuilt every render; its contents are the dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unsupportedKey])
+
+  /**
+   * The region drives the atlas and the publication matrix, which are statements
+   * about coverage; the text filter narrows the directory list underneath them.
+   * Searching does not blank the map, because "which countries does DIEM work
+   * in" is not the question the search box is answering.
+   */
   const visibleCountries = useMemo(() => {
     return (catalog?.countries || []).filter((country) => (
-      region === 'All regions' || country.region === region
+      region === ALL_REGIONS || country.region === region
     ))
   }, [catalog, region])
+  const directoryCountries = useMemo(
+    () => visibleCountries.filter((country) => countryMatchesQuery(country, query)),
+    [query, visibleCountries],
+  )
   const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+
+  /**
+   * A region is a destination and gets a history entry; a keystroke is not, and
+   * replaces. Same policy as `/catalog` and the country pages.
+   */
+  const update = (key: string, value: string, defaultValue: string) => {
+    const next = new URLSearchParams(params)
+    if (!value || value === defaultValue) next.delete(key)
+    else next.set(key, value)
+    setParams(next, { replace: key === 'q' })
+  }
+
+  const clearDirectoryFilters = () => {
+    setRemovedFilters([])
+    setParams({})
+  }
 
   usePageMetadata({
     title: 'Countries',
@@ -47,6 +108,21 @@ export default function CountryExplorer() {
     <>
       <SiteHeader />
       <main id="top" className="countries-main">
+        {/* The page's outline began at "H2 Where DIEM works", so neither a
+            screen reader nor a search result had a title for the document. The
+            heading is outside the loading branch so it exists immediately. */}
+        <section className="countries-hero">
+          <div className="countries-hero-inner">
+            <span className="kicker kicker--light">Country evidence</span>
+            <h1>DIEM evidence, <em>country by country.</em></h1>
+            <p>
+              {catalog
+                ? `Monitoring rounds, hazard impact assessments and published evidence for ${catalog.countries.length} countries. Filter the atlas by region, or search the directory by country name or ISO3 code.`
+                : 'Monitoring rounds, hazard impact assessments and published evidence, country by country. Filter the atlas by region, or search the directory by country name or ISO3 code.'}
+            </p>
+          </div>
+        </section>
+
         {!catalog && !error && (
           <section className="country-loading section-wrap" role="status">
             <span className="loader" />
@@ -70,13 +146,19 @@ export default function CountryExplorer() {
                 <div><span className="kicker">Evidence atlas</span><h2 id="atlas-heading">Where DIEM works</h2></div>
                 <p>Highlighted countries have discoverable products categorized in the DIEM Hub content group. Select a country to open its evidence page.</p>
               </div>
-              <div className="region-filters" aria-label="Filter countries by region">
+              {removedFilters.length > 0 && (
+                <div className="filter-notice" role="status">
+                  <p>{unsupportedFilterMessage(removedFilters)}</p>
+                  <button type="button" onClick={() => setRemovedFilters([])}>Dismiss</button>
+                </div>
+              )}
+              <div className="region-filters" role="group" aria-label="Filter countries by region">
                 {regions.map((value) => (
                   <button
                     type="button"
                     key={value}
                     aria-pressed={region === value}
-                    onClick={() => setRegion(value)}
+                    onClick={() => update('region', value, ALL_REGIONS)}
                   >{value}</button>
                 ))}
               </div>
@@ -102,11 +184,24 @@ export default function CountryExplorer() {
             <section className="country-directory section-wrap" aria-labelledby="directory-heading">
               <div className="country-section-heading country-section-heading--directory">
                 <div><span className="kicker">Country directory</span><h2 id="directory-heading">Browse the collection</h2></div>
-                <p><strong>{visibleCountries.length}</strong> countries match your current view.</p>
+                <label className="country-directory-search">
+                  <span>Search countries</span>
+                  <input
+                    type="search"
+                    value={query}
+                    placeholder="Country name or ISO3 code"
+                    aria-describedby="directory-count"
+                    onChange={(event) => update('q', event.target.value, '')}
+                  />
+                </label>
               </div>
-              {visibleCountries.length ? (
+              {/* The count is the search's feedback, so it announces. */}
+              <p className="country-directory-count" id="directory-count" aria-live="polite">
+                <strong>{directoryCountries.length}</strong> {directoryCountries.length === 1 ? 'country matches' : 'countries match'} your current view.
+              </p>
+              {directoryCountries.length ? (
                 <div className="country-grid">
-                  {visibleCountries.map((country) => (
+                  {directoryCountries.map((country) => (
                     <Link className="country-card" to={`/countries/${country.iso3.toLowerCase()}`} key={country.iso3}>
                       <div className="country-card-top"><span>{country.iso3}</span><span>{country.region}</span></div>
                       <h3><CountryFlag iso2={country.iso2} name={country.name} className="country-flag" />{country.name}</h3>
@@ -119,7 +214,22 @@ export default function CountryExplorer() {
                   ))}
                 </div>
               ) : (
-                <div className="empty-state"><strong>No countries are available for this region</strong><p>Select another region to see its country evidence.</p></div>
+                <div className="empty-state">
+                  {/* Says which of the two filters produced nothing, because
+                      "no countries in this region" is wrong and unhelpful when
+                      it was the search term that missed. */}
+                  <strong>
+                    {query
+                      ? `No country matches “${query.trim()}”${region !== ALL_REGIONS ? ` in ${region}` : ''}`
+                      : 'No countries are available for this region'}
+                  </strong>
+                  <p>
+                    {query
+                      ? 'Search by country name or ISO3 code, for example “Niger” or “NER”.'
+                      : 'Select another region to see its country evidence.'}
+                  </p>
+                  <button type="button" onClick={clearDirectoryFilters}>Clear filters</button>
+                </div>
               )}
             </section>
           </>

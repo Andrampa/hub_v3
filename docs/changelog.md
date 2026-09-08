@@ -1,5 +1,133 @@
 # Changelog
 
+## 2026-09-08 - Design review 2026-09-07: hero payload, `/countries` search and route descriptions
+
+Second batch from `docs/design_review_2026-09-07.md`, covering §7.10, §7.14
+item 4, and the hero-image and third-surface items in §7.15 / J6.
+
+- **The three hero photographs are no longer shipped as camera originals.**
+  `bangladesh-flood-2020`, `cyclone-freddy-madagascar-2023` and
+  `zambia-drought-2024` were 4,000–5,700 px JPEGs totalling **9.18 MB** (8.75
+  MiB), served identically to a 375 px phone and a 1440 px desktop.
+  `scripts/optimize_hero_images.mjs` now pre-encodes each to AVIF and WebP at
+  640/1024/1600/2048 plus one JPEG fallback, and the new `HeroImage` component
+  delivers them through `<picture>` with `sizes="100vw"`. Nothing is cropped:
+  the variants keep the source aspect ratio and the framing stays with
+  `object-fit`, so the editorial composition is unchanged. **A page view now
+  fetches one file of 15–29 kB at 640, 39–127 kB at 1024 or 128–262 kB at 2048
+  — between 92 % and 99 % less than before.** The masters moved to
+  `assets-source/heroes`, outside `src` and outside the deployment allowlist in
+  `scripts/sync-web-repository.ps1`, so the deployment repository receives the
+  3.80 MB of variants and not the 9.18 MB of originals. `sharp` is a pinned
+  devDependency and regeneration is `npm run optimize:heroes`; the variants are
+  committed, so a clean checkout builds without running it.
+  `src/assets/heroes/heroes.json` is the single source of the widths, the
+  fallback width, the encoder quality and each master's dimensions, read by both
+  the generator and `HeroImage`, so the two cannot drift; the generator refuses
+  to run against a master whose size disagrees with the manifest and deletes
+  variants the manifest no longer declares. `src/components/HeroImage.test.ts`
+  asserts every declared variant is present.
+- **`/countries` has an `<h1>`.** The outline began at "H2 Where DIEM works", so
+  neither a screen reader nor a search result had a title for the document. The
+  reinstated hero uses the `.countries-hero` styles the stylesheet already
+  carried.
+- **`/countries` has a country search.** A directory of 54 countries had six
+  region buttons and no text filter. The new input matches on country name and
+  ISO3 — accent- and case-insensitive on the name, prefix on the code, exact on
+  ISO2 — and is the tab stop immediately before the cards. Matching is a pure
+  helper, `src/lib/countryDirectory.ts`, with unit tests. The card design is
+  unchanged.
+- **Region is in the URL and validated.** `?region=` round-trips, so a filtered
+  atlas can be shared and Back restores it, and it is checked against the
+  regions the catalogue actually contains using the shared
+  `src/lib/catalogFilters.ts` helper: an unknown region is read as "All
+  regions", dropped from the URL and named in the same dismissible notice
+  `/catalog` uses. History policy matches the rest of the Hub — region buttons
+  push, search keystrokes replace.
+- **The directory's empty state says which filter missed.** "No country matches
+  “zzz” in Africa" with a Clear filters button, rather than "No countries are
+  available for this region" when it was the search term that found nothing.
+  The count line announces (`aria-live="polite"`). The region continues to drive
+  the atlas and the publication matrix, which are statements about coverage; the
+  search narrows the directory beneath them.
+- **One tab stop per assessment card.** The third surface named in the review:
+  the dossier image on `/hazard-impact-assessments` was a second focusable link
+  to the destination "Open assessment" already reaches. It is now an empty
+  overlay, out of the tab order and out of the accessibility tree, still
+  clickable with a pointer; the shock badge stays in the accessibility tree, and
+  the assessment title moved onto the accessible name of the remaining link, so
+  a list of links is no longer sixteen identical "Open assessment" entries.
+- **Nine routes gained their own meta description**, replacing the homepage text
+  they inherited: `/about`, `/contact`, `/data`, `/data/guide`,
+  `/data/:datasetId`, `/flood-services`, `/hazard-impact-assessments`,
+  `/monitoring-system`, `/monitoring` and `/photo-galleries`. Each describes what
+  is on that page; none adds structured data, because none of them describes a
+  single catalogued thing. The dataset explorer's description names no dataset,
+  since it is written into the document for anyone.
+- **A route with no description of its own now restores the `index.html`
+  baseline** instead of keeping the previous route's text: client-side
+  navigation updates meta tags in place, so the 404 reached from a product page
+  used to carry that product's description. `usePageMetadata` also now removes
+  only the `robots` tag it wrote itself. `useDocumentTitle` was deleted: every
+  route calls `usePageMetadata` directly and it had no remaining callers.
+
+## 2026-09-08 - Design review 2026-09-07: URL state, invalid filters and card accessibility
+
+Implements the low-cost recommendations from `docs/design_review_2026-09-07.md`
+§7.11, §7.12, §7.15 and journey J6.
+
+- **Country page state is now in the URL.** Pagination moved from local React
+  state into `useSearchParams`, so page 2 of `/countries/ner` can be shared and
+  reached with Back. History policy matches `/catalog`: typing in the search box
+  replaces the entry, while selects, pathway tiles, product tiles, sorting and
+  page turns each create one. Any filter change drops the page it was counted on,
+  and a page left beyond the last one is corrected in the URL rather than only in
+  the render.
+- **The results heading is brought into view after a pathway or product-tile
+  filter as well as after pagination**, and not on first render, so arriving on a
+  filtered link does not scroll. The tiles sit roughly 500 px above the results
+  they change.
+- **`/countries/:iso3` gained the "No pathway assigned" tile** that `/catalog`
+  already had, with the same filtering behaviour. The Niger tiles summed to 32
+  against a stated 33; they now close. The tile is absent when the count is zero,
+  so it never states a gap that does not exist.
+- **The country results line reads the pathway through `pathwayLabel()`** and
+  carries `aria-live="polite"`. It printed the stored `Seasonal calendar` where
+  every control says "Agricultural calendar", and filtering announced nothing.
+- **Unknown URL filter values no longer apply silently.** `/catalog` and the
+  country page validate `pathway`, `product`/`type`, `country`, `year` and `sort`
+  against the values the controls can currently produce. An unrecognised value is
+  read as the default, removed from the URL, and named in a dismissible
+  `role="status"` notice; the superseded `No pillar assigned` still resolves to
+  `No pathway assigned` rather than being dropped. Validation is suspended until
+  the content group has been read in full, so a value missing from the first page
+  of a progressive load is not mistaken for a value that is gone. New shared
+  helper: `src/lib/catalogFilters.ts`, with unit tests.
+- **A malformed product address is no longer reported as a withdrawal.**
+  `/catalog/not-an-id` said "This product is no longer published", the same page a
+  genuinely withdrawn item gets. Item-id validity is now a named predicate
+  (`isCatalogItemId`), tested, and the two states have separate copy. Both carry
+  `noindex`; live re-resolution and the withdrawal copy for real item IDs are
+  unchanged.
+- **An unknown `/data/:id` shows the Hub's not-found page**, signed in or out,
+  instead of "Sign in to explore this dataset", which read a dead link as a
+  permissions problem. Known IDs keep their named sign-in gate and their
+  authorization behaviour exactly as before; no protected metadata is exposed and
+  temporary grant routes are exempt.
+- **One tab stop per card.** The card image was a second focusable link to the URL
+  the title already links to, costing 32 stops for 16 cards. It is now an empty
+  overlay link, out of the tab order and out of the accessibility tree, still
+  clickable with a pointer. The product-type badge, edition and country text stay
+  in the accessibility tree because they sit outside it. Applied to
+  `CatalogContentCard` and the country resource card.
+- **Smaller fixes.** `aria-autocomplete="list"` on the search combobox; language
+  chips raised to the 24 px minimum target (WCAG 2.2 AA 2.5.8); the product
+  breadcrumb's last crumb now names the product, clipped with a CSS ellipsis and
+  complete in the DOM; `navigator.clipboard.writeText` failures are caught,
+  select the citation and say which keystroke copies it, instead of producing an
+  unhandled rejection and a button that does nothing.
+
+
 ## 2026-09-07 - Install Firebase Function dependencies during deployment
 
 - The manual deployment workflow now installs the separately locked
