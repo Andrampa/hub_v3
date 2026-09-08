@@ -67,14 +67,17 @@ export function ImpactAtlasMap({
   return (
     <>
       <div className="impact-map-wrap">
+        {/* A group, not an image; see CountryMap for why `role="img"` around
+            country links is wrong and what axe reports. */}
         <svg
           className="impact-map"
           viewBox="0 0 960 480"
-          role="img"
-          aria-label={`Living Shock Atlas showing ${countries.length} countries with hazard impact assessments`}
+          role="group"
+          aria-label={`Living Shock Atlas: ${countries.length} countries with hazard impact assessments`}
+          aria-describedby="impact-map-description"
         >
         <title>Living Shock Atlas</title>
-        <desc>Select a highlighted country to filter the assessment dossiers below.</desc>
+        <desc id="impact-map-description">Select a highlighted country to filter the assessment dossiers below.</desc>
         {paths.map(({ iso3, d }) => {
           const summary = countryByIso.get(iso3)
           if (!summary) return <path className="impact-map-country" d={d} key={iso3} />
@@ -83,6 +86,9 @@ export function ImpactAtlasMap({
             <a
               href="#impact-results"
               aria-label={`${summary.name}, ${summary.resourceCount} assessment${summary.resourceCount === 1 ? '' : 's'}`}
+              // The country whose filter is applied, named as such rather than
+              // only drawn differently.
+              aria-current={selected ? 'true' : undefined}
               key={iso3}
               onClick={() => onSelect(iso3)}
               onMouseEnter={() => setHoveredIso(iso3)}

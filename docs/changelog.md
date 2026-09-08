@@ -1,5 +1,71 @@
 # Changelog
 
+## 2026-09-08 - Design review 2026-09-07: accessibility findings and the mobile journey
+
+Third batch: the three accessibility defects the previous batch's axe pass
+found, plus the two mobile-length items from §7.10 and J3.
+
+- **The skip link had no target on ten routes.** `/about`, `/contact`, `/data`,
+  `/data/guide`, `/flood-services`, `/monitoring-system`, `/monitoring`,
+  `/photo-galleries`, `/data/:datasetId` and the 404 had no `id="top"`, so
+  `href="#top"` pointed at nothing; only the JavaScript handler saved it, and
+  only for a mouse. Every top-level `<main>` now carries the same target, and
+  `/catalog/:id`'s divergent `id="main-content"` joins the convention. Keyboard
+  activation moves focus into `<main>` on every public route.
+- **Both interactive maps declared their own links presentational.** `CountryMap`
+  and `ImpactAtlasMap` were `role="img"` wrapped around 51 and 43 country links
+  — the role tells assistive technology the subtree is a picture, which is
+  exactly the opposite of what those links are, and axe reported
+  `nested-interactive` at serious impact. They are now `role="group"` with an
+  `aria-label` naming the map and its coverage and an `aria-describedby` pointing
+  at the existing `<desc>`. Every country stays keyboard reachable with its own
+  name ("Chad, 36 products"); hover, focus, the live caption, selection, the
+  dimmed-region treatment and the disclaimer are untouched. The selected country
+  in the atlas now also carries `aria-current`.
+- **`/catalog` skipped from `h1` to the card `h3`s.** The results are now their
+  own `<section>` labelled by a visually hidden `<h2>` "Catalogue results",
+  rendered in every state — loading, populated, filtered and empty — so the
+  outline does not change shape while the group is being read. The heading is
+  hidden rather than shown because the results line beneath it already says the
+  same thing in numbers.
+
+- **`/catalog` gains a mobile filter disclosure.** Six stacked controls took
+  522 px of an 812 px screen and pushed the first card to y=1397. Below 620 px
+  the five filters and the sort move behind one "Filters" control that carries
+  the number applied; the search box stays beside it, because searching is why
+  most readers arrive. Collapsed, the applied filters appear as removable chips
+  in the words the controls use — `pathwayLabel()` and "No pathway assigned"
+  included — each with its own removal name ("Remove country filter: Niger"),
+  beside a "Clear all filters" action. Opening, closing, removing a chip and
+  clearing all follow the established URL and history policy; the disclosure's
+  own open/closed state is deliberately not in the URL. Disclosure, selects,
+  chip removals and the clear action are all at least 44 px. The invalid-filter
+  notice and progressive catalogue loading are unchanged, and the desktop layout
+  is exactly as it was. **The first card now begins at y=1033 instead of 1450.**
+  Sorting is summarised there too: a non-default sort produces its own chip in
+  the words the control uses ("Oldest first", "Title A–Z"), counted in the
+  badge, and its control offers "Reset sort: Oldest first" rather than removing
+  a filter, because sorting by title excludes nothing. The default "Recently
+  added" produces no chip, the visible search box stays out of the count, and
+  "Clear all filters" resets the search, the filters and the sort together.
+- **`/countries` opens at twelve cards on a narrow screen.** The directory was
+  54 cards and about 17,600 px of the page's 21,300 px at 375 px. Below 720 px
+  it renders one batch and a "Show 12 more countries" control that names how many
+  it will add; the last press offers only what is left. Filtering always runs
+  against all 54, so a search reaches a country that has not been revealed and a
+  result set that fits the first batch is shown whole — "yem" returns Yemen with
+  no control at all. The count distinguishes "Showing 12 of 54" from "54 match",
+  the reveal resets when the region or the search changes, and it is not in the
+  URL. Desktop still renders the full directory. **The page is 7,959 px at
+  375 px, down from 21,334.**
+
+Region continues to drive the atlas, the coverage matrix and the directory,
+while the text search continues to narrow only the directory.
+
+axe-core 4.10.2 now reports **zero violations** on `/about`, `/catalog`
+(desktop, and mobile with the panel open and closed), `/countries` and
+`/hazard-impact-assessments`.
+
 ## 2026-09-08 - Design review 2026-09-07: hero payload, `/countries` search and route descriptions
 
 Second batch from `docs/design_review_2026-09-07.md`, covering §7.10, §7.14

@@ -186,7 +186,7 @@ export default function CatalogProduct() {
   return (
     <>
       <SiteHeader />
-      <main className="catalog-product-page" id="main-content">
+      <main id="top" className="catalog-product-page">
         <div className="section-wrap">
           <nav className="catalog-product-breadcrumb" aria-label="Breadcrumb">
             <Link to="/">Home</Link><span aria-hidden="true">/</span>

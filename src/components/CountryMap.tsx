@@ -65,14 +65,20 @@ export function CountryMap({
   return (
     <>
       <div className="country-map-wrap">
+        {/* A group, not an image. Every highlighted country inside is a link, and
+            `role="img"` declares its children presentational: assistive
+            technology was told to ignore exactly the things it can operate, and
+            axe reported it as nested-interactive. `group` keeps one named
+            container around the set while leaving the links addressable. */}
         <svg
           className="country-map"
           viewBox="0 0 960 480"
-          role="img"
-          aria-label={`World map showing ${mappedCount} of ${countries.length} countries with DIEM resources`}
+          role="group"
+          aria-label={`World map of DIEM countries: ${mappedCount} of ${countries.length} highlighted`}
+          aria-describedby="country-map-description"
         >
         <title>Countries covered by DIEM</title>
-        <desc>Covered countries with geometry at this map scale are highlighted. Use the complete country directory below for keyboard navigation and small island states.</desc>
+        <desc id="country-map-description">Covered countries with geometry at this map scale are highlighted. Use the complete country directory below for keyboard navigation and small island states.</desc>
         {paths.map(({ iso3, d }) => {
           const summary = summaryByIso.get(iso3)
           const isVisible = !visibleIso || visibleIso.has(iso3)

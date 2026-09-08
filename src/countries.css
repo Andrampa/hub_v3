@@ -411,9 +411,28 @@
 .country-directory-search > span { color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 .country-directory-search input { min-height: 44px; padding: 10px 13px; border: 1px solid var(--line); background: white; color: var(--ink); font-size: var(--text-small); }
 .country-directory-search input:focus-visible { border-color: var(--fao-blue); outline: 2px solid var(--fao-blue); outline-offset: 1px; }
-.country-directory-count { margin: 0 0 18px; color: var(--ink-faint); font-size: 13px; }
-.country-directory-count strong { color: var(--deep-blue); font-size: 18px; }
+.country-directory-count { margin: 0 0 18px; color: var(--deep-blue); font-size: 14px; font-weight: 700; }
 
 @media (max-width: 720px) {
   .country-directory-search { width: 100%; }
+}
+
+/* Progressive directory reveal. 44 px target, full width on a phone so the
+   control is where the thumb already is after scrolling the cards. */
+.country-directory-more {
+  min-height: 48px;
+  margin-top: 20px;
+  padding: 13px 22px;
+  width: 100%;
+  border: 1px solid var(--deep-blue);
+  background: white;
+  color: var(--deep-blue);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.country-directory-more:hover, .country-directory-more:focus-visible { background: var(--deep-blue); color: white; }
+
+@media (min-width: 721px) {
+  .country-directory-more { width: auto; }
 }

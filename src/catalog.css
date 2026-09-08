@@ -194,3 +194,91 @@
 /* Wider than its filter cell so product titles are readable, but never wider
    than the viewport: min-width would beat max-width, so one width does both. */
 .hero-suggestions--inline { top: calc(100% + 4px); left: 0; right: auto; width: max(100%, min(380px, calc(100vw - 48px))); box-shadow: 0 14px 34px rgba(5, 55, 83, .18); }
+
+/* Mobile filter disclosure
+   ------------------------
+   Six stacked controls took 522 px of an 812 px screen and pushed the first
+   card to y=1397. Below 620 px the structured filters move behind one control
+   that states how many are applied; the search box stays beside it. */
+.catalog-filter-bar--compact { grid-template-columns: 1fr; }
+.catalog-filter-disclosure { background: white; }
+.catalog-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 0;
+  background: white;
+  color: var(--deep-blue);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.catalog-filter-toggle .bi { font-size: 15px; }
+/* The chevron states the disclosure's direction without a second icon file. */
+.catalog-filter-toggle::after { content: '⌄'; margin-left: auto; font-size: 16px; line-height: 1; transform: translateY(-3px); transition: transform .15s ease; }
+.catalog-filter-toggle[aria-expanded="true"]::after { transform: translateY(1px) rotate(180deg); }
+.catalog-filter-count {
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 11px;
+  background: var(--orange);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.catalog-filter-panel { display: grid; grid-template-columns: 1fr; gap: 1px; padding-top: 1px; background: var(--line); }
+/* 44 px minimum target on every control inside the panel: the desktop bar's
+   19 px selects are the defect this replaces. */
+.catalog-filter-panel label { height: auto; min-height: 72px; padding: 12px 16px; background: white; }
+.catalog-filter-panel select { min-height: 44px; font-size: 15px; }
+
+.catalog-active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -22px 0 22px; }
+.catalog-active-filters ul { display: contents; margin: 0; padding: 0; list-style: none; }
+.catalog-active-filters li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  padding: 0 2px 0 14px;
+  border: 1px solid #c6dbe1;
+  border-radius: 22px;
+  background: white;
+  color: var(--deep-blue);
+  font-size: 13px;
+  font-weight: 700;
+}
+.catalog-active-filters li button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-muted);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+.catalog-active-filters li button:hover, .catalog-active-filters li button:focus-visible { background: var(--mist); color: var(--deep-blue); }
+.catalog-clear-all {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fao-blue);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.catalog-clear-all:hover, .catalog-clear-all:focus-visible { border-color: var(--fao-blue); background: white; }
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-filter-toggle::after { transition: none; }
+}

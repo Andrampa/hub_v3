@@ -97,3 +97,63 @@ export function unsupportedFilterMessage(unsupported: UnsupportedFilter[]) {
 export function unsupportedFilterKey(unsupported: UnsupportedFilter[]) {
   return unsupported.map(({ key, value }) => `${key}=${value}`).join('&')
 }
+
+/**
+ * One applied filter, described for a chip the reader can remove.
+ *
+ * The collapsed mobile filter panel has to say what is applied without the
+ * controls being on screen, and it has to say it in the same words the controls
+ * use: the pathway stored as "Seasonal calendar" is "Agricultural calendar"
+ * everywhere a reader sees it, and a country is a name, not an ISO3 code. The
+ * caller supplies those display strings; this module only decides what counts
+ * as applied and how the removal is named.
+ */
+export interface ActiveFilterInput {
+  /** Search-param name, so removal is a plain param delete. */
+  key: string
+  /** The control's own caption: "Country", "Evidence pathway". */
+  label: string
+  value: string
+  defaultValue: string
+  /** What the reader sees. Defaults to the stored value. */
+  display?: string
+  /**
+   * An ordering control rather than a filter, so its chip offers to reset it
+   * rather than to remove it. Sorting by title does not exclude anything, and
+   * "Remove sort filter" would describe an action the control does not perform.
+   */
+  resets?: boolean
+}
+
+export interface ActiveFilter {
+  key: string
+  label: string
+  value: string
+  display: string
+  defaultValue: string
+  /** Accessible name for the chip's remove control. */
+  removeLabel: string
+}
+
+export function activeFilters(inputs: ActiveFilterInput[]): ActiveFilter[] {
+  return inputs
+    .filter(({ value, defaultValue }) => Boolean(value) && value !== defaultValue)
+    .map(({ key, label, value, defaultValue, display, resets }) => ({
+      key,
+      label,
+      value,
+      defaultValue,
+      display: display || value,
+      // "Remove country filter: Niger" rather than a row of identical
+      // "Remove" buttons, which is what a screen reader would otherwise read
+      // out five times.
+      removeLabel: resets
+        ? `Reset ${label.toLowerCase()}: ${display || value}`
+        : `Remove ${label.toLowerCase()} filter: ${display || value}`,
+    }))
+}
+
+/** What the disclosure control counts, so "Filters (2)" matches the chips. */
+export function activeFilterCount(inputs: ActiveFilterInput[]) {
+  return activeFilters(inputs).length
+}

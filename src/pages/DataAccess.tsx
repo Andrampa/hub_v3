@@ -253,7 +253,7 @@ function SignInGate() {
   const auth = useAuth()
   const reference = GENERATIONS[REFERENCE_GENERATION]
   return (
-    <main className="data-gate">
+    <main id="top" className="data-gate">
       <section className="data-gate-hero">
         <div className="data-gate-content section-wrap">
           <div className="data-gate-copy">
@@ -464,7 +464,7 @@ export default function DataAccess() {
   return (
     <>
       <SiteHeader />
-      <main className="data-page">
+      <main id="top" className="data-page">
         <section className="data-workspace-hero">
           <div className="section-wrap">
             <div className="data-workspace-heading">

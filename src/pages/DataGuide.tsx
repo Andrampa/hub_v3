@@ -54,7 +54,7 @@ export default function DataGuide() {
   return (
     <>
       <SiteHeader />
-      <main className="guide-page">
+      <main id="top" className="guide-page">
         <section className="guide-hero">
           <div className="section-wrap">
             <span className="eyebrow"><span/> Data access guide</span>

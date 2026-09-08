@@ -64,7 +64,7 @@ export default function PhotoGalleries() {
   return (
     <>
       <SiteHeader />
-      <main className="gallery-page">
+      <main id="top" className="gallery-page">
         <section className="gallery-hero">
           <div className="section-wrap">
             <span className="eyebrow"><span /> DIEM in the field</span>

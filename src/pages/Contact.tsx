@@ -12,7 +12,7 @@ export default function Contact() {
   return (
     <>
       <SiteHeader />
-      <main className="contact-page">
+      <main id="top" className="contact-page">
         <section className="contact-hero">
           <div className="section-wrap">
             <span className="eyebrow"><span /> Contact DIEM</span>

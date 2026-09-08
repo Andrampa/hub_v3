@@ -13,7 +13,7 @@ export default function HouseholdMonitoring() {
   return (
     <>
       <SiteHeader />
-      <main className="household-monitoring-page">
+      <main id="top" className="household-monitoring-page">
         <section className="household-explorer-banner" aria-labelledby="household-explorer-heading">
           <div className="section-wrap">
             <div>

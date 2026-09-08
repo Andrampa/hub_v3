@@ -9,7 +9,13 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
 import { usePageMetadata } from '../hooks/usePageMetadata'
-import { countryMatchesQuery } from '../lib/countryDirectory'
+import {
+  DIRECTORY_REVEAL_STEP,
+  countryMatchesQuery,
+  directoryCountLabel,
+  directoryReveal,
+} from '../lib/countryDirectory'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   readFilters,
   stripUnsupportedFilters,
@@ -77,6 +83,23 @@ export default function CountryExplorer() {
     [query, visibleCountries],
   )
   const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+
+  /**
+   * The directory is 54 cards and about 17,600 px tall at 375 px — some 21
+   * screen-heights below the atlas. On a narrow screen it opens at one batch and
+   * grows on request.
+   *
+   * Filtering always runs against every country, never against the revealed
+   * slice, so a search reaches a country the reader has not scrolled to; a set
+   * small enough to fit the first batch is shown whole, so an exact match is
+   * never behind a press. Reveal state is deliberately not in the URL: how much
+   * of a list someone has scrolled through is not part of what they share.
+   */
+  const isCompact = useMediaQuery('(max-width: 720px)')
+  const [revealed, setRevealed] = useState(DIRECTORY_REVEAL_STEP)
+  useEffect(() => setRevealed(DIRECTORY_REVEAL_STEP), [region, query])
+  const reveal = directoryReveal(directoryCountries.length, isCompact ? revealed : directoryCountries.length)
+  const shownCountries = directoryCountries.slice(0, reveal.visibleCount)
 
   /**
    * A region is a destination and gets a history entry; a keystroke is not, and
@@ -195,13 +218,16 @@ export default function CountryExplorer() {
                   />
                 </label>
               </div>
-              {/* The count is the search's feedback, so it announces. */}
+              {/* The count is the search's feedback, so it announces — and it
+                  distinguishes what matches from what is on screen, because a
+                  reader who cannot see the rest has no way to tell a short list
+                  from a truncated one. */}
               <p className="country-directory-count" id="directory-count" aria-live="polite">
-                <strong>{directoryCountries.length}</strong> {directoryCountries.length === 1 ? 'country matches' : 'countries match'} your current view.
+                {directoryCountLabel(directoryCountries.length, reveal.visibleCount)}
               </p>
               {directoryCountries.length ? (
                 <div className="country-grid">
-                  {directoryCountries.map((country) => (
+                  {shownCountries.map((country) => (
                     <Link className="country-card" to={`/countries/${country.iso3.toLowerCase()}`} key={country.iso3}>
                       <div className="country-card-top"><span>{country.iso3}</span><span>{country.region}</span></div>
                       <h3><CountryFlag iso2={country.iso2} name={country.name} className="country-flag" />{country.name}</h3>
@@ -213,7 +239,17 @@ export default function CountryExplorer() {
                     </Link>
                   ))}
                 </div>
-              ) : (
+              ) : null}
+              {reveal.hasMore && (
+                <button
+                  type="button"
+                  className="country-directory-more"
+                  onClick={() => setRevealed((current) => current + DIRECTORY_REVEAL_STEP)}
+                >
+                  Show {reveal.nextBatch} more {reveal.nextBatch === 1 ? 'country' : 'countries'}
+                </button>
+              )}
+              {!directoryCountries.length && (
                 <div className="empty-state">
                   {/* Says which of the two filters produced nothing, because
                       "no countries in this region" is wrong and unhelpful when

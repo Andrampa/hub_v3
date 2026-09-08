@@ -27,7 +27,7 @@ export default function AboutDiem() {
   return (
     <>
       <SiteHeader />
-      <main className="about-page">
+      <main id="top" className="about-page">
         <section className="about-hero">
           <HeroImage name="zambia-drought-2024" className="about-hero-image" alt="Dry agricultural fields illustrating the conditions DIEM evidence helps assess" />
           <div className="about-hero-overlay" />

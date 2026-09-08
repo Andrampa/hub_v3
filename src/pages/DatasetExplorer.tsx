@@ -118,7 +118,7 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
   return (
     <>
       <SiteHeader />
-      <main className="dataset-explorer-gate section-wrap">
+      <main id="top" className="dataset-explorer-gate section-wrap">
         <span className="kicker">Protected data explorer</span>
         <h1>Sign in to explore {resourceName}.</h1>
         <p>Filters, preview records, API links and downloads are available only to enabled DIEM community members with access to this dataset.</p>
@@ -425,7 +425,7 @@ export default function DatasetExplorer() {
   return (
     <>
       <SiteHeader />
-      <main className="dataset-explorer">
+      <main id="top" className="dataset-explorer">
         <header className="dataset-explorer-header">
           <div className="section-wrap">
             <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><span>Dataset explorer</span></nav>
