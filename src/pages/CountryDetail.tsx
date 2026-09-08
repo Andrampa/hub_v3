@@ -28,7 +28,7 @@ import {
   itemLanguage,
   type ProductFamily,
 } from '../lib/productFamilies'
-import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex, distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
+import { buildDistinctThumbnailIndex, distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
 import {
   fetchCountryEditorial,
   type CountryEditorialContent,
@@ -470,7 +470,6 @@ export default function CountryDetail() {
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">
                 <div><span className="kicker">Evidence collection</span><h2 id="products-heading">Choose a product</h2></div>
-                <p>Product classifications are maintained in the DIEM Hub content group.</p>
               </div>
               {pathwayCounts.size > 0 && (
                 <div className="country-pathway-filter" role="group" aria-label="Filter by evidence pathway">
@@ -505,7 +504,6 @@ export default function CountryDetail() {
               <div className="section-wrap">
                 <div className="country-section-heading country-section-heading--library">
                   <div><span className="kicker">Resource library</span><h2>Find country evidence</h2></div>
-                  <a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}#content`} target="_blank" rel="noreferrer">View source group ↗</a>
                 </div>
                 <div className="country-filter-bar">
                   <label className="country-filter-search"><span>Search</span><input type="search" placeholder={`Search ${definition.name}`} value={query} onChange={(event) => setFilter('q', event.target.value, '')} /></label>

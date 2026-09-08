@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-08 - Remove content-group references from the country page
+
+- Dropped the "View source group" link from the resource library heading and the
+  line about product classifications being maintained in the DIEM Hub content
+  group. Both pointed editors-only detail at public visitors.
+
 ## 2026-09-08 - Add a shareable guide for current editors
 
 - Added `docs/editor_guide_current.md`, limited to editorial actions available
