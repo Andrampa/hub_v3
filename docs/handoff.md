@@ -9,12 +9,15 @@ enabled Gen 2 Function deployment or configured `DIEM_ARCGIS_ADMIN_CLIENT_ID`
 and `DIEM_ARCGIS_ADMIN_CLIENT_SECRET`, and `firebase deploy --only
 hosting,functions` fails without them.
 
-Two changes, both in `fao-oer-diem-hub`, neither in this repository:
+Three changes:
 
 - `.github/workflows/manual_deploy.yml` — `firebase deploy ... --only hosting`
   instead of `--only hosting,functions`.
 - `firebase.json` — the `/api/microdata/invitations/validate` rewrite was
   removed, so the path is not routed at a function that is not deployed.
+- `scripts/sync-web-repository.ps1` (this repository) — the same two edits in
+  the embedded templates, which regenerate both files on every sync and would
+  otherwise silently restore them.
 
 No frontend change was needed. `fetchPendingGrantInvitations` already treats the
 server projection as an enhancement: when the validator fails, an invitation to
@@ -27,7 +30,8 @@ grant groups.
 
     git revert 6e92caf5   # chore(deploy): deploy hosting only while ArcGIS secrets are pending
 
-then re-run Manual Deploy and verify `POST /api/microdata/invitations/validate`
+and revert the matching sync-script template edits (commit 4a7abf1) here, then
+re-run Manual Deploy and verify `POST /api/microdata/invitations/validate`
 returns JSON rather than the SPA shell.
 
 
