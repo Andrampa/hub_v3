@@ -19,15 +19,26 @@
 }
 
 a.hub-area-card {
+  text-decoration: none;
   transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 
+/* The whole card is one link, so the theme's global a:hover underline would
+   strike the kicker, title, body copy and Explore all at once. The border,
+   shadow and lift carry the hover state; only the title takes an underline. */
 a.hub-area-card:hover,
 a.hub-area-card:focus-visible {
   border-color: var(--fao-blue);
   color: #545454;
+  text-decoration: none;
   box-shadow: 0 12px 28px rgba(28, 71, 103, .12);
   transform: translateY(-3px);
+}
+
+a.hub-area-card:hover h3,
+a.hub-area-card:focus-visible h3 {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .hub-area-image {
