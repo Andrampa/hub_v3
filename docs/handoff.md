@@ -1,38 +1,27 @@
 # Handoff
 
-## MUST BE REVERTED: hosting-only deploy while ArcGIS secrets are pending
+## Resolved: hosting-only deploy fallback has been reverted
 
-On 2026-09-08 the deployment repository `C:\git\fao-oer-diem-hub` was changed to
-deploy **Hosting only**, so that the rest of the Hub could be published while
-the Firebase Function secrets were still unavailable. CSI (Eugenio) had not yet
-enabled Gen 2 Function deployment or configured `DIEM_ARCGIS_ADMIN_CLIENT_ID`
-and `DIEM_ARCGIS_ADMIN_CLIENT_SECRET`, and `firebase deploy --only
-hosting,functions` fails without them.
+On 2026-09-08 the deploy was briefly reduced to
+Hosting only because the Firebase Gen 2 Function secrets did not exist. CSI
+(Eugenio) reported the configuration under way, and the fallback was reverted:
 
-Three changes:
+- `fao-oer-diem-hub` 7b5c8fcd reverts 6e92caf5 — `--only hosting,functions` and
+  the `/api/microdata/invitations/validate` rewrite are both back.
+- This repository 9815912 reverts 4a7abf1 — the `scripts/sync-web-repository.ps1`
+  templates that regenerate those two files are back in their normal form. A
+  clean re-run of the sync afterwards produced no drift, which is the check that
+  the two repositories agree.
 
-- `.github/workflows/manual_deploy.yml` — `firebase deploy ... --only hosting`
-  instead of `--only hosting,functions`.
-- `firebase.json` — the `/api/microdata/invitations/validate` rewrite was
-  removed, so the path is not routed at a function that is not deployed.
-- `scripts/sync-web-repository.ps1` (this repository) — the same two edits in
-  the embedded templates, which regenerate both files on every sync and would
-  otherwise silently restore them.
+**Not yet verified against a live deploy.** The secrets
+`DIEM_ARCGIS_ADMIN_CLIENT_ID` and `DIEM_ARCGIS_ADMIN_CLIENT_SECRET` were being
+configured while this revert was made, and no deployment has been run since. If
+Manual Deploy fails on a missing secret, CSI has not finished; re-apply the
+fallback by reverting the two reverts rather than inventing a new one.
 
-No frontend change was needed. `fetchPendingGrantInvitations` already treats the
-server projection as an enhancement: when the validator fails, an invitation to
-an unreadable private group stays `unverified` and the dialog sends the
-recipient to their ArcGIS notifications. Nothing errors and nothing is hidden.
-The only lost capability is the in-Hub accept button for invitations to private
-grant groups.
-
-**To undo once CSI confirms the secrets exist**, in `fao-oer-diem-hub`:
-
-    git revert 6e92caf5   # chore(deploy): deploy hosting only while ArcGIS secrets are pending
-
-and revert the matching sync-script template edits (commit 4a7abf1) here, then
-re-run Manual Deploy and verify `POST /api/microdata/invitations/validate`
-returns JSON rather than the SPA shell.
+After a successful deploy, confirm that
+`POST /api/microdata/invitations/validate` answers with JSON rather than the SPA
+shell, then run the acceptance test described in the section below.
 
 
 ## Pending deployment: direct temporary-microdata invitation validation
