@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-09 - Show the complete homepage search suggestions
+
+- Removed the homepage hero's overflow crop so the existing autocomplete list
+  can overlay the following section. The search still returns its intentionally
+  bounded, ranked set, but later suggestions and the “See all results” action
+  are no longer hidden below the hero edge.
+
 ## 2026-09-09 - Remove false bars from flood assessment cards
 
 - Made each flood-assessment link fill its complete grid cell. The grey grid

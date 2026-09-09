@@ -95,6 +95,11 @@ a.hub-area-card:focus-visible h3 {
 .featured-evidence .section-heading > a { align-self: end; color: var(--fao-blue); font-size: .82rem; font-weight: 700; }
 .featured-evidence-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 
+/* The image and overlay are already constrained to the hero's bounds. Let the
+   suggestion list extend over the following section instead of clipping its
+   final rows at the hero edge. */
+.hero { overflow: visible; }
+
 /* The suggestion list overlays the hero image, so it owns a stacking context. */
 .hero-search-wrap { position: relative; z-index: 3; width: min(640px, 100%); }
 .hero-suggestions {
