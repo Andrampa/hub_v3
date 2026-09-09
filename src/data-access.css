@@ -16,7 +16,7 @@
 .data-gate-actions a { display: inline-flex; align-items: center; gap: 8px; color: #b9d7de; font-size: 12px; font-weight: 700; }
 .data-gate-note { display: flex; align-items: center; gap: 9px; margin-top: 27px; font-size: var(--text-small) !important; }
 .data-gate-note svg { color: #71c29a; }
-.data-gate-preview { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid rgba(255,255,255,.45); background: rgba(28,71,103,.75); }
+.data-gate-preview { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid rgba(255,255,255,.45); background: rgba(9, 52, 79, .96); }
 .data-gate-preview > div { position: relative; min-height: 165px; padding: 30px 24px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,.12); border-bottom: 1px solid rgba(255,255,255,.12); }
 .data-gate-preview > div:nth-child(even) { border-right: 0; }
 .data-gate-preview > div:nth-child(n+3) { border-bottom: 0; }
@@ -465,3 +465,11 @@
   .grant-views li { flex-direction: column; align-items: stretch; gap: 10px; }
   .grant-views li .data-resource-action { margin-left: 0; }
 }
+
+/* The gate and workspace bands carry the same hero photograph as
+   /monitoring-system, with the navy laid over it as a translucent wash. */
+.data-hero-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 50%; }
+.data-gate-hero::before, .data-workspace-hero::before { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(120deg, rgba(2, 48, 72, .90) 0%, rgba(2, 48, 72, .76) 52%, rgba(5, 66, 101, .60) 100%); }
+.data-gate-content { z-index: 2; }
+.data-workspace-hero { position: relative; }
+.data-workspace-hero > div { position: relative; z-index: 2; }

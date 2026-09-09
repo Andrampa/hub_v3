@@ -4,6 +4,8 @@ import '../data-access.css'
 import { useAuth } from '../auth/AuthContext'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import { TemporaryMicrodataGrants } from '../components/TemporaryMicrodataGrants'
 import { formatDate } from '../lib/catalog'
 import {
@@ -255,6 +257,8 @@ function SignInGate() {
   return (
     <main id="top" className="data-gate">
       <section className="data-gate-hero">
+        <HeroImage name="drc-ndjili-market-gardens-2025" className="data-hero-image" />
+        <HeroCredit name="drc-ndjili-market-gardens-2025" />
         <div className="data-gate-content section-wrap">
           <div className="data-gate-copy">
             <span className="eyebrow"><span/> DIEM Household Monitoring System Data</span>
@@ -466,6 +470,8 @@ export default function DataAccess() {
       <SiteHeader />
       <main id="top" className="data-page">
         <section className="data-workspace-hero">
+          <HeroImage name="drc-ndjili-market-gardens-2025" className="data-hero-image" />
+          <HeroCredit name="drc-ndjili-market-gardens-2025" />
           <div className="section-wrap">
             <div className="data-workspace-heading">
               <span className="eyebrow"><span/> Authenticated data workspace</span>

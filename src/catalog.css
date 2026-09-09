@@ -282,3 +282,12 @@
 @media (prefers-reduced-motion: reduce) {
   .catalog-filter-toggle::after { transition: none; }
 }
+
+/* Hero photograph: DIEM field team on the Ndjili riverbank. It was chosen for
+   the '#DataInEmergencies' print on the shirt, which sits at 57-61% of the
+   master height and 50-68% of its width, so the crop is pinned to that band and
+   the blue is laid over as a translucent wash rather than a fill. */
+.catalog-hero { position: relative; overflow: hidden; }
+.catalog-hero-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 63%; }
+.catalog-hero::before { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(120deg, rgba(2, 48, 72, .90) 0%, rgba(2, 48, 72, .74) 48%, rgba(5, 66, 101, .52) 100%); }
+.catalog-hero .section-wrap { position: relative; z-index: 2; }

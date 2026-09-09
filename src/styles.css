@@ -425,3 +425,9 @@ footer a:hover { color: white; }
 /* The hero <picture> is a delivery wrapper, not a box: the image inside keeps
    positioning itself against the hero section exactly as it did. */
 .hero-picture { display: contents; }
+
+/* Full-bleed hero photograph and its attribution. The photograph sits behind
+   the blue band: the band becomes a translucent wash over the image rather
+   than a flat fill, so the type keeps its contrast. */
+.hero-photo-credit { position: absolute; z-index: 3; right: 16px; bottom: 12px; color: rgba(255,255,255,.78); font-size: var(--text-small); text-decoration: none; }
+.hero-photo-credit:hover, .hero-photo-credit:focus-visible { color: white; text-decoration: underline; }

@@ -34,6 +34,19 @@ function variant(name: HeroName, width: number, extension: string) {
   return generated[`../assets/heroes/${name}-${width}.${extension}`]
 }
 
+/**
+ * The JPEG the generator actually wrote: `fallbackWidth`, or the widest slot
+ * below it when the master is narrower than that and the larger variants were
+ * never generated.
+ */
+function fallback(name: HeroName) {
+  const width = [...manifest.widths]
+    .filter((candidate) => candidate <= manifest.fallbackWidth)
+    .sort((a, b) => b - a)
+    .find((candidate) => variant(name, candidate, 'jpg'))
+  return width ? { url: variant(name, width, 'jpg'), width } : undefined
+}
+
 function srcSet(name: HeroName, extension: string) {
   return manifest.widths
     .map((width) => [variant(name, width, extension), width] as const)
@@ -59,7 +72,8 @@ export function HeroImage({
   const hero = manifest.heroes[name]
   // The fallback's own pixel size, so the element declares the master's aspect
   // ratio rather than a guess.
-  const scale = Math.min(1, manifest.fallbackWidth / hero.width)
+  const jpeg = fallback(name)
+  const scale = Math.min(1, (jpeg?.width ?? manifest.fallbackWidth) / hero.width)
   return (
     // `display: contents`, so the picture element adds no box of its own and the
     // image keeps positioning itself against the hero section as before.
@@ -68,7 +82,7 @@ export function HeroImage({
       <source type="image/webp" srcSet={srcSet(name, 'webp')} sizes="100vw" />
       <img
         className={className}
-        src={variant(name, manifest.fallbackWidth, 'jpg')}
+        src={jpeg?.url}
         alt={alt}
         width={Math.round(hero.width * scale)}
         height={Math.round(hero.height * scale)}

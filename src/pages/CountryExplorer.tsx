@@ -5,6 +5,8 @@ import { CountryCoverageMatrix } from '../components/CountryCoverageMatrix'
 import { CountryFlag } from '../components/CountryFlag'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { formatDate } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
@@ -125,7 +127,7 @@ export default function CountryExplorer() {
   })
 
   const visibleIso = useMemo(() => new Set(visibleCountries.map((country) => country.iso3)), [visibleCountries])
-  const latestUpdate = Math.max(...(catalog?.countries.map((country) => country.latestModified) || [0]))
+  const latestPublication = Math.max(...(catalog?.countries.map((country) => country.latestPublished) || [0]))
 
   return (
     <>
@@ -135,6 +137,8 @@ export default function CountryExplorer() {
             screen reader nor a search result had a title for the document. The
             heading is outside the loading branch so it exists immediately. */}
         <section className="countries-hero">
+          <HeroImage name="afghanistan-daikundi-survey-2023" className="countries-hero-image" />
+          <HeroCredit name="afghanistan-daikundi-survey-2023" />
           <div className="countries-hero-inner">
             <span className="kicker kicker--light">Country evidence</span>
             <h1>DIEM evidence, <em>country by country.</em></h1>
@@ -191,7 +195,7 @@ export default function CountryExplorer() {
             <section className="country-facts" aria-label="Country catalog summary">
               <div><strong>{catalog.countries.length}</strong><span>countries with evidence</span></div>
               <div><strong>{families.length.toLocaleString()}</strong><span>curated products</span></div>
-              <div><strong>{latestUpdate ? formatDate(latestUpdate) : '—'}</strong><span>latest update</span></div>
+              <div><strong>{latestPublication ? formatDate(latestPublication) : '—'}</strong><span>latest publication</span></div>
             </section>
 
             {catalog.crossCountry && (
@@ -235,7 +239,7 @@ export default function CountryExplorer() {
                       <div className="country-card-types">
                         {topTypes(country.typeCounts).map(([type, count]) => <span key={type}>{type} <b>{count}</b></span>)}
                       </div>
-                      <div className="country-card-footer"><span>Updated {formatDate(country.latestModified)}</span><span aria-hidden="true">→</span></div>
+                      <div className="country-card-footer"><span>Latest publication {formatDate(country.latestPublished)}</span><span aria-hidden="true">→</span></div>
                     </Link>
                   ))}
                 </div>

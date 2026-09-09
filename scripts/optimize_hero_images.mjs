@@ -78,7 +78,15 @@ for (const [name, hero] of Object.entries(heroes)) {
   sourceBytes += original
   console.log(`${name}  ${metadata.width}x${metadata.height}  ${(original / 1048576).toFixed(2)} MB`)
 
-  for (const width of widths) {
+  // A master narrower than the widest slot would otherwise be written out under
+  // a filename claiming a width it does not have, and `HeroImage` would offer
+  // the browser a mislabelled `srcset` candidate. Widths above the master are
+  // simply not generated; the smallest is always kept so every hero has one.
+  const heroWidths = widths.filter((width) => width <= metadata.width)
+  if (heroWidths.length === 0) heroWidths.push(Math.min(...widths))
+  const heroFallbackWidth = Math.max(...heroWidths.filter((width) => width <= fallbackWidth))
+
+  for (const width of heroWidths) {
     for (const format of ['avif', 'webp']) {
       const bytes = await emit(source, name, width, format)
       generatedBytes += bytes
@@ -86,10 +94,10 @@ for (const [name, hero] of Object.entries(heroes)) {
       console.log(`  ${String(width).padStart(4)} ${format.padEnd(4)} ${(bytes / 1024).toFixed(0).padStart(5)} kB`)
     }
   }
-  const bytes = await emit(source, name, fallbackWidth, 'jpeg')
+  const bytes = await emit(source, name, heroFallbackWidth, 'jpeg')
   generatedBytes += bytes
-  expected.add(fileName(name, fallbackWidth, 'jpeg'))
-  console.log(`  ${fallbackWidth} jpg  ${(bytes / 1024).toFixed(0).padStart(5)} kB`)
+  expected.add(fileName(name, heroFallbackWidth, 'jpeg'))
+  console.log(`  ${heroFallbackWidth} jpg  ${(bytes / 1024).toFixed(0).padStart(5)} kB`)
 }
 
 // A width removed from the manifest would otherwise leave an orphan in the

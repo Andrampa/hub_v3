@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-09 - Make country dates publication-only
+
+- Replaced country **Latest update** dates with **Latest publication** dates.
+  Present and future figures now use only the newest discoverable product's
+  ArcGIS creation date or the newest validated, public monitoring-round
+  publication date.
+- Product metadata modifications and published country-editorial edits no
+  longer move the date. Country directory cards and map summaries now use the
+  same publication-only wording and value as the country page.
+- Added a regression test using Mali's May publication / August metadata-edit
+  pattern to keep mutable ArcGIS metadata out of the calculation.
+
 ## 2026-09-09 - Show the complete homepage search suggestions
 
 - Removed the homepage hero's overflow crop so the existing autocomplete list
@@ -1866,3 +1878,39 @@ All notable documentation and implementation changes. Most recent entry first.
   tiers restored, and no horizontal overflow at 375, 768 and 1280 px. The
   authenticated layout was reviewed through the harness, not through a real
   session; the tier behaviour itself still needs a real-account run.
+
+## Household survey hero photograph
+
+`/monitoring-system` and `/data` (both the sign-in gate and the authenticated
+workspace) now carry the DRC Ndjili market-gardens photograph behind their blue
+band. The photograph was chosen for the '#DataInEmergencies' print on the two
+field shirts, so the crop is pinned to it: both prints occupy the 41-60% band of
+the master height, and `object-position: center ~50%` keeps that band inside the
+visible window at every viewport - wide screens crop vertically around it,
+narrow screens crop horizontally and both prints stay inside the retained
+15-85% width. Change that percentage only against those numbers, delivered through `HeroImage` with the blue laid over it as a translucent
+gradient. `HeroCredit` renders the attribution. The hero master is only
+1,024 px wide - the largest size Flickr serves for this all-rights-reserved
+photo - so `scripts/optimize_hero_images.mjs` now skips variant widths above a
+master's own width instead of writing an upscale under a filename that claims a
+width it does not have, and `HeroImage` picks the widest JPEG that was actually
+generated.
+
+## Country explorer and catalogue hero photographs
+
+`/countries` carries the Daikundi face-to-face survey photograph (Afghanistan,
+2023) and `/catalog` the Ndjili field-team photograph (DRC, 2025), both through
+`HeroImage` with the existing blue band laid over as a translucent wash.
+
+Each crop is pinned to what the photograph was chosen for, so
+`object-position` is not free to be retuned by eye:
+
+- `afghanistan-daikundi-survey-2023` - the two figures occupy 33-95% of the
+  master height; `center 88%` keeps both and the terraced valley in frame.
+- `drc-ndjili-field-team-2025` - the '#DataInEmergencies' shirt print sits at
+  57-61% of the master height and 50-68% of its width; `center 63%` places it in
+  the open space to the right of the heading.
+
+`.countries-hero` keeps `overflow: visible` (its decorative ring deliberately
+bleeds out), so the wash is on `::after` and the ring, copy and credit are
+lifted above it rather than the section being clipped.

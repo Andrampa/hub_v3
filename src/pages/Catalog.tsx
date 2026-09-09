@@ -4,6 +4,8 @@ import { CatalogContentCard, pathwaySlug } from '../components/CatalogContentCar
 import { CatalogSearchBox } from '../components/CatalogSearchBox'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { itemYear } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
@@ -296,7 +298,7 @@ export default function Catalog() {
             times over before a product appeared: eyebrow, title, second
             eyebrow, second title. The subtitle now states what is in the
             catalogue and where it comes from instead of restating the title. */}
-        <section className="catalog-hero"><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${families.length.toLocaleString()} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.'}</p></div></section>
+        <section className="catalog-hero"><HeroImage name="drc-ndjili-field-team-2025" className="catalog-hero-image" /><HeroCredit name="drc-ndjili-field-team-2025" /><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${families.length.toLocaleString()} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.'}</p></div></section>
         <section className="catalog-section" aria-labelledby="catalog-title">
           <div className="section-wrap">
             <div className={`filter-bar catalog-filter-bar${isCompact ? ' catalog-filter-bar--compact' : ''}`}>

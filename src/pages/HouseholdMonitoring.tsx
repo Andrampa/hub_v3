@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import { MonitoringProducts } from '../components/MonitoringProducts'
 import { SurveyReleases } from '../components/SurveyReleases'
 import { usePageMetadata } from '../hooks/usePageMetadata'
@@ -15,6 +17,8 @@ export default function HouseholdMonitoring() {
       <SiteHeader />
       <main id="top" className="household-monitoring-page">
         <section className="household-explorer-banner" aria-labelledby="household-explorer-heading">
+          <HeroImage name="drc-ndjili-market-gardens-2025" className="household-explorer-banner-image" />
+          <HeroCredit name="drc-ndjili-market-gardens-2025" />
           <div className="section-wrap">
             <div>
               <span>Interactive survey results</span>
