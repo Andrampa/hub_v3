@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-09 - Remove false bars from flood assessment cards
+
+- Made each flood-assessment link fill its complete grid cell. The grey grid
+  background now appears only as the intended one-pixel separators instead of
+  as thick bars beneath cards whose neighbour wraps onto an extra line.
+
 ## 2026-09-09 - Limit the country-card hover underline
 
 - Prevented the global anchor hover decoration from underlining every label in
