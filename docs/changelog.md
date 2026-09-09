@@ -1,5 +1,83 @@
 # Changelog
 
+## 2026-09-09 - Fix two link colours the FAO stylesheet was overriding
+
+- The country hero's **Countries** breadcrumb was dark blue on dark blue, at a
+  contrast ratio of 1.71:1. The gallery card's **View on Flickr** label turned
+  navy on its navy chip the moment a reader pointed at it, at 1.01:1 - legible
+  until hovered, then not.
+- Both came from the same cause. The FAO adaptation stylesheet loads after this
+  application's and declares `a { color: var(--fao-blue) }` and
+  `a:hover { color: var(--fao-navy) }` at the same specificity as our
+  `a { color: inherit }`, so it wins on order. Anything that relied on
+  inheriting a light colour on a dark ground was affected.
+- The breadcrumb link now takes the trail's own colour (5.39:1) and the chip
+  states white on its own element rather than inheriting it (13.96:1), so a
+  hovered ancestor cannot recolour it.
+- A contrast sweep of every rendered link on the home, country and gallery pages
+  reports nothing else below 4.5:1.
+
+## 2026-09-09 - Name gallery cards for Flickr and resolve every wrapper
+
+- Cards for a photo gallery are labelled **Flickr gallery** instead of
+  **StoryMap**. The old label named the container the photographs were once
+  wrapped in rather than what the link opens, and it stayed on the cards after
+  the photographs moved to the gallery catalogue. Genuine StoryMaps, such as the
+  hazard-impact stories, keep their label.
+- A wrapper whose `legacy_item_id` has not been backfilled now resolves anyway:
+  the Flickr album is read from the wrapper itself and matched against the
+  catalogue's `flickr_url`. All 27 wrappers reach their gallery today, with no
+  editorial action, in both album URL shapes ArcGIS holds. A recorded item ID
+  still answers first, and remains what keeps an address working once a wrapper
+  leaves the content group.
+- `isPhotoGalleryWrapper` and `itemTypeLabel` in `src/lib/catalog.ts` are shared
+  by the country cards, the catalogue cards and the product route, so one item
+  is judged and labelled identically wherever it appears.
+
+## 2026-09-09 - Resolve legacy gallery addresses to the gallery itself
+
+- A Hub product address belonging to a retired StoryMap wrapper now resolves to
+  the gallery it stood for, at `/photo-galleries?gallery=<id>`, instead of to a
+  page whose only action opened the StoryMap. The reader reaches the Flickr
+  album in one step, and the wrapper is out of the path while it is still in the
+  content group as well as after it leaves.
+- The join is the catalogue's own `legacy_item_id`, read as a list so a gallery
+  that replaced two wrappers answers for both. Only a 32-character item id is
+  accepted. A gallery published without a wrapper records nothing there and is
+  unaffected, which is the expected state for everything published from now on.
+- `/photo-galleries` accepts `?gallery=`, showing that one gallery with a way
+  back to the full collection. An id matching no gallery falls back to the whole
+  listing rather than an empty page.
+- The gallery catalogue is consulted only for a product recorded as a photo
+  gallery, or for an address that resolved to nothing, which is what a removed
+  wrapper looks like. Every other product page makes no gallery request at all.
+  A gallery-service failure leaves product pages resolving exactly as before.
+
+## 2026-09-09 - Distribute photo galleries on country pages
+
+- Country pages now read field photographs from the photo-gallery catalogue
+  instead of the StoryMap wrappers that were created only to carry a Flickr
+  link. Galleries keep their field date, carry no product type, pillar or
+  `Catalog role` category, and are counted in no product total.
+- `country_iso3` is read as a list, so one gallery can serve several countries.
+  Codes may be separated by `;`, `,`, `/`, `|` or spaces, and a segment counts
+  only when every word in it is a three-letter code: `Iraq and Lebanon` yields no
+  assignment because `AND` is Andorra. A row with no code stays on
+  `/photo-galleries` and reaches no country page, since absence is not a claim
+  of global scope.
+- Added a country band of at most three galleries, newest first, above the
+  Evidence collection, linking to `/photo-galleries?country={ISO3}`. It renders
+  nothing when a country has no galleries or the catalogue cannot be read.
+- The gallery page filters by ISO3 and accepts `?country=`, so the country link
+  lands filtered. Rows that record no code remain listed under All countries but
+  no longer appear as their own picker option.
+- Extracted the gallery card into `src/components/PhotoGalleryCard.tsx`, shared
+  by both surfaces, and dropped a repeated `<country> | ` title prefix where the
+  country is already named by the heading.
+- One load now serves every gallery surface for fifteen minutes.
+- The 27 StoryMap wrappers still in the content group are unchanged by this
+  release; `docs/handoff.md` records the ArcGIS work that retires them.
+
 ## 2026-09-08 - Remove content-group references from the country page
 
 - Dropped the "View source group" link from the resource library heading and the

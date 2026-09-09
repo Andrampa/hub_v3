@@ -39,13 +39,24 @@ Editable catalogue:
 [Open DIEM Hub 3.0 — Photo gallery catalogue](https://hqfao.maps.arcgis.com/home/item.html?id=24afb02b6cf549f99380cd6b3780691b)
 
 Flickr remains the home of the photographs. The ArcGIS layer supplies only the
-metadata needed to build `/photo-galleries`; do not create a StoryMap wrapper.
+metadata needed to build `/photo-galleries` and the country-page gallery
+bands; do not create a StoryMap wrapper.
 Complete the gallery ID, title, short summary, canonical Flickr album URL,
 public Flickr thumbnail URL, thumbnail alt text, ISO3, country name, event or
 round, gallery date, credit and display order. Set **Publication status** to
 `Published` only after checking both links. The service is intentionally
 public and read-only; an owner must temporarily enable editing to maintain it,
 then disable editing again immediately.
+
+The ISO3 field alone decides which country pages show the gallery: one code for
+one country, several separated by semicolons (`IRQ;LBN`) for a shared gallery,
+and no code for a gallery that stays on `/photo-galleries` only. Country names
+and words such as `Global` are ignored there.
+
+Leave **Legacy item ID** empty on a new gallery. It records the ArcGIS item ID
+of a StoryMap wrapper a gallery replaced, so links already circulating for that
+wrapper open the gallery instead; two IDs, separated by a semicolon, where one
+gallery replaced two wrappers.
 
 ## Country Introductions
 

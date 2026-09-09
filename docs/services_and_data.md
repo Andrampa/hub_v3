@@ -82,6 +82,37 @@ accepts only FAO emergencies Flickr album URLs and `live.staticflickr.com`
 thumbnails. `VITE_PHOTO_GALLERY_SERVICE_URL` can override the service endpoint
 for a staging catalogue.
 
+`country_iso3` is read as a list so one gallery can serve several countries:
+codes may be separated by `;`, `,`, `/`, `|` or spaces, and a segment counts
+only when every word in it is a three-letter code. A prose value yields no
+assignment, and a row with no code stays on `/photo-galleries` without reaching
+any country page. One load serves every gallery surface: the module keeps the
+result for fifteen minutes and shares an in-flight request, so a country page
+and the gallery page do not query twice. That shared request ignores the
+caller's abort signal, because one component unmounting must not cancel a
+request another is awaiting; the signal is still reported to the caller that
+passed it.
+
+`legacy_item_id` records the ArcGIS item IDs of the StoryMap wrappers a gallery
+replaced, as a list on the same separators, keeping only 32-character item IDs.
+`galleryForLegacyItem` resolves a wrapper's Hub address to its gallery, which is
+what `/catalog/<item-id>` uses to send those addresses to
+`/photo-galleries?gallery=<id>`. That lookup runs only when the resolved product
+records the `Photo gallery` product type or carries the words in its title, or
+when the address resolved to no product at all, which is how a wrapper removed
+from the content group presents. Every other product page issues no gallery
+request.
+
+Where a wrapper is still in the group but its item ID has not been recorded on
+the row, `fetchStoryMapFlickrAlbum` reads the album the wrapper links to from
+the wrapper's own item data and `galleryForFlickrAlbum` matches it against the
+catalogue's `flickr_url`. Both album URL shapes are accepted: a link to the
+album, and a link to one photo within it. The recorded item ID always answers
+first, and is the only thing that can answer once the wrapper has left the
+group, because there is then no product to read an album from. The field is empty for a gallery published
+without a wrapper, and is expected to stay empty for everything published from
+now on.
+
 The Latest evidence strip does not make a second ArcGIS request. It derives up
 to six current items from the already-loaded catalog using exact,
 case-insensitive matches for publisher-provided tags `Impact assessment` and

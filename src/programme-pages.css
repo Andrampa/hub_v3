@@ -10,16 +10,28 @@
 .gallery-heading h2 { margin: 7px 0 0; color: var(--deep-blue); font-size: clamp(32px, 4vw, 48px); letter-spacing: -.045em; }
 .gallery-heading label { display: grid; gap: 7px; color: #536b74; font-size: var(--text-small); font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .gallery-heading select { min-width: 230px; padding: 11px 36px 11px 12px; border: 1px solid #b9cbcb; background: white; color: var(--deep-blue); font: inherit; letter-spacing: 0; text-transform: none; }
+/* Shown when a legacy wrapper address resolved to one gallery, so the reader
+   who followed an old link can reach the rest of the collection. */
+.gallery-show-all { margin-top: 12px; padding: 0; border: 0; background: none; color: var(--fao-blue); font: inherit; font-size: var(--text-small); font-weight: 700; cursor: pointer; }
+.gallery-show-all:hover, .gallery-show-all:focus-visible { text-decoration: underline; }
 .gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .gallery-card { overflow: hidden; background: white; border: 1px solid var(--line-soft); }
 .gallery-card--featured { border-top: 4px solid var(--fao-blue); }
 .gallery-card-image { position: relative; min-height: 285px; display: grid; place-items: center; overflow: hidden; background: #173d50; color: white; font-size: 30px; font-weight: 800; }
 .gallery-card-image img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; transition: transform .25s ease; }
+/* Both the "View on Flickr" chip and the fallback plate state their own colour
+   rather than inheriting the link's. The FAO stylesheet turns a hovered link
+   navy, which on this dark chip left the label unreadable at the moment the
+   reader pointed at it. */
+.gallery-card-image > span { color: #fff; }
 .gallery-card-image > span:last-child { position: absolute; right: 14px; bottom: 14px; padding: 9px 12px; background: rgba(3,47,72,.9); font-size: var(--text-small); }
 .gallery-card-image:hover img, .gallery-card-image:focus-visible img { transform: scale(1.025); }
 .gallery-card-copy { padding: 25px 27px 27px; }
 .gallery-card-meta, .gallery-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
 .gallery-card-meta { color: var(--ink-muted); font-size: var(--text-small); font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+/* A country page drops the country label, leaving the date alone in a row that
+   would otherwise push it to the far edge. */
+.gallery-card-meta > :only-child { margin-right: auto; }
 .gallery-card h2 { margin: 15px 0 12px; color: var(--deep-blue); font-size: 25px; line-height: 1.2; letter-spacing: -.025em; }
 .gallery-card p { min-height: 48px; margin: 0 0 22px; color: var(--ink-muted); font-size: 13px; line-height: 1.7; }
 .gallery-card-footer { padding-top: 16px; border-top: 1px solid var(--line-soft); }

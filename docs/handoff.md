@@ -1,5 +1,110 @@
 # Handoff
 
+## Pending ArcGIS work: retire the photo-gallery StoryMap wrappers
+
+Country pages now read field photographs from the photo-gallery catalogue
+(`24afb02b6cf549f99380cd6b3780691b`) and no longer need the StoryMap wrappers
+that were created only to carry a Flickr link. **No ArcGIS change has been made.**
+The 27 wrappers are still in the content group `ab8a43038b6347ac93507988f7e2a90b`,
+still carry `Product types/Photo gallery`, `DIEM pillars/Household monitoring
+system` and `Catalog role/Discoverable product`, and so still appear as country
+products with a wrapper creation date instead of the field date.
+
+### Step 1 — two catalogue rows record no country code (blocking)
+
+`global-diem-activities-2024` and `irq-lbn-monitoring-2022` have an empty
+`country_iso3`, so they reach no country page and no longer appear as their own
+option in the gallery page's country picker. They remain listed under All
+countries.
+
+- Set `irq-lbn-monitoring-2022` to `IRQ;LBN`. The Hub then shows it on both
+  country pages and on the cross-country page.
+- Leave `global-diem-activities-2024` empty, or add an explicit scope column if
+  global galleries should surface on the cross-country page. The Hub will not
+  infer global scope from an empty field.
+
+Note that the `DIEM 2024 - Photo Gallery` wrapper is categorised `Countries/PAK`
+although its album is the global 2024 activities album. Do not copy that
+assignment into the catalogue.
+
+### Step 2 — backfill `legacy_item_id` (22 rows)
+
+**Required before Step 3, though nothing is broken while it waits.** All 27
+wrappers already send readers to their gallery: five through `legacy_item_id`,
+the other 22 through the album read from the wrapper itself. That fallback needs
+the wrapper to still be readable as a product, so it stops working the moment
+Step 3 removes them from the group. Backfill first, then remove: doing it in the
+other order leaves 22 Hub addresses dead-ending on "Product unavailable".
+
+The mapping below was verified by comparing the Flickr album ID inside each
+wrapper against each row's `flickr_url`, not by title, and every wrapper
+matched. `irq-lbn-monitoring-2022` corresponds to two wrappers; record both,
+separated by a semicolon.
+
+| Wrapper item | Wrapper title | Country category | Catalogue row | `legacy_item_id` |
+|---|---|---|---|---|
+| `4d69851d11774fc6bb436108f423ed74` | Democratic Republic of the Congo - Photo gallery - Field mission | COD | `cod-field-mission-2025-07` | set |
+| `abf39060608b4341b94a163b9dcd60b6` | Afghanistan - Photo gallery - Round 10 | AFG | `afg-monitoring-r10` | set |
+| `e5f1726ba193445e9d79b9f024904bfd` | Chad - Photo Gallery - Round 8 | TCD | `tcd-monitoring-r8` | set |
+| `b22ad08d56144be2b947a2564636a6e6` | Democratic Republic of the Congo - Photo gallery - Round 9 | COD | `cod-monitoring-r9` | set |
+| `09c644077b054756918c502fce6f873a` | Chad - Photo Gallery - Round 7 | TCD | `tcd-monitoring-r7` | set |
+| `a1e64777d4fa40859796aba1b9b60219` | Afghanistan - Photo Gallery - Round 9 | AFG | `afg-monitoring-r9` | to backfill |
+| `3813345b89ec4cd2ac66d8164b77ad77` | DIEM 2024 - Photo Gallery | PAK | `global-diem-activities-2024` | to backfill |
+| `8135c10847e548759ced2e5c49a1eaa2` | Sierra Leone - Photo Gallery - Round 12 | SLE | `sle-monitoring-r12` | to backfill |
+| `cec78a2c06dd49cd896697c102c2d61f` | The Sudan - Photo gallery | SDN | `sdn-monitoring-r5-markets-livestock` | to backfill |
+| `826a1ab8daf34d69989491122ae4aa39` | Pakistan - Photo Gallery - Round 5 | PAK | `pak-monitoring-r5` | to backfill |
+| `ae704cae4f1f429f82262fbeda839712` | Nigeria - Photo gallery | NGA | `nga-inputs-r1` | to backfill |
+| `b835b311171649fda644e28ca39a94ac` | Afghanistan - Photo gallery - Round 8 | AFG | `afg-monitoring-r8` | to backfill |
+| `2927b91000214833bd34fb47fbee8f92` | Central African Republic - Photo gallery - Round 5 | CAF | `caf-monitoring-r5` | to backfill |
+| `69c938229ce64678ba4a2cb9b3764ece` | Sierra Leone - Photo gallery - Round 11 | SLE | `sle-monitoring-r11` | to backfill |
+| `0d8aded638cd42a387df0c77fc820d35` | Nigeria - Photo gallery - Round 6 | NGA | `nga-monitoring-r6` | to backfill |
+| `7410f3d3b6e241c9acbbdcd9b3c7774f` | Chad - Photo gallery - Round 5 | TCD | `tcd-monitoring-r5` | to backfill |
+| `fbf8aeef7a68455990a330c42aba9246` | Democratic Republic of the Congo - Photo gallery | COD | `cod-impact-ituri-2023-08` | to backfill |
+| `3f740be1a5dc4b30a52d41b63c8e9b62` | Colombia - Photo gallery - Round 3 | COL | `col-monitoring-r3` | to backfill |
+| `1ed19c38b6434205a19c17503fbe5391` | The Syrian Arab Republic - Photo gallery | SYR | `syr-impact-earthquake-2023` | to backfill |
+| `eb002a5b919d49019604627bd68660c2` | Afghanistan - Photo gallery - Round 6 | AFG | `afg-monitoring-r6` | to backfill |
+| `2195be40b125443d91dea90eaba0942a` | Sierra Leone - Photo gallery - Round 9 | SLE | `sle-monitoring-r9` | to backfill |
+| `8158243997d54dfc9bd035c08eb9a5b7` | Guatemala - Photo gallery - Round 1 | GTM | `gtm-monitoring-r1` | to backfill |
+| `c19d2a911002483788e289293501875f` | Iraq - Photo gallery - Round 8 | IRQ | `irq-lbn-monitoring-2022` | to backfill |
+| `2967bf588f36424592cfee80af2a1c0c` | Lebanon - Photo gallery - Round 3 | LBN | `irq-lbn-monitoring-2022` | to backfill |
+| `498a4c9d0d2444aeb2c0ddaaeb730db1` | Pakistan - Photo gallery - Round 3 | PAK | `pak-monitoring-r3` | to backfill |
+| `da3e9a53ed6247d59703ee8b7da80c7e` | Somalia - Photo gallery - Round 4 | SOM | `som-monitoring-r4` | to backfill |
+| `92ec8caf6e8a4e15ac055b838069699a` | Afghanistan - Photo gallery - Round 5 | AFG | `afg-monitoring-r5` | to backfill |
+
+### Step 3 — remove the wrappers from the content group
+
+Remove all 27 items from `ab8a43038b6347ac93507988f7e2a90b`. **Do not delete the
+StoryMap items**: they stay public in ArcGIS, so links already circulating keep
+resolving. Removing them from the group is what ends Hub discovery.
+
+Expect country product counts and product-type counts to fall for AFG, CAF, COD,
+COL, GTM, IRQ, LBN, NGA, PAK, SDN, SLE, SOM, SYR and TCD. That is the intended
+outcome of galleries ceasing to be catalogue products, not a regression.
+
+### Step 4 — retire the category and the code path
+
+Once no item carries it, remove the `Product types/Photo gallery` branch from
+the group category schema and drop `'Photo gallery'` from `PRODUCT_TYPES` in
+`src/services/countries.ts`.
+
+### Step 5 — legacy redirect: implemented
+
+`/catalog/<wrapper-id>` resolves through `legacy_item_id` to
+`/photo-galleries?gallery=<gallery-id>`, which shows that gallery with a link to
+its Flickr album and a way back to the collection. It works both while a wrapper
+is still in the group and after it is removed, so no Hub URL dead-ends and no
+reader passes through a StoryMap. Rows without `legacy_item_id` are not
+redirected, which is why Step 2 comes first.
+
+Nothing here needs doing for galleries published from now on: a gallery with no
+wrapper leaves `legacy_item_id` empty and is unaffected.
+
+Verification after each ArcGIS step: `npm run build`, `npx vitest run`, then open
+`/countries/AFG`, `/countries/TCD`, `/countries/IRQ`, `/countries/LBN`,
+`/photo-galleries?country=AFG` and
+`/catalog/4d69851d11774fc6bb436108f423ed74`, which must land on the DRC field
+mission gallery.
+
 ## Resolved: hosting-only deploy fallback has been reverted
 
 On 2026-09-08 the deploy was briefly reduced to

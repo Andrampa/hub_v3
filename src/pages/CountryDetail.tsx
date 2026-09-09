@@ -5,12 +5,13 @@ import { CountryEditorial } from '../components/CountryEditorial'
 import { CountryEveOverview } from '../components/CountryEveOverview'
 import { CountryRoundTimeline } from '../components/CountryRoundTimeline'
 import { CountryMonitoring } from '../components/CountryMonitoring'
+import { CountryPhotoGalleries } from '../components/CountryPhotoGalleries'
 import { CountryShape } from '../components/CountryMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
-import { distinctSummary, formatDate, itemEdition, itemYear } from '../lib/catalog'
+import { distinctSummary, formatDate, itemEdition, itemTypeLabel, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
   LEGACY_UNASSIGNED_PATHWAY,
@@ -96,7 +97,7 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
         <Link className="card-media-link" to={itemProductPath(item)} tabIndex={-1} aria-hidden="true" />
       </div>
       <div className="country-resource-body">
-        <div className="country-resource-meta"><span>{item.type}</span><time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time></div>
+        <div className="country-resource-meta"><span>{itemTypeLabel(item)}</span><time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time></div>
         {pathways.length > 0 && (
           <ul className="country-resource-pathways" aria-label="Evidence pathways">
             {pathways.map((pathway) => (
@@ -466,6 +467,8 @@ export default function CountryDetail() {
             )}
 
             <CountryRoundTimeline families={allResourceFamilies} countryName={definition.name} />
+
+            <CountryPhotoGalleries countryName={definition.name} iso3={definition.iso3} />
 
             <section className="country-products section-wrap" aria-labelledby="products-heading">
               <div className="country-section-heading">

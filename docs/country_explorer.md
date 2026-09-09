@@ -143,6 +143,29 @@ both actions can appear. Cross-country routes do not request EVE eligibility.
 Service-resolution or query failures silently omit the optional action and do
 not affect editorial content, monitoring coverage or the Evidence collection.
 
+## Photo Galleries
+
+Country routes read field photographs from the photo-gallery catalogue
+(`src/services/photoGalleries.ts`), never from the content group. Galleries are
+not catalogue products: they carry no product type, no DIEM pillar and no
+`Catalog role` category, they do not appear in product counts, product-type
+filters or the coverage matrix, and they are dated by the field work through
+`gallery_date` rather than by when any record was created.
+
+Assignment is the catalogue's `country_iso3` field alone. It holds one code for
+a single-country gallery and several for a shared one, separated by `;`, `,`,
+`/`, `|` or spaces. A segment is accepted only when every word in it is a
+three-letter code, so a prose value such as `Iraq and Lebanon` yields no
+assignment: `AND` is Andorra, and a country name must never become a country
+assignment. A gallery that records no code appears on `/photo-galleries` but on
+no country page, because absence of a code is not a claim of global scope.
+
+The cross-country route shows galleries recording more than one country. The
+band renders at most three cards, newest first, above the Evidence collection,
+and links to `/photo-galleries?country={ISO3}`. It renders nothing when the
+country has no galleries or the catalogue cannot be read: photographs are
+supplementary and never stand between a reader and the country's evidence.
+
 ## Latest Update
 
 The country hero's **Latest update** is the most recent timestamp among:

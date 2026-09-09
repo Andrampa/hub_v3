@@ -68,8 +68,12 @@
 .country-profile-hero-credit:hover, .country-profile-hero-credit:focus-visible { color: white; text-decoration: underline; }
 .country-profile-inner { position: relative; z-index: 2; min-height: 440px; display: grid; grid-template-columns: 1.45fr .65fr; align-items: center; gap: 60px; padding-block: 54px; }
 .country-profile-hero--cross-country .country-profile-inner { grid-template-columns: minmax(0, 760px); }
+/* The crumb sits on the deep-blue hero, so it takes the trail's own light
+   colour. Without this it inherits the FAO stylesheet's `a { color: fao-blue }`,
+   which loads after this file and leaves "Countries" dark blue on dark blue. */
 .breadcrumbs { display: flex; gap: 9px; margin-bottom: 30px; color: #a9c5cf; font-size: var(--text-small); }
-.breadcrumbs a:hover { color: white; }
+.breadcrumbs a { color: inherit; }
+.breadcrumbs a:hover, .breadcrumbs a:focus-visible { color: white; }
 .country-code { color: var(--orange-on-dark); font-size: var(--text-small); font-weight: 700; letter-spacing: .16em; }
 .country-profile-copy h1 { margin: 8px 0 17px; font-size: clamp(48px, 6vw, 72px); line-height: 1; letter-spacing: -.055em; }
 .country-profile-copy > p { max-width: 650px; color: #d2e2e6; font-size: 15px; line-height: 1.7; }
@@ -435,4 +439,24 @@
 
 @media (min-width: 721px) {
   .country-directory-more { width: auto; }
+}
+
+/* Country photo galleries. The cards are the gallery page's own cards, so only
+   the band around them is defined here: three across on a wide viewport, where
+   the gallery page runs two, because this is a supporting strip rather than the
+   page's subject. */
+.country-galleries { padding-block: 8px 46px; }
+.country-galleries .country-section-heading > a { color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; white-space: nowrap; }
+.country-galleries-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.country-galleries-grid .gallery-card-image { min-height: 200px; }
+.country-galleries-grid .gallery-card-copy { padding: 20px 22px 22px; }
+.country-galleries-grid .gallery-card h3 { margin: 12px 0 10px; color: var(--deep-blue); font-size: 20px; line-height: 1.25; letter-spacing: -.02em; }
+.country-galleries-grid .gallery-card p { min-height: 0; margin-bottom: 18px; }
+
+@media (max-width: 940px) {
+  .country-galleries-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 650px) {
+  .country-galleries-grid { grid-template-columns: 1fr; }
 }

@@ -134,3 +134,27 @@ export function itemRound(item: ArcGISItem) {
   // at round 14 after six years.
   return Number.isFinite(round) && round > 0 && round < 100 ? round : undefined
 }
+
+/**
+ * Whether a catalogue item is one of the photo-gallery StoryMap wrappers.
+ *
+ * The wrappers hold no story: each is a single sentence linking out to a Flickr
+ * album, published before the gallery catalogue existed. The recorded product
+ * type is the signal, with the title accepted as a fallback so a wrapper whose
+ * category was never applied is still recognised.
+ */
+export function isPhotoGalleryWrapper(item: ArcGISItem & { productTypes?: string[] }) {
+  return Boolean(item.productTypes?.includes('Photo gallery')) || /photo\s*gallery/i.test(item.title)
+}
+
+/**
+ * What a card should call this item's type.
+ *
+ * 'StoryMap' describes the container a gallery was once wrapped in, not what
+ * the reader is about to open, and it survived on cards after the photographs
+ * themselves moved to the gallery catalogue. Naming Flickr sets the expectation
+ * that the link leaves the Hub.
+ */
+export function itemTypeLabel(item: ArcGISItem & { productTypes?: string[] }) {
+  return isPhotoGalleryWrapper(item) ? 'Flickr gallery' : item.type
+}

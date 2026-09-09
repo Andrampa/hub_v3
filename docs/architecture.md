@@ -89,13 +89,19 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/pages/PhotoGalleries.tsx`: native public gallery discovery, country
   filtering, resilient Flickr thumbnails and direct album links.
 - `src/services/photoGalleries.ts`: published-row queries against the public,
-  read-only ArcGIS gallery catalogue plus Flickr URL validation.
+  read-only ArcGIS gallery catalogue, multi-country code parsing, a shared
+  fifteen-minute load and Flickr URL validation.
+- `src/components/PhotoGalleryCard.tsx`: the gallery card shared by the gallery
+  page and country pages, with its Flickr link and thumbnail fallback.
+- `src/components/CountryPhotoGalleries.tsx`: the country page's field-photograph
+  band, filtered by stored ISO3 codes and hidden when a country has none.
 - `src/pages/DatasetExplorer.tsx`: internal map, filter, preview, export and API experience for a protected data service.
 - `src/components/DatasetGeometryMap.tsx`: Leaflet map over the public ArcGIS light-gray basemap, with filtered service geometry, tooltips, popups and extent controls.
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
 - `src/data-access.css`: data workspace visual and responsive behavior.
-- `src/services/arcgis.ts`: portal constants, pagination, fetch validation, resource URLs.
+- `src/services/arcgis.ts`: portal constants, pagination, fetch validation,
+  resource URLs, and the Flickr album a legacy photo-gallery StoryMap links to.
 - `src/catalog-product.css`: responsive public product-detail presentation and
   unavailable/error states.
 - `src/services/auth.ts`: OAuth configuration, session lifecycle, and community validation.
@@ -129,6 +135,16 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - Flickr hosts gallery images, while ArcGIS item
   `24afb02b6cf549f99380cd6b3780691b` is the authoritative editorial catalogue
   for gallery titles, countries, dates, thumbnails and publication status.
+- Photo galleries are not catalogue products. They are never carried by content
+  group items, never counted in country product totals or product-type filters,
+  and are dated by `gallery_date` rather than by any record's creation date.
+  A gallery reaches a country page only through a stored ISO3 code.
+- A product address that belongs to a retired photo-gallery StoryMap wrapper
+  resolves to the gallery, not to the wrapper. The mapping is the catalogue's
+  `legacy_item_id`; a gallery published without a wrapper records none. The
+  catalogue is consulted only for a product recorded as a photo gallery or for
+  an address that resolved to nothing, so product resolution is unchanged, and
+  free of any added request, for every other item.
 - ArcGIS errors produce an explicit retry state.
 - Authentication requires the exact community organization ID; authenticated status never replaces item-level ArcGIS authorization.
 - Tokens and the identity manager stay outside page components; protected JSON and binary resources are requested through `AuthContext.requestProtected` and `AuthContext.downloadProtected`.

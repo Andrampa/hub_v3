@@ -1,15 +1,16 @@
 import DOMPurify from 'dompurify'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
-import { formatDate } from '../lib/catalog'
+import { formatDate, isPhotoGalleryWrapper } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
 import { CITATION_LANGUAGES, citationFor, citationRound, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
-import { itemResourceAction, itemThumbnail } from '../services/arcgis'
+import { fetchStoryMapFlickrAlbum, itemResourceAction, itemThumbnail } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
+import { fetchPhotoGalleries, galleryForFlickrAlbum, galleryForLegacyItem, type PhotoGallery } from '../services/photoGalleries'
 
 type ProductState =
   | { status: 'loading' }
@@ -62,6 +63,8 @@ export default function CatalogProduct() {
   const { itemId = '' } = useParams()
   const { catalog } = useCountryCatalog()
   const [state, setState] = useState<ProductState>({ status: 'loading' })
+  /** Set when this address belongs to a gallery rather than to a product. */
+  const [galleryPath, setGalleryPath] = useState('')
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const citationRef = useRef<HTMLParagraphElement>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -69,6 +72,7 @@ export default function CatalogProduct() {
   useEffect(() => {
     let active = true
     setPreviewOpen(false)
+    setGalleryPath('')
     // A mistyped or truncated address is not a withdrawal. Both used to render
     // "no longer published in the DIEM Hub catalogue", which told a reader whose
     // link was simply cut in half that a product had been removed.
@@ -77,9 +81,41 @@ export default function CatalogProduct() {
       return
     }
     setState({ status: 'loading' })
+    /**
+     * A legacy StoryMap wrapper answers at this address whether or not it is
+     * still in the content group: while it is, resolving it here takes the
+     * wrapper out of the reader's path, and once it is removed, this is what
+     * keeps its Hub URL working. The gallery catalogue is therefore consulted
+     * in two cases only - a product that looks like a gallery, and an address
+     * that resolved to nothing, which is what a removed wrapper looks like -
+     * so no other product pays for a second request. A gallery-service failure
+     * leaves the product resolving exactly as it did before.
+     */
     void fetchCurrentCatalogProduct(itemId)
-      .then((item) => {
-        if (active) setState(item ? { status: 'available', item } : { status: 'unavailable' })
+      .then(async (item) => {
+        if (!active) return
+        if (item && !isPhotoGalleryWrapper(item)) {
+          setState({ status: 'available', item })
+          return
+        }
+        const galleries = await fetchPhotoGalleries().catch(() => [] as PhotoGallery[])
+        if (!active) return
+        /**
+         * The recorded item ID answers first, and is the only thing that can
+         * answer once a wrapper has been removed from the group. While a
+         * wrapper is still reachable, the album it links to is read from the
+         * wrapper itself and matched against the catalogue, so a row whose
+         * `legacy_item_id` has not been filled in yet still sends the reader to
+         * the gallery instead of to a StoryMap.
+         */
+        const gallery = galleryForLegacyItem(galleries, itemId)
+          || (item ? galleryForFlickrAlbum(galleries, await fetchStoryMapFlickrAlbum(itemId)) : undefined)
+        if (!active) return
+        if (gallery) {
+          setGalleryPath(`/photo-galleries?gallery=${encodeURIComponent(gallery.id)}`)
+          return
+        }
+        setState(item ? { status: 'available', item } : { status: 'unavailable' })
       })
       .catch((error: unknown) => {
         if (active) setState({
@@ -182,6 +218,9 @@ export default function CatalogProduct() {
     setPreviewOpen(true)
     window.setTimeout(() => document.getElementById('product-preview-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
   }
+
+  // Placed after every hook so the redirect never changes the hook order.
+  if (galleryPath) return <Navigate to={galleryPath} replace />
 
   return (
     <>

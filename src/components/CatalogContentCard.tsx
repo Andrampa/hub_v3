@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { distinctSummary, formatDate, itemEdition } from '../lib/catalog'
+import { distinctSummary, formatDate, itemEdition, itemTypeLabel } from '../lib/catalog'
 import { distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
@@ -78,7 +78,7 @@ export function CatalogContentCard({
             last edit to the ArcGIS record, which bulk re-categorization rewrites,
             so it is never presented here as if it were a publication date. */}
         <div className="card-context">
-          <span>{item.type}</span>
+          <span>{itemTypeLabel(item)}</span>
           <span aria-hidden="true">·</span>
           <time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time>
         </div>

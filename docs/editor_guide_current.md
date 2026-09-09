@@ -283,6 +283,36 @@ Complete:
 - credit;
 - featured flag and display order, where needed.
 
+### Where the gallery appears
+
+The country ISO3 decides which country page shows the gallery. It is the only
+field that does: the country name is a label for readers and is never read as an
+assignment.
+
+- one country: enter its code, for example `TCD`;
+- several countries: enter every code separated by a semicolon, for example
+  `IRQ;LBN`. The gallery then appears on each of those country pages and on the
+  cross-country page;
+- no code: the gallery appears on **/photo-galleries** only. Leave it empty only
+  when no country applies.
+
+Do not type a country name, or words such as `Global`, into the ISO3 field. The
+Hub ignores anything that is not a three-letter code, so the gallery would
+simply reach no country page.
+
+Each country page shows its three most recent galleries by gallery date, above
+the evidence collection, and links to the full list. Never create a StoryMap to
+carry a photo gallery: a catalogue row is the only supported route, and it keeps
+the field date and leaves the gallery out of product counts.
+
+### Legacy item ID
+
+**Leave this empty for a new gallery.** It exists only for the galleries that
+were once published as a StoryMap wrapper: it holds that wrapper's ArcGIS item
+ID, so Hub links already circulating for it open the gallery instead of the
+StoryMap. Where one gallery replaced two wrappers, both IDs are recorded,
+separated by a semicolon.
+
 Set **Publication status** to `Published` only after opening both the album and
 thumbnail links anonymously. The service is normally public and read-only; its
 owner must temporarily enable editing for maintenance and disable it again

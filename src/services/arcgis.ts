@@ -175,3 +175,29 @@ export function itemResourceAction(item: ArcGISItem) {
     label: 'View in ArcGIS',
   }
 }
+
+/**
+ * The Flickr album a photo-gallery StoryMap wrapper links to, if any.
+ *
+ * The wrappers are a single sentence around one album link, and that album is
+ * the only thing they and the gallery catalogue have in common until an editor
+ * records the item ID against the row. Reading it here lets a wrapper's Hub
+ * address reach its gallery before that backfill happens, from the wrapper
+ * itself rather than from a mapping kept in this repository.
+ *
+ * Album IDs appear in two shapes: a link to the album, and a link to one photo
+ * within it. Any failure returns undefined, which leaves the wrapper resolving
+ * as an ordinary product.
+ */
+export async function fetchStoryMapFlickrAlbum(itemId: string, signal?: AbortSignal) {
+  if (!/^[a-f0-9]{32}$/i.test(itemId)) return undefined
+  try {
+    const response = await fetch(`${REST_ROOT}/content/items/${itemId}/data?f=json`, { signal })
+    if (!response.ok) return undefined
+    const text = await response.text()
+    const match = text.match(/(?:faoemergencies\/(?:albums|sets)\/|\/in\/album-)(\d{6,})/)
+    return match?.[1]
+  } catch {
+    return undefined
+  }
+}

@@ -1,37 +1,34 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { PhotoGalleryCard } from '../components/PhotoGalleryCard'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { countryDefinition } from '../services/countries'
 import { fetchPhotoGalleries, type PhotoGallery } from '../services/photoGalleries'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 
-function formatGalleryDate(date: Date) {
-  return new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(date)
-}
+const ALL_COUNTRIES = 'All countries'
 
-function GalleryCard({ gallery }: { gallery: PhotoGallery }) {
-  const [imageFailed, setImageFailed] = useState(false)
-  return (
-    <article className={`gallery-card${gallery.featured ? ' gallery-card--featured' : ''}`}>
-      <a className="gallery-card-image" href={gallery.flickrUrl} target="_blank" rel="noreferrer">
-        {gallery.thumbnailUrl && !imageFailed
-          ? <img src={gallery.thumbnailUrl} alt={gallery.thumbnailAlt} loading="lazy" onError={() => setImageFailed(true)} />
-          : <span aria-hidden="true">DIEM</span>}
-        <span>View on Flickr ↗</span>
-      </a>
-      <div className="gallery-card-copy">
-        <div className="gallery-card-meta">
-          <span>{gallery.countryName || gallery.countryIso3 || 'Regional'}</span>
-          <time dateTime={gallery.date.toISOString()}>{formatGalleryDate(gallery.date)}</time>
-        </div>
-        <h2>{gallery.title}</h2>
-        {gallery.summary && <p>{gallery.summary}</p>}
-        <div className="gallery-card-footer">
-          {gallery.eventOrRound && <span>{gallery.eventOrRound}</span>}
-          <small>{gallery.credit}</small>
-        </div>
-      </div>
-    </article>
-  )
+/**
+ * Filter options built from stored country codes.
+ *
+ * A gallery shared by two countries is offered under each of them, and a
+ * gallery that records no code stays discoverable under 'All countries' rather
+ * than being filed under a country nobody assigned it to. The label prefers the
+ * canonical country name so the picker agrees with country pages.
+ */
+function countryOptions(galleries: PhotoGallery[]) {
+  const names = new Map<string, string>()
+  galleries.forEach((gallery) => {
+    gallery.countryIso3List.forEach((code) => {
+      if (names.has(code)) return
+      const definition = countryDefinition(code)
+      names.set(code, definition.name === code ? gallery.countryName || code : definition.name)
+    })
+  })
+  return [...names.entries()]
+    .map(([iso3, name]) => ({ iso3, name }))
+    .sort((first, second) => first.name.localeCompare(second.name))
 }
 
 export default function PhotoGalleries() {
@@ -42,8 +39,17 @@ export default function PhotoGalleries() {
   const [galleries, setGalleries] = useState<PhotoGallery[]>([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
-  const [country, setCountry] = useState('All countries')
+  const [searchParams, setSearchParams] = useSearchParams()
   const [reloadKey, setReloadKey] = useState(0)
+
+  const selectedCountry = (searchParams.get('country') || '').trim().toUpperCase()
+  /**
+   * Set when a legacy StoryMap wrapper's Hub address resolved to one gallery.
+   * The reader asked for that gallery, so it is shown on its own, with a way
+   * back to the full collection. An id that matches nothing falls back to the
+   * whole listing rather than to an empty page.
+   */
+  const requestedGallery = (searchParams.get('gallery') || '').trim()
 
   useEffect(() => {
     const controller = new AbortController()
@@ -58,8 +64,27 @@ export default function PhotoGalleries() {
     return () => controller.abort()
   }, [reloadKey])
 
-  const countries = useMemo(() => [...new Set(galleries.map((gallery) => gallery.countryName).filter(Boolean))].sort(), [galleries])
-  const visible = country === 'All countries' ? galleries : galleries.filter((gallery) => gallery.countryName === country)
+  const options = useMemo(() => countryOptions(galleries), [galleries])
+  const single = requestedGallery
+    ? galleries.find((gallery) => gallery.id === requestedGallery)
+    : undefined
+  const visible = single
+    ? [single]
+    : selectedCountry
+      ? galleries.filter((gallery) => gallery.countryIso3List.includes(selectedCountry))
+      : galleries
+
+  function selectCountry(iso3: string) {
+    const next = new URLSearchParams(searchParams)
+    next.delete('gallery')
+    if (iso3 === ALL_COUNTRIES) next.delete('country')
+    else next.set('country', iso3)
+    setSearchParams(next, { replace: true })
+  }
+
+  function showAll() {
+    setSearchParams(new URLSearchParams(), { replace: true })
+  }
 
   return (
     <>
@@ -75,15 +100,19 @@ export default function PhotoGalleries() {
         </section>
         <section className="gallery-catalogue section-wrap" aria-labelledby="gallery-heading">
           <div className="gallery-heading">
-            <div><span className="kicker">Field evidence</span><h2 id="gallery-heading">Latest galleries</h2></div>
-            {countries.length > 1 && (
-              <label>Country<select value={country} onChange={(event) => setCountry(event.target.value)}><option>All countries</option>{countries.map((name) => <option key={name}>{name}</option>)}</select></label>
+            <div>
+              <span className="kicker">Field evidence</span>
+              <h2 id="gallery-heading">{single ? single.countryName || 'Photo gallery' : 'Latest galleries'}</h2>
+              {single && <button type="button" className="gallery-show-all" onClick={showAll}>Show all photo galleries</button>}
+            </div>
+            {!single && options.length > 1 && (
+              <label>Country<select value={selectedCountry || ALL_COUNTRIES} onChange={(event) => selectCountry(event.target.value)}><option>{ALL_COUNTRIES}</option>{options.map((option) => <option key={option.iso3} value={option.iso3}>{option.name}</option>)}</select></label>
             )}
           </div>
           {loading && <div className="gallery-state" role="status"><span className="loader" /> Loading photo galleries…</div>}
           {!loading && error && <div className="gallery-state gallery-state--error" role="alert"><strong>Photo galleries are temporarily unavailable.</strong><span>{error}</span><button type="button" onClick={() => setReloadKey((key) => key + 1)}>Try again</button></div>}
           {!loading && !error && visible.length === 0 && <div className="gallery-state"><strong>No published galleries found.</strong><span>Try another country or return later.</span></div>}
-          {!loading && !error && visible.length > 0 && <div className="gallery-grid">{visible.map((gallery) => <GalleryCard key={gallery.id} gallery={gallery} />)}</div>}
+          {!loading && !error && visible.length > 0 && <div className="gallery-grid">{visible.map((gallery) => <PhotoGalleryCard key={gallery.id} gallery={gallery} />)}</div>}
         </section>
       </main>
       <SiteFooter />
