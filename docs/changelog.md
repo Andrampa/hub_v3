@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-09 - Limit the country-card hover underline
+
+- Prevented the global anchor hover decoration from underlining every label in
+  a country card. Hover now underlines only the country name while the card's
+  border treatment and keyboard focus outline continue to signal that the
+  complete card is interactive.
+
 ## 2026-09-09 - Fix two link colours the FAO stylesheet was overriding
 
 - The country hero's **Countries** breadcrumb was dark blue on dark blue, at a

@@ -47,7 +47,8 @@
 .country-section-heading--directory > p strong { color: var(--deep-blue); font-size: 18px; }
 .country-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .country-card { min-width: 0; padding: 23px; background: white; border: 1px solid var(--line-soft); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
-.country-card:hover { transform: translateY(-3px); border-color: #b9cbcb; box-shadow: 0 13px 27px rgba(28,68,78,.09); }
+.country-card:hover { transform: translateY(-3px); border-color: #b9cbcb; box-shadow: 0 13px 27px rgba(28,68,78,.09); text-decoration: none; }
+.country-card:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
 .country-card-top { display: flex; justify-content: space-between; gap: 15px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
 .country-card-top span:first-child { color: var(--fao-blue); }
 .country-card h3 { min-height: 45px; margin: 10px 0 13px; color: var(--deep-blue); font-size: 20px; letter-spacing: -.025em; }
