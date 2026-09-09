@@ -16,6 +16,11 @@ import manifest from '../assets/heroes/heroes.json'
 const HERO_DIR = join(__dirname, '../assets/heroes')
 const heroNames = Object.keys(manifest.heroes) as Array<keyof typeof manifest.heroes>
 
+/** The widths the generator will write for a hero: never wider than its master. */
+function widthsFor(name: keyof typeof manifest.heroes) {
+  return manifest.widths.filter((width) => width <= manifest.heroes[name].width)
+}
+
 describe('hero manifest', () => {
   it('declares at least one width and a fallback among them', () => {
     expect(manifest.widths.length).toBeGreaterThan(0)
@@ -31,13 +36,19 @@ describe('hero manifest', () => {
       'bangladesh-flood-2020',
       'cyclone-freddy-madagascar-2023',
       'zambia-drought-2024',
+      'drc-ndjili-market-gardens-2025',
+      'afghanistan-daikundi-survey-2023',
+      'drc-ndjili-field-team-2025',
     ])
   })
 
   it('records a plausible master size for each hero', () => {
+    // Not every master clears `fallbackWidth`: the FAO photographs are served at
+    // 1,024 px and the generator refuses to upscale past that, so the floor here
+    // is the narrowest width the ladder declares.
     heroNames.forEach((name) => {
       const hero = manifest.heroes[name]
-      expect(hero.width).toBeGreaterThan(manifest.fallbackWidth)
+      expect(hero.width).toBeGreaterThanOrEqual(Math.min(...manifest.widths))
       expect(hero.height).toBeGreaterThan(0)
       expect(hero.source).toMatch(/\.jpg$/)
     })
@@ -45,9 +56,9 @@ describe('hero manifest', () => {
 })
 
 describe('committed hero variants', () => {
-  it('has an AVIF and a WebP at every declared width', () => {
+  it('has an AVIF and a WebP at every width its master can supply', () => {
     heroNames.forEach((name) => {
-      manifest.widths.forEach((width) => {
+      widthsFor(name).forEach((width) => {
         ['avif', 'webp'].forEach((extension) => {
           const file = join(HERO_DIR, `${name}-${width}.${extension}`)
           expect(existsSync(file), `${name}-${width}.${extension} is missing`).toBe(true)
@@ -57,9 +68,27 @@ describe('committed hero variants', () => {
     })
   })
 
-  it('has the JPEG fallback every <img> src points at', () => {
+  it('writes nothing above a master width, so no srcset candidate is an upscale', () => {
+    // A file named `-2048` generated from a 1,024 px master would tell the
+    // browser it is choosing 2,048 px of detail that does not exist.
     heroNames.forEach((name) => {
-      const file = join(HERO_DIR, `${name}-${manifest.fallbackWidth}.jpg`)
+      manifest.widths
+        .filter((width) => width > manifest.heroes[name].width)
+        .forEach((width) => {
+          ['avif', 'webp', 'jpg'].forEach((extension) => {
+            const file = join(HERO_DIR, `${name}-${width}.${extension}`)
+            expect(existsSync(file), `${name}-${width}.${extension} is an upscale`).toBe(false)
+          })
+        })
+    })
+  })
+
+  it('has the JPEG fallback every <img> src points at', () => {
+    // Mirrors `fallback()` in HeroImage.tsx: the widest JPEG at or below
+    // `fallbackWidth` that the master was large enough to produce.
+    heroNames.forEach((name) => {
+      const width = Math.max(...widthsFor(name).filter((candidate) => candidate <= manifest.fallbackWidth))
+      const file = join(HERO_DIR, `${name}-${width}.jpg`)
       expect(existsSync(file), `${name} fallback is missing`).toBe(true)
     })
   })
