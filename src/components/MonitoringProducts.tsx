@@ -19,8 +19,41 @@ function countryName(item: MonitoringProduct, countries: MonitoringProductCatalo
   return item.countries.map((iso3) => countries.find((country) => country.iso3 === iso3)?.name || iso3).join(', ')
 }
 
-function ProductRow({ item }: { item: MonitoringProduct }) {
-  const summary = cleanText(item.snippet || item.description)
+// Round labels as the surveys publish them in the catalog languages, so a title
+// such as "Honduras - Informe de seguimiento DIEM - Ronda 5" can drop the
+// context its group header already carries.
+const ROUND_WORDS = 'round|ronda|rodada|tour|cycle|serie|série'
+const EDGE_PUNCTUATION = /^[\s\-–—:,]+|[\s\-–—:,]+$/g
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function stripEdges(value: string) {
+  return value.replace(/\s{2,}/g, ' ').replace(EDGE_PUNCTUATION, '').trim()
+}
+
+// Removes the country and round that the group header already states. A match
+// that would empty the text out is skipped, so single-word titles survive.
+function trimGroupContext(text: string, country?: string, roundValue?: string) {
+  let result = text.trim()
+  const strip = (pattern: RegExp) => {
+    const next = stripEdges(result.replace(pattern, ' '))
+    if (next) result = next
+  }
+  if (country) strip(new RegExp(`^${escapeRegExp(country)}\\b`, 'i'))
+  if (roundValue) strip(new RegExp(`[\\s\\-–—:,]*\\b(?:${ROUND_WORDS})\\s*0*${escapeRegExp(roundValue)}\\b`, 'i'))
+  return result || text.trim()
+}
+
+function comparable(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
+function ProductRow({ item, country, roundValue }: { item: MonitoringProduct, country?: string, roundValue?: string }) {
+  const title = trimGroupContext(item.title, country, roundValue)
+  const rawSummary = cleanText(item.snippet || item.description)
+  const summary = rawSummary ? trimGroupContext(rawSummary, country, roundValue) : ''
   // Public monitoring products all carry the catalog role, so this is the Hub
   // product page. A contributor-only row that an anonymous group search cannot
   // resolve falls back to the direct link; see itemHubLink.
@@ -33,13 +66,19 @@ function ProductRow({ item }: { item: MonitoringProduct }) {
           <span>{item.languages.join(', ') || 'Language not specified'}</span>
           <time dateTime={`${item.year}`}>{item.year}</time>
         </div>
-        <h4>{item.title.trim()}</h4>
-        {summary && <p>{summary}</p>}
+        <h4>
+          {link.kind === 'product' ? (
+            <Link to={link.to}>{title}</Link>
+          ) : (
+            <a href={link.href} target="_blank" rel="noreferrer">{title}</a>
+          )}
+        </h4>
+        {summary && comparable(summary) !== comparable(title) && <p>{summary}</p>}
       </div>
       {link.kind === 'product' ? (
-        <Link to={link.to}>Open product</Link>
+        <Link className="monitoring-product-open" to={link.to} aria-label={`Open product: ${title}`}>Open product</Link>
       ) : (
-        <a href={link.href} target="_blank" rel="noreferrer">
+        <a className="monitoring-product-open" href={link.href} target="_blank" rel="noreferrer" aria-label={`Open product: ${title}`}>
           Open product <span aria-hidden="true">↗</span>
         </a>
       )}
@@ -226,7 +265,14 @@ export function MonitoringProducts() {
                           </div>
                         </div>
                       </header>
-                      <div>{group.items.map((item) => <ProductRow item={item} key={item.key} />)}</div>
+                      <div>{group.items.map((item) => (
+                        <ProductRow
+                          item={item}
+                          country={group.iso3 ? group.country : undefined}
+                          roundValue={group.roundValue}
+                          key={item.key}
+                        />
+                      ))}</div>
                     </section>
                   )
                 })}

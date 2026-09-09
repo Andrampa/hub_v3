@@ -92,6 +92,9 @@
 .monitoring-product-meta { display: flex; flex-wrap: wrap; gap: 7px 16px; color: var(--ink-muted); font-size: .76rem; font-weight: 600; }
 .monitoring-product-meta span:first-child { color: #a94f00; font-weight: 800; text-transform: uppercase; letter-spacing: .055em; }
 .monitoring-product-row h4 { margin: 7px 0 5px; color: var(--fao-navy); font-size: 1.08rem; }
+.monitoring-product-row h4 a { color: inherit; text-decoration: none; }
+.monitoring-product-row h4 a:hover,
+.monitoring-product-row h4 a:focus-visible { color: #0b5f9e; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 .monitoring-product-row p { max-width: 850px; margin: 0; color: #545454; font-size: .9rem; line-height: 1.55; }
 .monitoring-product-row > a { color: #0b5f9e; font-weight: 700; text-decoration-thickness: 1px; text-underline-offset: 4px; white-space: nowrap; }
 .monitoring-product-row > a:hover,
