@@ -81,7 +81,8 @@ export interface CountryResource extends ArcGISItem {
 
 export interface CountrySummary extends CountryDefinition {
   resourceCount: number
-  latestModified: number
+  /** Most recent product publication date; mutable ArcGIS edits are excluded. */
+  latestPublished: number
   typeCounts: Record<string, number>
 }
 
@@ -342,7 +343,7 @@ function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummar
   return {
     ...countryDefinition(iso3),
     resourceCount: families.length,
-    latestModified: Math.max(...items.map((item) => item.modified), 0),
+    latestPublished: Math.max(...items.map((item) => item.created), 0),
     typeCounts,
   }
 }

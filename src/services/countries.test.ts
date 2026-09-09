@@ -217,6 +217,34 @@ describe('fetchCountryCatalog', () => {
     expect(catalog.diagnostics.excludedByCatalogRole).toBe(1)
   })
 
+  it('dates a country by product publication, never by later metadata edits', async () => {
+    vi.stubGlobal('sessionStorage', { getItem: () => null, setItem: () => undefined, removeItem: () => undefined })
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        total: 2,
+        start: 1,
+        num: 2,
+        nextStart: -1,
+        results: [
+          record(id(1), [DISCOVERABLE, '/Categories/Countries/MLI'], {
+            created: Date.UTC(2026, 4, 28),
+            modified: Date.UTC(2026, 7, 24),
+          }),
+          record(id(2), [DISCOVERABLE, '/Categories/Countries/MLI'], {
+            created: Date.UTC(2026, 3, 10),
+            modified: Date.UTC(2026, 8, 1),
+          }),
+        ],
+      }),
+    })))
+    const { fetchCountryCatalog: fetchFresh } = await import('./countries')
+
+    const catalog = await fetchFresh()
+    expect(catalog.countries.find((country) => country.iso3 === 'MLI')?.latestPublished)
+      .toBe(Date.UTC(2026, 4, 28))
+  })
+
   it('surfaces a failed request rather than resolving with a partial catalogue', async () => {
     vi.stubGlobal('sessionStorage', { getItem: () => null, setItem: () => undefined, removeItem: () => undefined })
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 503 })))

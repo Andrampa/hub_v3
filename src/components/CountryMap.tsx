@@ -100,7 +100,7 @@ export function CountryMap({
         </svg>
         <div className="map-selection" aria-live="polite">
         {hovered ? (
-          <><strong>{hovered.name}</strong><span>{hovered.resourceCount} {hovered.resourceCount === 1 ? 'product' : 'products'} · Updated {new Date(hovered.latestModified).getUTCFullYear()}</span></>
+          <><strong>{hovered.name}</strong><span>{hovered.resourceCount} {hovered.resourceCount === 1 ? 'product' : 'products'} · Latest publication {new Date(hovered.latestPublished).getUTCFullYear()}</span></>
         ) : (
           <><strong>Explore the map</strong><span>Select a highlighted country or use the directory below.</span></>
         )}

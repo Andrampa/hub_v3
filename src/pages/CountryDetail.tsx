@@ -389,9 +389,8 @@ export default function CountryDetail() {
   }
 
   const definition = country || countryDefinition(iso3)
-  const latestUpdate = Math.max(
-    country?.latestModified || 0,
-    editorial?.updatedAt || 0,
+  const latestPublication = Math.max(
+    country?.latestPublished || 0,
     monitoringCoverage?.latest.publicationDate || 0,
   )
 
@@ -438,7 +437,7 @@ export default function CountryDetail() {
                   <div className="country-profile-stats">
                     <div><strong>{country.resourceCount}</strong><span>products</span></div>
                     <div><strong>{Object.keys(country.typeCounts).filter((type) => type !== UNRECORDED_PRODUCT_TYPE).length}</strong><span>product types</span></div>
-                    <div><strong>{formatDate(latestUpdate)}</strong><span>latest update</span></div>
+                    <div><strong>{formatDate(latestPublication)}</strong><span>latest publication</span></div>
                   </div>
                 </div>
                 {definition.iso3 !== CROSS_COUNTRY_CODE && (

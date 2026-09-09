@@ -166,15 +166,16 @@ and links to `/photo-galleries?country={ISO3}`. It renders nothing when the
 country has no galleries or the catalogue cannot be read: photographs are
 supplementary and never stand between a reader and the country's evidence.
 
-## Latest Update
+## Latest Publication
 
-The country hero's **Latest update** is the most recent timestamp among:
+The country hero's **Latest publication** is the most recent timestamp among:
 
-1. the latest modified resource currently assigned to the country;
-2. the edit timestamp of the published country introduction or highlighted
-   editorial content;
-3. the publication date of the latest public monitoring round.
+1. the ArcGIS creation date of the latest discoverable product currently
+   assigned to the country;
+2. the publication date of the latest public monitoring round.
 
-Draft editorial rows are excluded because they are not part of the rendered
-country page. This date is recalculated from live ArcGIS responses on each
-page load.
+Product metadata modifications and country-editorial edits never change this
+date. The product creation date is the current publication signal; if an older
+pre-existing ArcGIS item is added to the Hub later, its original creation date
+remains the date shown. The value is recalculated from live ArcGIS responses on
+each page load.
