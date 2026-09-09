@@ -1908,8 +1908,12 @@ Each crop is pinned to what the photograph was chosen for, so
 - `afghanistan-daikundi-survey-2023` - the two figures occupy 33-95% of the
   master height; `center 88%` keeps both and the terraced valley in frame.
 - `drc-ndjili-field-team-2025` - the '#DataInEmergencies' shirt print sits at
-  57-61% of the master height and 50-68% of its width; `center 63%` places it in
-  the open space to the right of the heading.
+  57-61% of the master height and 50-68% of its width. `.catalog-hero` is given
+  a 440px min-height because object-fit cover is already at the minimum scale
+  that fills the width, so vertical room is the only way to pull back far enough
+  to show the market gardens and the riverside shelter. With `center 74%` the
+  band then runs from the foreground subject's ear (0.40) to 0.86 of the master
+  at desktop widths, with the print in the open space right of the heading.
 
 `.countries-hero` keeps `overflow: visible` (its decorative ring deliberately
 bleeds out), so the wash is on `::after` and the ring, copy and credit are
