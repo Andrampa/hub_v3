@@ -5,6 +5,8 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION } from '../services/protectedData'
 import { usePageMetadata } from '../hooks/usePageMetadata'
+import { CitationText } from '../components/CitationText'
+import { collectionCitationModel } from '../lib/citation'
 
 const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
@@ -201,7 +203,7 @@ export default function DataGuide() {
             <section id="citation">
               <h2>How to cite</h2>
               <p>Any product or publication that mentions or includes DIEM data should carry the following citation, replacing the bracketed date with the date you accessed the data.</p>
-              <blockquote className="guide-citation">FAO. 2026. DIEM-Monitoring. In: Data in Emergencies (DIEM) Hub. Rome. [Cited date]. https://data-in-emergencies.fao.org</blockquote>
+              <blockquote className="guide-citation"><CitationText model={collectionCitationModel('English')}/></blockquote>
               <p>French and Spanish versions are available in the data workspace and can be copied directly. We would be glad to hear about any product based on DIEM data — please let the DIEM Hub team know when you publish.</p>
             </section>
 

@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-09-10 - Cite fixed publications and living products differently
+
+- Following the FAO publications editor's review, product citations now take
+  one of two forms. Fixed publications (PDFs, document links, spreadsheets and
+  other files) cite as `FAO. Year. *Title*. Rome. URL.`, with no container and
+  no access date. Living products (StoryMaps, dashboards, web apps, Hub pages,
+  web maps and services) cite as `FAO. Year. Title. In: *DIEM Hub*. Rome.
+  [Cited date]. URL.` The form is chosen by ArcGIS item type; unknown types
+  cite as publications.
+- The inferred programme series (`DIEM-Monitoring`, `DIEM-Impact`, EVE, ...)
+  no longer appears in product citations, and the container is `DIEM Hub`
+  rather than `Data in Emergencies (DIEM) Hub`.
+- The page italicises the publication title or the Hub's name as the editor's
+  examples do; copied text is unchanged plain text.
+- A borrowed round now joins the title (`…, Round 8`) instead of following it
+  as a separate sentence.
+- The collection citations on `/data` and `/data/guide` are generated from the
+  same model instead of four handwritten strings. French now reads `Dans :`
+  in product citations too, matching the data workspace.
+- The author remains `FAO` by policy; the year remains the ArcGIS creation
+  year. See `docs/services_and_data.md#citations`.
+
 ## 2026-09-09 - Make country dates publication-only
 
 - Replaced country **Latest update** dates with **Latest publication** dates.

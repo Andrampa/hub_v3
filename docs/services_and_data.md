@@ -209,6 +209,39 @@ Authentication uses the separate community portal and OAuth client described in 
 
 The public group contains documents, files, StoryMaps, web maps, services, Hub pages, dashboards, forms, and applications. Search result fields used include ID, title, type, owner, dates, tags, summary, thumbnail, URL, access, and licence metadata.
 
+## Citations
+
+`src/lib/citation.ts` builds every citation the Hub shows from one structured
+model; the page renders it with the emphasised run in `<cite>` and the
+clipboard receives the same text flattened. Two forms, agreed with the FAO
+publications editor (September 2026):
+
+- **Fixed publication** (default): `FAO. Year. *Title*. Rome. URL.` No
+  container, no access date; the whole title is italic, its full stop is not.
+- **Living product**: `FAO. Year. Title. In: *DIEM Hub*. Rome. [Cited date]. URL.`
+  Only `DIEM Hub` is italic.
+
+Rules:
+
+- The form is chosen by ArcGIS item type alone. StoryMap, Dashboard, Web
+  Mapping Application, Web Experience, Hub Page, Web Map, Feature Service, Map
+  Service and Image Service are living; every other type, including unknown
+  ones, is a fixed publication. EVE follows from this: its app, dashboards and
+  services are living, its PDF reports fixed.
+- The author is always `FAO`, as policy. Individual authors are not read from
+  owners, Credits or tags; there is no author override.
+- The year comes from `created`, the Hub's publication proxy. It is the ArcGIS
+  upload date, not a publication date; no better field exists.
+- The URL is a DOI or FAO Open Knowledge handle when the item links to one,
+  otherwise the Hub product page.
+- A round missing from the title but borrowed from a sibling edition is folded
+  into the title as `, Round N`, in English in all three languages.
+- French and Spanish keep their existing phrases (`Dans :`, `En:`, `Roma`,
+  localized access dates) pending language review.
+- The generic DIEM-Monitoring collection citation on `/data` and `/data/guide`
+  comes from the same model in the living form, with the localized
+  `[Cited date]` placeholder the surrounding text asks readers to replace.
+
 ## Caches
 
 Only React in-memory state. Browser and ArcGIS HTTP caches may apply. There is no service worker or persistent application cache. Protected item metadata is removed when authentication is lost.

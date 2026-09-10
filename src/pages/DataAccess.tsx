@@ -26,6 +26,8 @@ import {
   type ResolvedDataResource,
 } from '../services/protectedData'
 import { usePageMetadata } from '../hooks/usePageMetadata'
+import { CitationText } from '../components/CitationText'
+import { CITATION_LANGUAGES, citationText, collectionCitationModel } from '../lib/citation'
 
 const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
@@ -373,11 +375,11 @@ function SignInGate() {
   )
 }
 
-const citations = [
-  { language: 'English', text: 'FAO. 2026. DIEM-Monitoring. In: Data in Emergencies (DIEM) Hub. Rome. [Cited date]. https://data-in-emergencies.fao.org' },
-  { language: 'Français', text: 'FAO. 2026. DIEM-Monitoring [DIEM-Suivi]. Dans : Data in Emergencies (DIEM) Hub. Rome. [Consulté le date]. https://data-in-emergencies.fao.org' },
-  { language: 'Español', text: 'FAO. 2026. DIEM-Monitoring [DIEM-Monitoreo]. En: Data in Emergencies (DIEM) Hub. Roma. [Consultado el fecha]. https://data-in-emergencies.fao.org' },
-]
+/** Generic examples: the access date is the placeholder the intro asks readers to replace. */
+const citations = CITATION_LANGUAGES.map((language) => {
+  const model = collectionCitationModel(language)
+  return { language, model, text: citationText(model) }
+})
 
 function GenerationHeader({ id, reference }: { id: DataGeneration; reference: boolean }) {
   const generation = GENERATIONS[id]
@@ -685,7 +687,7 @@ export default function DataAccess() {
         <section className="citation-section">
           <div className="section-wrap">
             <div className="citation-intro"><span className="kicker">Responsible reuse</span><h2>How to cite DIEM data</h2><p>Replace the bracketed date with the date on which you accessed the data.</p></div>
-            <div className="citation-list">{citations.map((citation) => <article key={citation.language}><span>{citation.language}</span><p>{citation.text}</p><button type="button" onClick={() => void copyCitation(citation.language, citation.text)}>{copied === citation.language ? 'Copied' : 'Copy citation'}<Icon name={copied === citation.language ? 'check' : 'book'}/></button></article>)}</div>
+            <div className="citation-list">{citations.map((citation) => <article key={citation.language}><span>{citation.language}</span><p><CitationText model={citation.model}/></p><button type="button" onClick={() => void copyCitation(citation.language, citation.text)}>{copied === citation.language ? 'Copied' : 'Copy citation'}<Icon name={copied === citation.language ? 'check' : 'book'}/></button></article>)}</div>
             <div className="license-line"><Icon name="shield"/><p>DIEM aggregated data is available under <a href="https://creativecommons.org/licenses/by/4.0/legalcode.en" target="_blank" rel="noreferrer">CC BY 4.0</a> and the <a href="https://www.fao.org/contact-us/terms/db-terms-of-use/en" target="_blank" rel="noreferrer">FAO Statistical Database Terms of Use</a>. Microdata is released under the separate conditions set out above.</p></div>
           </div>
         </section>

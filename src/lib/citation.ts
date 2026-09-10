@@ -1,78 +1,91 @@
 import { itemRound } from './catalog'
 import { itemLanguage } from './productFamilies'
-import type { CountryResource, EvidencePathway } from '../services/countries'
+import type { CountryResource } from '../services/countries'
 
 /**
- * Product citations, following the three DIEM reference forms published in the
- * data access guide. The guide cites the collection; a product page can be more
- * precise, so the product's own title sits in front of the series it belongs to
- * and the link resolves to the product rather than to the Hub's front door.
+ * Product citations, in the two forms FAO's publications editor set out:
  *
- * The date in brackets is the access date, which is what "[Cited date]" in the
- * guide asks the reader to replace. It is filled in at render time rather than
- * left as a placeholder, because a placeholder is the part people forget.
+ * - a fixed publication (a report, brief, spreadsheet, a PDF or a card linking
+ *   to one) cites as a publication: `FAO. Year. *Title*. Rome. URL.` No
+ *   container, no access date - the thing cited does not change.
+ * - a living product (a StoryMap, dashboard, web app or updating service)
+ *   cites as a part of the Hub: `FAO. Year. Title. In: *DIEM Hub*. Rome.
+ *   [Cited date]. URL.` The access date is there because what the reader saw
+ *   can change after that date.
+ *
+ * The author is always FAO. That is a policy, not a fallback for missing data:
+ * individual authors are not recorded in any authoritative ArcGIS field, and an
+ * owner username is not a bibliographic author.
+ *
+ * The year is taken from `created`, the same publication proxy country pages
+ * use. It is the upload date, not a publication date, and ArcGIS holds no
+ * better one; `modified` would be worse, since metadata edits move it.
+ *
+ * Everything is built as one structured model. The page renders it with the
+ * emphasised part in italics, and the clipboard gets the same text flattened,
+ * so the two can never say different things.
  */
 export const CITATION_LANGUAGES = ['English', 'Français', 'Español'] as const
 export type CitationLanguage = (typeof CITATION_LANGUAGES)[number]
 
-interface SeriesName {
-  English: string
-  Français: string
-  Español: string
+export type CitationForm = 'static' | 'living'
+
+/** A run of citation text, italicised when `emphasis` is set. */
+export interface CitationSegment {
+  text: string
+  emphasis?: boolean
+}
+
+export interface CitationModel {
+  form: CitationForm
+  author: string
+  year: number
+  title: string
+  place: string
+  /** Living form only: the localized "In" and the container it introduces. */
+  container?: { label: string; name: string }
+  /** Living form only: the bracketed access statement, without brackets. */
+  accessed?: string
+  url: string
+}
+
+const AUTHOR = 'FAO'
+const CONTAINER = 'DIEM Hub'
+const HUB_URL = 'https://data-in-emergencies.fao.org'
+
+const PHRASES: Record<CitationLanguage, {
+  in: string; cited: string; placeholder: string; city: string; locale: string
+}> = {
+  English: { in: 'In:', cited: 'Cited', placeholder: 'date', city: 'Rome', locale: 'en-GB' },
+  Français: { in: 'Dans :', cited: 'Consulté le', placeholder: 'date', city: 'Rome', locale: 'fr-FR' },
+  Español: { in: 'En:', cited: 'Consultado el', placeholder: 'fecha', city: 'Roma', locale: 'es-ES' },
 }
 
 /**
- * EVE is its own service under its own brand, not a hazard-impact product that
- * happens to concern floods, so it is matched on product type before the
- * pathway is consulted. The brand is not translated: it is a name.
+ * ArcGIS item types whose content can change after they are published. Only
+ * these cite in the living form; every other type, including ones not seen
+ * yet, cites as a fixed publication, which is how almost all FAO products are
+ * cited. The split is by item type alone: EVE's app and dashboard are living,
+ * its PDF flood reports are publications, with no product-type rule needed.
  */
-const EVE_SERIES = 'FAO DIEM - Events Visualization in Emergencies (EVE)'
-const EVE_PRODUCT_TYPES = ['EVE flood reports', 'DIEM EVE']
+const LIVING_TYPES = new Set([
+  'StoryMap',
+  'Dashboard',
+  'Web Mapping Application',
+  'Web Experience',
+  'Hub Page',
+  'Web Map',
+  'Feature Service',
+  'Map Service',
+  'Image Service',
+])
 
-/**
- * The programme series a product belongs to, named as the guide names it: the
- * English form first, with the translated form in brackets where one is used.
- * Agricultural calendars are produced by the monitoring system, so they cite it.
- */
-const SERIES_BY_PATHWAY: Record<EvidencePathway, SeriesName> = {
-  'Regular monitoring': {
-    English: 'DIEM-Monitoring',
-    Français: 'DIEM-Monitoring [DIEM-Suivi]',
-    Español: 'DIEM-Monitoring [DIEM-Monitoreo]',
-  },
-  'Seasonal calendar': {
-    English: 'DIEM-Monitoring',
-    Français: 'DIEM-Monitoring [DIEM-Suivi]',
-    Español: 'DIEM-Monitoring [DIEM-Monitoreo]',
-  },
-  'Hazard impact': {
-    English: 'DIEM-Impact',
-    Français: 'DIEM-Impact',
-    Español: 'DIEM-Impact [DIEM-Impacto]',
-  },
-  'Research & analysis': {
-    English: 'DIEM-Research and Analysis',
-    Français: 'DIEM-Research and Analysis [DIEM-Recherche et analyse]',
-    Español: 'DIEM-Research and Analysis [DIEM-Investigación y análisis]',
-  },
-}
-
-/** Ordered, so a product carrying two pathways cites the one that produced it. */
-const PATHWAY_PRIORITY: EvidencePathway[] = [
-  'Regular monitoring',
-  'Hazard impact',
-  'Research & analysis',
-  'Seasonal calendar',
-]
-
-const PHRASES: Record<CitationLanguage, { in: string; cited: string; city: string; locale: string }> = {
-  English: { in: 'In', cited: 'Cited', city: 'Rome', locale: 'en-GB' },
-  Français: { in: 'Dans', cited: 'Consulté le', city: 'Rome', locale: 'fr-FR' },
-  Español: { in: 'En', cited: 'Consultado el', city: 'Roma', locale: 'es-ES' },
+export function citationForm(item: Pick<CountryResource, 'type'>): CitationForm {
+  return LIVING_TYPES.has(item.type) ? 'living' : 'static'
 }
 
 export function productUrl(itemId: string) {
-  return `https://data-in-emergencies.fao.org/catalog/${itemId}`
+  return `${HUB_URL}/catalog/${itemId}`
 }
 
 /**
@@ -80,7 +93,7 @@ export function productUrl(itemId: string) {
  * this catalogue - deprecated items are removed from the content group as the
  * Hub is built - so where a product has one, that is what a reference should
  * carry. Everything else cites its Hub product page, the only stable address it
- * has.
+ * has; a StoryMap's own URL is an application address, not a reference.
  */
 const PERSISTENT_HOSTS = [/^https?:\/\/(dx\.)?doi\.org\//i, /^https?:\/\/openknowledge\.fao\.org\//i]
 
@@ -100,42 +113,107 @@ export function citationRound(item: CountryResource, siblings: CountryResource[]
   return itemRound(item) ?? siblings.map((sibling) => itemRound(sibling)).find(Boolean)
 }
 
-function seriesFor(item: CountryResource, language: CitationLanguage) {
-  if (item.productTypes.some((type) => EVE_PRODUCT_TYPES.includes(type))) return EVE_SERIES
-  const pathway = PATHWAY_PRIORITY.find((candidate) => item.evidencePathways.includes(candidate))
-  return pathway ? SERIES_BY_PATHWAY[pathway][language] : undefined
+/**
+ * The title as cited: the published title, with a borrowed round folded into
+ * it when the title does not already state one. "Round" stays English in every
+ * language, as it is in the titles that do carry it. A trailing full stop is
+ * dropped so the citation's own punctuation does not double it.
+ */
+function effectiveTitle(item: CountryResource, round?: number) {
+  const title = item.title.trim().replace(/\.+$/, '')
+  return round && !itemRound(item) ? `${title}, Round ${round}` : title
 }
 
-function accessDate(language: CitationLanguage, on: Date) {
-  const formatted = new Intl.DateTimeFormat(PHRASES[language].locale, {
-    day: 'numeric', month: 'long', year: 'numeric',
-  }).format(on)
+function accessStatement(language: CitationLanguage, on?: Date) {
+  const phrases = PHRASES[language]
   // Spanish and French style the day-month join differently from English, and
-  // Intl already knows how; only the bracketed verb is ours.
-  return `${PHRASES[language].cited} ${formatted}`
+  // Intl already knows how; only the verb is ours. Without a date - a generic
+  // example the reader is told to complete - the localized placeholder stays.
+  const date = on
+    ? new Intl.DateTimeFormat(phrases.locale, { day: 'numeric', month: 'long', year: 'numeric' }).format(on)
+    : phrases.placeholder
+  return `${phrases.cited} ${date}`
+}
+
+export function citationModel(
+  item: CountryResource,
+  language: CitationLanguage,
+  { on = new Date(), round }: { on?: Date; round?: number } = {},
+): CitationModel {
+  const form = citationForm(item)
+  const phrases = PHRASES[language]
+  return {
+    form,
+    author: AUTHOR,
+    year: new Date(item.created).getUTCFullYear(),
+    title: effectiveTitle(item, round),
+    place: phrases.city,
+    ...(form === 'living' && {
+      container: { label: phrases.in, name: CONTAINER },
+      accessed: accessStatement(language, on),
+    }),
+    url: citationUrl(item),
+  }
+}
+
+/**
+ * The collection the data guide and the data workspace ask people to cite for
+ * DIEM data in general. It is the Hub's living monitoring collection, so it
+ * takes the living form; its title keeps the translated name in brackets.
+ */
+const COLLECTION_TITLE: Record<CitationLanguage, string> = {
+  English: 'DIEM-Monitoring',
+  Français: 'DIEM-Monitoring [DIEM-Suivi]',
+  Español: 'DIEM-Monitoring [DIEM-Monitoreo]',
+}
+const COLLECTION_YEAR = 2026
+
+/** Without `on`, the access date is the placeholder the reader replaces. */
+export function collectionCitationModel(language: CitationLanguage, { on }: { on?: Date } = {}): CitationModel {
+  const phrases = PHRASES[language]
+  return {
+    form: 'living',
+    author: AUTHOR,
+    year: COLLECTION_YEAR,
+    title: COLLECTION_TITLE[language],
+    place: phrases.city,
+    container: { label: phrases.in, name: CONTAINER },
+    accessed: accessStatement(language, on),
+    url: HUB_URL,
+  }
+}
+
+/**
+ * The citation as runs of text. Only the title of a fixed publication, or the
+ * Hub's name in a living one, is emphasised; the full stop after it is not.
+ */
+export function citationSegments(model: CitationModel): CitationSegment[] {
+  const head = `${model.author}. ${model.year}. `
+  if (model.form === 'static' || !model.container) {
+    return [
+      { text: head },
+      { text: model.title, emphasis: true },
+      { text: `. ${model.place}. ${model.url}` },
+    ]
+  }
+  return [
+    { text: `${head}${model.title}. ${model.container.label} ` },
+    { text: model.container.name, emphasis: true },
+    { text: `. ${model.place}. ${model.accessed ? `[${model.accessed}]. ` : ''}${model.url}` },
+  ]
+}
+
+/** Plain text, for the clipboard: the same runs, without the emphasis. */
+export function citationText(model: CitationModel) {
+  return citationSegments(model).map((segment) => segment.text).join('')
 }
 
 export function citationFor(
   item: CountryResource,
   language: CitationLanguage,
-  { on = new Date(), round }: { on?: Date; round?: number } = {},
+  options: { on?: Date; round?: number } = {},
 ) {
-  const year = new Date(item.created).getUTCFullYear()
-  const series = seriesFor(item, language)
-  const phrases = PHRASES[language]
-  const collection = 'Data in Emergencies (DIEM) Hub'
-  // Stated only when the title does not already say it: a citation reading
-  // "Round 4 (FR). Round 4." is worse than one that leaves the number out.
-  const roundSuffix = round && !itemRound(item) ? ` Round ${round}.` : ''
-  const parts = [
-    `FAO. ${year}.`,
-    `${item.title.trim()}.${roundSuffix}`,
-    `${phrases.in}: ${series ? `${series}. ` : ''}${collection}.`,
-    `${phrases.city}.`,
-    `[${accessDate(language, on)}].`,
-    citationUrl(item),
-  ]
-  return parts.join(' ')
+  return citationText(citationModel(item, language, options))
 }
 
 /**

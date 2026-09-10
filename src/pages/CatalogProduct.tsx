@@ -7,7 +7,8 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatDate, isPhotoGalleryWrapper } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
-import { CITATION_LANGUAGES, citationFor, citationRound, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
+import { CITATION_LANGUAGES, citationModel, citationRound, citationText, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
+import { CitationText } from '../components/CitationText'
 import { fetchStoryMapFlickrAlbum, itemResourceAction, itemThumbnail } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
 import { fetchPhotoGalleries, galleryForFlickrAlbum, galleryForLegacyItem, type PhotoGallery } from '../services/photoGalleries'
@@ -178,9 +179,10 @@ export default function CatalogProduct() {
       .find((candidate) => candidate.variants.some((variant) => variant.id === item.id))
   }, [catalog, item])
   const citationSiblings = family?.variants.filter((variant) => variant.id !== item?.id) || []
-  const citation = item
-    ? citationFor(item, citationLanguage, { round: citationRound(item, citationSiblings) })
+  const citationParts = item
+    ? citationModel(item, citationLanguage, { round: citationRound(item, citationSiblings) })
     : undefined
+  const citation = citationParts ? citationText(citationParts) : undefined
   const countries = item?.countries.map(countryDefinition) || []
   const categories = item ? publicCategories(item) : []
   const licence = item ? licenceFor(item) : undefined
@@ -357,7 +359,7 @@ export default function CatalogProduct() {
                       ))}
                     </div>
                   </div>
-                  <p ref={citationRef}>{citation}</p>
+                  <p ref={citationRef}>{citationParts && <CitationText model={citationParts}/>}</p>
                   <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>
                     {copyState === 'copied' ? 'Citation copied' : copyState === 'failed' ? 'Copy blocked — press Ctrl+C' : 'Copy citation'}
                   </button>
