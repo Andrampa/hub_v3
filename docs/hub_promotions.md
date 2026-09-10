@@ -28,7 +28,10 @@ the live service definition rather than assumed. Failure is non-blocking.
 The popup appears only after:
 
 1. the page has remained active for at least 4.5 seconds; and
-2. the evidence-in-focus section enters the upper 45 percent of the viewport.
+2. the visitor has scrolled at least 35 percent of a viewport height
+   (`SCROLL_TRIGGER_VIEWPORTS` in `EditorialPopup.tsx`).
+
+It then fades in over 1.4 seconds with a short upward rise.
 
 Dismissal is stored by publication channel and stable campaign ID. The default
 is seven days; editors can change `dismiss_days`. The popup does not steal

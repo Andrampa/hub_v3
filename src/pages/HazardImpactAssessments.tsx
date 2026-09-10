@@ -204,12 +204,12 @@ export default function HazardImpactAssessments() {
           </a>
           <div className="impact-hero-content section-wrap">
             <span className="eyebrow">DIEM pillar · Hazard impact assessment</span>
-            <h1>Living evidence from <em>shocks and crises.</em></h1>
+            <h1>Measuring the impact of <em>shocks and crises</em></h1>
             <p>
-              Explore rapid assessments of how floods, droughts, conflict and other hazards
-              affect agriculture, food security and rural livelihoods.
+              Explore how floods, droughts, conflict and other hazards impact
+              agriculture, food security and rural livelihoods.
             </p>
-            <a href="#shock-atlas">Explore the Living Shock Atlas <span aria-hidden="true">↓</span></a>
+            <a href="#shock-atlas">Open the Living Shock Atlas <span aria-hidden="true">↓</span></a>
           </div>
         </section>
 
@@ -241,7 +241,6 @@ export default function HazardImpactAssessments() {
             <section className="impact-latest section-wrap" aria-labelledby="impact-latest-title">
               <div className="impact-section-heading">
                 <div><span className="kicker">Latest assessments</span><h2 id="impact-latest-title">New evidence for current decisions</h2></div>
-                <p>Recent primary assessments and interactive stories, selected from the live Hub collection.</p>
               </div>
               <div className="impact-latest-grid">
                 {latest.map((item) => <DossierCard item={item} compact key={item.id} />)}
@@ -252,7 +251,7 @@ export default function HazardImpactAssessments() {
               <div className="section-wrap">
                 <div className="impact-section-heading impact-section-heading--light">
                   <div><span className="kicker">Living Shock Atlas</span><h2 id="shock-atlas-title">Where shocks have been assessed</h2></div>
-                  <p>Select a highlighted country to move directly from geography to its available evidence.</p>
+                  <p>Select a highlighted country to view available products.</p>
                 </div>
                 <ImpactAtlasMap
                   countries={catalog.countries}

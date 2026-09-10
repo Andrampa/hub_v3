@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MONITORING_COUNTRIES_COVERED } from '../services/monitoring'
+import { formatNumber } from '../lib/format'
 
 /**
  * The live figures behind the four pathways. Everything except `surveys` is
@@ -32,7 +33,7 @@ const sectionAreas: HubArea[] = [
     id: 'countries', eyebrow: 'Place-based discovery', title: 'Country evidence',
     description: ({ countriesWithEvidence, publicResources }) =>
       countriesWithEvidence && publicResources
-        ? `${countriesWithEvidence} countries, ${publicResources.toLocaleString()} products: monitoring, assessments and published evidence, indexed by place.`
+        ? `${countriesWithEvidence} countries, ${formatNumber(publicResources)} products: monitoring, assessments and published evidence.`
         : 'Start with a country and find its monitoring, assessments and published evidence.',
     destination: '/countries',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/9103febede744492ae43ebae1c5e3826/data',
@@ -41,7 +42,7 @@ const sectionAreas: HubArea[] = [
     id: 'monitoring', eyebrow: 'Household surveys', title: 'Household monitoring',
     description: ({ surveys }) =>
       surveys
-        ? `${surveys.toLocaleString()} survey rounds across ${MONITORING_COUNTRIES_COVERED} countries, with the briefs and findings from each.`
+        ? `${formatNumber(surveys)} survey rounds across ${MONITORING_COUNTRIES_COVERED} countries, with the briefs and findings from each.`
         : `Survey rounds across ${MONITORING_COUNTRIES_COVERED} countries, with the briefs and findings from each.`,
     destination: '/monitoring-system',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/b18c0ef1f4494f2a9a564713bc216620/data',
@@ -50,13 +51,13 @@ const sectionAreas: HubArea[] = [
     id: 'impact', eyebrow: 'Major shocks', title: 'Hazard impact assessments',
     description: ({ hazardImpactAssessments }) =>
       hazardImpactAssessments
-        ? `${hazardImpactAssessments} hazard impact assessments, indexed by country, shock type and year.`
-        : 'Hazard impact assessments, indexed by country, shock type and year.',
+        ? `${formatNumber(hazardImpactAssessments)} assessments of how major shocks affect agriculture and livelihoods.`
+        : 'Assessments of how major shocks affect agriculture and livelihoods.',
     destination: '/hazard-impact-assessments',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/1ab88703b32847cd8fd8776fd2c5e7ac/data',
   },
   {
-    id: 'flood', eyebrow: 'Flood evidence', title: 'Flood services',
+    id: 'flood', eyebrow: 'Flood evidence', title: 'Flood analysis',
     description: () => 'How DIEM observes floods, assesses exposure and prioritizes action, through EVE and VISTA.',
     destination: '/flood-services',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/1155b4e0339641458d8aac5e294d81d4/data',
@@ -85,7 +86,7 @@ function CatalogBand() {
   return (
     <section className="hub-catalog-band" aria-labelledby="hub-catalog-band-title">
       <div>
-        <span className="kicker">Complete collection</span>
+        <span className="kicker">Publication catalogue</span>
         <h2 id="hub-catalog-band-title">Every published DIEM product, in one place</h2>
         <p>Search and filter the public catalogue by evidence pathway, product type, country or year.</p>
       </div>
@@ -104,7 +105,7 @@ export function HubAreaCards({ counts }: { counts: HubAreaCounts }) {
           it is the entry point a first-time visitor needs and the only one of
           the four that opens a real index. */}
       <div className="section-heading">
-        <div><span className="kicker">Explore the Hub</span><h2 id="hub-areas-title">Start with the evidence you need</h2></div>
+        <div><span className="kicker">Explore the Hub</span><h2 id="hub-areas-title">Where to start</h2></div>
       </div>
       <div className="hub-area-grid">
         {sectionAreas.map((area) => <Link className="hub-area-card" to={area.destination} key={area.id}><CardContent area={area} counts={counts} /></Link>)}

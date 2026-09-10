@@ -135,8 +135,8 @@ const capabilityGroups: CapabilityGroup[] = [
       src: eveExposureImage,
       width: 1907,
       height: 1025,
-      alt: 'EVE 2.0 Exposure model for Mozambique showing 2,049,380 people and 4,819.2 square kilometres of cropland potentially exposed, a stack of layer transparency sliders for the RP20 hazard, modelled flood depth, cropland and population density, districts ranked by exposed population with Chokwe first, and a map where modelled flood depth follows the Zambezi corridor and the Sofala floodplain with exposed cropland picked out over it.',
-      caption: 'Exposure model for Mozambique: 2.05 million people and 4,819 km² of cropland fall inside the modelled RP20 flood scenario. Each layer carries its own transparency slider, and districts rank by exposed population. This is a preparedness baseline, not an observation of a specific event.',
+      alt: 'EVE 2.0 Exposure model for Mozambique showing 2 049 380 people and 4 819.2 square kilometres of cropland potentially exposed, a stack of layer transparency sliders for the RP20 hazard, modelled flood depth, cropland and population density, districts ranked by exposed population with Chokwe first, and a map where modelled flood depth follows the Zambezi corridor and the Sofala floodplain with exposed cropland picked out over it.',
+      caption: 'Exposure model for Mozambique: 2.05 million people and 4 819 km² of cropland fall inside the modelled RP20 flood scenario. Each layer carries its own transparency slider, and districts rank by exposed population. This is a preparedness baseline, not an observation of a specific event.',
     },
   },
   {
@@ -181,7 +181,7 @@ function briefMeta(item: ImpactAssessmentResource) {
 
 export default function FloodServices() {
   usePageMetadata({
-    title: 'Flood services',
+    title: 'Flood analysis',
     description: 'DIEM flood services: the EVE 2.0 exposure model and field data modes, VISTA satellite products and flood impact assessments, connecting hazard, exposure, observation and field evidence into one traceable workflow.',
   })
   const [briefs, setBriefs] = useState<ImpactAssessmentResource[]>()
@@ -218,7 +218,7 @@ export default function FloodServices() {
             Photo: Frameofashik / CC BY-SA 4.0
           </a>
           <div className="section-wrap">
-            <span className="eyebrow"><span /> DIEM flood services</span>
+            <span className="eyebrow"><span /> DIEM flood analysis</span>
             <h1>From flood hazard to <em>evidence for action.</em></h1>
             <p>DIEM flood services connect hazard and exposure, satellite observation, field evidence and impact analysis in one workflow, so decisions about early action, response and recovery rest on a traceable chain of evidence.</p>
             <div className="programme-actions">

@@ -34,6 +34,7 @@ import {
 } from '../services/countries'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { formatDate, formatNumber } from '../lib/format'
 
 const PAGE_SIZE = 16
 const SORT_VALUES = ['newest', 'oldest', 'title'] as const
@@ -60,7 +61,7 @@ const typeGroups: Record<string, string[]> = {
 function formatReadTime(fetchedAt: Date) {
   const stamp = fetchedAt.toISOString()
   const time = `at ${stamp.slice(11, 16)} UTC`
-  return stamp.slice(0, 10) === new Date().toISOString().slice(0, 10) ? time : `${stamp.slice(0, 10)} ${time}`
+  return stamp.slice(0, 10) === new Date().toISOString().slice(0, 10) ? time : `${formatDate(fetchedAt)} ${time}`
 }
 
 function categoryFor(item: CountryResource) {
@@ -82,7 +83,7 @@ export default function Catalog() {
   usePageMetadata({
     title: 'Catalogue',
     description: catalog
-      ? `${families.length.toLocaleString()} published DIEM products from ${catalog.countries.length} countries: monitoring briefs, assessment reports, questionnaires, presentations and maps, filterable by evidence pathway, product type, country and year.`
+      ? `${formatNumber(families.length)} published DIEM products from ${catalog.countries.length} countries: monitoring briefs, assessment reports, questionnaires, presentations and maps, filterable by evidence pathway, product type, country and year.`
       : 'Published DIEM products: monitoring briefs, assessment reports, questionnaires, presentations and maps, filterable by evidence pathway, product type, country and year.',
     // The query string carries filter state, so every combination would
     // otherwise be indexed as a separate page over the same collection.
@@ -298,7 +299,7 @@ export default function Catalog() {
             times over before a product appeared: eyebrow, title, second
             eyebrow, second title. The subtitle now states what is in the
             catalogue and where it comes from instead of restating the title. */}
-        <section className="catalog-hero"><HeroImage name="drc-ndjili-field-team-2025" className="catalog-hero-image" /><HeroCredit name="drc-ndjili-field-team-2025" /><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${families.length.toLocaleString()} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.'}</p></div></section>
+        <section className="catalog-hero"><HeroImage name="drc-ndjili-field-team-2025" className="catalog-hero-image" /><HeroCredit name="drc-ndjili-field-team-2025" /><div className="section-wrap"><span className="kicker kicker--light">Public catalog</span><h1 id="catalog-title">DIEM catalogue</h1><p>{catalog ? `${formatNumber(families.length)} published products from ${catalog.countries.length} countries, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.` : 'Published DIEM products, read from the DIEM Hub content group. Filter by evidence pathway, product type, country or year.'}</p></div></section>
         <section className="catalog-section" aria-labelledby="catalog-title">
           <div className="section-wrap">
             <div className={`filter-bar catalog-filter-bar${isCompact ? ' catalog-filter-bar--compact' : ''}`}>
@@ -423,7 +424,7 @@ export default function Catalog() {
                   )}
                 </div>
               )}
-              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filteredFamilies.length.toLocaleString()}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && (catalog.complete
+              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{formatNumber(filteredFamilies.length)}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && (catalog.complete
   ? <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>
   // Counts, facet options and page total are all a floor until the last page
   // lands. Saying so is cheaper than freezing the controls, and it is the only

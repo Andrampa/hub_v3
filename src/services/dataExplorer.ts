@@ -15,6 +15,7 @@ import {
   type GrantComponent,
   type ResolvedGrantView,
 } from './microdataGrants'
+import { formatNumber } from '../lib/format'
 
 export const MAP_FEATURE_LIMIT = 250
 export const BROWSER_EXPORT_LIMIT = 20000
@@ -546,7 +547,7 @@ async function fetchEsriGeoJsonPages(
     const converted = esriFeaturesToGeoJson(page)
     features.push(...converted.features)
     const returned = page.features?.length || 0
-    if (!returned) throw new Error(`The data service stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
+    if (!returned) throw new Error(`The data service stopped after ${formatNumber(offset)} of ${formatNumber(expectedCount)} expected records. Narrow the filters and try again.`)
     offset += returned
   }
   return { type: 'FeatureCollection', features } as GeoJsonResponse
@@ -573,7 +574,7 @@ async function fetchAllAttributes(
     })
     const pageRows = (page.features || []).map((feature) => feature.attributes)
     rows.push(...pageRows)
-    if (!pageRows.length) throw new Error(`The data service stopped after ${offset.toLocaleString()} of ${expectedCount.toLocaleString()} expected records. Narrow the filters and try again.`)
+    if (!pageRows.length) throw new Error(`The data service stopped after ${formatNumber(offset)} of ${formatNumber(expectedCount)} expected records. Narrow the filters and try again.`)
     offset += pageRows.length
   }
   return rows
@@ -590,7 +591,7 @@ export async function downloadCsv(
   count: number,
   requester: ProtectedRequester,
 ) {
-  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${BROWSER_EXPORT_LIMIT.toLocaleString()} records. Use the service API for a larger automated extraction.`)
+  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${formatNumber(BROWSER_EXPORT_LIMIT)} records. Use the service API for a larger automated extraction.`)
   const rows = await fetchAllAttributes(definition, where, requester, count)
   const columns = usableFields(definition.layer.fields).map((field) => field.name)
   const lines = [columns.join(','), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
@@ -603,7 +604,7 @@ export async function downloadGeoJson(
   count: number,
   requester: ProtectedRequester,
 ) {
-  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${BROWSER_EXPORT_LIMIT.toLocaleString()} records. Use the service API for a larger automated extraction.`)
+  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${formatNumber(BROWSER_EXPORT_LIMIT)} records. Use the service API for a larger automated extraction.`)
   const response = await fetchEsriGeoJsonPages(definition, where, requester, count)
   return new Blob([JSON.stringify(response)], { type: 'application/geo+json' })
 }
@@ -630,7 +631,7 @@ export async function downloadXlsx(
   count: number,
   requester: ProtectedRequester,
 ) {
-  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${BROWSER_EXPORT_LIMIT.toLocaleString()} records. Use the service API for a larger automated extraction.`)
+  if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${formatNumber(BROWSER_EXPORT_LIMIT)} records. Use the service API for a larger automated extraction.`)
   const { default: writeXlsxFile } = await import('write-excel-file/browser')
   const rows = await fetchAllAttributes(definition, where, requester, count)
   const columns = usableFields(definition.layer.fields)

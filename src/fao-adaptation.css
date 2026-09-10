@@ -289,7 +289,7 @@ h1, h2, h3, h4, h5, h6,
   border: 1px solid #d9d9d9;
   box-shadow: none;
 }
-.pn-heading, .pn-tier + .pn-tier, .pn-footnote { border-color: #d9d9d9; }
+.pn-heading, .pn-tier + .pn-tier { border-color: #d9d9d9; }
 .pn-tier-label { border-left-color: var(--fao-blue); color: var(--fao-navy); }
 .pn-figure strong { color: var(--fao-navy); font-family: "Open Sans", Helvetica, Arial, sans-serif; letter-spacing: 0; }
 .pn-pending { background-color: #e5ecf4; }

@@ -3,6 +3,7 @@ import L, { type GeoJSON as LeafletGeoJSON, type Layer } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import type { MapExtent } from '../services/dataExplorer'
+import { formatNumber } from '../lib/format'
 
 function propertyValue(properties: GeoJsonProperties | null, patterns: RegExp[]) {
   if (!properties) return undefined
@@ -68,9 +69,9 @@ export function DatasetGeometryMap({
 
   const shown = collection.features.length
   const previewNote = useMemo(() => {
-    if (shown >= totalCount) return `${totalCount.toLocaleString()} mapped records`
-    if (truncated) return `Showing ${shown.toLocaleString()} of ${totalCount.toLocaleString()} mapped records`
-    return `All ${shown.toLocaleString()} features in view, of ${totalCount.toLocaleString()} matching records`
+    if (shown >= totalCount) return `${formatNumber(totalCount)} mapped records`
+    if (truncated) return `Showing ${formatNumber(shown)} of ${formatNumber(totalCount)} mapped records`
+    return `All ${formatNumber(shown)} features in view, of ${formatNumber(totalCount)} matching records`
   }, [shown, totalCount, truncated])
 
   useEffect(() => {

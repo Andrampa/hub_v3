@@ -65,14 +65,7 @@ export function cleanText(value?: string) {
   return document.body.textContent?.replace(/\s+/g, ' ').trim() || ''
 }
 
-export function formatDate(timestamp: number) {
-  return new Intl.DateTimeFormat('en', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(new Date(timestamp))
-}
+export { formatDate } from './format'
 
 /**
  * A record summary worth printing.

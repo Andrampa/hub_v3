@@ -25,7 +25,7 @@ export function SiteFooter() {
             <li><Link to="/catalog">Catalogue</Link></li>
             <li><Link to="/countries">Countries</Link></li>
             <li><Link to="/hazard-impact-assessments">Hazard impacts</Link></li>
-            <li><Link to="/flood-services">Flood services</Link></li>
+            <li><Link to="/flood-services">Flood analysis</Link></li>
           </ul>
         </div>
         <div>

@@ -50,7 +50,7 @@ export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
     <section className="featured-evidence" id="featured-evidence" aria-labelledby="featured-evidence-title">
       <div className="section-wrap">
         <div className="section-heading">
-          <div><span className="kicker">Evidence in focus</span><h2 id="featured-evidence-title">Recently added to the catalogue</h2></div>
+          <div><span className="kicker">DIEM products</span><h2 id="featured-evidence-title">Recent publications</h2></div>
           <Link to="/catalog">View all products <span aria-hidden="true">→</span></Link>
         </div>
         {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}

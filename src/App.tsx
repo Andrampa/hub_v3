@@ -71,10 +71,10 @@ export default function App() {
           <img className="hero-image" src={defaultProgrammeSlides[0].imageUrl} alt="" />
           <div className="hero-content">
             <div className="eyebrow">Data in Emergencies</div>
-            <h1>Evidence where<br />decisions <em>can’t wait.</em></h1>
+            <h1>Evidence for decisions<br />that <em>can’t wait</em></h1>
             <p>Regularly collected and analysed data on how shocks affect agricultural livelihoods in fragile and risk-prone contexts.</p>
             <CatalogSearchBox families={families} countries={catalog?.countries || []} />
-            <div className="hero-actions"><Link to="/countries">Browse country evidence <span aria-hidden="true">→</span></Link></div>
+            <div className="hero-actions"><Link to="/countries">Browse by country <span aria-hidden="true">→</span></Link></div>
             {auth.status === 'authenticated' && <div className="hero-meta"><span><i className="status-dot" /> Signed in to the DIEM community</span></div>}
           </div>
         </section>
@@ -85,7 +85,7 @@ export default function App() {
         <FeaturedEvidence families={families} />
         <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} countriesWithEvidence={catalog?.countries.length || 0} catalogReady={Boolean(catalog)} />
 
-        <EditorialPopup campaign={promotions.campaign} channel={promotions.channel} triggerId="featured-evidence" />
+        <EditorialPopup campaign={promotions.campaign} channel={promotions.channel} />
       </main>
       <SiteFooter />
     </>

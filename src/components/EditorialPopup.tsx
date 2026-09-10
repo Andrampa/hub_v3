@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import type { HubCampaign, PromotionChannel } from '../services/hubPromotions'
 
 const DWELL_TIME_MS = 4500
+/** How far the visitor must scroll, in viewport heights, before the popup shows. */
+const SCROLL_TRIGGER_VIEWPORTS = 0.35
 const STORAGE_PREFIX = 'diem-hub-promotion-dismissed'
 
 function storageKey(campaign: HubCampaign, channel: PromotionChannel) {
@@ -30,11 +32,9 @@ function rememberDismissal(campaign: HubCampaign, channel: PromotionChannel) {
 export function EditorialPopup({
   campaign,
   channel,
-  triggerId = 'promotion-trigger',
 }: {
   campaign?: HubCampaign
   channel: PromotionChannel
-  triggerId?: string
 }) {
   const [dwellComplete, setDwellComplete] = useState(false)
   const [scrollComplete, setScrollComplete] = useState(false)
@@ -52,22 +52,21 @@ export function EditorialPopup({
     return () => window.clearTimeout(timer)
   }, [campaign, dismissed])
 
+  // A short scroll is enough to show the visitor is reading rather than
+  // bouncing. Tying the popup to a section further down meant most visitors
+  // reached the bottom of the page before it appeared, or never saw it.
   useEffect(() => {
     if (!campaign || dismissed) return
-    const trigger = document.getElementById(triggerId)
-    if (!trigger) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setScrollComplete(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin: '0px 0px -55% 0px', threshold: 0.01 },
-    )
-    observer.observe(trigger)
-    return () => observer.disconnect()
-  }, [campaign, dismissed, triggerId])
+    const check = () => {
+      if (window.scrollY >= window.innerHeight * SCROLL_TRIGGER_VIEWPORTS) {
+        setScrollComplete(true)
+        window.removeEventListener('scroll', check)
+      }
+    }
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    return () => window.removeEventListener('scroll', check)
+  }, [campaign, dismissed])
 
   const visible = Boolean(campaign && !dismissed && dwellComplete && scrollComplete)
   const close = useCallback(() => {

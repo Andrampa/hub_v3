@@ -251,7 +251,6 @@ main:focus { outline: none; }
 .pn-pending { display: block; width: 92px; max-width: 100%; height: 21px; margin-top: 6px; background: linear-gradient(90deg, var(--line-faint) 25%, var(--line-soft) 50%, var(--line-faint) 75%) 0 0 / 300% 100%; animation: pn-shimmer 1.4s ease-in-out infinite; }
 .pn-figure--lead .pn-pending { width: 126px; height: 29px; }
 .pn-unavailable { grid-column: 1 / -1; margin: 0; align-self: center; color: var(--ink-faint); font-size: 12px; }
-.pn-footnote { margin: 0; padding-top: 17px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: var(--text-small); }
 @keyframes pn-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 
 @media (prefers-reduced-motion: no-preference) {

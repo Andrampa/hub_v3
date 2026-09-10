@@ -213,7 +213,7 @@ export function SurveyReleases() {
                 <div className="board-scroll">
                   <table>
                     <caption className="sr-only">
-                      Household monitoring rounds in order of arrival
+                      Household monitoring rounds in order of release
                     </caption>
                     <thead>
                       <tr>
@@ -279,10 +279,10 @@ export function SurveyReleases() {
       <div className="section-heading">
         <div>
           <span className="kicker">Survey pipeline</span>
-          <h2 id="survey-board-heading">Incoming and published surveys</h2>
+          <h2 id="survey-board-heading">Published and forthcoming surveys</h2>
         </div>
         <p>
-          Every household monitoring round in order of arrival. Country briefs and
+          Every household monitoring round in order of release. Country briefs and
           other survey products are added as they become available.
         </p>
       </div>
@@ -292,7 +292,7 @@ export function SurveyReleases() {
           className="board-fullscreen"
           role="dialog"
           aria-modal="true"
-          aria-label="Incoming and published surveys, every round"
+          aria-label="Published and forthcoming surveys, every round"
         >
           {boardPanel}
         </div>

@@ -41,6 +41,7 @@ import {
   type FieldOptions,
   type MapExtent,
 } from '../services/dataExplorer'
+import { formatDate, formatNumber } from '../lib/format'
 
 type ExplorerIconName = 'arrow' | 'download' | 'code' | 'filter' | 'map' | 'table' | 'copy' | 'check' | 'external' | 'close'
 
@@ -90,7 +91,7 @@ function fieldLabel(field: FeatureField) {
 
 function formatItemDate(value?: number) {
   if (!value) return 'Not provided'
-  return new Intl.DateTimeFormat('en', { dateStyle: 'medium' }).format(new Date(value))
+  return formatDate(value)
 }
 
 function recommendedFilterFields(fields: FeatureField[]) {
@@ -397,7 +398,7 @@ export default function DatasetExplorer() {
   async function exportServerFormat(format: typeof HUB_DOWNLOAD_FORMATS[number]['format']) {
     if (!definition || count === undefined) return
     if (count > BROWSER_EXPORT_LIMIT) {
-      setDownloadState(`Filter this result to ${BROWSER_EXPORT_LIMIT.toLocaleString()} records or fewer before downloading.`)
+      setDownloadState(`Filter this result to ${formatNumber(BROWSER_EXPORT_LIMIT)} records or fewer before downloading.`)
       return
     }
     if (!await grantStillOpen()) return
@@ -439,7 +440,7 @@ export default function DatasetExplorer() {
           <>
             <section className="dataset-command-bar">
               <div className="section-wrap">
-                <span><strong>{count === undefined ? '—' : count.toLocaleString()}</strong> records{filters.length ? ' match current filters' : ' in this dataset'}</span>
+                <span><strong>{count === undefined ? '—' : formatNumber(count)}</strong> records{filters.length ? ' match current filters' : ' in this dataset'}</span>
                 <span>{definition.isTable ? 'Tabular dataset' : 'Spatial dataset'}</span>
                 <span>{fields.length} attributes</span>
               </div>
@@ -475,11 +476,11 @@ export default function DatasetExplorer() {
                     <div><dt>Published</dt><dd>{formatItemDate(definition.resource.item?.created)}</dd></div>
                     <div><dt>Information updated</dt><dd>{formatItemDate(definition.resource.item?.modified)}</dd></div>
                     <div><dt>Data updated</dt><dd>{formatItemDate(definition.layer.editingInfo?.lastEditDate)}</dd></div>
-                    <div><dt>Records</dt><dd>{count === undefined ? 'Loading…' : count.toLocaleString()}</dd></div>
+                    <div><dt>Records</dt><dd>{count === undefined ? 'Loading…' : formatNumber(count)}</dd></div>
                     <div><dt>Sharing</dt><dd>{definition.resource.item?.access === 'public' ? 'Public' : 'DIEM community access'}</dd></div>
                     <div><dt>License</dt><dd>{definition.resource.item?.licenseInfo ? 'See item terms' : 'Creative Commons Attribution 4.0'}</dd></div>
                     <div><dt>Layer</dt><dd>{definition.layer.name}</dd></div>
-                    <div><dt>Attributes</dt><dd>{fields.length.toLocaleString()}</dd></div>
+                    <div><dt>Attributes</dt><dd>{formatNumber(fields.length)}</dd></div>
                   </dl>
                 </section>
                 <div className="control-panel-heading"><span><ExplorerIcon name="filter"/></span><div><strong>Filters</strong><small>Start with country and survey round to create a focused extract.</small></div></div>
@@ -491,7 +492,7 @@ export default function DatasetExplorer() {
                     : <input value={draftValue} onChange={(event) => setDraftValue(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') addFilter() }} placeholder={optionsLoading ? 'Loading values…' : fieldIsText(draftFieldDefinition) ? 'Enter a value' : 'Enter a number'} />}</label>
                   <button type="button" onClick={addFilter} disabled={!draftValue.trim()}>Add filter <ExplorerIcon name="arrow"/></button>
                 </div>
-                {draftOptions?.truncated && draftOperator === 'equals' && <p className="filter-option-note">This attribute has more than {FILTER_OPTION_LIMIT.toLocaleString()} distinct values, so type the value instead of choosing one.</p>}
+                {draftOptions?.truncated && draftOperator === 'equals' && <p className="filter-option-note">This attribute has more than {formatNumber(FILTER_OPTION_LIMIT)} distinct values, so type the value instead of choosing one.</p>}
                 <div className="active-filters" aria-live="polite">{filters.length ? filters.map((filter) => <span key={filter.id}>{fieldLabel(fields.find((field) => field.name === filter.fieldName) || { name: filter.fieldName, alias: filter.fieldName, type: '' })} <em>{filter.operator === 'contains' ? 'contains' : filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='}</em> {filter.value}<button type="button" onClick={() => setFilters((current) => current.filter((candidate) => candidate.id !== filter.id))} aria-label={`Remove ${filter.fieldName} filter`}><ExplorerIcon name="close"/></button></span>) : <p>No filters applied. Choose a country and round before downloading.</p>}</div>
                 {filters.length > 0 && <button className="clear-filters" type="button" onClick={() => setFilters([])}>Clear all filters</button>}
                 {bulkExportBlocked ? (
@@ -502,15 +503,15 @@ export default function DatasetExplorer() {
                   </div>
                 ) : (
                 <div className="download-panel" id="dataset-download">
-                  <div><ExplorerIcon name="download"/><strong>Download filtered data</strong><p>The portal prepares files only when the current result contains 20,000 records or fewer.</p></div>
+                  <div><ExplorerIcon name="download"/><strong>Download filtered data</strong><p>The portal prepares files only when the current result contains 20 000 records or fewer.</p></div>
                   <div className={`download-limit ${overDownloadLimit ? 'is-over-limit' : 'is-ready'}`} role="status">
-                    <strong>{count === undefined ? 'Checking result size…' : overDownloadLimit ? `${count.toLocaleString()} records — filter required` : `${count.toLocaleString()} records — ready`}</strong>
-                    <span>{overDownloadLimit ? 'This result is too large for a browser-prepared file.' : `Within the ${BROWSER_EXPORT_LIMIT.toLocaleString()}-record download limit.`}</span>
+                    <strong>{count === undefined ? 'Checking result size…' : overDownloadLimit ? `${formatNumber(count)} records — filter required` : `${formatNumber(count)} records — ready`}</strong>
+                    <span>{overDownloadLimit ? 'This result is too large for a browser-prepared file.' : `Within the ${formatNumber(BROWSER_EXPORT_LIMIT)}-record download limit.`}</span>
                   </div>
                   {overDownloadLimit && (
                     <div className="download-alternatives">
                       <strong>How to get this extract instead</strong>
-                      <p>Portal files are assembled in your browser, so the whole result has to fit in this tab's memory. Above {BROWSER_EXPORT_LIMIT.toLocaleString()} records that becomes unreliable, and the routes below have no such limit.</p>
+                      <p>Portal files are assembled in your browser, so the whole result has to fit in this tab's memory. Above {formatNumber(BROWSER_EXPORT_LIMIT)} records that becomes unreliable, and the routes below have no such limit.</p>
                       <ol>
                         <li><strong>Narrow the selection.</strong> Add a country and a survey round above. Most analyses need one country-round at a time, and that almost always lands under the limit.</li>
                         <li><strong>Run a bulk script.</strong> The Python and R scripts below already carry your current filters and page through the service in batches, so they handle results of any size. You supply a short-lived access token.</li>
@@ -523,8 +524,8 @@ export default function DatasetExplorer() {
                       A filtered extract that silently omits most of the dataset
                       is the kind of thing an analyst discovers far too late. */}
                   <p className="download-scope" role="status">{filters.length > 0
-                    ? <>These files contain the <strong>{count === undefined ? 'filtered' : `${count.toLocaleString()} filtered`}</strong> records matching your {filters.length === 1 ? 'filter' : `${filters.length} filters`}, not the full dataset.</>
-                    : <>No filters applied, so these files contain <strong>every record</strong> in this dataset{count === undefined ? '' : ` (${count.toLocaleString()})`}.</>}</p>
+                    ? <>These files contain the <strong>{count === undefined ? 'filtered' : `${formatNumber(count)} filtered`}</strong> records matching your {filters.length === 1 ? 'filter' : `${filters.length} filters`}, not the full dataset.</>
+                    : <>No filters applied, so these files contain <strong>every record</strong> in this dataset{count === undefined ? '' : ` (${formatNumber(count)})`}.</>}</p>
                   <span className="download-group-label">Direct downloads</span>
                   <div className="download-format-grid"><button type="button" onClick={() => void exportCsv()} disabled={count === undefined || isQuerying || overDownloadLimit}>CSV</button><button type="button" onClick={() => void exportXlsx()} disabled={count === undefined || isQuerying || overDownloadLimit}>Excel</button>{!definition.isTable && <button type="button" onClick={() => void exportGeoJson()} disabled={count === undefined || isQuerying || overDownloadLimit}>GeoJSON</button>}</div>
                   {packagedFormats.length > 0 && <>
@@ -541,9 +542,9 @@ export default function DatasetExplorer() {
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{API_LINK_LABELS[label] || label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>
               <div className="dataset-results-panel">
-                <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : `Previewing ${previewRows.length.toLocaleString()} records`}</span><span>{definition.layer.name}</span></div>
+                <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : `Previewing ${formatNumber(previewRows.length)} records`}</span><span>{definition.layer.name}</span></div>
                 {!definition.isTable && (geometry ? <DatasetGeometryMap collection={geometry} totalCount={count || 0} truncated={geometryTruncated} isLoadingView={isMapLoading} fitKey={where} onExtentChange={setMapExtent} /> : isMapLoading ? <div className="dataset-map-loading"><span className="loader"/><strong>Loading map geometry</strong><p>The data table remains available while spatial features load.</p></div> : <div className="dataset-map-unavailable"><strong>Map preview is temporarily unavailable.</strong><p>{mapError || 'The service did not return geometry for the current filters.'}</p></div>)}
-                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {fields.length.toLocaleString()} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <div className="dataset-table-scroll"><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</div>}</section>
+                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {formatNumber(fields.length)} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <div className="dataset-table-scroll"><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</div>}</section>
               </div>
             </section>
           </>

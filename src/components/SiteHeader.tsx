@@ -68,11 +68,11 @@ export function SiteHeader() {
           <Link className={active === 'home' ? 'active' : ''} to="/">Home</Link>
           <NavDropdown label="Household Surveys" active={active === 'monitoring' || active === 'data'}>
               <Link to="/monitoring-system">
-                <strong>Surveys catalogue</strong>
+                <strong>Catalogue</strong>
                 <small>Browse surveys and products</small>
               </Link>
               <Link to="/monitoring">
-                <strong>Household Survey Explorer</strong>
+                <strong>Survey explorer</strong>
                 <small>Explore survey results in the full-screen app</small>
               </Link>
               <Link to="/data">
@@ -81,17 +81,17 @@ export function SiteHeader() {
               </Link>
           </NavDropdown>
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
-          <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood services</Link>
+          <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood analysis</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
           <Link className={active === 'catalog' ? 'active' : ''} to="/catalog">Catalogue</Link>
           <NavDropdown label="About DIEM" active={active === 'about'} align="end">
               <Link to="/about">
                 <strong>What is DIEM?</strong>
-                <small>Purpose, approach and stories from users</small>
+                <small>Purpose, approach and use cases</small>
               </Link>
               <Link to="/photo-galleries">
                 <strong>Photo galleries</strong>
-                <small>DIEM teams and fieldwork in pictures</small>
+                <small>DIEM in action</small>
               </Link>
               <Link to="/contact">
                 <strong>Contact us</strong>
@@ -147,11 +147,11 @@ export function SiteHeader() {
         <Link className={active === 'catalog' ? 'active' : ''} to="/catalog" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>
         <Link className={active === 'countries' ? 'active' : ''} to="/countries" onClick={() => setMobileMenuOpen(false)}>Countries</Link>
         <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments" onClick={() => setMobileMenuOpen(false)}>Hazard impacts</Link>
-        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood services</Link>
+        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood analysis</Link>
         {/* Mirrors the desktop Household Surveys dropdown; /data and the survey
             explorer were previously unreachable from the mobile menu. */}
         <span className="mobile-nav-heading">Household surveys</span>
-        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Surveys catalogue</Link>
+        <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>
         <Link to="/monitoring" onClick={() => setMobileMenuOpen(false)}>Survey explorer</Link>
         <Link className={active === 'data' ? 'active' : ''} to="/data" onClick={() => setMobileMenuOpen(false)}>Data access</Link>
         <span className="mobile-nav-heading">About DIEM</span>

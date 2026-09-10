@@ -179,7 +179,7 @@ export function CatalogSearchBox({
           aria-expanded={expanded}
           aria-controls={listId}
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
-          placeholder={inline ? 'Search products, countries or topics…' : 'Search by country, theme or resource…'}
+          placeholder={inline ? 'Search products, countries or topics…' : 'Search by country, theme or product…'}
           value={query}
           onFocus={() => { setIndexRequested(true); setOpen(true) }}
           onChange={(event) => { setIndexRequested(true); setQuery(event.target.value); setOpen(true) }}

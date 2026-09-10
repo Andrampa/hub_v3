@@ -67,9 +67,6 @@ export const MONITORING_STATISTICS_SOURCE_URL = 'https://services5.arcgis.com/sj
  */
 export const MONITORING_COUNTRIES_COVERED = 42
 
-/** Shown with the figure above so a reader can date it without reading source. */
-export const MONITORING_COUNTRIES_VERIFIED_LABEL = 'Countries surveyed verified 28 Jul 2026'
-
 /** Programme start, used to date every cumulative figure on the homepage. */
 export const MONITORING_SINCE_LABEL = 'Since June 2020'
 

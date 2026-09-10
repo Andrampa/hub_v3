@@ -27,6 +27,7 @@ import {
   type UnsupportedFilter,
 } from '../lib/catalogFilters'
 import { UNRECORDED_PRODUCT_TYPE } from '../services/countries'
+import { formatNumber } from '../lib/format'
 
 const ALL_REGIONS = 'All regions'
 
@@ -194,7 +195,7 @@ export default function CountryExplorer() {
 
             <section className="country-facts" aria-label="Country catalog summary">
               <div><strong>{catalog.countries.length}</strong><span>countries with evidence</span></div>
-              <div><strong>{families.length.toLocaleString()}</strong><span>curated products</span></div>
+              <div><strong>{formatNumber(families.length)}</strong><span>curated products</span></div>
               <div><strong>{latestPublication ? formatDate(latestPublication) : '—'}</strong><span>latest publication</span></div>
             </section>
 

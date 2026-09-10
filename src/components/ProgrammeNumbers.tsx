@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   MONITORING_COUNTRIES_COVERED,
-  MONITORING_COUNTRIES_VERIFIED_LABEL,
   MONITORING_SINCE_LABEL,
   type MonitoringStatistics,
 } from '../services/monitoring'
+import { formatNumber } from '../lib/format'
 
 interface ProgrammeNumbersProps {
   statistics: MonitoringStatistics | null
@@ -112,7 +112,7 @@ function Figure({
       {pending ? (
         <strong className="pn-pending" aria-hidden="true" />
       ) : (
-        <strong aria-label={value.toLocaleString('en')}>{counted.toLocaleString('en')}</strong>
+        <strong aria-label={formatNumber(value)}>{formatNumber(counted)}</strong>
       )}
       <span>{label}</span>
     </div>
@@ -135,7 +135,6 @@ export function ProgrammeNumbers({
   return (
     <section
       className={`programme-numbers${revealed ? ' is-revealed' : ''}`}
-      id="promotion-trigger"
       aria-labelledby="programme-numbers-title"
       ref={ref}
     >
@@ -180,7 +179,7 @@ export function ProgrammeNumbers({
       </div>
 
       <div className="pn-tier">
-        <p className="pn-tier-label">Evidence<br />published</p>
+        <p className="pn-tier-label">Publications</p>
         <div className="pn-figures">
           <Figure
             value={hazardImpactAssessments}
@@ -196,19 +195,12 @@ export function ProgrammeNumbers({
           />
           <Figure
             value={countriesWithEvidence}
-            label="Countries with evidence"
+            label="Countries"
             active={revealed}
             pending={!catalogReady}
           />
         </div>
       </div>
-
-      <p className="pn-footnote">
-        Monitoring figures are the running totals for DIEM survey rounds
-        {' '}{MONITORING_SINCE_LABEL.replace('Since', 'since')}.
-        {statistics?.lastPublicationDate && <> Latest survey published {statistics.lastPublicationDate}.</>}
-        {' '}{MONITORING_COUNTRIES_VERIFIED_LABEL}. Evidence figures are read live.
-      </p>
     </section>
   )
 }

@@ -1,5 +1,40 @@
 # Changelog
 
+## 2026-09-10 - FAO house style for dates and figures; earlier, gentler popup
+
+- Every date the Hub prints now reads day, full month, year ("12 June 2024"),
+  from one formatter in `src/lib/format.ts`. Short months and the US order on
+  cards, product pages, the dataset explorer and the catalogue read time are
+  gone.
+- Thousands are separated by a non-breaking space instead of a comma
+  ("2 049 380"), through `formatNumber`, including the hardcoded figures on the
+  flood-services page and the download-limit copy.
+- The homepage popup no longer waits for the evidence-in-focus section. It
+  appears once the visitor has been on the page for 4.5 seconds and has
+  scrolled 35 percent of a screen, and it fades in over 1.4 seconds instead of
+  sliding in.
+- Copy from the editor's review: the homepage headline reads "Evidence for
+  decisions that can't wait" with no full stop; the hero link reads "Browse by
+  country"; the search placeholder says "product" instead of "resource"; and
+  "Flood services" is "Flood analysis" in the header, footer, homepage card,
+  page title and eyebrow. The `/flood-services` address is unchanged. The
+  homepage's "Recently added to the catalogue" section is "Recent
+  publications", and "Start with the evidence you need" is "Where to start",
+  whose cards no longer describe how their content is indexed. Homepage
+  labels: "Complete collection" is "Publication catalogue" and "Evidence in
+  focus" is "DIEM products". In the homepage statistics, "Evidence published"
+  is "Publications", "Countries with evidence" is "Countries", and the
+  footnote under the figures is removed.
+- Header menus: under Household Surveys, "Surveys catalogue" is "Catalogue"
+  and "Household Survey Explorer" is "Survey explorer"; under About DIEM, the
+  descriptions read "Purpose, approach and use cases" and "DIEM in action".
+- Survey catalogue: the pipeline section is "Published and forthcoming
+  surveys", listing rounds "in order of release".
+- Hazard impact assessments hero: "Measuring the impact of shocks and crises",
+  a shorter introduction, and "Open the Living Shock Atlas". The latest
+  assessments lose their explanatory line; the atlas prompt reads "Select a
+  highlighted country to view available products."
+
 ## 2026-09-10 - Cite fixed publications and living products differently
 
 - Following the FAO publications editor's review, product citations now take

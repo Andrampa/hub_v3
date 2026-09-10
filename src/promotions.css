@@ -305,7 +305,7 @@
   background: #043f61;
   color: white;
   box-shadow: 0 22px 55px rgba(0, 26, 41, .34);
-  animation: editorial-popup-in .45s ease-out both;
+  animation: editorial-popup-in 1.4s cubic-bezier(.22, .61, .36, 1) both;
 }
 
 .editorial-popup-close {
@@ -384,9 +384,10 @@
   background: #d76321;
 }
 
+/* A slow fade with a short rise, so the popup arrives rather than jumps in. */
 @keyframes editorial-popup-in {
-  from { opacity: 0; transform: translateX(36px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 900px) {
