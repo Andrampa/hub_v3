@@ -70,7 +70,7 @@ export const defaultProgrammeSlides: ProgrammeSlide[] = [
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/1155b4e0339641458d8aac5e294d81d4/data',
     imageAlt: 'Flooded agricultural landscape',
     ctaLabel: 'Explore flood services',
-    destination: '/flood-services',
+    destination: '/flood-analysis',
     sortOrder: 20,
   },
   {
@@ -81,7 +81,7 @@ export const defaultProgrammeSlides: ProgrammeSlide[] = [
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/9103febede744492ae43ebae1c5e3826/data',
     imageAlt: 'Flood exposure analysis landscape',
     ctaLabel: 'Open flood services',
-    destination: '/flood-services',
+    destination: '/flood-analysis',
     sortOrder: 30,
   },
   {
@@ -125,7 +125,7 @@ export const defaultProgrammeSlides: ProgrammeSlide[] = [
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/f16cb09773494779b17eb4156c78e323/data',
     imageAlt: 'Mountain valley representing risk assessment',
     ctaLabel: 'Explore flood services',
-    destination: '/flood-services',
+    destination: '/flood-analysis',
     sortOrder: 70,
   },
 ]

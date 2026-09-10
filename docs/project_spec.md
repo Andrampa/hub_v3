@@ -28,7 +28,7 @@ Public decision-makers, governments, partners, researchers, donors, practitioner
   board and the live full-screen Explorer at `/monitoring`.
 - Public `/hazard-impact-assessments` pathway combining a Living Shock Atlas,
   latest-assessments editorial row, filterable dossiers and an evidence timeline.
-- Public DIEM flood-services page presenting the evidence pathway, the EVE 2.0
+- Public DIEM flood-analysis page (`/flood-analysis`) presenting the evidence pathway, the EVE 2.0
   platform and its grouped capabilities, the VISTA seasonal reference and its
   public explorer, catalog-driven flood impact assessments, and the DIEM
   Community access route for restricted field evidence.

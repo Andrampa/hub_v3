@@ -31,7 +31,7 @@
 2. A visitor opens `/hazard-impact-assessments`, scans the latest assessments,
    selects a country in the Living Shock Atlas, and explores the same live
    collection as filterable dossiers or a chronological evidence timeline.
-3. A visitor opens `/flood-services`, follows the four-step evidence pathway,
+3. A visitor opens `/flood-analysis`, follows the four-step evidence pathway,
    opens EVE 2.0 or reads which of its capabilities answers their question,
    reaches the VISTA comparison explorer or product downloads, scans published
    flood assessments read live from the catalog, and finds the DIEM Community

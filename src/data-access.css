@@ -20,7 +20,6 @@
 .data-gate-preview > div { position: relative; min-height: 165px; padding: 30px 24px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,.12); border-bottom: 1px solid rgba(255,255,255,.12); }
 .data-gate-preview > div:nth-child(even) { border-right: 0; }
 .data-gate-preview > div:nth-child(n+3) { border-bottom: 0; }
-.data-gate-preview > div > span { position: absolute; right: 17px; top: 14px; color: rgba(255,255,255,.28); font-size: var(--text-small); letter-spacing: .12em; }
 .data-gate-preview svg { width: 25px; margin-bottom: auto; color: #f1a16e; }
 .data-gate-preview strong { margin: 22px 0 5px; font-size: 14px; }
 .data-gate-preview small { color: #9db9c4; }
@@ -473,3 +472,11 @@
 .data-gate-content { z-index: 2; }
 .data-workspace-hero { position: relative; }
 .data-workspace-hero > div { position: relative; z-index: 2; }
+
+/* Keep the survey photograph fixed behind its clipped hero so scrolling
+   reveals more of the field scene. Mobile and reduced-motion users retain the
+   stable static crop above. */
+@media (min-width: 721px) and (prefers-reduced-motion: no-preference) {
+  .data-gate-hero, .data-workspace-hero { clip-path: inset(0); }
+  .data-hero-image { position: fixed; height: 100vh; }
+}

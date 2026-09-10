@@ -18,34 +18,6 @@ const boards: Array<[BoardFilter, string]> = [
   ['published', 'Departures'],
 ]
 
-function boardTime(value: number) {
-  return new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    timeZone: 'UTC',
-    hour12: false,
-  }).format(value)
-}
-
-function BoardClock() {
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(timer)
-  }, [])
-
-  return (
-    <div className="board-clock">
-      <span className="board-live" aria-hidden="true" />
-      <span className="sr-only">Board time, coordinated universal time: </span>
-      <time dateTime={new Date(now).toISOString()}>{boardTime(now)}</time>
-      <small>UTC</small>
-    </div>
-  )
-}
-
 // The board shows the bare round number: "Round 12" becomes 12.
 function roundNumber(round: string) {
   const digits = round.match(/\d+/)?.[0]
@@ -171,7 +143,6 @@ export function SurveyReleases() {
         <header className="board-bezel">
           <div className="board-mark"><span aria-hidden="true">DIEM</span> Survey status board</div>
           <div className="board-bezel-end">
-            <BoardClock />
             {fullBoard && (
               <button type="button" className="board-exit" onClick={() => setFullBoard(false)}>
                 <span aria-hidden="true">←</span> Back to home

@@ -39,6 +39,8 @@ describe('hero manifest', () => {
       'drc-ndjili-market-gardens-2025',
       'afghanistan-daikundi-survey-2023',
       'drc-ndjili-field-team-2025',
+      'afghanistan-household-survey-round-10-2025',
+      'syria-earthquake-impact-2023',
     ])
   })
 

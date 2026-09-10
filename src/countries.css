@@ -466,7 +466,7 @@
    figures occupy 33-95% of the master height, so the crop is pinned low enough
    to keep both of them and the terraced valley behind them in frame. The
    decorative ring and the copy are lifted above the blue wash. */
-.countries-hero-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 88%; }
+.countries-hero-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 44%; }
 .countries-hero::after { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(120deg, rgba(3, 42, 66, .90) 0%, rgba(3, 42, 66, .78) 46%, rgba(6, 70, 106, .58) 100%); }
 .countries-hero::before { z-index: 2; }
 .countries-hero-inner { z-index: 3; }

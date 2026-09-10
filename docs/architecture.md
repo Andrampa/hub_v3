@@ -24,7 +24,7 @@ generator; this is an external runtime dependency, not a competing data store.
 ## Startup / Execution Sequence
 
 1. The router selects the homepage, complete product catalog, household monitoring release board,
-   full-screen survey Explorer, hazard-impact assessment page, flood-services
+   full-screen survey Explorer, hazard-impact assessment page, flood-analysis
    page, About DIEM overview, contact page, country explorer, country detail,
    or protected data page.
 2. The selected screen starts its group requests; country routes share a cached country-catalog promise.

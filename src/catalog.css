@@ -81,6 +81,21 @@
 .catalog-pathways { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 0; padding: 0; list-style: none; }
 .catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: var(--line-faint); border-left: 3px solid var(--ink-faint); color: #405961; font-size: var(--text-micro); font-weight: 700; letter-spacing: .03em; }
 .catalog-pathway i { font-size: var(--text-small); }
+.catalog-tag-link { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; }
+.catalog-tag-link:hover, .catalog-tag-link:focus-visible { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.catalog-country-entry { display: inline-flex; align-items: center; }
+.catalog-country-link { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px; margin: -3px -4px; border-radius: 2px; color: inherit; line-height: 1.35; text-decoration: none; }
+.catalog-country-link:hover, .catalog-country-link:focus-visible { background: var(--primary-light); color: var(--fao-blue); text-decoration: underline; text-underline-offset: 2px; }
+.catalog-country-link:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 2px; }
+
+.related-dialog-backdrop { position: fixed; z-index: 1200; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(3, 49, 72, .58); }
+.related-dialog { width: min(480px, 100%); padding: 30px; border-top: 5px solid var(--fao-blue); background: #fff; box-shadow: 0 18px 55px rgba(3, 49, 72, .28); }
+.related-dialog h2 { margin: 8px 0 10px; color: var(--deep-blue); font-size: 1.35rem; line-height: 1.35; }
+.related-dialog p { margin: 0; color: var(--ink-muted); font-size: 14px; line-height: 1.6; }
+.related-dialog-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.related-dialog-actions button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--fao-blue); background: var(--fao-blue); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.related-dialog-actions button:last-child { background: #fff; color: var(--fao-blue); }
+.related-dialog-actions button:hover, .related-dialog-actions button:focus-visible { background: var(--deep-blue); border-color: var(--deep-blue); color: #fff; }
 .catalog-pathway--regular-monitoring { border-left-color: var(--fao-blue); }
 .catalog-pathway--hazard-impact { border-left-color: var(--orange); }
 .catalog-pathway--research-analysis { border-left-color: var(--deep-blue); }

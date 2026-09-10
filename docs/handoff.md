@@ -167,7 +167,7 @@ must not be triggered without explicit authorization.
 
 ## In Progress
 
-The `/flood-services` page was restructured on 2026-08-25 to match the
+The flood page (now `/flood-analysis`, formerly `/flood-services`) was restructured on 2026-08-25 to match the
 consolidated EVE 2.0 platform in `C:\gitao-oer-eve-app`. Floodex and both
 ArcGIS attachment-viewer field-reporting applications are retired; their
 capabilities are now the EVE Exposure Model and Field Data modes. EVE 2.0 is

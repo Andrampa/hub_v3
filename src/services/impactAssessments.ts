@@ -19,6 +19,7 @@ export interface ImpactAssessmentResource extends ArcGISItem {
 export interface ImpactCountrySummary {
   iso3: string
   name: string
+  region: string
   resourceCount: number
   latestModified: number
 }
@@ -79,9 +80,11 @@ export async function fetchImpactAssessmentCatalog(
   const countryCodes = [...new Set(items.flatMap((item) => item.countries))]
   const countries = countryCodes.map((iso3) => {
     const resources = items.filter((item) => item.countries.includes(iso3))
+    const definition = countryDefinition(iso3)
     return {
       iso3,
-      name: countryDefinition(iso3).name,
+      name: definition.name,
+      region: definition.region,
       resourceCount: resources.length,
       latestModified: Math.max(...resources.map((item) => item.modified), 0),
     }

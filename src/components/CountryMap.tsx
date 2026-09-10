@@ -52,13 +52,19 @@ export function CountryMap({
     [countries],
   )
   const paths = useMemo(() => {
-    const projection = geoNaturalEarth1().fitExtent([[12, 12], [948, 465]], worldFeatures)
+    const visibleFeatures = visibleIso
+      ? worldFeatures.features.filter((country) => visibleIso.has(featureIso(country)))
+      : []
+    const projectionTarget: FeatureCollection<Geometry, WorldProperties> = visibleFeatures.length
+      ? { type: 'FeatureCollection', features: visibleFeatures }
+      : worldFeatures
+    const projection = geoNaturalEarth1().fitExtent([[12, 12], [948, 465]], projectionTarget)
     const path = geoPath(projection)
     return worldFeatures.features.map((country) => ({
       iso3: featureIso(country),
       d: path(country) || '',
     }))
-  }, [])
+  }, [visibleIso])
   const hovered = hoveredIso ? summaryByIso.get(hoveredIso) : undefined
   const mappedCount = paths.filter(({ iso3 }) => summaryByIso.has(iso3)).length
 

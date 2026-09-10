@@ -4,6 +4,7 @@ import { ImpactAtlasMap } from '../components/ImpactAtlasMap'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import { cleanText, formatDate } from '../lib/catalog'
 import { countryDefinition, itemHubLink } from '../services/countries'
 import {
@@ -18,6 +19,8 @@ type ResultsView = 'details' | 'timeline'
 const RESULTS_STEP = 18
 const TIMELINE_PREVIEW_PER_YEAR = 3
 const FEATURED_TAG = 'featured impact assessment'
+const ALL_REGIONS = 'All regions'
+const REGIONS = [ALL_REGIONS, 'Asia & Pacific', 'Africa', 'Latin America & Caribbean', 'Near East & North Africa', 'Europe']
 
 function ExternalIcon() {
   return (
@@ -122,6 +125,7 @@ export default function HazardImpactAssessments() {
   const [reloadKey, setReloadKey] = useState(0)
   const [query, setQuery] = useState('')
   const [country, setCountry] = useState('All countries')
+  const [region, setRegion] = useState(ALL_REGIONS)
   const [shock, setShock] = useState('All shocks')
   const [year, setYear] = useState('All years')
   const [language, setLanguage] = useState('All languages')
@@ -154,18 +158,25 @@ export default function HazardImpactAssessments() {
       ].join(' ').toLowerCase()
       return (
         (!normalizedQuery || haystack.includes(normalizedQuery))
+        && (region === ALL_REGIONS || item.countries.some((iso3) => countryDefinition(iso3).region === region))
         && (country === 'All countries' || item.countries.includes(country))
         && (shock === 'All shocks' || item.shockTypes.includes(shock))
         && (year === 'All years' || item.assessmentYear === Number(year))
         && (language === 'All languages' || item.languages.includes(language))
       )
     })
-  }, [catalog, country, language, query, shock, year])
+  }, [catalog, country, language, query, region, shock, year])
 
   useEffect(() => {
     setVisibleCount(RESULTS_STEP)
     setExpandedTimelineYears(new Set())
-  }, [country, language, query, shock, year, view])
+  }, [country, language, query, region, shock, year, view])
+
+  const regionCountries = useMemo(
+    () => (catalog?.countries || []).filter((entry) => region === ALL_REGIONS || entry.region === region),
+    [catalog, region],
+  )
+  const visibleIso = useMemo(() => new Set(regionCountries.map((entry) => entry.iso3)), [regionCountries])
 
   const visible = filtered.slice(0, visibleCount)
   const timeline = useMemo(() => {
@@ -181,6 +192,7 @@ export default function HazardImpactAssessments() {
 
   const clearFilters = () => {
     setQuery('')
+    setRegion(ALL_REGIONS)
     setCountry('All countries')
     setShock('All shocks')
     setYear('All years')
@@ -192,16 +204,9 @@ export default function HazardImpactAssessments() {
       <SiteHeader />
       <main id="top" className="impact-page">
         <section className="impact-hero">
-          <HeroImage name="zambia-drought-2024" className="impact-hero-image" />
+          <HeroImage name="syria-earthquake-impact-2023" className="impact-hero-image" alt="A building damaged by the 2023 earthquake in northwest Syria" />
           <div className="impact-hero-overlay" />
-          <a
-            className="impact-hero-credit"
-            href="https://commons.wikimedia.org/wiki/File:Dry_fields_in_Lusaka_03.jpg"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Photo: Icem4k / CC BY 4.0
-          </a>
+          <HeroCredit name="syria-earthquake-impact-2023" />
           <div className="impact-hero-content section-wrap">
             <span className="eyebrow">DIEM pillar · Hazard impact assessment</span>
             <h1>Measuring the impact of <em>shocks and crises</em></h1>
@@ -253,8 +258,22 @@ export default function HazardImpactAssessments() {
                   <div><span className="kicker">Living Shock Atlas</span><h2 id="shock-atlas-title">Where shocks have been assessed</h2></div>
                   <p>Select a highlighted country to view available products.</p>
                 </div>
+                <div className="region-filters impact-region-filters" role="group" aria-label="Filter assessments by region">
+                  {REGIONS.map((value) => (
+                    <button
+                      type="button"
+                      key={value}
+                      aria-pressed={region === value}
+                      onClick={() => {
+                        setRegion(value)
+                        if (country !== 'All countries' && !catalog.countries.some((entry) => entry.iso3 === country && (value === ALL_REGIONS || entry.region === value))) setCountry('All countries')
+                      }}
+                    >{value}</button>
+                  ))}
+                </div>
                 <ImpactAtlasMap
                   countries={catalog.countries}
+                  visibleIso={region === ALL_REGIONS ? undefined : visibleIso}
                   selectedIso={country === 'All countries' ? undefined : country}
                   onSelect={setCountry}
                 />
@@ -264,7 +283,7 @@ export default function HazardImpactAssessments() {
             <section className="impact-library" id="impact-results" aria-labelledby="impact-library-title">
               <div className="section-wrap">
                 <div className="impact-section-heading">
-                  <div><span className="kicker">Assessment library</span><h2 id="impact-library-title">Explore the evidence</h2></div>
+                  <div><span className="kicker">Assessment library</span><h2 id="impact-library-title">{region === ALL_REGIONS ? 'Explore the evidence' : `Explore the evidence for ${region} region`}</h2></div>
                   <div className="impact-view-switch" aria-label="Results view">
                     <button type="button" aria-pressed={view === 'timeline'} onClick={() => setView('timeline')}>Timeline</button>
                     <button type="button" aria-pressed={view === 'details'} onClick={() => setView('details')}>Details</button>
@@ -276,7 +295,7 @@ export default function HazardImpactAssessments() {
                     <span>Search</span>
                     <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Country, event or topic…" />
                   </label>
-                  <label><span>Country</span><select value={country} onChange={(event) => setCountry(event.target.value)}><option>All countries</option>{catalog.countries.map((entry) => <option value={entry.iso3} key={entry.iso3}>{entry.name}</option>)}</select></label>
+                  <label><span>Country</span><select value={country} onChange={(event) => setCountry(event.target.value)}><option>All countries</option>{regionCountries.map((entry) => <option value={entry.iso3} key={entry.iso3}>{entry.name}</option>)}</select></label>
                   <label><span>Shock</span><select value={shock} onChange={(event) => setShock(event.target.value)}><option>All shocks</option>{catalog.shockTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
                   <label><span>Year</span><select value={year} onChange={(event) => setYear(event.target.value)}><option>All years</option>{catalog.years.map((value) => <option key={value}>{value}</option>)}</select></label>
                   <label><span>Language</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option>All languages</option>{catalog.languages.map((value) => <option key={value}>{value}</option>)}</select></label>
@@ -299,13 +318,12 @@ export default function HazardImpactAssessments() {
                       (() => {
                         const expanded = expandedTimelineYears.has(timelineYear)
                         const shownItems = expanded ? items : items.slice(0, TIMELINE_PREVIEW_PER_YEAR)
-                        const remaining = items.length - shownItems.length
                         return (
                           <section className="impact-timeline-year" key={timelineYear} aria-labelledby={`impact-year-${timelineYear}`}>
                             <div className="impact-timeline-marker"><span /><h3 id={`impact-year-${timelineYear}`}>{timelineYear}</h3><small>{shownItems.length} of {items.length} shown</small></div>
                             <div className="impact-timeline-items">
                               {shownItems.map((item) => <DossierCard item={item} compact key={item.id} />)}
-                              {remaining > 0 && (
+                              {shownItems.length < items.length && (
                                 <div className="impact-timeline-year-action">
                                   <button
                                     type="button"
@@ -313,7 +331,6 @@ export default function HazardImpactAssessments() {
                                   >
                                     Show all {items.length} assessments from {timelineYear}
                                   </button>
-                                  <span>{remaining} more {remaining === 1 ? 'assessment' : 'assessments'} in this year</span>
                                 </div>
                               )}
                               {expanded && items.length > TIMELINE_PREVIEW_PER_YEAR && (

@@ -42,10 +42,12 @@ function featureIso(country: Feature<Geometry, WorldProperties>) {
 
 export function ImpactAtlasMap({
   countries,
+  visibleIso,
   selectedIso,
   onSelect,
 }: {
   countries: ImpactCountrySummary[]
+  visibleIso?: Set<string>
   selectedIso?: string
   onSelect: (iso3: string) => void
 }) {
@@ -55,13 +57,19 @@ export function ImpactAtlasMap({
     [countries],
   )
   const paths = useMemo(() => {
-    const projection = geoNaturalEarth1().fitExtent([[12, 12], [948, 465]], worldFeatures)
+    const visibleFeatures = visibleIso
+      ? worldFeatures.features.filter((country) => visibleIso.has(featureIso(country)))
+      : []
+    const projectionTarget: FeatureCollection<Geometry, WorldProperties> = visibleFeatures.length
+      ? { type: 'FeatureCollection', features: visibleFeatures }
+      : worldFeatures
+    const projection = geoNaturalEarth1().fitExtent([[12, 12], [948, 465]], projectionTarget)
     const path = geoPath(projection)
     return worldFeatures.features.map((country) => ({
       iso3: featureIso(country),
       d: path(country) || '',
     }))
-  }, [])
+  }, [visibleIso])
   const highlighted = hoveredIso ? countryByIso.get(hoveredIso) : undefined
 
   return (
@@ -82,6 +90,7 @@ export function ImpactAtlasMap({
           const summary = countryByIso.get(iso3)
           if (!summary) return <path className="impact-map-country" d={d} key={iso3} />
           const selected = selectedIso === iso3
+          const isVisible = !visibleIso || visibleIso.has(iso3)
           return (
             <a
               href="#impact-results"
@@ -97,7 +106,7 @@ export function ImpactAtlasMap({
               onBlur={() => setHoveredIso(undefined)}
             >
               <path
-                className={`impact-map-country impact-map-country--covered${selected ? ' is-selected' : ''}`}
+                className={`impact-map-country impact-map-country--covered${isVisible ? '' : ' impact-map-country--dimmed'}${selected ? ' is-selected' : ''}`}
                 d={d}
               />
             </a>

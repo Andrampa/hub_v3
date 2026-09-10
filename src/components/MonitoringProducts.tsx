@@ -217,10 +217,10 @@ export function MonitoringProducts() {
           <>
             <div className="monitoring-filters">
               <label className="monitoring-filter-search"><span>Search</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Country, round or product…" /></label>
-              <label><span>Country</span><select value={country} onChange={(event) => setCountry(event.target.value)}><option>All countries</option>{visibleCatalog.countries.map((entry) => <option value={entry.iso3} key={entry.iso3}>{entry.name}</option>)}</select></label>
-              <label><span>Product type</span><select value={productType} onChange={(event) => setProductType(event.target.value)}><option>All product types</option>{visibleCatalog.productTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Year</span><select value={year} onChange={(event) => setYear(event.target.value)}><option>All years</option>{visibleCatalog.years.map((value) => <option key={value}>{value}</option>)}</select></label>
-              <label><span>Language</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option>All languages</option>{visibleCatalog.languages.map((value) => <option key={value}>{value}</option>)}</select></label>
+              <label><span>Country</span><select value={country} onChange={(event) => setCountry(event.target.value)}><option value="All countries">All</option>{visibleCatalog.countries.map((entry) => <option value={entry.iso3} key={entry.iso3}>{entry.name}</option>)}</select></label>
+              <label><span>Product type</span><select value={productType} onChange={(event) => setProductType(event.target.value)}><option value="All product types">All</option>{visibleCatalog.productTypes.map((value) => <option key={value}>{value}</option>)}</select></label>
+              <label><span>Year</span><select value={year} onChange={(event) => setYear(event.target.value)}><option value="All years">All</option>{visibleCatalog.years.map((value) => <option key={value}>{value}</option>)}</select></label>
+              <label><span>Language</span><select value={language} onChange={(event) => setLanguage(event.target.value)}><option value="All languages">All</option>{visibleCatalog.languages.map((value) => <option key={value}>{value}</option>)}</select></label>
               <button type="button" onClick={clearFilters}>Clear</button>
             </div>
 
@@ -251,7 +251,7 @@ export function MonitoringProducts() {
                         <div className="monitoring-group-actions">
                           {group.iso3 && group.roundValue && (
                             <Link className="monitoring-survey-explorer-link" to={monitoringCountryPath(group.iso3, group.roundValue)}>
-                              Explore in Household Survey Explorer <span aria-hidden="true">→</span>
+                              Open in Household Survey Explorer <span aria-hidden="true">→</span>
                             </Link>
                           )}
                           <div className="monitoring-group-count">

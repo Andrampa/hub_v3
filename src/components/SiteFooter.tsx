@@ -25,7 +25,7 @@ export function SiteFooter() {
             <li><Link to="/catalog">Catalogue</Link></li>
             <li><Link to="/countries">Countries</Link></li>
             <li><Link to="/hazard-impact-assessments">Hazard impacts</Link></li>
-            <li><Link to="/flood-services">Flood analysis</Link></li>
+            <li><Link to="/flood-analysis">Flood analysis</Link></li>
           </ul>
         </div>
         <div>
@@ -43,6 +43,7 @@ export function SiteFooter() {
             <li><Link to="/about">What is DIEM?</Link></li>
             <li><Link to="/photo-galleries">Photo galleries</Link></li>
             <li><Link to="/contact">Contact us</Link></li>
+            <li><a href="https://www.fao.org/emergencies/" target="_blank" rel="noreferrer">FAO emergencies and resilience</a></li>
           </ul>
         </div>
       </nav>

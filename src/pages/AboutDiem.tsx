@@ -36,7 +36,6 @@ export default function AboutDiem() {
             <h1>Evidence when decisions <em>cannot wait.</em></h1>
             <p>DIEM—Data in Emergencies—is FAO’s information system for understanding how shocks affect agricultural livelihoods and food security in crisis contexts.</p>
           </div>
-          <a className="about-hero-credit" href="https://commons.wikimedia.org/wiki/File:Dry_fields_in_Lusaka_03.jpg" target="_blank" rel="noreferrer">Photo: Icem4k / CC BY 4.0</a>
         </section>
 
         <section className="about-introduction section-wrap" aria-labelledby="about-introduction-heading">
@@ -64,7 +63,7 @@ export default function AboutDiem() {
             <nav className="about-pathways" aria-label="Explore DIEM evidence pathways">
               <Link to="/monitoring-system">Household monitoring <span aria-hidden="true">→</span></Link>
               <Link to="/hazard-impact-assessments">Hazard impacts <span aria-hidden="true">→</span></Link>
-              <Link to="/flood-services">Flood monitoring and risk <span aria-hidden="true">→</span></Link>
+              <Link to="/flood-analysis">Flood monitoring and risk <span aria-hidden="true">→</span></Link>
               <Link to="/data">Data access <span aria-hidden="true">→</span></Link>
             </nav>
           </div>

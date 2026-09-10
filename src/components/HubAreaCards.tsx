@@ -59,7 +59,7 @@ const sectionAreas: HubArea[] = [
   {
     id: 'flood', eyebrow: 'Flood evidence', title: 'Flood analysis',
     description: () => 'How DIEM observes floods, assesses exposure and prioritizes action, through EVE and VISTA.',
-    destination: '/flood-services',
+    destination: '/flood-analysis',
     imageUrl: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/1155b4e0339641458d8aac5e294d81d4/data',
   },
 ]

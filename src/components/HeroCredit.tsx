@@ -18,6 +18,14 @@ const CREDITS: Partial<Record<HeroName, { text: string; href: string }>> = {
     text: 'Photo: ©FAO',
     href: 'https://www.flickr.com/photos/faoemergencies/52829806979/in/album-72177720307634439',
   },
+  'afghanistan-household-survey-round-10-2025': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/54500887476/in/album-72177720325914781',
+  },
+  'syria-earthquake-impact-2023': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/52845070578/in/album-72177720307762521',
+  },
 }
 
 export function HeroCredit({ name }: { name: HeroName }) {

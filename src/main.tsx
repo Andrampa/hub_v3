@@ -1,6 +1,6 @@
 import { lazy, StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './auth/AuthContext'
 import ScrollToTop from './components/ScrollToTop'
@@ -47,6 +47,16 @@ function RouteLoading() {
   return <main className="route-loading" role="status"><span className="loader" /><strong>Opening DIEM Hub 3.0…</strong></main>
 }
 
+/**
+ * A route that has been renamed. The old address stays reachable for bookmarks,
+ * shared links and promotion records outside this repository, and carries its
+ * query string and fragment across so deep links into the page still land.
+ */
+function RenamedRoute({ to }: { to: string }) {
+  const { search, hash } = useLocation()
+  return <Navigate to={{ pathname: to, search, hash }} replace />
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
@@ -65,7 +75,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/data/:datasetId" element={<DatasetExplorer />} />
             <Route path="/monitoring-system" element={<HouseholdMonitoring />} />
             <Route path="/monitoring" element={<MonitoringSystem />} />
-            <Route path="/flood-services" element={<FloodServices />} />
+            <Route path="/flood-analysis" element={<FloodServices />} />
+            <Route path="/flood-services" element={<RenamedRoute to="/flood-analysis" />} />
             <Route path="/hazard-impact-assessments" element={<HazardImpactAssessments />} />
             <Route path="/about" element={<AboutDiem />} />
             <Route path="/contact" element={<Contact />} />

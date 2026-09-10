@@ -55,7 +55,7 @@ export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
         </div>
         {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}
         <div className="card-grid featured-evidence-grid">
-          {evidence.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}
+          {evidence.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} roundEditionOnly linkedTags key={family.id} />)}
         </div>
       </div>
     </section>

@@ -48,9 +48,10 @@ function catalogHref(iso3: string, type?: ProductType) {
   return `/catalog?${params}`
 }
 
-export function CountryCoverageMatrix({ countries, families }: {
+export function CountryCoverageMatrix({ countries, families, region }: {
   countries: CountrySummary[]
   families: ProductFamily<CountryResource>[]
+  region?: string
 }) {
   const rows = useMemo<CoverageRow[]>(() => {
     const wanted = new Set(countries.map((country) => country.iso3))
@@ -98,7 +99,7 @@ export function CountryCoverageMatrix({ countries, families }: {
       <div className="country-section-heading">
         <div>
           <span className="kicker">Coverage</span>
-          <h2 id="coverage-matrix-heading">Country publication matrix</h2>
+          <h2 id="coverage-matrix-heading">{region ? `Country publication matrix for ${region} region` : 'Country publication matrix'}</h2>
         </div>
         <p>Select any figure to open the catalogue for that country and product type. Scroll inside the table for the rest of the {rows.length} countries and their product types.</p>
       </div>

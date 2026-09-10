@@ -66,7 +66,7 @@
 .monitoring-group-country { display: inline-flex; align-items: center; gap: 8px; color: var(--fao-blue); font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .monitoring-group-country .flag { width: 20px; height: 15px; min-height: 0; margin: 0; flex: 0 0 20px; border: 1px solid rgba(28, 71, 103, .14); box-shadow: none; }
 .monitoring-product-group h3 { margin: 4px 0 0; color: var(--fao-navy); font-size: 1.45rem; }
-.monitoring-group-actions { display: flex; align-items: center; gap: 18px; }
+.monitoring-group-actions { display: grid; grid-template-columns: 370px 145px; align-items: center; gap: 18px; }
 .monitoring-group-count { display: grid; grid-template-columns: auto auto; align-content: center; column-gap: 7px; text-align: right; }
 .monitoring-group-count strong { color: var(--fao-navy); font-size: 1.3rem; }
 .monitoring-product-group > header time { grid-column: 1 / -1; color: var(--ink-muted); font-size: .78rem; }
@@ -82,6 +82,7 @@
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
+  justify-content: center;
 }
 .monitoring-survey-explorer-link:hover,
 .monitoring-survey-explorer-link:focus-visible { background: var(--fao-navy); border-color: var(--fao-navy); color: #fff; }
@@ -117,7 +118,7 @@
   .monitoring-product-group > header,
   .monitoring-product-row { grid-template-columns: 1fr; }
   .monitoring-product-group > header { align-items: start; }
-  .monitoring-group-actions { width: 100%; flex-direction: column-reverse; align-items: flex-start; }
+  .monitoring-group-actions { width: 100%; display: flex; flex-direction: column-reverse; align-items: flex-start; }
   .monitoring-group-count { text-align: left; }
   .monitoring-survey-explorer-link { justify-content: center; width: 100%; }
   .monitoring-product-row { gap: 16px; }

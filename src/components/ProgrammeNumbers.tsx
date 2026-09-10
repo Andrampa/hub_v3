@@ -144,7 +144,7 @@ export function ProgrammeNumbers({
       </div>
 
       <div className="pn-tier">
-        <p className="pn-tier-label">The monitoring<br />operation</p>
+        <p className="pn-tier-label">The household<br />monitoring system</p>
         <div className="pn-figures">
           {statisticsFailed ? (
             <p className="pn-unavailable">

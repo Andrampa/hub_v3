@@ -21,7 +21,7 @@ function activeSection(pathname: string): NavSection | undefined {
   if (section === 'data') return 'data'
   if (section === 'monitoring' || section === 'monitoring-system') return 'monitoring'
   if (section === 'hazard-impact-assessments') return 'impact'
-  if (section === 'flood-services') return 'flood'
+  if (section === 'flood-analysis') return 'flood'
   if (section === 'about' || section === 'contact' || section === 'photo-galleries') return 'about'
   return undefined
 }
@@ -51,10 +51,6 @@ export function SiteHeader() {
   return (
     <header className="fao-header subsite-header site-header">
       <a className="skip-link" href="#top" onClick={skipToContent}>Skip to content</a>
-      <div className="utility-bar">
-        <span>Food and Agriculture Organization of the United Nations</span>
-        <a href="https://www.fao.org/emergencies/" target="_blank" rel="noreferrer">FAO emergencies and resilience</a>
-      </div>
       <nav className="main-nav" aria-label="Primary navigation">
         <div className="brand-group">
           <a className="fao-brand" href="https://www.fao.org/home/en/" aria-label="Food and Agriculture Organization of the United Nations">
@@ -66,7 +62,7 @@ export function SiteHeader() {
         </div>
         <div className="nav-links">
           <Link className={active === 'home' ? 'active' : ''} to="/">Home</Link>
-          <NavDropdown label="Household Surveys" active={active === 'monitoring' || active === 'data'}>
+          <NavDropdown label="Household surveys" active={active === 'monitoring' || active === 'data'}>
               <Link to="/monitoring-system">
                 <strong>Catalogue</strong>
                 <small>Browse surveys and products</small>
@@ -81,7 +77,7 @@ export function SiteHeader() {
               </Link>
           </NavDropdown>
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
-          <Link className={active === 'flood' ? 'active' : ''} to="/flood-services">Flood analysis</Link>
+          <Link className={active === 'flood' ? 'active' : ''} to="/flood-analysis">Flood analysis</Link>
           <Link className={active === 'countries' ? 'active' : ''} to="/countries">Countries</Link>
           <Link className={active === 'catalog' ? 'active' : ''} to="/catalog">Catalogue</Link>
           <NavDropdown label="About DIEM" active={active === 'about'} align="end">
@@ -147,8 +143,8 @@ export function SiteHeader() {
         <Link className={active === 'catalog' ? 'active' : ''} to="/catalog" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>
         <Link className={active === 'countries' ? 'active' : ''} to="/countries" onClick={() => setMobileMenuOpen(false)}>Countries</Link>
         <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments" onClick={() => setMobileMenuOpen(false)}>Hazard impacts</Link>
-        <Link className={active === 'flood' ? 'active' : ''} to="/flood-services" onClick={() => setMobileMenuOpen(false)}>Flood analysis</Link>
-        {/* Mirrors the desktop Household Surveys dropdown; /data and the survey
+        <Link className={active === 'flood' ? 'active' : ''} to="/flood-analysis" onClick={() => setMobileMenuOpen(false)}>Flood analysis</Link>
+        {/* Mirrors the desktop Household surveys dropdown; /data and the survey
             explorer were previously unreachable from the mobile menu. */}
         <span className="mobile-nav-heading">Household surveys</span>
         <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>

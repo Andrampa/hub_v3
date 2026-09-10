@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { distinctSummary, formatDate, itemEdition, itemTypeLabel } from '../lib/catalog'
 import { distinctThumbnail, itemProductPath, itemThumbnail } from '../services/arcgis'
 import {
@@ -28,18 +29,28 @@ export function pathwaySlug(value: string) {
 export function CatalogContentCard({
   family,
   thumbnailIndex,
+  roundEditionOnly = false,
+  linkedTags = false,
 }: {
   family: ProductFamily<CountryResource>
   /** Thumbnail names unique in the catalogue; see buildDistinctThumbnailIndex. */
   thumbnailIndex: Set<string>
+  /** Homepage cards need a round marker, but not a year repeated above the full added date. */
+  roundEditionOnly?: boolean
+  /** Homepage discovery tags confirm before leaving for a broader result set. */
+  linkedTags?: boolean
 }) {
+  const navigate = useNavigate()
+  const [relatedDestination, setRelatedDestination] = useState<{ label: string, to: string }>()
+  const dialogRef = useRef<HTMLDivElement>(null)
   const item = family.primary
   const thumbnail = itemThumbnail(item)
   const summary = distinctSummary(item)
   // Most of the group shares a per-country basemap or an ArcGIS default, so the
   // image alone cannot tell one product in a series from the next. The round is
   // marked on those cards; a thumbnail that is unique to its product is left clean.
-  const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
+  const inferredEdition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
+  const edition = roundEditionOnly && !inferredEdition?.startsWith('Round ') ? undefined : inferredEdition
   const destination = itemProductPath(item)
   const soleLanguage = itemLanguage(item)
   const recordedType = item.productTypes.find((type) => type !== UNRECORDED_PRODUCT_TYPE)
@@ -57,6 +68,21 @@ export function CatalogContentCard({
   const countryLabel = countries.length
     ? countries.map((country) => country.name).join(', ')
     : crossCountry ? 'Cross-country' : 'Country not assigned'
+
+  useEffect(() => {
+    if (!relatedDestination) return
+    dialogRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setRelatedDestination(undefined)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [relatedDestination])
+
+  const offerRelated = (label: string, to: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault()
+    setRelatedDestination({ label, to })
+  }
 
   return (
     <article className="content-card">
@@ -84,24 +110,37 @@ export function CatalogContentCard({
         </div>
         {pathways.length > 0 && (
           <ul className="catalog-pathways" aria-label="Evidence pathways">
-            {pathways.map((pathway) => (
-              <li className={`catalog-pathway catalog-pathway--${pathwaySlug(pathway)}`} key={pathway}>
-                <i className={`bi ${PATHWAY_ICONS[pathway]}`} aria-hidden="true" />
-                {pathwayLabel(pathway)}
-              </li>
-            ))}
+            {pathways.map((pathway) => {
+              const content = <><i className={`bi ${PATHWAY_ICONS[pathway]}`} aria-hidden="true" />{pathwayLabel(pathway)}</>
+              return (
+                <li className={`catalog-pathway catalog-pathway--${pathwaySlug(pathway)}`} key={pathway}>
+                  {linkedTags
+                    ? <Link className="catalog-tag-link" to={`/catalog?pathway=${encodeURIComponent(pathway)}`} onClick={offerRelated(pathwayLabel(pathway), `/catalog?pathway=${encodeURIComponent(pathway)}`)}>{content}</Link>
+                    : content}
+                </li>
+              )
+            })}
           </ul>
         )}
         <h3><Link to={destination}>{item.title.trim()}</Link></h3>
         {summary && <p>{summary}</p>}
         <div className="card-footer">
           <span className="catalog-country" title={countryLabel}>
-            {visibleCountries.length > 0 && (
-              <span className="catalog-country-flags" role="img" aria-label={countryLabel}>
-                {visibleCountries.map((country) => <i className={`flag flag-small flag-${country.iso3.toLowerCase()}`} aria-hidden="true" key={country.iso3} />)}
+            {linkedTags && visibleCountries.length > 0 ? visibleCountries.map((country, index) => (
+              <span className="catalog-country-entry" key={country.iso3}>
+                {index > 0 && <span aria-hidden="true">, </span>}
+                <Link className="catalog-country-link" to={`/countries/${country.iso3.toLowerCase()}`} onClick={offerRelated(country.name, `/countries/${country.iso3.toLowerCase()}`)}>
+                  <i className={`flag flag-small flag-${country.iso3.toLowerCase()}`} aria-hidden="true" />
+                  <span>{country.name}</span>
+                </Link>
               </span>
+            )) : (
+              <>
+                {visibleCountries.length > 0 && <span className="catalog-country-flags" aria-hidden="true">{visibleCountries.map((country) => <i className={`flag flag-small flag-${country.iso3.toLowerCase()}`} key={country.iso3} />)}</span>}
+                <span>{countryLabel}</span>
+              </>
             )}
-            <span>{countries.length > 2 ? `${visibleCountries.map((country) => country.name).join(', ')} +${countries.length - 2}` : countryLabel}</span>
+            {linkedTags && countries.length > 2 && <span> +{countries.length - 2}</span>}
           </span>
         </div>
         {/* A list, not a <nav>. As a landmark every card added an entry to the
@@ -133,6 +172,19 @@ export function CatalogContentCard({
         </div>
         )}
       </div>
+      {relatedDestination && (
+        <div className="related-dialog-backdrop" onClick={() => setRelatedDestination(undefined)}>
+          <div className="related-dialog" role="dialog" aria-modal="true" aria-labelledby={`related-dialog-${item.id}`} tabIndex={-1} ref={dialogRef} onClick={(event) => event.stopPropagation()}>
+            <span className="kicker">Explore related evidence</span>
+            <h2 id={`related-dialog-${item.id}`}>See all products related to {relatedDestination.label}?</h2>
+            <p>You’ll leave this page and open the related collection.</p>
+            <div className="related-dialog-actions">
+              <button type="button" onClick={() => navigate(relatedDestination.to)}>Yes, show products</button>
+              <button type="button" onClick={() => setRelatedDestination(undefined)}>No, stay here</button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   )
 }

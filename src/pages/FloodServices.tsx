@@ -209,20 +209,12 @@ export default function FloodServices() {
       <main id="top" className="programme-page">
         <section className="programme-hero programme-hero--flood">
           <HeroImage name="bangladesh-flood-2020" className="programme-hero-image" />
-          <a
-            className="programme-hero-credit"
-            href="https://commons.wikimedia.org/wiki/File:Flood_of_Bangladesh_01.jpg"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Photo: Frameofashik / CC BY-SA 4.0
-          </a>
           <div className="section-wrap">
             <span className="eyebrow"><span /> DIEM flood analysis</span>
             <h1>From flood hazard to <em>evidence for action.</em></h1>
             <p>DIEM flood services connect hazard and exposure, satellite observation, field evidence and impact analysis in one workflow, so decisions about early action, response and recovery rest on a traceable chain of evidence.</p>
             <div className="programme-actions">
-              <a href={EVE_URL} target="_blank" rel="noreferrer">Open EVE 2.0 ↗</a>
+              <a href={EVE_URL} target="_blank" rel="noreferrer">Open Events Visualization in Emergencies (EVE) 2.0 ↗</a>
               <span>Public access, no account required</span>
             </div>
           </div>
@@ -252,7 +244,7 @@ export default function FloodServices() {
             <div className="programme-section-heading">
               <div>
                 <span className="kicker">The platform</span>
-                <h2 id="flood-platform-heading">EVE 2.0</h2>
+                <h2 id="flood-platform-heading">Events Visualization in Emergencies (EVE) 2.0</h2>
               </div>
               <p>A single analytical environment over one shared map, country and period. Every capability below reads the same selection, so moving between them keeps your context.</p>
             </div>
@@ -315,7 +307,7 @@ export default function FloodServices() {
             <div className="programme-section-heading">
               <div>
                 <span className="kicker kicker--light">The reference behind the analysis</span>
-                <h2 id="flood-reference-heading">VISTA</h2>
+                <h2 id="flood-reference-heading">VIIRS Surface Water Temporal Atlas (VISTA)</h2>
               </div>
               <p>Observing water is not the same as observing a flood. VISTA is what makes the difference measurable.</p>
             </div>

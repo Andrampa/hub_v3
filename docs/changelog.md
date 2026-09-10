@@ -1,5 +1,60 @@
 # Changelog
 
+## 2026-09-10 - Add regional matrix context and About fieldwork image
+
+- The Countries publication-matrix heading now names the selected region.
+- Replaced the About hero with FAO's 2023 DIEM Impact photograph from the Democratic Republic of the Congo, framing the women cleaning and sorting fish as the visible subject.
+
+## 2026-09-10 - Clarify regional state and hero subject
+
+- Shifted the Countries hero farther down so both Data in Emergencies shirt labels remain fully in frame.
+- Increased the selected-region contrast on the hazard-impact atlas and named the active region in both downstream collection headings.
+
+## 2026-09-10 - Correct regional controls and Countries hero crop
+
+- Moved hazard-impact regional controls above the Living Shock Atlas map to match the Countries atlas interaction.
+- Shifted the Countries hero photograph downward so the white Data in Emergencies shirt lettering remains visible.
+
+## 2026-09-10 - Add regional atlas navigation
+
+- Added regional filtering to the hazard-impact assessment library and removed its redundant yearly overflow count.
+- Country and hazard-impact atlases now fit the selected region instead of only dimming countries outside it.
+- Expanded EVE as Events Visualization in Emergencies and VISTA as VIIRS Surface Water Temporal Atlas on the flood-services page.
+
+## 2026-09-10 - Refine related-product navigation and data labels
+
+- Expanded homepage country links to include both the flag and country name, with visible hover and keyboard-focus treatments.
+- Replaced the browser-native related-products confirmation with an FAO-styled in-page dialog.
+- Removed the live UTC clock from the household survey arrivals and departures board.
+- Shortened the household monitoring filter defaults to `All` and simplified the signed-out data-access preview and account copy.
+
+## 2026-09-10 - Refine navigation and homepage discovery controls
+
+- Survey catalogue Explorer buttons now share a fixed desktop column and read
+  "Open in Household Survey Explorer".
+- The homepage names the household monitoring system in full, removes the
+  redundant ribbon play/pause button, and shows only round edition badges in
+  Recent publications. Country flags and evidence-pathway tags there confirm
+  before opening the related country page or filtered catalogue.
+- The slim corporate utility bar is removed. Its FAO emergencies and resilience
+  link moves into the footer sitemap, and the main navigation uses sentence case
+  for "Household surveys".
+
+## 2026-09-10 - Reassign catalogue, country, data and impact hero photography
+
+- The field-team photograph with visible Data in Emergencies shirt lettering
+  moves from the survey catalogue and data access to the Countries header.
+- Data access now uses the Afghanistan smartphone-interview photograph; the
+  Household Surveys Catalogue uses FAO's Afghanistan round 10 fieldwork image;
+  and Hazard Impact uses FAO's northwest Syria post-earthquake assessment
+  image. Flickr credits travel with all four photographs.
+- The two new FAO masters have responsive AVIF, WebP and JPEG variants and
+  descriptive alternative text.
+- The Household Surveys Catalogue and Data Access hero photographs stay fixed
+  behind their clipped sections on desktop, revealing different areas as the
+  page scrolls; mobile and reduced-motion views keep a static image. The Hazard
+  Impact crop is shifted down to retain more of the damaged building.
+
 ## 2026-09-10 - FAO house style for dates and figures; earlier, gentler popup
 
 - Every date the Hub prints now reads day, full month, year ("12 June 2024"),
@@ -1975,3 +2030,20 @@ Each crop is pinned to what the photograph was chosen for, so
 `.countries-hero` keeps `overflow: visible` (its decorative ring deliberately
 bleeds out), so the wash is on `::after` and the ring, copy and credit are
 lifted above it rather than the section being clipped.
+
+## Flood page renamed to /flood-analysis; hero credits removed
+
+The flood page now lives at `/flood-analysis`, matching the "Flood analysis"
+label already used in the header and footer. Every internal link - header,
+mobile menu, footer, home area cards, About, and the three promotion
+records in `hubPromotions.ts` - points at the new address, and the header's
+active-section detection follows it.
+
+`/flood-services` is kept as a redirect (`RenamedRoute` in `main.tsx`) rather
+than removed: bookmarks, shared links and anything outside this repository
+still land on the page, with their query string and fragment preserved.
+
+The About hero is back to the Zambia drought photograph, and both it and the
+flood hero no longer carry an on-image credit link. Both photographs are
+CC BY 4.0 (Icem4k and Frameofashik, Wikimedia Commons), which requires
+attribution somewhere reasonable; the site currently gives none for them.

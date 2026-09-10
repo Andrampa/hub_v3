@@ -49,13 +49,12 @@ function BannerItems({ items, duplicate = false }: { items: ArcGISItem[], duplic
 }
 
 export function LatestEvidenceBanner({ items }: { items: ArcGISItem[] }) {
-  const [userPaused, setUserPaused] = useState(false)
   const [interactionPaused, setInteractionPaused] = useState(false)
   const featured = useMemo(
     () => items.filter(isFeatured).sort((a, b) => b.created - a.created).slice(0, MAX_ITEMS),
     [items],
   )
-  const paused = userPaused || interactionPaused
+  const paused = interactionPaused
 
   if (!featured.length) return null
 
@@ -63,14 +62,6 @@ export function LatestEvidenceBanner({ items }: { items: ArcGISItem[] }) {
     <section className="latest-evidence" aria-labelledby="latest-evidence-title">
       <div className="latest-evidence-label">
         <span id="latest-evidence-title">Latest evidence</span>
-        <button
-          type="button"
-          onClick={() => setUserPaused((value) => !value)}
-          aria-pressed={userPaused}
-        >
-          {userPaused ? 'Play' : 'Pause'}
-          <span aria-hidden="true">{userPaused ? '▶' : 'Ⅱ'}</span>
-        </button>
       </div>
       <div
         className="latest-evidence-viewport"

@@ -259,8 +259,8 @@ function SignInGate() {
   return (
     <main id="top" className="data-gate">
       <section className="data-gate-hero">
-        <HeroImage name="drc-ndjili-market-gardens-2025" className="data-hero-image" />
-        <HeroCredit name="drc-ndjili-market-gardens-2025" />
+        <HeroImage name="afghanistan-daikundi-survey-2023" className="data-hero-image" alt="A DIEM enumerator conducting a household survey by smartphone in Daikundi, Afghanistan" />
+        <HeroCredit name="afghanistan-daikundi-survey-2023" />
         <div className="data-gate-content section-wrap">
           <div className="data-gate-copy">
             <span className="eyebrow"><span/> DIEM Household Monitoring System Data</span>
@@ -272,13 +272,13 @@ function SignInGate() {
               </button>
               <Link className="data-gate-secondary" to="/data/guide"><Icon name="book" />Read the data access guide</Link>
             </div>
-            <p className="data-gate-note"><Icon name="shield"/> Accounts are free. Privileges take about ten minutes to activate after you create one.</p>
+            <p className="data-gate-note"><Icon name="shield"/> Accounts are free. Privileges take about ten minutes to activate after account creation.</p>
           </div>
           <div className="data-gate-preview" aria-label="Available data collections">
-            <div><span>01</span><Icon name="table"/><strong>Aggregated data</strong><small>To ADM1 or ADM2, by theme</small></div>
-            <div><span>02</span><Icon name="download"/><strong>Household microdata</strong><small>Through FAM, or by request</small></div>
-            <div><span>03</span><Icon name="map"/><strong>Reference boundaries</strong><small>Operational ADM1 and ADM2</small></div>
-            <div><span>04</span><Icon name="code"/><strong>API and analysis tools</strong><small>Reproducible workflows</small></div>
+            <div><Icon name="table"/><strong>Aggregated data</strong><small>By ADM1 or ADM2, by theme</small></div>
+            <div><Icon name="download"/><strong>Household microdata</strong><small>Through FAM, or by request</small></div>
+            <div><Icon name="map"/><strong>Reference boundaries</strong><small>Operational ADM1 and ADM2</small></div>
+            <div><Icon name="code"/><strong>API and analysis tools</strong><small>Reproducible workflows</small></div>
           </div>
         </div>
       </section>
@@ -472,8 +472,8 @@ export default function DataAccess() {
       <SiteHeader />
       <main id="top" className="data-page">
         <section className="data-workspace-hero">
-          <HeroImage name="drc-ndjili-market-gardens-2025" className="data-hero-image" />
-          <HeroCredit name="drc-ndjili-market-gardens-2025" />
+          <HeroImage name="afghanistan-daikundi-survey-2023" className="data-hero-image" alt="A DIEM enumerator conducting a household survey by smartphone in Daikundi, Afghanistan" />
+          <HeroCredit name="afghanistan-daikundi-survey-2023" />
           <div className="section-wrap">
             <div className="data-workspace-heading">
               <span className="eyebrow"><span/> Authenticated data workspace</span>

@@ -30,6 +30,7 @@ import { UNRECORDED_PRODUCT_TYPE } from '../services/countries'
 import { formatNumber } from '../lib/format'
 
 const ALL_REGIONS = 'All regions'
+const REGIONS = [ALL_REGIONS, 'Asia & Pacific', 'Africa', 'Latin America & Caribbean', 'Near East & North Africa', 'Europe']
 
 function topTypes(typeCounts: Record<string, number>) {
   return Object.entries(typeCounts)
@@ -43,10 +44,7 @@ export default function CountryExplorer() {
   const [params, setParams] = useSearchParams()
   const query = params.get('q') || ''
 
-  const regions = useMemo(
-    () => [ALL_REGIONS, ...new Set(catalog?.countries.map((country) => country.region) || [])],
-    [catalog],
-  )
+  const regions = REGIONS
 
   /**
    * The region is in the URL, so a filtered atlas can be shared and Back
@@ -138,8 +136,8 @@ export default function CountryExplorer() {
             screen reader nor a search result had a title for the document. The
             heading is outside the loading branch so it exists immediately. */}
         <section className="countries-hero">
-          <HeroImage name="afghanistan-daikundi-survey-2023" className="countries-hero-image" />
-          <HeroCredit name="afghanistan-daikundi-survey-2023" />
+          <HeroImage name="drc-ndjili-market-gardens-2025" className="countries-hero-image" alt="Two DIEM field team members wearing Data in Emergencies shirts in market gardens" />
+          <HeroCredit name="drc-ndjili-market-gardens-2025" />
           <div className="countries-hero-inner">
             <span className="kicker kicker--light">Country evidence</span>
             <h1>DIEM evidence, <em>country by country.</em></h1>
@@ -190,7 +188,7 @@ export default function CountryExplorer() {
                   >{value}</button>
                 ))}
               </div>
-              <CountryMap countries={catalog.countries} visibleIso={visibleIso} />
+              <CountryMap countries={catalog.countries} visibleIso={region === ALL_REGIONS ? undefined : visibleIso} />
             </section>
 
             <section className="country-facts" aria-label="Country catalog summary">
@@ -207,11 +205,11 @@ export default function CountryExplorer() {
               </section>
             )}
 
-            <CountryCoverageMatrix countries={visibleCountries} families={families} />
+            <CountryCoverageMatrix countries={visibleCountries} families={families} region={region === ALL_REGIONS ? undefined : region} />
 
             <section className="country-directory section-wrap" aria-labelledby="directory-heading">
               <div className="country-section-heading country-section-heading--directory">
-                <div><span className="kicker">Country directory</span><h2 id="directory-heading">Browse the collection</h2></div>
+                <div><span className="kicker">Country directory</span><h2 id="directory-heading">{region === ALL_REGIONS ? 'Browse the collection' : `Browse the collection in ${region} region`}</h2></div>
                 <label className="country-directory-search">
                   <span>Search countries</span>
                   <input

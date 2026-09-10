@@ -65,30 +65,6 @@
   letter-spacing: .1em;
 }
 
-.board-clock {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--board-screen);
-  font-family: var(--board-mono);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .08em;
-}
-
-.board-clock small { color: var(--board-dim); font-size: var(--text-micro); letter-spacing: .18em; }
-
-.board-live {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #58d69a;
-  box-shadow: 0 0 9px #58d69a;
-  animation: board-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes board-pulse { 50% { opacity: .25; } }
-
 .board-tabs { display: flex; flex-wrap: wrap; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--board-edge); }
 
 .board-tabs button {

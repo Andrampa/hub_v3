@@ -1,7 +1,7 @@
 .impact-page { background: #f6f7f4; }
 
 .impact-hero { position: relative; min-height: 520px; overflow: hidden; display: flex; align-items: end; background: var(--fao-navy); color: white; }
-.impact-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.impact-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
 .impact-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(3, 48, 73, .96) 0%, rgba(3, 48, 73, .82) 48%, rgba(3, 48, 73, .4) 100%); }
 .impact-hero-credit { position: absolute; z-index: 2; right: 16px; bottom: 12px; color: rgba(255,255,255,.78); font-size: var(--text-small); text-decoration: none; }
 .impact-hero-credit:hover, .impact-hero-credit:focus-visible { color: white; text-decoration: underline; }
@@ -67,6 +67,10 @@
 .impact-map-caption strong { font-size: 13px; }
 .impact-map-caption span { margin-top: 3px; color: #d2e2e6; font-size: var(--text-small); }
 .impact-atlas .map-disclaimer { margin: 10px 0 0; color: #d2e2e6; font-size: var(--text-micro); line-height: 1.5; }
+.impact-region-filters { margin: 0 0 20px; }
+.impact-region-filters button { border-color: rgba(255, 255, 255, .45); color: #e5ecf4; }
+.impact-atlas .impact-region-filters button[aria-pressed="true"] { border-color: #fff; background: #fff; color: var(--deep-blue); }
+.impact-map-country--dimmed { opacity: .12; pointer-events: none; }
 
 .impact-library { padding-block: 95px 105px; background: var(--line-faint); }
 .impact-view-switch { display: flex; border: 1px solid #b9cbcb; }

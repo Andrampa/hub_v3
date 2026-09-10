@@ -59,8 +59,6 @@
 .programme-hero--monitoring { background: linear-gradient(120deg, #043753, var(--fao-blue)); }
 .programme-hero--flood { background: #05466c; }
 .programme-hero--flood::before { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(90deg, rgba(3, 48, 73, .94) 0%, rgba(3, 48, 73, .78) 55%, rgba(3, 48, 73, .42) 100%); }
-.programme-hero-credit { position: absolute; z-index: 3; right: 16px; bottom: 12px; color: rgba(255,255,255,.78); font-size: var(--text-small); text-decoration: none; }
-.programme-hero-credit:hover, .programme-hero-credit:focus-visible { color: white; text-decoration: underline; }
 .contact-hero { padding-bottom: 82px; background: linear-gradient(120deg, #05466c, var(--fao-blue)); }
 .programme-hero .section-wrap, .contact-hero .section-wrap { position: relative; z-index: 2; }
 .programme-hero h1, .contact-hero h1 { max-width: 780px; margin: 18px 0; font-size: clamp(42px, 5.8vw, 70px); line-height: 1; letter-spacing: -.055em; }
@@ -243,8 +241,6 @@
 .about-hero h1 { max-width: 790px; margin: 18px 0; font-size: clamp(46px, 6vw, 72px); line-height: 1; letter-spacing: -.055em; }
 .about-hero h1 em { color: #a8d5df; font-weight: 600; }
 .about-hero p { max-width: 700px; margin: 0; color: var(--line-soft); font-size: 17px; line-height: 1.7; }
-.about-hero-credit { position: absolute; z-index: 2; right: 16px; bottom: 12px; color: rgba(255,255,255,.8); font-size: var(--text-small); }
-.about-hero-credit:hover, .about-hero-credit:focus-visible { color: white; text-decoration: underline; }
 .about-introduction { padding-block: 90px; display: grid; grid-template-columns: .75fr 1.25fr; gap: 80px; }
 .about-introduction h2, .about-contact h2 { margin: 8px 0 0; color: var(--deep-blue); font-size: clamp(32px, 4.2vw, 48px); line-height: 1.08; letter-spacing: -.045em; }
 .about-introduction-copy { color: #536b74; font-size: 16px; line-height: 1.85; }
@@ -370,9 +366,16 @@
 }
 
 .household-explorer-banner { position: relative; overflow: hidden; }
-.household-explorer-banner-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 51%; }
+.household-explorer-banner-image { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 65%; }
 .household-explorer-banner::before { content: ''; position: absolute; z-index: 1; inset: 0; background: linear-gradient(120deg, rgba(4, 55, 83, .88) 0%, rgba(4, 55, 83, .72) 45%, rgba(9, 76, 116, .55) 100%); }
 .household-explorer-banner .section-wrap { position: relative; z-index: 2; }
 /* Wins over `.household-explorer-banner a`, which styles the explorer CTA. */
 .household-explorer-banner a.hero-photo-credit { flex: none; min-height: 0; padding: 0; display: block; border: 0; background: none; color: rgba(255,255,255,.78); font-size: var(--text-small); font-weight: 400; }
 .household-explorer-banner a.hero-photo-credit:hover { transform: none; box-shadow: none; color: white; text-decoration: underline; }
+
+/* Clip a viewport-fixed image to the banner. As the page moves over it, the
+   reader sees a different vertical slice without JavaScript-driven parallax. */
+@media (min-width: 721px) and (prefers-reduced-motion: no-preference) {
+  .household-explorer-banner { clip-path: inset(0); }
+  .household-explorer-banner-image { position: fixed; top: -10vh; height: 110vh; }
+}
