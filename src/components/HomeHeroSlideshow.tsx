@@ -35,9 +35,15 @@ export function HomeHeroSlideshow() {
   // left the first slide, active from its first paint, with no change for the
   // pan transition to run from.
   const [panning, setPanning] = useState(-1)
-  // Slides are mounted one ahead of the one showing, so the first paint fetches
-  // a single photograph and each next one is ready before it fades in.
-  const [mounted, setMounted] = useState(2)
+  // Slides are mounted one ahead of the one showing, so each is ready before it
+  // fades in. The second waits a moment, so its download and decode do not
+  // compete with the first paint and the first slide's drift.
+  const [mounted, setMounted] = useState(1)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setMounted((count) => Math.max(count, 2)), SLIDE_MS / 2)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -49,7 +55,7 @@ export function HomeHeroSlideshow() {
   }, [])
 
   useEffect(() => {
-    setMounted((count) => Math.max(count, Math.min(SLIDES.length, active + 2)))
+    if (active > 0) setMounted((count) => Math.max(count, Math.min(SLIDES.length, active + 2)))
     // Long enough for the starting position to be painted before the pan
     // begins. A timer rather than animation frames, which a browser withholds
     // from a page it considers hidden.

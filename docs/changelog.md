@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-09-11 - Frame the homepage popup
+
+- The homepage campaign popup sits in a thin white mount with a navy hairline
+  outside it and a soft two-layer shadow, so it no longer dissolves into the
+  navy hero or floats loosely over white sections.
+- The homepage hero slides drift with a composited transform inside a clipping
+  layer instead of animating `object-position`, which repainted every frame
+  and stuttered on the first slide while the page was still loading. The
+  second photograph now mounts after 3 seconds, so it no longer competes with
+  the first.
+
 ## 2026-09-11 - Rotate fieldwork photographs on the homepage hero
 
 - The homepage hero now crossfades between twelve FAO photographs every 6

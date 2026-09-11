@@ -239,25 +239,32 @@ h1, h2, h3, h4, h5, h6,
   opacity: .7;
 }
 /* Homepage slides stack in the same box and crossfade. While a slide shows it
-   pans slowly down its own frame; object-position rather than a zoom, because
-   the hero does not clip and a scaled image would spill past its edges.
-   `is-active` shows a slide at its starting position; `is-panning`, added a
-   frame later, moves it, so the first slide pans as well. The pan is reset
-   only once the slide has faded out. */
-.hero-slides { display: contents; }
+   drifts slowly upward. The drift is a transform, which the compositor runs
+   even while the page is still loading; animating object-position repainted
+   the image every frame and stuttered on the first slide, when the main thread
+   is busiest. Each slide is taller than the hero so the drift never uncovers
+   an edge, and the layer clips them, which the hero itself cannot do without
+   also clipping the search suggestions.
+   `is-active` shows a slide at its starting offset; `is-panning`, added just
+   after, moves it, so the first slide drifts as well. The offset is reset only
+   once the slide has faded out. */
+.hero-slides { position: absolute; inset: 0; overflow: hidden; }
 .hero-image.hero-slide {
+  top: -5%;
+  height: 110%;
   opacity: 0;
-  object-position: center calc(var(--hero-slide-y, 50%) - 6%);
-  transition: opacity 1.6s ease, object-position 0s linear 1.6s;
+  object-position: center var(--hero-slide-y, 50%);
+  transform: translate3d(0, 4%, 0);
+  transition: opacity 1.6s ease, transform 0s linear 1.6s;
 }
-.hero-image.hero-slide.is-active { opacity: .7; }
+.hero-image.hero-slide.is-active { opacity: .7; will-change: transform, opacity; }
 .hero-image.hero-slide.is-active.is-panning {
-  object-position: center calc(var(--hero-slide-y, 50%) + 6%);
+  transform: translate3d(0, -4%, 0);
   /* The 6 s slide in HomeHeroSlideshow plus the 1.6 s fade. */
-  transition: opacity 1.6s ease, object-position 7.6s linear;
+  transition: opacity 1.6s ease, transform 7.6s linear;
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-image.hero-slide, .hero-image.hero-slide.is-active, .hero-image.hero-slide.is-active.is-panning { object-position: center var(--hero-slide-y, 50%); transition: none; }
+  .hero-image.hero-slide, .hero-image.hero-slide.is-active, .hero-image.hero-slide.is-active.is-panning { transform: none; transition: none; }
 }
 .hero::after {
   content: "";
@@ -454,12 +461,19 @@ h1, h2, h3, h4, h5, h6,
 .countries-hero p { color: #fff; font-size: .95rem; }
 .country-facts { border: 1px solid #d9d9d9; box-shadow: none; }
 
-/* Campaigns remain available but read as notices, not app-like overlays. */
+/* Campaigns remain available but read as notices, not app-like overlays. A
+   navy box with a grey hairline dissolved into the navy hero and floated
+   loosely on white, so it now sits in a thin white mount with a navy hairline
+   outside it, and a soft shadow lifts it off whatever it overlaps. */
 .editorial-popup {
-  border: 1px solid #b8b8b8;
+  border: 1px solid rgba(255, 255, 255, .22);
   border-radius: 0;
   background: var(--fao-navy);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .14);
+  box-shadow:
+    0 0 0 4px #fff,
+    0 0 0 5px rgba(2, 48, 72, .18),
+    0 12px 30px rgba(0, 26, 41, .24),
+    0 2px 6px rgba(0, 26, 41, .12);
   animation: none;
 }
 .editorial-popup-close { border-radius: 0; }
