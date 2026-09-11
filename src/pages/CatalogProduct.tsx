@@ -9,7 +9,7 @@ import { formatDate, isPhotoGalleryWrapper } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
 import { CITATION_LANGUAGES, citationModel, citationRound, citationText, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { CitationText } from '../components/CitationText'
-import { fetchStoryMapFlickrAlbum, itemResourceAction, itemThumbnail } from '../services/arcgis'
+import { fetchStoryMapFlickrAlbum, isExplorableProduct, itemResourceAction, itemThumbnail } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
 import { fetchPhotoGalleries, galleryForFlickrAlbum, galleryForLegacyItem, type PhotoGallery } from '../services/photoGalleries'
 
@@ -281,12 +281,21 @@ export default function CatalogProduct() {
                       <button className="catalog-product-action" type="button" onClick={openPreview}>Preview PDF <i className="bi bi-file-earmark-pdf" aria-hidden="true" /></button>
                       <a className="catalog-product-action catalog-product-action--secondary" href={action.href}>Download PDF <i className="bi bi-download" aria-hidden="true" /></a>
                     </div>
+                  ) : isExplorableProduct(item) ? (
+                    <div className="catalog-product-hero-actions">
+                      <Link className="catalog-product-action" to={`/datasets/${item.id}`}>Explore and download data <i className="bi bi-download" aria-hidden="true" /></Link>
+                      <a className="catalog-product-action catalog-product-action--secondary" href={action.href} target="_blank" rel="noreferrer">Open data service <i className="bi bi-box-arrow-up-right" aria-hidden="true" /></a>
+                    </div>
                   ) : (
                     <a className="catalog-product-action" href={action.href} target="_blank" rel="noreferrer">
                       {action.label}<i className="bi bi-box-arrow-up-right" aria-hidden="true" />
                     </a>
                   )}
-                  <p className="catalog-product-action-note">{item.type === 'PDF' ? 'Preview in the Hub or download the original file.' : 'Opens the resource in a new tab.'}</p>
+                  <p className="catalog-product-action-note">{item.type === 'PDF'
+                    ? 'Preview in the Hub or download the original file.'
+                    : isExplorableProduct(item)
+                      ? 'Filter, preview and download the records, or copy API links. No sign-in needed.'
+                      : 'Opens the resource in a new tab.'}</p>
                   {licence && (
                     <div className="catalog-product-licence">
                       {'label' in licence && licence.label ? (

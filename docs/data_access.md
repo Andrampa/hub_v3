@@ -144,12 +144,27 @@ not been done yet.
 - Tools: microdata labelling repository, DIEM API examples and FAO Microdata Catalogue.
 - Citations: copyable English, French and Spanish citation text plus licensing.
 
+## Public Dataset Explorer
+
+`/datasets/:itemId` opens the same explorer for a public catalogue dataset, with
+no sign-in. It also accepts the legacy Hub's `/datasets/<id>_<layer>/explore`
+address and opens that layer. An item qualifies when it is a discoverable
+product of the content group (resolved exactly as its product page is), is
+shared publicly, and is an ArcGIS `Feature Service` with a URL
+(`isExplorableProduct` in `src/services/arcgis.ts`). Its product page then leads
+with **Explore and download data** and keeps the raw service as a secondary
+link. Queries run anonymously; CSV, Excel and GeoJSON are built in the browser
+as for protected data, the Python/R scripts need no account, and Shapefile/KML
+packaging is not offered because the export generator needs a signed-in
+session. The administrative-boundary shortcut is protected data and is not
+shown.
+
 ## Explorer and Download Strategy
 
 The application resolves the configured ArcGIS item to its feature service and layer after login. It uses the active identity for count, preview, geometry and export queries, while keeping the user inside Hub 3.0.
 
 - Map preview converts native ArcGIS geometry from up to 250 records in the current map extent. The 250-feature budget is a rendering limit, not a data limit: the query carries the map's envelope, so zooming into a crowded area spends the same budget on a smaller area and progressively reveals every feature in it. The map reframes itself only when the filter changes, never on a pan, and says whether it is showing a sample of the view or all of it. It converts geometry, preserves polygon ring direction and holes, and renders it through Leaflet over ArcGIS Online's public light-gray base and reference tiles. Users can pan, zoom, reset to the filtered extent, hover and select features.
-- Table preview returns the first 30 matching records.
+- Table preview returns the first 30 matching records. It scrolls inside a bounded height with a sticky header, and a synced horizontal scrollbar sits above the table so wide schemas can be scrolled without leaving the column names.
 - CSV, Excel and GeoJSON are generated locally from authenticated filtered queries of up to 20,000 records. Pagination is driven by the count captured before export, advances by the number of records actually returned, and uses object-ID ordering where the layer exposes it; incomplete exports fail explicitly instead of silently truncating. CSV includes a UTF-8 byte-order mark for reliable accented text in Excel. The Excel workbook is written with `write-excel-file`, loaded as a lazy chunk so the library is fetched only when a user asks for that format; field aliases form a frozen header row and numeric fields are written as numbers.
 - Filter values come from a dropdown wherever the attribute offers a bounded list: a coded-value domain is used directly, and otherwise the service answers a `returnDistinctValues` query capped at 500 options. That query is unfiltered, so the option list describes the dataset rather than the current selection, and its cost does not grow with table size. Attributes with more distinct values, and the `contains` and numeric comparisons, stay free text.
 - The download panel states what a file will contain -- the filtered record count, or that no filters are applied and the file is the whole dataset -- next to the format buttons.

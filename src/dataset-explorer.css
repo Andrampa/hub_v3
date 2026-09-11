@@ -111,9 +111,11 @@
 .dataset-table-section > div:first-child { margin-bottom: 17px; }
 .dataset-table-section h2 { margin: 5px 0 0; color: var(--deep-blue); font-size: 21px; letter-spacing: -.02em; }
 .table-help { margin: 6px 0 0; color: var(--ink-faint); font-size: var(--text-small); }
-.dataset-table-scroll { overflow-x: auto; border: 1px solid var(--line-soft); }
+.dataset-table-rail { overflow-x: auto; overflow-y: hidden; border: 1px solid var(--line-soft); border-bottom: 0; }
+.dataset-table-rail > div { height: 1px; }
+.dataset-table-scroll { max-height: min(70vh, 640px); overflow: auto; border: 1px solid var(--line-soft); }
 .dataset-table-scroll table { width: max-content; min-width: 100%; border-collapse: collapse; }
-.dataset-table-scroll th { padding: 10px; background: #f2f6f5; color: #536b74; font-size: var(--text-micro); text-align: left; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.dataset-table-scroll th { position: sticky; top: 0; z-index: 1; padding: 10px; background: #f2f6f5; color: #536b74; font-size: var(--text-micro); text-align: left; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 .dataset-table-scroll td { max-width: 210px; padding: 10px; border-top: 1px solid #e5ebea; overflow: hidden; color: #55676d; font-size: var(--text-small); text-overflow: ellipsis; white-space: nowrap; }
 .dataset-table-scroll tr:nth-child(even) td { background: #fbfcfc; }
 .dataset-no-results { padding: 18px; margin: 0; color: var(--ink-faint); font-size: var(--text-small); text-align: center; }

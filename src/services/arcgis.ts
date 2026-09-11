@@ -152,6 +152,14 @@ export function itemProductPath(item: Pick<ArcGISItem, 'id'>) {
   return `/catalog/${item.id}`
 }
 
+/**
+ * A catalogue product the public dataset explorer can open: a public, queryable
+ * feature service. Everything else keeps its ordinary resource action.
+ */
+export function isExplorableProduct(item: Pick<ArcGISItem, 'type' | 'access' | 'url'>) {
+  return item.type === 'Feature Service' && item.access === 'public' && !!item.url
+}
+
 /** The authoritative resource action exposed from a membership-checked page. */
 export function itemResourceAction(item: ArcGISItem) {
   if (item.url) {

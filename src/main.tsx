@@ -73,6 +73,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/data/guide" element={<DataGuide />} />
             <Route path="/data/grants/:datasetId" element={<DatasetExplorer />} />
             <Route path="/data/:datasetId" element={<DatasetExplorer />} />
+            <Route path="/datasets/:datasetId" element={<DatasetExplorer />} />
+            {/* The legacy Hub's dataset address, kept so old links still open. */}
+            <Route path="/datasets/:datasetId/explore" element={<DatasetExplorer />} />
             <Route path="/monitoring-system" element={<HouseholdMonitoring />} />
             <Route path="/monitoring" element={<MonitoringSystem />} />
             <Route path="/flood-analysis" element={<FloodServices />} />

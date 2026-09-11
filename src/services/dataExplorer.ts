@@ -1,14 +1,19 @@
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
+import { request } from '@esri/arcgis-rest-request'
 import {
   DATA_PORTAL,
   DATA_REST,
   resolveProtectedResource,
+  type DataGeneration,
+  type DataResourceKind,
   type ProtectedDataResource,
   type ProtectedRequester,
   type ResolvedDataResource,
 } from './protectedData'
 import { ALL_PROTECTED_DATA_RESOURCES } from './protectedData'
 import { COMMUNITY_PORTAL } from './auth'
+import { isExplorableProduct } from './arcgis'
+import { fetchCurrentCatalogProduct } from './countries'
 import {
   describeSurveyScope,
   resolveGrantView,
@@ -77,8 +82,19 @@ export interface FeatureLayerInfo {
   editingInfo?: { lastEditDate?: number }
 }
 
+/**
+ * What the explorer knows about the dataset it has open. A registered or grant
+ * dataset carries its questionnaire generation; a public catalogue dataset has
+ * none, and is marked with its own kind rather than borrowing a generation it
+ * does not belong to.
+ */
+export type ExplorerResource = Omit<ResolvedDataResource, 'version' | 'kind'> & {
+  version?: DataGeneration
+  kind: DataResourceKind | 'public'
+}
+
 export interface DatasetDefinition {
-  resource: ResolvedDataResource
+  resource: ExplorerResource
   serviceUrl: string
   layerUrl: string
   layer: FeatureLayerInfo
@@ -344,6 +360,60 @@ export async function fetchGrantDatasetDefinition(
   const layerUrl = `${serviceUrl}/${layerReference.id}`
   const layer = await requester<FeatureLayerInfo>(layerUrl)
   return { resource, serviceUrl, layerUrl, layer, isTable, grant: view }
+}
+
+/**
+ * Anonymous requests for public services. Same transport as the signed-in
+ * requester, with no identity attached, so the query helpers below work
+ * unchanged for either.
+ */
+export const publicRequester: ProtectedRequester = <T,>(
+  url: string,
+  params: Record<string, unknown> = {},
+  options: { method?: 'GET' | 'POST' } = {},
+) => request(url, { httpMethod: options.method || 'POST', params: { f: 'json', ...params } }) as Promise<T>
+
+/**
+ * `/datasets/<id>` also accepts the legacy Hub's `<id>_<layer>` form, so an
+ * address copied from the old site opens the same layer here.
+ */
+export function parsePublicDatasetAddress(value: string) {
+  const match = /^([0-9a-f]{32})(?:_(\d+))?$/i.exec(value.trim())
+  return match ? { itemId: match[1].toLowerCase(), layerId: match[2] === undefined ? undefined : Number(match[2]) } : undefined
+}
+
+/**
+ * Open a public catalogue dataset without signing in.
+ *
+ * The item is resolved through the content group exactly as its product page
+ * is, so only a discoverable product can be opened here: a public service that
+ * is not in the catalogue does not become explorable by typing its id.
+ */
+export async function fetchPublicDatasetDefinition(address: string): Promise<DatasetDefinition> {
+  const parsed = parsePublicDatasetAddress(address)
+  if (!parsed) throw new Error('This address does not name a DIEM dataset.')
+  const item = await fetchCurrentCatalogProduct(parsed.itemId)
+  if (!item) throw new Error('This dataset is not published in the DIEM Hub catalogue.')
+  if (!isExplorableProduct(item)) throw new Error('This product is not a public data service that can be explored here.')
+
+  const resource: ExplorerResource = {
+    id: item.id,
+    kind: 'public',
+    fallbackTitle: item.title,
+    description: item.snippet || '',
+    access: 'available',
+    item: { ...item, owner: 'FAO DIEM' },
+  }
+  const serviceUrl = normalizedServiceUrl(item.url!)
+  const service = await publicRequester<FeatureServiceInfo>(serviceUrl)
+  const references = [...(service.layers || []), ...(service.tables || [])]
+  const layerReference = references.find((reference) => reference.id === parsed.layerId) || references[0]
+  if (!layerReference) throw new Error('This service does not expose a feature layer or table for exploration.')
+
+  const isTable = !service.layers?.some((layer) => layer.id === layerReference.id)
+  const layerUrl = `${serviceUrl}/${layerReference.id}`
+  const layer = await publicRequester<FeatureLayerInfo>(layerUrl)
+  return { resource, serviceUrl, layerUrl, layer, isTable }
 }
 
 export async function fetchRecordCount(definition: DatasetDefinition, where: string, requester: ProtectedRequester) {
@@ -738,6 +808,7 @@ export function apiLinks(definition: DatasetDefinition, where: string) {
  * federated through enterprise SSO has no password to present here.
  */
 export function bulkDownloadScripts(definition: DatasetDefinition, where: string) {
+  if (definition.resource.kind === 'public') return publicBulkDownloadScripts(definition, where)
   const queryUrl = `${definition.layerUrl}/query`
   const tokenUrl = `${COMMUNITY_PORTAL}/sharing/rest/generateToken`
   const filename = `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-bulk.csv`
@@ -885,6 +956,90 @@ token <- sign_in()
 
 service_post <- function(parameters) {
   post_json(query_url, c(list(token = token), parameters))
+}
+
+id_result <- service_post(list(where = where, returnIdsOnly = "true"))
+object_ids <- unlist(id_result$objectIds)
+pages <- list()
+if (length(object_ids) > 0) {
+  for (start in seq(1, length(object_ids), by = 1000)) {
+    batch <- object_ids[start:min(start + 999, length(object_ids))]
+    page <- service_post(list(
+      objectIds = paste(batch, collapse = ","),
+      outFields = "*",
+      returnGeometry = "false"
+    ))
+    pages[[length(pages) + 1]] <- page$features$attributes
+  }
+}
+result <- if (length(pages)) do.call(rbind, pages) else data.frame()
+write.csv(result, output, row.names = FALSE, fileEncoding = "UTF-8")
+message(sprintf("Saved %s records to %s", format(nrow(result), big.mark = ","), output))
+`
+  return { python, r }
+}
+
+/** The same extraction for a public service: no account, no token. */
+function publicBulkDownloadScripts(definition: DatasetDefinition, where: string) {
+  const queryUrl = `${definition.layerUrl}/query`
+  const filename = `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-bulk.csv`
+  const python = `# DIEM bulk attribute download (Python 3, standard library only)
+#
+# This dataset is public, so no account or token is needed.
+import csv
+import json
+import urllib.parse
+import urllib.request
+
+QUERY_URL = ${JSON.stringify(queryUrl)}
+WHERE = ${JSON.stringify(where)}
+OUTPUT = ${JSON.stringify(filename)}
+
+
+def service_post(parameters):
+    body = urllib.parse.urlencode({"f": "json", **parameters}).encode()
+    with urllib.request.urlopen(QUERY_URL, body) as response:
+        payload = json.load(response)
+    if "error" in payload:
+        raise RuntimeError(payload["error"])
+    return payload
+
+
+id_result = service_post({"where": WHERE, "returnIdsOnly": "true"})
+object_ids = id_result.get("objectIds") or []
+rows = []
+for start in range(0, len(object_ids), 1000):
+    page = service_post({
+        "objectIds": ",".join(map(str, object_ids[start:start + 1000])),
+        "outFields": "*",
+        "returnGeometry": "false",
+    })
+    rows.extend(feature["attributes"] for feature in page.get("features", []))
+
+if rows:
+    with open(OUTPUT, "w", newline="", encoding="utf-8-sig") as target:
+        writer = csv.DictWriter(target, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+print(f"Saved {len(rows):,} records to {OUTPUT}")
+`
+  const r = `# DIEM bulk attribute download (R)
+#
+# Packages: install.packages(c("httr", "jsonlite"))
+# This dataset is public, so no account or token is needed.
+library(httr)
+library(jsonlite)
+
+query_url <- ${JSON.stringify(queryUrl)}
+where <- ${JSON.stringify(where)}
+output <- ${JSON.stringify(filename)}
+
+service_post <- function(parameters) {
+  response <- POST(query_url, body = c(list(f = "json"), parameters), encode = "form")
+  stop_for_status(response)
+  payload <- fromJSON(content(response, as = "text", encoding = "UTF-8"), simplifyVector = TRUE)
+  if (!is.null(payload$error)) stop(toJSON(payload$error, auto_unbox = TRUE))
+  payload
 }
 
 id_result <- service_post(list(where = where, returnIdsOnly = "true"))

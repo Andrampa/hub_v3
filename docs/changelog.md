@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-11 - Explore public catalogue datasets without signing in
+
+- Public feature services in the catalogue (for example the three EVE master
+  tables) now open in the dataset explorer at `/datasets/<id>`: filters, record
+  preview, CSV/Excel/GeoJSON downloads, API links and Python/R scripts, with no
+  sign-in. The legacy `/datasets/<id>_<layer>/explore` address works too.
+- Their product pages lead with **Explore and download data** instead of
+  sending readers to the bare FeatureServer page, which stays as a secondary
+  link.
+- `/data` and its protected explorer are unchanged. See
+  `docs/data_access.md#public-dataset-explorer`.
+- Every dataset explorer's record preview now has a horizontal scrollbar above
+  the table as well as below it, kept in sync, and the table scrolls inside a
+  bounded height with a sticky header, so wide schemas can be browsed with the
+  column names in view.
+
 ## 2026-09-10 - Add regional matrix context and About fieldwork image
 
 - The Countries publication-matrix heading now names the selected region.

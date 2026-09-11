@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom'
 import { confirmGrantStillActive, describeSurveyScope } from '../services/microdataGrants'
 import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
@@ -20,6 +20,8 @@ import {
   downloadXlsx,
   fetchDatasetDefinition,
   fetchGrantDatasetDefinition,
+  fetchPublicDatasetDefinition,
+  publicRequester,
   fetchFieldOptions,
   fieldSupportsOptions,
   fetchGeometryPreview,
@@ -114,6 +116,52 @@ function operatorOptions(field: FeatureField | undefined) {
   ]
 }
 
+/**
+ * The record table, with a second horizontal scrollbar above it.
+ *
+ * Wide schemas run to dozens of columns, and the native scrollbar sits under
+ * the last row, where the headers are already off screen. The rail on top
+ * mirrors the table's scroll width and position both ways, and the table body
+ * is height-bounded with a sticky header, so columns can be scrolled while
+ * their names stay in view.
+ */
+function TableScroll({ children }: { children: ReactNode }) {
+  const railRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [scrollWidth, setScrollWidth] = useState(0)
+  const [overflowing, setOverflowing] = useState(false)
+
+  useEffect(() => {
+    const scroller = scrollRef.current
+    if (!scroller) return
+    const measure = () => {
+      setScrollWidth(scroller.scrollWidth)
+      setOverflowing(scroller.scrollWidth > scroller.clientWidth + 1)
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(scroller)
+    if (scroller.firstElementChild) observer.observe(scroller.firstElementChild)
+    return () => observer.disconnect()
+  }, [children])
+
+  // Each side follows the other; equal positions stop the echo.
+  const follow = (from: HTMLDivElement | null, to: HTMLDivElement | null) => {
+    if (from && to && to.scrollLeft !== from.scrollLeft) to.scrollLeft = from.scrollLeft
+  }
+
+  return (
+    <>
+      {overflowing && (
+        <div className="dataset-table-rail" ref={railRef} onScroll={() => follow(railRef.current, scrollRef.current)} aria-hidden="true">
+          <div style={{ width: scrollWidth }} />
+        </div>
+      )}
+      <div className="dataset-table-scroll" ref={scrollRef} onScroll={() => follow(scrollRef.current, railRef.current)}>{children}</div>
+    </>
+  )
+}
+
 function ExplorerGate({ resourceName }: { resourceName: string }) {
   const auth = useAuth()
   return (
@@ -137,7 +185,12 @@ export default function DatasetExplorer() {
   // registered dataset. The distinction is only about where the definition
   // comes from: both are authorized by ArcGIS on every request, so a hand-typed
   // grant URL is exactly as harmless as a hand-typed dataset URL.
-  const isGrantRoute = useLocation().pathname.startsWith('/data/grants/')
+  const { pathname } = useLocation()
+  const isGrantRoute = pathname.startsWith('/data/grants/')
+  // `/datasets/<item-id>` opens a public catalogue dataset. Nobody signs in:
+  // the service is public in ArcGIS, and the item must still be a discoverable
+  // product of the content group, which the loader checks.
+  const isPublicRoute = pathname.startsWith('/datasets/')
   /**
    * An id absent from the protected-data manifest is a dead address, not a
    * permissions problem: `/data/garbageid` used to render "Sign in to explore
@@ -146,7 +199,7 @@ export default function DatasetExplorer() {
    * registered datasets — and leaves authorization for known ids untouched.
    * Grant routes are exempt: their ids are temporary views, never registered.
    */
-  const unknownDataset = !isGrantRoute && !resourceForDataset(datasetId)
+  const unknownDataset = !isGrantRoute && !isPublicRoute && !resourceForDataset(datasetId)
   // Declares `noindex` itself rather than leaving it to the not-found page it
   // renders: this hook runs after that page's own and would otherwise remove
   // the tag the child had just set.
@@ -156,7 +209,9 @@ export default function DatasetExplorer() {
     // into the document for anyone, and the workspace itself is authorized.
     description: unknownDataset
       ? undefined
-      : 'Filter, preview, map and download a DIEM data resource, and copy the API links needed to query it directly. Available to signed-in DIEM community members with access to the dataset.',
+      : isPublicRoute
+        ? 'Filter, preview, map and download a public DIEM dataset, and copy the API links needed to query it directly.'
+        : 'Filter, preview, map and download a DIEM data resource, and copy the API links needed to query it directly. Available to signed-in DIEM community members with access to the dataset.',
     noindex: unknownDataset,
   })
   const [searchParams, setSearchParams] = useSearchParams()
@@ -186,7 +241,8 @@ export default function DatasetExplorer() {
   const [fieldOptions, setFieldOptions] = useState<Record<string, FieldOptions>>({})
   const [optionsLoading, setOptionsLoading] = useState(false)
 
-  const resource = isGrantRoute ? undefined : resourceForDataset(datasetId)
+  const resource = isGrantRoute || isPublicRoute ? undefined : resourceForDataset(datasetId)
+  const requester = isPublicRoute ? publicRequester : auth.requestProtected
   const fields = useMemo(() => definition ? usableFields(definition.layer.fields) : [], [definition])
   const recommendedFields = useMemo(() => recommendedFilterFields(fields), [fields])
   const remainingFields = useMemo(() => fields.filter((field) => !recommendedFields.includes(field)), [fields, recommendedFields])
@@ -206,19 +262,22 @@ export default function DatasetExplorer() {
   // comparisons are about values the list does not enumerate.
   const showOptionList = draftOperator === 'equals' && !!draftOptions && !draftOptions.truncated && draftOptions.values.length > 0
   // CSV, Excel and GeoJSON are built locally; only the spatial packages still
-  // come from the export service, and none of them apply to a plain table.
-  const packagedFormats = definition
+  // come from the export service, and none of them apply to a plain table. That
+  // service needs a signed-in session, so public datasets do without it.
+  const packagedFormats = definition && !isPublicRoute
     ? HUB_DOWNLOAD_FORMATS.filter((candidate) => !['csv', 'geojson'].includes(candidate.format) && candidate.spatial && !definition.isTable)
     : []
 
   useEffect(() => {
-    if (auth.status !== 'authenticated' || !datasetId || unknownDataset) return
+    if ((!isPublicRoute && auth.status !== 'authenticated') || !datasetId || unknownDataset) return
     let active = true
     setDefinition(undefined)
     setDefinitionError(undefined)
-    const loadDefinition = isGrantRoute
-      ? fetchGrantDatasetDefinition(datasetId, auth.requestProtected)
-      : fetchDatasetDefinition(datasetId, auth.requestProtected)
+    const loadDefinition = isPublicRoute
+      ? fetchPublicDatasetDefinition(datasetId)
+      : isGrantRoute
+        ? fetchGrantDatasetDefinition(datasetId, auth.requestProtected)
+        : fetchDatasetDefinition(datasetId, auth.requestProtected)
     loadDefinition
       .then((result) => {
         if (!active) return
@@ -238,7 +297,7 @@ export default function DatasetExplorer() {
         if (active) setDefinitionError(error.message)
       })
     return () => { active = false }
-  }, [auth.requestProtected, auth.status, datasetId, isGrantRoute, unknownDataset])
+  }, [auth.requestProtected, auth.status, datasetId, isGrantRoute, isPublicRoute, unknownDataset])
 
   // Keep the country and round filters addressable, so a filtered view can be
   // shared and so a link handed to the dashboard round-trips back unchanged.
@@ -266,12 +325,12 @@ export default function DatasetExplorer() {
     if (!field || !fieldSupportsOptions(field) || fieldOptions[draftField]) return
     let active = true
     setOptionsLoading(true)
-    withTimeout(fetchFieldOptions(definition, field, auth.requestProtected), 'The attribute value list did not respond in time.', 12000)
+    withTimeout(fetchFieldOptions(definition, field, requester), 'The attribute value list did not respond in time.', 12000)
       .then((options) => { if (active) setFieldOptions((current) => ({ ...current, [draftField]: options })) })
       .catch(() => { if (active) setFieldOptions((current) => ({ ...current, [draftField]: { values: [], truncated: true } })) })
       .finally(() => { if (active) setOptionsLoading(false) })
     return () => { active = false }
-  }, [auth.requestProtected, definition, draftField, fieldOptions, fields])
+  }, [requester, definition, draftField, fieldOptions, fields])
 
   useEffect(() => {
     if (!definition) return
@@ -279,8 +338,8 @@ export default function DatasetExplorer() {
     setIsQuerying(true)
     setQueryError(undefined)
     Promise.allSettled([
-      withTimeout(fetchRecordCount(definition, where, auth.requestProtected), 'The record count did not respond in time.'),
-      withTimeout(fetchTablePreview(definition, where, auth.requestProtected), 'The table preview did not respond in time.'),
+      withTimeout(fetchRecordCount(definition, where, requester), 'The record count did not respond in time.'),
+      withTimeout(fetchTablePreview(definition, where, requester), 'The table preview did not respond in time.'),
     ])
       .then(([countResult, tableResult]) => {
         if (!active) return
@@ -293,7 +352,7 @@ export default function DatasetExplorer() {
       })
       .finally(() => { if (active) setIsQuerying(false) })
     return () => { active = false }
-  }, [auth.requestProtected, definition, where])
+  }, [requester, definition, where])
 
   // A new filter invalidates the extent the map was showing, so the next
   // geometry load starts unbounded again and the map reframes itself.
@@ -313,7 +372,7 @@ export default function DatasetExplorer() {
     // The existing features stay on screen while a new extent loads; clearing
     // them would blank the map on every pan.
     if (!mapExtent) setGeometry(undefined)
-    withTimeout(fetchGeometryPreview(definition, where, auth.requestProtected, mapExtent), 'The map preview did not respond in time.', 22000)
+    withTimeout(fetchGeometryPreview(definition, where, requester, mapExtent), 'The map preview did not respond in time.', 22000)
       .then((preview) => {
         if (!active) return
         setGeometry(preview.collection)
@@ -322,7 +381,7 @@ export default function DatasetExplorer() {
       .catch((error: Error) => { if (active) setMapError(error.message) })
       .finally(() => { if (active) setIsMapLoading(false) })
     return () => { active = false }
-  }, [auth.requestProtected, definition, mapExtent, where])
+  }, [requester, definition, mapExtent, where])
 
   function addFilter() {
     if (!draftField || !draftValue.trim()) return
@@ -361,7 +420,7 @@ export default function DatasetExplorer() {
     if (!await grantStillOpen()) return
     setDownloadState('Preparing CSV download...')
     try {
-      const blob = await downloadCsv(definition, where, count, auth.requestProtected)
+      const blob = await downloadCsv(definition, where, count, requester)
       downloadBlob(blob, `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}.csv`)
       setDownloadState('CSV download started.')
     } catch (error) {
@@ -374,7 +433,7 @@ export default function DatasetExplorer() {
     if (!await grantStillOpen()) return
     setDownloadState('Preparing GeoJSON download...')
     try {
-      const blob = await downloadGeoJson(definition, where, count, auth.requestProtected)
+      const blob = await downloadGeoJson(definition, where, count, requester)
       downloadBlob(blob, `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}.geojson`)
       setDownloadState('GeoJSON download started.')
     } catch (error) {
@@ -387,7 +446,7 @@ export default function DatasetExplorer() {
     if (!await grantStillOpen()) return
     setDownloadState('Preparing Excel workbook...')
     try {
-      const blob = await downloadXlsx(definition, where, count, auth.requestProtected)
+      const blob = await downloadXlsx(definition, where, count, requester)
       downloadBlob(blob, `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}.xlsx`)
       setDownloadState('Excel download started.')
     } catch (error) {
@@ -418,8 +477,8 @@ export default function DatasetExplorer() {
   // Ahead of the session check, so a dead address answers the same way whether
   // or not anyone is signed in.
   if (unknownDataset) return <NotFound />
-  if (auth.status === 'loading') return <><SiteHeader /><main className="dataset-explorer-loading"><span className="loader"/><strong>Checking your DIEM session...</strong></main><SiteFooter/></>
-  if (auth.status !== 'authenticated') return <ExplorerGate resourceName={resource?.fallbackTitle || 'this dataset'} />
+  if (!isPublicRoute && auth.status === 'loading') return <><SiteHeader /><main className="dataset-explorer-loading"><span className="loader"/><strong>Checking your DIEM session...</strong></main><SiteFooter/></>
+  if (!isPublicRoute && auth.status !== 'authenticated') return <ExplorerGate resourceName={resource?.fallbackTitle || 'this dataset'} />
 
   const visibleColumns = fields.map((field) => field.name)
 
@@ -429,12 +488,16 @@ export default function DatasetExplorer() {
       <main id="top" className="dataset-explorer">
         <header className="dataset-explorer-header">
           <div className="section-wrap">
-            <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><span>Dataset explorer</span></nav>
-            <div className="dataset-title-row"><div><span className="kicker">Live data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">Authenticated access</span></div>
+            {isPublicRoute
+              ? <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/catalog">Catalogue</Link><span>/</span>{definition ? <Link to={`/catalog/${definition.resource.id}`}>{definition.resource.fallbackTitle}</Link> : <span>Dataset</span>}<span>/</span><span>Dataset explorer</span></nav>
+              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><span>Dataset explorer</span></nav>}
+            <div className="dataset-title-row"><div><span className="kicker">Live data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">{isPublicRoute ? 'Public data' : 'Authenticated access'}</span></div>
           </div>
         </header>
 
-        {definitionError && <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened for your account.</strong><p>{definitionError}</p><Link to="/data">Return to data access</Link></section>}
+        {definitionError && (isPublicRoute
+          ? <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened.</strong><p>{definitionError}</p><Link to="/catalog">Return to the catalogue</Link></section>
+          : <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened for your account.</strong><p>{definitionError}</p><Link to="/data">Return to data access</Link></section>)}
         {!definition && !definitionError && <main className="dataset-explorer-loading"><span className="loader"/><strong>Opening the data service</strong><p>Reading the layer schema and access permissions...</p></main>}
         {definition && (
           <>
@@ -451,7 +514,7 @@ export default function DatasetExplorer() {
                   <span className="dataset-info-type">{definition.resource.item?.type || (definition.isTable ? 'Feature Table' : 'Feature Layer')}</span>
                   <h2 id="dataset-about-heading">{definition.resource.item?.title || definition.resource.fallbackTitle}</h2>
                   <p className="dataset-info-owner">Published by <strong>{definition.resource.item?.owner || 'FAO DIEM'}</strong></p>
-                  {datasetId !== ADMIN_REFERENCE_DATASET_ID && <p className="dataset-admin-reference">Join geographic fields using the official ADM codes. <Link to={`/data/${ADMIN_REFERENCE_DATASET_ID}`}>Open the administrative reference boundaries <ExplorerIcon name="arrow"/></Link></p>}
+                  {!isPublicRoute && datasetId !== ADMIN_REFERENCE_DATASET_ID && <p className="dataset-admin-reference">Join geographic fields using the official ADM codes. <Link to={`/data/${ADMIN_REFERENCE_DATASET_ID}`}>Open the administrative reference boundaries <ExplorerIcon name="arrow"/></Link></p>}
                   <p>{definition.grant ? definition.resource.description : (definition.resource.item?.snippet || definition.resource.description)}</p>
                   {definition.grant && (
                     <div className="dataset-grant-scope" role="note">
@@ -514,8 +577,8 @@ export default function DatasetExplorer() {
                       <p>Portal files are assembled in your browser, so the whole result has to fit in this tab's memory. Above {formatNumber(BROWSER_EXPORT_LIMIT)} records that becomes unreliable, and the routes below have no such limit.</p>
                       <ol>
                         <li><strong>Narrow the selection.</strong> Add a country and a survey round above. Most analyses need one country-round at a time, and that almost always lands under the limit.</li>
-                        <li><strong>Run a bulk script.</strong> The Python and R scripts below already carry your current filters and page through the service in batches, so they handle results of any size. You supply a short-lived access token.</li>
-                        <li><strong>Query the service directly.</strong> The API links below work in ArcGIS Pro, QGIS or any HTTP client, with the same authentication as this page.</li>
+                        <li><strong>Run a bulk script.</strong> The Python and R scripts below already carry your current filters and page through the service in batches, so they handle results of any size.{isPublicRoute ? '' : ' They ask for your DIEM community sign-in when they run.'}</li>
+                        <li><strong>Query the service directly.</strong> The API links below work in ArcGIS Pro, QGIS or any HTTP client{isPublicRoute ? ', with no sign-in' : ', with the same authentication as this page'}.</li>
                       </ol>
                       <p className="download-alternatives-note">A DIEM-hosted large-export service, which will prepare very large files server-side and email a download link, is planned and will remove this limit.</p>
                     </div>
@@ -537,14 +600,14 @@ export default function DatasetExplorer() {
                 )}
                 {!bulkExportBlocked && <details className="bulk-script-panel">
                   <summary><ExplorerIcon name="code"/> Bulk API scripts <span>Python and R</span></summary>
-                  {scripts && <div><p>For larger extractions, run a script with your own short-lived access token. The current filters are already included.</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
+                  {scripts && <div><p>{isPublicRoute ? 'For larger extractions, run a script. No account is needed, and the current filters are already included.' : 'For larger extractions, run a script with your DIEM community sign-in. The current filters are already included.'}</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
                 </details>}
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{API_LINK_LABELS[label] || label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>
               <div className="dataset-results-panel">
                 <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : `Previewing ${formatNumber(previewRows.length)} records`}</span><span>{definition.layer.name}</span></div>
                 {!definition.isTable && (geometry ? <DatasetGeometryMap collection={geometry} totalCount={count || 0} truncated={geometryTruncated} isLoadingView={isMapLoading} fitKey={where} onExtentChange={setMapExtent} /> : isMapLoading ? <div className="dataset-map-loading"><span className="loader"/><strong>Loading map geometry</strong><p>The data table remains available while spatial features load.</p></div> : <div className="dataset-map-unavailable"><strong>Map preview is temporarily unavailable.</strong><p>{mapError || 'The service did not return geometry for the current filters.'}</p></div>)}
-                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {formatNumber(fields.length)} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <div className="dataset-table-scroll"><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</div>}</section>
+                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {formatNumber(fields.length)} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <TableScroll><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</TableScroll>}</section>
               </div>
             </section>
           </>
