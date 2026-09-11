@@ -18,15 +18,17 @@ Tier decides what is *offered*. ArcGIS item sharing decides what is *authorized*
 every protected item is still resolved against the active identity.
 
 Tier 2 is derived from organization membership, not from the aggregated-data
-group (`c8ae74a0f2de480abe6f72876a52b0cc`), to which account creation
-auto-provisions members after roughly ten minutes.
+group (`c8ae74a0f2de480abe6f72876a52b0cc`). ArcGIS cannot add Hub community
+accounts to that FAO group itself; the internal community-sync notebook
+(`scripts/agol_notebooks/`, see its README) adds new accounts on its next
+scheduled run, planned every 15 minutes.
 
 The provisioning notice is shown when **no aggregated dataset resolved as
 available at all**, and on no other condition. Deriving it from
 `capabilities.aggregatedData` instead produced a false alarm for accounts that
 could plainly see their data — group-membership derivation and item resolution
 can disagree, and only resolution reflects what the user actually has. The
-notice offers the ten-minute window as a likely explanation rather than
+notice offers the provisioning window as a likely explanation rather than
 asserting it, and offers a re-check.
 
 Presentation rule: dataset cards lead with the curated manifest label, not the

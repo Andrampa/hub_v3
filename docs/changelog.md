@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-09-11 - Sync Hub community roles by difference
+
+- The internal AGOL notebook that copies Hub community accounts into the FAO
+  access groups is now versioned at
+  `scripts/agol_notebooks/diem_community_management.ipynb`, without outputs or
+  passwords, with a README.
+- It no longer removes and re-adds every user in every run (about 3,600
+  requests, two hours at 3,000 users). It reads each group once by fixed ID,
+  looks up details only for new users, and writes only differences: additions
+  first, then removals. It adds dry-run mode, a self-test, a guard against
+  large removals, a check that "departed" accounts are really gone before any
+  deletion, and result checks that fail the task on any rejected change.
+  Roles stay exclusive and are managed only in the role table.
+- All four target groups are addressed by fixed ID and checked against their
+  titles. The AGOL dry run confirmed the previous Followers title search
+  resolved to the same group, `3581cdd013a048e1b69a12fdf4cf186f`.
+- `/data` and `/data/guide` now say access arrives within 15 minutes, matching
+  the planned schedule, instead of "about ten minutes".
+
 ## 2026-09-11 - Frame the homepage popup
 
 - The homepage campaign popup sits in a thin white mount with a navy hairline

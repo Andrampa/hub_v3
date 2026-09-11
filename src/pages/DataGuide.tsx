@@ -122,7 +122,7 @@ export default function DataGuide() {
                 <li><strong>With a DIEM community account.</strong> Aggregated survey data at the lowest administrative level each survey supports, administrative reference boundaries, all technical documentation, the data API, and the microdata request form.</li>
                 <li><strong>With approved microdata access.</strong> Anonymized household-level records for the surveys covered by your approval, valid for a week and renewable.</li>
               </ol>
-              <p>Accounts are free and can be created from the sign-in prompt on the data workspace. Privileges are assigned by an automated procedure: allow about ten minutes from account creation before full access activates. If the aggregated data section says access is missing immediately after you register, that is the provisioning window rather than a problem with your account.</p>
+              <p>Accounts are free and can be created from the sign-in prompt on the data workspace. Privileges are assigned by an automated procedure: allow up to 15 minutes from account creation before full access activates. If the aggregated data section says access is missing immediately after you register, that is the provisioning window rather than a problem with your account.</p>
             </section>
 
             <section id="aggregated">

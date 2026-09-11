@@ -1,5 +1,29 @@
 # Handoff
 
+## Pending AGOL work: roll out the difference-based community sync
+
+Status: the notebook is saved at
+`scripts/agol_notebooks/diem_community_management.ipynb`. The 2026-09-11 AGOL
+dry run passed: self-test, all group IDs and titles, Followers confirmed as
+`3581cdd013a048e1b69a12fdf4cf186f`, details for 54/54 new users, 0 departures.
+It planned +54 table rows, +54 Followers, +52 Community Members and one
+removal (`Ece.Gultan_faohub` from Community Members: role 3, added to
+Contributors by hand, so exclusive roles apply as intended). The 54 pending
+users are there because the old task had stopped running. The departure check
+has not yet been exercised.
+
+First live run (2026-09-11, 21 s): table +54 rows, Community Members +52,
+Ece removed. All 54 Followers additions failed with a 403 because Followers
+was written through the Hub account, but its owner is the FAO admin. Fixed:
+Followers now uses the FAO connection. The second live run added the 54
+Followers with no failures in 6 s.
+
+Remaining: make sure the AGOL task runs every 15 minutes with
+`DRY_RUN = False`, check the first day's runs, and retire the old task. The
+`/data` and `/data/guide` "within 15 minutes" copy relies on that schedule.
+The first real departure will be the first test of the departure check;
+expect a `Departures: …` line.
+
 ## Pending ArcGIS work: retire the photo-gallery StoryMap wrappers
 
 Country pages now read field photographs from the photo-gallery catalogue

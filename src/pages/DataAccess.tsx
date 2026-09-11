@@ -272,7 +272,7 @@ function SignInGate() {
               </button>
               <Link className="data-gate-secondary" to="/data/guide"><Icon name="book" />Read the data access guide</Link>
             </div>
-            <p className="data-gate-note"><Icon name="shield"/> Accounts are free. Privileges take about ten minutes to activate after account creation.</p>
+            <p className="data-gate-note"><Icon name="shield"/> Accounts are free. Privileges usually activate within 15 minutes of account creation.</p>
           </div>
           <div className="data-gate-preview" aria-label="Available data collections">
             <div><Icon name="table"/><strong>Aggregated data</strong><small>By ADM1 or ADM2, by theme</small></div>
@@ -510,7 +510,7 @@ export default function DataAccess() {
               <Icon name="shield"/>
               <div>
                 <strong>No aggregated datasets are available to your account yet</strong>
-                <p>Access is assigned automatically and usually takes about ten minutes after an account is created. If you have just registered, wait a moment and check again. If this persists, contact the DIEM Hub team.</p>
+                <p>Access is assigned automatically and usually takes up to 15 minutes after an account is created. If you have just registered, wait a moment and check again. If this persists, contact the DIEM Hub team.</p>
               </div>
               <button type="button" onClick={() => setLoadVersion((value) => value + 1)}>Check again</button>
             </div>
