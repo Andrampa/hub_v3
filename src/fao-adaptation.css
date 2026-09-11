@@ -236,6 +236,9 @@ h1, h2, h3, h4, h5, h6,
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* The master is nearly square; 40% keeps the enumerator's and the farmer's
+     faces inside the band. */
+  object-position: center 40%;
   opacity: .7;
 }
 .hero::after {
@@ -245,6 +248,25 @@ h1, h2, h3, h4, h5, h6,
   background: linear-gradient(90deg, rgba(28, 71, 103, .96) 0%, rgba(28, 71, 103, .82) 42%, rgba(28, 71, 103, .32) 72%, rgba(28, 71, 103, .14) 100%);
 }
 .hero-content { z-index: 2; width: min(1200px, calc(100% - 48px)); padding-top: 65px; }
+/* The desktop minimum height left an empty navy band under the stacked copy on
+   narrow screens, and let the square master show almost whole. The hero ends
+   with its content instead. */
+@media (max-width: 1023px) {
+  .hero { min-height: 0; }
+  .hero-content { padding-bottom: 44px; }
+}
+/* On wide screens the photograph starts a third of the way in and fades up
+   from the navy, so the interviewed farmer sits beside the search box rather
+   than under it, and the narrower box shows more of the square master. */
+@media (min-width: 1024px) {
+  .hero-image {
+    left: 32%;
+    width: 68%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+  }
+  .hero::after { background: linear-gradient(90deg, rgba(28, 71, 103, .96) 0%, rgba(28, 71, 103, .86) 40%, rgba(28, 71, 103, .30) 62%, rgba(28, 71, 103, .12) 100%); }
+}
 .hero .eyebrow { color: #fff; }
 .hero .eyebrow::after { content: ""; display: block; width: 32px; height: 1px; background: rgba(168, 213, 223, .85); }
 .hero h1 {
@@ -518,7 +540,6 @@ h1, h2, h3, h4, h5, h6,
   .mobile-menu-toggle { padding-inline: 9px; }
   .mobile-menu-toggle > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
   .mobile-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 10px 16px; }
-  .hero { min-height: 510px; }
   .hero-content { padding-top: 54px; }
   .hero h1 { font-size: 2.25rem; }
   .programme-numbers { width: calc(100% - 32px); }

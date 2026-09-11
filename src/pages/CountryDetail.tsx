@@ -431,7 +431,10 @@ export default function CountryDetail() {
               <div className="country-profile-inner section-wrap">
                 <div className="country-profile-copy">
                   <nav className="breadcrumbs" aria-label="Breadcrumb"><Link to="/countries">Countries</Link><span>/</span><span>{definition.name}</span></nav>
-                  <span className="country-code">{definition.iso3 === CROSS_COUNTRY_CODE ? 'GLOBAL' : definition.iso3}</span>
+                  <span className="country-code">
+                    {definition.iso3 !== CROSS_COUNTRY_CODE && <i className={`flag flag-small flag-${definition.iso3.toLowerCase()}`} aria-hidden="true" />}
+                    {definition.iso3 === CROSS_COUNTRY_CODE ? 'GLOBAL' : definition.iso3}
+                  </span>
                   <h1>{definition.name}</h1>
                   <p>{definition.iso3 === CROSS_COUNTRY_CODE ? 'Evidence and analysis that connect findings across multiple countries and crisis contexts.' : `Monitoring, assessments and practical evidence concerning food security and agricultural livelihoods in ${definition.name}.`}</p>
                   <div className="country-profile-stats">

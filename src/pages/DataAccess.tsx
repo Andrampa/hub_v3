@@ -259,8 +259,8 @@ function SignInGate() {
   return (
     <main id="top" className="data-gate">
       <section className="data-gate-hero">
-        <HeroImage name="afghanistan-daikundi-survey-2023" className="data-hero-image" alt="A DIEM enumerator conducting a household survey by smartphone in Daikundi, Afghanistan" />
-        <HeroCredit name="afghanistan-daikundi-survey-2023" />
+        <HeroImage name="afghanistan-f2f-smartphone-interview-2024" className="data-hero-image" alt="A DIEM enumerator recording a face-to-face interview on a smartphone in Afghanistan" />
+        <HeroCredit name="afghanistan-f2f-smartphone-interview-2024" />
         <div className="data-gate-content section-wrap">
           <div className="data-gate-copy">
             <span className="eyebrow"><span/> DIEM Household Monitoring System Data</span>
@@ -472,8 +472,8 @@ export default function DataAccess() {
       <SiteHeader />
       <main id="top" className="data-page">
         <section className="data-workspace-hero">
-          <HeroImage name="afghanistan-daikundi-survey-2023" className="data-hero-image" alt="A DIEM enumerator conducting a household survey by smartphone in Daikundi, Afghanistan" />
-          <HeroCredit name="afghanistan-daikundi-survey-2023" />
+          <HeroImage name="afghanistan-f2f-smartphone-interview-2024" className="data-hero-image" alt="A DIEM enumerator recording a face-to-face interview on a smartphone in Afghanistan" />
+          <HeroCredit name="afghanistan-f2f-smartphone-interview-2024" />
           <div className="section-wrap">
             <div className="data-workspace-heading">
               <span className="eyebrow"><span/> Authenticated data workspace</span>

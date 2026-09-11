@@ -427,3 +427,21 @@ footer a:hover { color: white; }
    than a flat fill, so the type keeps its contrast. */
 .hero-photo-credit { position: absolute; z-index: 3; right: 16px; bottom: 12px; color: rgba(255,255,255,.78); font-size: var(--text-small); text-decoration: none; }
 .hero-photo-credit:hover, .hero-photo-credit:focus-visible { color: white; text-decoration: underline; }
+
+/* The FAO theme sizes `.flag` for its own layouts: a 32x24 box pushed by side
+   and bottom margins, with the SVG drawn at its natural size from the corner.
+   In our inline country labels that shifted every flag and clipped Nepal's
+   pennants. Every small flag is instead fitted whole and centred in a fixed
+   box, and outlined along its own shape rather than framed. */
+i.flag.flag-small {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 15px;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+  background-position: center;
+  background-size: contain;
+  filter: drop-shadow(0 0 .6px rgba(28, 55, 70, .55));
+}

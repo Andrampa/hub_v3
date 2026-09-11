@@ -76,6 +76,8 @@
 .breadcrumbs a { color: inherit; }
 .breadcrumbs a:hover, .breadcrumbs a:focus-visible { color: white; }
 .country-code { color: var(--orange-on-dark); font-size: var(--text-small); font-weight: 700; letter-spacing: .16em; }
+/* The flag rides on the code line: present, but quieter than the name. */
+.country-profile-copy .country-code { display: flex; width: fit-content; align-items: center; gap: 9px; }
 .country-profile-copy h1 { margin: 8px 0 17px; font-size: clamp(48px, 6vw, 72px); line-height: 1; letter-spacing: -.055em; }
 .country-profile-copy > p { max-width: 650px; color: #d2e2e6; font-size: 15px; line-height: 1.7; }
 .country-profile-stats { display: flex; gap: 38px; margin-top: 34px; }
@@ -233,7 +235,6 @@
 .country-resource-footer { min-height: 30px; padding-top: 11px; display: flex; align-items: center; gap: 7px; border-top: 1px solid var(--line-faint); color: var(--ink-muted); font-size: var(--text-micro); }
 .country-resource-footer > span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .country-resource-country-flags { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 3px; }
-.country-resource-country-flags .flag { width: 20px; height: 15px; min-height: 0; margin: 0; border: 1px solid rgba(28,68,78,.14); box-shadow: none; }
 .country-resource-languages { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-faint); }
 .country-resource-languages > span { color: var(--ink-muted); font-size: var(--text-micro); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .country-resource-languages ul { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; margin: 0; padding: 0; list-style: none; }

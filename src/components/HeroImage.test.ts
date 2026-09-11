@@ -33,14 +33,16 @@ describe('hero manifest', () => {
 
   it('names every hero used by a route', () => {
     expect(heroNames).toEqual([
-      'bangladesh-flood-2020',
       'cyclone-freddy-madagascar-2023',
       'zambia-drought-2024',
       'drc-ndjili-market-gardens-2025',
-      'afghanistan-daikundi-survey-2023',
       'drc-ndjili-field-team-2025',
-      'afghanistan-household-survey-round-10-2025',
       'syria-earthquake-impact-2023',
+      'afghanistan-f2f-smartphone-interview-2024',
+      'afghanistan-household-visit-round-10-2025',
+      'drc-field-mission-team-2025',
+      'bangladesh-haor-flood-2024',
+      'guatemala-maize-field-interview-2022',
     ])
   })
 
@@ -97,9 +99,11 @@ describe('committed hero variants', () => {
 
   it('keeps every variant smaller than a quarter of a megabyte at 1024', () => {
     // The point of the exercise: a hero at a phone-sized width must not be a
-    // multi-megabyte download again.
+    // multi-megabyte download again. A master narrower than 1024 has no such
+    // variant, so its widest one stands in.
     heroNames.forEach((name) => {
-      expect(statSync(join(HERO_DIR, `${name}-1024.avif`)).size).toBeLessThan(262_144)
+      const width = Math.max(...widthsFor(name).filter((w) => w <= 1024), manifest.widths[0])
+      expect(statSync(join(HERO_DIR, `${name}-${width}.avif`)).size).toBeLessThan(262_144)
     })
   })
 

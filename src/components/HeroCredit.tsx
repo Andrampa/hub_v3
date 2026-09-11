@@ -14,13 +14,25 @@ const CREDITS: Partial<Record<HeroName, { text: string; href: string }>> = {
     text: 'Photo: ©FAO/Cécile Barrière',
     href: 'https://www.flickr.com/photos/faoemergencies/54773460703/in/album-72177720328904503',
   },
-  'afghanistan-daikundi-survey-2023': {
+  'afghanistan-f2f-smartphone-interview-2024': {
     text: 'Photo: ©FAO',
-    href: 'https://www.flickr.com/photos/faoemergencies/52829806979/in/album-72177720307634439',
+    href: 'https://www.flickr.com/photos/faoemergencies/53755244075/in/album-72177720317415994',
   },
-  'afghanistan-household-survey-round-10-2025': {
+  'afghanistan-household-visit-round-10-2025': {
     text: 'Photo: ©FAO',
-    href: 'https://www.flickr.com/photos/faoemergencies/54500887476/in/album-72177720325914781',
+    href: 'https://www.flickr.com/photos/faoemergencies/54500018762/in/album-72177720325914781',
+  },
+  'drc-field-mission-team-2025': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/54773563750/in/album-72177720328904503',
+  },
+  'bangladesh-haor-flood-2024': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/54236461672/in/album-72177720322869120',
+  },
+  'guatemala-maize-field-interview-2022': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/52535263796/in/album-72177720304128573',
   },
   'syria-earthquake-impact-2023': {
     text: 'Photo: ©FAO',

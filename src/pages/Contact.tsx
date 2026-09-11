@@ -1,5 +1,7 @@
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
+import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const CONTACT_FORM_URL = 'https://arcg.is/0Df1Ca'
@@ -14,6 +16,8 @@ export default function Contact() {
       <SiteHeader />
       <main id="top" className="contact-page">
         <section className="contact-hero">
+          <HeroImage name="drc-field-mission-team-2025" className="contact-hero-image" alt="DIEM field team members talking together in a crop field in the Democratic Republic of the Congo" />
+          <HeroCredit name="drc-field-mission-team-2025" />
           <div className="section-wrap">
             <span className="eyebrow"><span /> Contact DIEM</span>
             <h1>How can we <em>help?</em></h1>

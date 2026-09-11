@@ -5,13 +5,15 @@
   "fallbackWidth": 1600,
   "quality": { "avif": 50, "webp": 74, "jpeg": 74 },
   "heroes": {
-    "bangladesh-flood-2020": { "source": "bangladesh-flood-2020.jpg", "width": 4000, "height": 2250 },
     "cyclone-freddy-madagascar-2023": { "source": "cyclone-freddy-madagascar-2023.jpg", "width": 5693, "height": 4091 },
     "zambia-drought-2024": { "source": "zambia-drought-2024.jpg", "width": 4032, "height": 2268 },
     "drc-ndjili-market-gardens-2025": { "source": "drc-ndjili-market-gardens-2025.jpg", "width": 1024, "height": 683 },
-    "afghanistan-daikundi-survey-2023": { "source": "afghanistan-daikundi-survey-2023.jpg", "width": 1024, "height": 461 },
     "drc-ndjili-field-team-2025": { "source": "drc-ndjili-field-team-2025.jpg", "width": 1024, "height": 683 },
-    "afghanistan-household-survey-round-10-2025": { "source": "afghanistan-household-survey-round-10-2025.jpg", "width": 1024, "height": 498 },
-    "syria-earthquake-impact-2023": { "source": "syria-earthquake-impact-2023.jpg", "width": 1024, "height": 768 }
+    "syria-earthquake-impact-2023": { "source": "syria-earthquake-impact-2023.jpg", "width": 1024, "height": 768 },
+    "afghanistan-f2f-smartphone-interview-2024": { "source": "afghanistan-f2f-smartphone-interview-2024.jpg", "width": 999, "height": 517 },
+    "afghanistan-household-visit-round-10-2025": { "source": "afghanistan-household-visit-round-10-2025.jpg", "width": 1276, "height": 665 },
+    "drc-field-mission-team-2025": { "source": "drc-field-mission-team-2025.jpg", "width": 2560, "height": 1707 },
+    "bangladesh-haor-flood-2024": { "source": "bangladesh-haor-flood-2024.jpg", "width": 1280, "height": 960 },
+    "guatemala-maize-field-interview-2022": { "source": "guatemala-maize-field-interview-2022.jpg", "width": 2560, "height": 2410 }
   }
 }

@@ -1,5 +1,55 @@
 # Changelog
 
+## 2026-09-11 - Centre the country flags on product cards
+
+- Small country flags on catalogue, country and monitoring cards no longer
+  inherit the FAO theme's 32x24 box with side and bottom margins, which drew
+  the SVG from its corner, shifted every flag and clipped Nepal's pennants.
+  One rule in `styles.css` now fits each flag whole and centred in a 20x15
+  box, outlined along its own shape instead of framed, replacing the three
+  per-page overrides.
+- Country pages show the same small flag on the ISO code line above the
+  country name. The cross-country page, which reads GLOBAL, has none.
+
+## 2026-09-11 - Show a field interview on the homepage hero
+
+- The homepage hero replaces the 700 px ArcGIS-hosted farmer silhouette with
+  FAO's 2022 Guatemala photograph of an enumerator interviewing a farmer on a
+  smartphone beside a maize field (Pasac II), served through `HeroImage` with
+  alt text and a Flickr credit. The master is stored at 2560 px and cropped at
+  40% so the enumerator's face and phone stay in the band.
+- From 1024 px up, the photograph starts 32% of the way in and fades up from
+  the navy, so the interviewed farmer sits beside the search box instead of
+  under it and the square master is shown less tightly cropped. Below 1024 px
+  the hero drops its desktop minimum height and ends 44 px under "Browse by
+  country", removing the empty navy band and the view down to the ground.
+- `defaultProgrammeSlides[0].imageUrl` no longer drives the hero; the slides
+  still seed the promotions state.
+
+## 2026-09-11 - Photograph the Contact and Flood analysis heroes
+
+- The Contact hero now carries FAO's July 2025 DRC field-mission photograph of
+  the DIEM team talking in a crop field, under a translucent version of its
+  blue gradient, cropped at 28% so the faces stay in the band.
+- The Flood analysis hero replaces the 2020 Bangladesh photograph with FAO's
+  June 2024 Haor flood photograph of a woman and child wading under an
+  umbrella, now with alt text and a Flickr credit.
+- Retired `bangladesh-flood-2020`. The DRC master is stored at 2560 px rather
+  than the 5184 px original.
+
+## 2026-09-11 - Show face-to-face interviews in the survey heroes
+
+- The Surveys catalogue banner (`/monitoring-system`) now uses FAO's Afghanistan
+  round 10 photograph of an enumerator interviewing a farmer outside his home,
+  with the pair in the right third where the navy wash is lightest.
+- Both `/data` heroes now use FAO's Afghanistan photograph of an enumerator
+  recording a face-to-face interview on a smartphone. The master is 999 px wide,
+  so it ships at 640 px only; on the signed-out gate the preview cards cover the
+  pair, as they did the previous photograph.
+- Retired `afghanistan-daikundi-survey-2023` and
+  `afghanistan-household-survey-round-10-2025`. The hero size test now checks a
+  narrow master's widest variant instead of assuming a 1024 px one.
+
 ## 2026-09-11 - Explore public catalogue datasets without signing in
 
 - Public feature services in the catalogue (for example the three EVE master

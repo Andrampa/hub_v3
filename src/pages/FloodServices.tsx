@@ -5,6 +5,7 @@ import eveFieldDataImage from '../assets/eve/eve-field-data-madagascar.jpg'
 import eveOverviewImage from '../assets/eve/eve-overview-mozambique.jpg'
 import vistaExplorerImage from '../assets/eve/vista-comparison-explorer.jpg'
 import { HeroImage } from '../components/HeroImage'
+import { HeroCredit } from '../components/HeroCredit'
 import faoLogo from '../assets/fao/fao-logo-blue-3lines-en.svg'
 import columbiaLogo from '../assets/partners/columbia-climate-school.png'
 import dfoLogo from '../assets/partners/dartmouth-flood-observatory.png'
@@ -208,7 +209,8 @@ export default function FloodServices() {
       <SiteHeader />
       <main id="top" className="programme-page">
         <section className="programme-hero programme-hero--flood">
-          <HeroImage name="bangladesh-flood-2020" className="programme-hero-image" />
+          <HeroImage name="bangladesh-haor-flood-2024" className="programme-hero-image" alt="A woman and child under an umbrella wading through floodwater in Bangladesh's Haor region, June 2024" />
+          <HeroCredit name="bangladesh-haor-flood-2024" />
           <div className="section-wrap">
             <span className="eyebrow"><span /> DIEM flood analysis</span>
             <h1>From flood hazard to <em>evidence for action.</em></h1>

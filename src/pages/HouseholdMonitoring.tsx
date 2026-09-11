@@ -17,8 +17,8 @@ export default function HouseholdMonitoring() {
       <SiteHeader />
       <main id="top" className="household-monitoring-page">
         <section className="household-explorer-banner" aria-labelledby="household-explorer-heading">
-          <HeroImage name="afghanistan-household-survey-round-10-2025" className="household-explorer-banner-image" alt="A DIEM enumerator interviewing a household survey respondent in Afghanistan" />
-          <HeroCredit name="afghanistan-household-survey-round-10-2025" />
+          <HeroImage name="afghanistan-household-visit-round-10-2025" className="household-explorer-banner-image" alt="A DIEM enumerator interviewing a farmer outside his home in Afghanistan" />
+          <HeroCredit name="afghanistan-household-visit-round-10-2025" />
           <div className="section-wrap">
             <div>
               <span>Interactive survey results</span>
