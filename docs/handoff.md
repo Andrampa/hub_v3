@@ -1,21 +1,5 @@
 # Handoff
 
-## Waiting on the publications editor: DIEM in fixed-publication citations
-
-Status: the two-form citation contract (`docs/services_and_data.md#citations`)
-is implemented, tested and on `main`. Andrea asked Paige (FAO publications
-editor, 2026-09-10) whether leaving DIEM out of the fixed-publication form
-(`FAO. Year. *Title*. Rome. URL.`) is deliberate, since the data citation
-agreed earlier names `DIEM-Monitoring` and `In: DIEM Hub`.
-
-- If she keeps her template: nothing to do; remove this entry.
-- If DIEM should return: change `citationSegments` / `citationModel` in
-  `src/lib/citation.ts` (the series-by-pathway mapping removed in this change
-  is in git history), then update the static-form tests in
-  `src/lib/citation.test.ts` and the Citations section of
-  `docs/services_and_data.md`.
-- Verify: `npx vitest run src/lib/citation.test.ts`, then `npm run build`.
-
 ## Pending ArcGIS work: retire the photo-gallery StoryMap wrappers
 
 Country pages now read field photographs from the photo-gallery catalogue
