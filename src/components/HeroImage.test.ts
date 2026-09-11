@@ -43,6 +43,16 @@ describe('hero manifest', () => {
       'drc-field-mission-team-2025',
       'bangladesh-haor-flood-2024',
       'guatemala-maize-field-interview-2022',
+      'drc-phone-interview-round-8-2024',
+      'drc-ndjili-rice-threshing-2025',
+      'drc-ndjili-threshing-team-2025',
+      'drc-ndjili-rice-inspection-2025',
+      'car-ouadda-interview-2024',
+      'car-bria-interview-2024',
+      'drc-diem-officers-2023',
+      'colombia-quipama-doorstep-2023',
+      'syria-earthquake-assessment-2023',
+      'drc-ndjili-rice-harvest-2025',
     ])
   })
 

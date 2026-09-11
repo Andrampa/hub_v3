@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-09-11 - Rotate fieldwork photographs on the homepage hero
+
+- The homepage hero now crossfades between twelve FAO photographs every 6
+  seconds, with a slow pan inside each and no controls. It opens on the DRC
+  round 8 phone interview (also what reduced-motion visitors keep) and mixes
+  interviews in the Central African Republic, Guatemala and Colombia with the
+  hazards DIEM assesses (the 2023 Syria earthquake, the 2024 Bangladesh Haor
+  flood), cultivation (rice panicles on the Ndjili, DRC) and DIEM staff. No
+  single respondent stays the face of the site.
+- Photographs come from Flickr originals of at least 1600 px, so none is
+  upscaled in the desktop hero; the one exception is the Bangladesh flood, the
+  largest flood photograph in the galleries at 1280 px.
+- Slides are mounted one ahead of the one showing, so the first paint loads a
+  single photograph; later slides load at low fetch priority, and a hidden tab
+  does not cycle. The credit follows the photograph on screen.
+- Every slide pans, the first included: the pan starts just after a slide
+  becomes active, so the slide shown on arrival no longer sits still.
+- The Contact hero credit now names the photographer, Cécile Barrière, as the
+  Flickr caption requires.
+
 ## 2026-09-11 - Centre the country flags on product cards
 
 - Small country flags on catalogue, country and monitoring cards no longer

@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import manifest from '../assets/heroes/heroes.json'
 
 /**
@@ -59,9 +60,14 @@ export function HeroImage({
   name,
   className,
   alt = '',
+  priority = true,
+  style,
 }: {
   name: HeroName
   className: string
+  /** False for a photograph that is not the first one painted, such as a later slide. */
+  priority?: boolean
+  style?: CSSProperties
   /**
    * Empty where the photograph is decorative — the heading beside it already
    * says what the page is about — and descriptive where it carries meaning of
@@ -86,9 +92,10 @@ export function HeroImage({
         alt={alt}
         width={Math.round(hero.width * scale)}
         height={Math.round(hero.height * scale)}
+        style={style}
         // Above the fold on every route that uses it, so it is not deferred.
         decoding="async"
-        fetchPriority="high"
+        fetchPriority={priority ? 'high' : 'low'}
       />
     </picture>
   )

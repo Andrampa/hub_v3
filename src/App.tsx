@@ -4,8 +4,7 @@ import { useAuth } from './auth/AuthContext'
 import { CatalogSearchBox } from './components/CatalogSearchBox'
 import { EditorialPopup } from './components/EditorialPopup'
 import { FeaturedEvidence } from './components/FeaturedEvidence'
-import { HeroCredit } from './components/HeroCredit'
-import { HeroImage } from './components/HeroImage'
+import { HomeHeroSlideshow } from './components/HomeHeroSlideshow'
 import { HubAreaCards } from './components/HubAreaCards'
 import { LatestEvidenceBanner } from './components/LatestEvidenceBanner'
 import { ProgrammeNumbers } from './components/ProgrammeNumbers'
@@ -70,8 +69,7 @@ export default function App() {
       <SiteHeader />
       <main id="top">
         <section className="hero">
-          <HeroImage name="guatemala-maize-field-interview-2022" className="hero-image" alt="A DIEM enumerator interviewing a farmer on a smartphone beside a maize field in Guatemala" />
-          <HeroCredit name="guatemala-maize-field-interview-2022" />
+          <HomeHeroSlideshow />
           <div className="hero-content">
             <div className="eyebrow">Data in Emergencies</div>
             <h1>Evidence for decisions<br />that <em>can’t wait</em></h1>
