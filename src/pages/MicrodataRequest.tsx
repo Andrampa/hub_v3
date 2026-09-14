@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { HeroImage } from '../components/HeroImage'
@@ -13,6 +14,8 @@ export default function MicrodataRequest() {
     title: 'Microdata request',
     description: 'Request household-level DIEM microdata from a recent survey for research or operational purposes, before it is published in the FAO Food and Agriculture Microdata Catalogue.',
   })
+  const auth = useAuth()
+
   return (
     <>
       <SiteHeader />
@@ -26,10 +29,26 @@ export default function MicrodataRequest() {
             <p>Anonymized microdata is published in FAM about six months after the aggregated release. If you need household-level data from a more recent survey, submit a request below.</p>
           </div>
         </section>
-        <section className="contact-form-section section-wrap" aria-labelledby="microdata-form-heading">
-          <div className="contact-form-intro"><span className="kicker">Request form</span><h2 id="microdata-form-heading">Tell us what data you need.</h2><p>Read the <Link to="/data/guide#microdata">microdata conditions in the data guide</Link> before submitting. Sign in to the form with your DIEM community account if prompted.</p><a href={REQUEST_FORM_URL} target="_blank" rel="noreferrer">Open the form in a new tab ↗</a></div>
-          <iframe title="DIEM microdata request form" src={REQUEST_FORM_URL} loading="lazy" allow="geolocation">Your browser does not support embedded content. <a href={REQUEST_FORM_URL} target="_blank" rel="noreferrer">Open the microdata request form.</a></iframe>
-        </section>
+        {/* Sign-in rejects accounts outside the DIEM community organization
+            (assertCommunityAccount), so an authenticated session is a member. */}
+        {auth.status === 'authenticated' ? (
+          <section className="contact-form-section section-wrap" aria-labelledby="microdata-form-heading">
+            <div className="contact-form-intro"><span className="kicker">Request form</span><h2 id="microdata-form-heading">Tell us what data you need.</h2><p>Read the <Link to="/data/guide#microdata">microdata conditions in the data guide</Link> before submitting.</p><a href={REQUEST_FORM_URL} target="_blank" rel="noreferrer">Open the form in a new tab ↗</a></div>
+            <iframe title="DIEM microdata request form" src={REQUEST_FORM_URL} loading="lazy" allow="geolocation">Your browser does not support embedded content. <a href={REQUEST_FORM_URL} target="_blank" rel="noreferrer">Open the microdata request form.</a></iframe>
+          </section>
+        ) : (
+          <section className="contact-form-section section-wrap" aria-labelledby="microdata-form-heading" aria-busy={auth.status === 'loading'}>
+            <div className="contact-form-intro">
+              <span className="kicker">DIEM community only</span>
+              <h2 id="microdata-form-heading">Sign in to request microdata.</h2>
+              <p>The microdata request form is available to members of the DIEM community. Sign in with your DIEM community account to open it.</p>
+              {auth.error && <p role="alert">{auth.error}</p>}
+              {auth.status === 'loading'
+                ? <p role="status">Checking your session…</p>
+                : <button type="button" onClick={() => void auth.signIn()} disabled={auth.status === 'authenticating'}>{auth.status === 'authenticating' ? 'Opening sign in…' : 'Sign in or create an account'}</button>}
+            </div>
+          </section>
+        )}
       </main>
       <SiteFooter />
     </>
