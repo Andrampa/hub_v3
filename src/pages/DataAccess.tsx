@@ -29,7 +29,6 @@ import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
 import { CITATION_LANGUAGES, citationText, collectionCitationModel } from '../lib/citation'
 
-const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
 
@@ -368,7 +367,7 @@ function SignInGate() {
         </div>
         <div className="data-gate-microdata-actions">
           <a href={FAM_URL} target="_blank" rel="noreferrer">Browse DIEM data in FAM <Icon name="external"/></a>
-          <a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">Open the microdata request form <Icon name="external"/></a>
+          <Link to="/data/microdata-request">Open the microdata request form</Link>
         </div>
       </section>
     </main>
@@ -575,7 +574,7 @@ export default function DataAccess() {
               <span className="microdata-route-step">If you need it sooner</span>
               <h3>Request direct access</h3>
               <p>If your research or operational work needs household-level data from a survey that has not reached FAM yet, submit a request. Requests are evaluated within about two working days. Access is granted in justified cases to users with institutional email addresses, is valid for a week, and can be extended.</p>
-              <a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">Open the request form <Icon name="external"/></a>
+              <Link to="/data/microdata-request">Open the request form</Link>
             </article>
           </div>
 
@@ -604,7 +603,7 @@ export default function DataAccess() {
                 <p className="microdata-licence-aside">On that last point: if colleagues will work with the data, tell the DIEM Hub team so they can be granted access too.</p>
               </div>
             </div>
-            <a className="microdata-licence-cta" href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">I accept these conditions — open the request form <Icon name="arrow"/></a>
+            <Link className="microdata-licence-cta" to="/data/microdata-request">I accept these conditions — open the request form <Icon name="arrow"/></Link>
           </section>
 
           {capabilities?.householdData ? (

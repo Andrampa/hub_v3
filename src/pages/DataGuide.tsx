@@ -8,7 +8,6 @@ import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
 import { collectionCitationModel } from '../lib/citation'
 
-const ACCESS_REQUEST_URL = 'https://data-in-emergencies.fao.org/feedback/surveys/c224d7e568fb464fbfbca2fff047707f/explore'
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
 const FAM_POLICY_URL = 'https://www.fao.org/food-agriculture-microdata/en/'
@@ -147,7 +146,7 @@ export default function DataGuide() {
               <p><a href={FAM_URL} target="_blank" rel="noreferrer">Browse DIEM collections in FAM</a></p>
               <h3>2. Direct access by request</h3>
               <p>If your research or operational work needs household-level data from a survey that has not reached FAM yet, submit a request after creating a DIEM account. Requests are evaluated within about two working days. Access is granted in justified cases, exclusively to users with institutional email addresses, and is valid for a week with the possibility of extension.</p>
-              <p><a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">Open the microdata request form</a></p>
+              <p><Link to="/data/microdata-request">Open the microdata request form</Link></p>
               <h3>Coded values and labelling</h3>
               <p>Microdata is disseminated in coded form, in line with good practice for data protection, standardization and analytical consistency across countries and survey rounds. Coded values keep files small, keep processing harmonized, and limit the risk of misinterpretation or unintended disclosure. The codebook maps every code to its label.</p>
               <p>To make that easier, DIEM publishes Python and R tools that detect the questionnaire generation automatically and apply the official value labels, producing an analysis-ready dataset while preserving the original structure and file format. They are available in the <a href="https://github.com/Andrampa/diem-microdata-labelling" target="_blank" rel="noreferrer">public microdata labelling repository</a>.</p>
