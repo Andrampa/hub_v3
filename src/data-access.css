@@ -267,7 +267,8 @@
 .microdata-licence-body p { margin: 0 0 11px; color: #c6dbe1; font-size: 12px; line-height: 1.7; }
 .microdata-licence-body ul { margin: 0; padding-left: 18px; color: #c6dbe1; font-size: 12px; line-height: 1.7; }
 .microdata-licence-aside { color: #9db9c4 !important; font-size: var(--text-small) !important; font-style: italic; }
-.microdata-licence-cta { display: inline-flex; align-items: center; gap: 12px; margin-top: 26px; padding: 15px 20px; background: var(--orange); color: white; font-size: 12px; font-weight: 700; }
+.microdata-licence-citation { padding: 14px 16px; border-left: 3px solid var(--orange); background: rgba(255,255,255,.06); color: white !important; }
+.microdata-licence-cta {display: inline-flex; align-items: center; gap: 12px; margin-top: 26px; padding: 15px 20px; background: var(--orange); color: white; font-size: 12px; font-weight: 700; }
 .microdata-licence-cta svg { width: 16px; }
 .microdata-datasets { margin-top: 40px; }
 .microdata-locked { display: flex; align-items: center; gap: 11px; margin: 24px 0 0; padding: 20px 22px; background: #f2f6f5; border: 1px dashed #c3d1ce; color: var(--ink-muted); font-size: 12px; }

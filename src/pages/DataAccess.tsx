@@ -583,8 +583,10 @@ export default function DataAccess() {
           <section className="microdata-licence" aria-labelledby="microdata-licence-heading">
             <div className="microdata-licence-head">
               <span className="kicker">Microdata licence</span>
-              <h3 id="microdata-licence-heading">Conditions of use</h3>
-              <p>Aggregated data is CC BY 4.0. Microdata is not. Submitting a request means agreeing to the conditions below, and they continue to apply for as long as you hold the data.</p>
+              <h3 id="microdata-licence-heading">{capabilities?.householdData ? 'Your microdata licence' : 'Conditions of use'}</h3>
+              <p>{capabilities?.householdData
+                ? 'Your account has been granted microdata access. The conditions you accepted when requesting access apply to every dataset below, for as long as you hold the data.'
+                : 'Aggregated data is CC BY 4.0. Microdata is not. Submitting a request means agreeing to the conditions below, and they continue to apply for as long as you hold the data.'}</p>
             </div>
             <div className="microdata-licence-body">
               <div>
@@ -603,7 +605,20 @@ export default function DataAccess() {
                 <p className="microdata-licence-aside">On that last point: if colleagues will work with the data, tell the DIEM Hub team so they can be granted access too.</p>
               </div>
             </div>
-            <Link className="microdata-licence-cta" to="/data/microdata-request">I accept these conditions — open the request form <Icon name="arrow"/></Link>
+            {capabilities?.householdData ? (
+              <div className="microdata-licence-body">
+                <div>
+                  <h4>Citation</h4>
+                  <p>All products or publications that mention or include DIEM data must include the following citation:</p>
+                </div>
+                <div>
+                  <p className="microdata-licence-citation">Source of data: FAO. 2025. <em>Name of the country</em>: DIEM-Monitoring assessments results (<em>Month and Year</em>). In: FAO Data in Emergencies Hub. Rome. <em>Cited date</em>. https://data-in-emergencies.fao.org</p>
+                  <p>Finally, we would greatly appreciate it if you could inform the DIEM Hub team of the release of any product based on DIEM data.</p>
+                </div>
+              </div>
+            ) : (
+              <Link className="microdata-licence-cta" to="/data/microdata-request">I accept these conditions — open the request form <Icon name="arrow"/></Link>
+            )}
           </section>
 
           {capabilities?.householdData ? (
