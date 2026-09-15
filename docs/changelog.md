@@ -1,24 +1,5 @@
 # Changelog
 
-## 2026-09-11 - Sync Hub community roles by difference
-
-- The internal AGOL notebook that copies Hub community accounts into the FAO
-  access groups is now versioned at
-  `scripts/agol_notebooks/diem_community_management.ipynb`, without outputs or
-  passwords, with a README.
-- It no longer removes and re-adds every user in every run (about 3,600
-  requests, two hours at 3,000 users). It reads each group once by fixed ID,
-  looks up details only for new users, and writes only differences: additions
-  first, then removals. It adds dry-run mode, a self-test, a guard against
-  large removals, a check that "departed" accounts are really gone before any
-  deletion, and result checks that fail the task on any rejected change.
-  Roles stay exclusive and are managed only in the role table.
-- All four target groups are addressed by fixed ID and checked against their
-  titles. The AGOL dry run confirmed the previous Followers title search
-  resolved to the same group, `3581cdd013a048e1b69a12fdf4cf186f`.
-- `/data` and `/data/guide` now say access arrives within 15 minutes, matching
-  the planned schedule, instead of "about ten minutes".
-
 ## 2026-09-11 - Frame the homepage popup
 
 - The homepage campaign popup sits in a thin white mount with a navy hairline
@@ -29,6 +10,28 @@
   and stuttered on the first slide while the page was still loading. The
   second photograph now mounts after 3 seconds, so it no longer competes with
   the first.
+
+## 2026-09-11 - Refocus the product communication strategy
+
+- Shortened the shareable strategy and restored the original launch plan as
+  its central content.
+- Kept VISTA within the EVE 2.0 launch, removed the questionnaire template from
+  the public product campaign, corrected the legacy household references to the
+  former Monitoring System app and old dashboards, and simplified the EVE 2.0
+  capability message.
+- Extended post-launch support beyond intensive champion-country work to an
+  appropriate online or regional support offer for every DIEM country.
+
+## 2026-09-11 - Establish cross-product launch strategy context
+
+- Added a focused `docs/launch_strategy/` area for coordinating the launch of
+  the new DIEM Hub, Household Survey Explorer, EVE 2.0, VISTA and the household
+  survey questionnaire template.
+- Recorded the agreed two-stream campaign model, relative T0-T6 milestones,
+  institutional channels, country targeting, OER event, training options and
+  measures of adoption without assigning fixed calendar dates.
+- Added a concise shareable communication-strategy source for the accompanying
+  Word document and routed future launch work through the context index.
 
 ## 2026-09-11 - Rotate fieldwork photographs on the homepage hero
 
@@ -60,6 +63,25 @@
   per-page overrides.
 - Country pages show the same small flag on the ISO code line above the
   country name. The cross-country page, which reads GLOBAL, has none.
+
+## 2026-09-11 - Sync Hub community roles by difference
+
+- The internal AGOL notebook that copies Hub community accounts into the FAO
+  access groups is now versioned at
+  `scripts/agol_notebooks/diem_community_management.ipynb`, without outputs or
+  passwords, with a README.
+- It no longer removes and re-adds every user in every run (about 3,600
+  requests, two hours at 3,000 users). It reads each group once by fixed ID,
+  looks up details only for new users, and writes only differences: additions
+  first, then removals. It adds dry-run mode, a self-test, a guard against
+  large removals, a check that "departed" accounts are really gone before any
+  deletion, and result checks that fail the task on any rejected change.
+  Roles stay exclusive and are managed only in the role table.
+- All four target groups are addressed by fixed ID and checked against their
+  titles. The AGOL dry run confirmed the previous Followers title search
+  resolved to the same group, `3581cdd013a048e1b69a12fdf4cf186f`.
+- `/data` and `/data/guide` now say access arrives within 15 minutes, matching
+  the planned schedule, instead of "about ten minutes".
 
 ## 2026-09-11 - Show a field interview on the homepage hero
 

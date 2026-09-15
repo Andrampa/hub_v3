@@ -89,6 +89,29 @@ re-added every user daily.
   2026-09-11 dry run confirmed that the previous notebook's Followers title
   search resolved to the configured group `3581cdd013a048e1b69a12fdf4cf186f`.
 
+### Standard procedures
+
+AGOL notebook item: `f3734260254b48a09bea7cb51ac71b69` (FAO organization),
+runnable by the Hub team. Its copy has `DRY_RUN = False` and the Hub password
+set, so it stays private to the team; never copy it back here unchanged.
+
+**Promote an existing account to Contributor**
+
+1. In the role table, set the user's role to **Contributor**.
+2. Run the notebook (or wait up to 15 minutes for the schedule).
+
+**Create a new account with the Contributor role**
+
+1. On `hqfao-hub.maps.arcgis.com`, add the member with "Add members and notify
+   them via email". The account exists before the person accepts. Do not choose
+   a role with notebook privileges unless intended.
+2. Run the notebook. The account is added to the table as Community Member.
+3. In the role table, set its role to **Contributor**.
+4. Run the notebook again.
+
+Never add a table row for an account that does not exist yet (it is deleted as a
+departure), and never change the FAO groups by hand (the next run undoes it).
+
 ### Operating it
 
 - Connections: `GIS("home")` is the task owner in the FAO organization (an
