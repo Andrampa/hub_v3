@@ -3,12 +3,13 @@ import { HeroCredit } from './HeroCredit'
 import { HeroImage, type HeroName } from './HeroImage'
 
 /**
- * The homepage photographs, crossfading behind the hero copy.
+ * The homepage photographs, rotating behind the hero copy.
  *
  * Several fieldwork scenes rather than one, so no single respondent becomes the
  * permanent face of the site: interviews mixed with the hazards DIEM assesses
- * (earthquake, flood) and the cultivation it protects. The first slide is also
- * what reduced-motion and no-script visitors keep. `y` is each frame's
+ * (earthquake, flood) and the cultivation it protects. Each new photograph rises
+ * over the last in six staggered columns, like bars in a chart. The first slide
+ * is also what reduced-motion and no-script visitors keep. `y` is each frame's
  * vertical crop.
  */
 const SLIDES: Array<{ name: HeroName, y: string }> = [
@@ -26,17 +27,22 @@ const SLIDES: Array<{ name: HeroName, y: string }> = [
   { name: 'drc-diem-officers-2023', y: '25%' },
 ]
 
-// Keep in step with the pan duration in fao-adaptation.css (SLIDE_MS + fade).
+// Keep in step with the pan duration in fao-adaptation.css.
 const SLIDE_MS = 6000
+// Longer than the strip reveal in fao-adaptation.css.
+const TRANSITION_MS = 1500
 
 export function HomeHeroSlideshow() {
   const [active, setActive] = useState(0)
+  // The slide being covered, kept visible beneath the reveal.
+  const [previous, setPrevious] = useState(-1)
+  const [transitioning, setTransitioning] = useState(false)
   // The pan starts a frame after a slide becomes active. Setting both at once
   // left the first slide, active from its first paint, with no change for the
   // pan transition to run from.
   const [panning, setPanning] = useState(-1)
   // Slides are mounted one ahead of the one showing, so each is ready before it
-  // fades in. The second waits a moment, so its download and decode do not
+  // appears. The second waits a moment, so its download and decode do not
   // compete with the first paint and the first slide's drift.
   const [mounted, setMounted] = useState(1)
 
@@ -49,7 +55,11 @@ export function HomeHeroSlideshow() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = window.setInterval(() => {
       // A background tab keeps its place instead of cycling unseen.
-      if (document.visibilityState === 'visible') setActive((index) => (index + 1) % SLIDES.length)
+      if (document.visibilityState !== 'visible') return
+      setActive((index) => {
+        setPrevious(index)
+        return (index + 1) % SLIDES.length
+      })
     }, SLIDE_MS)
     return () => window.clearInterval(timer)
   }, [])
@@ -63,6 +73,21 @@ export function HomeHeroSlideshow() {
     return () => window.clearTimeout(timer)
   }, [active])
 
+  useEffect(() => {
+    if (previous < 0) return
+    setTransitioning(true)
+    const timer = window.setTimeout(() => setTransitioning(false), TRANSITION_MS)
+    return () => window.clearTimeout(timer)
+  }, [active, previous])
+
+  const slideClass = (index: number) => [
+    'hero-image hero-slide',
+    index === active && ' is-active',
+    index === active && index === panning && ' is-panning',
+    transitioning && index === active && ' is-entering',
+    transitioning && index === previous && ' is-leaving',
+  ].filter(Boolean).join('')
+
   return (
     <>
       <div className="hero-slides" aria-hidden="true">
@@ -70,7 +95,7 @@ export function HomeHeroSlideshow() {
           <HeroImage
             key={slide.name}
             name={slide.name}
-            className={`hero-image hero-slide${index === active ? ' is-active' : ''}${index === active && index === panning ? ' is-panning' : ''}`}
+            className={slideClass(index)}
             priority={index === 0}
             style={{ '--hero-slide-y': slide.y } as CSSProperties}
           />

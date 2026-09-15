@@ -238,33 +238,70 @@ h1, h2, h3, h4, h5, h6,
   object-fit: cover;
   opacity: .7;
 }
-/* Homepage slides stack in the same box and crossfade. While a slide shows it
-   drifts slowly upward. The drift is a transform, which the compositor runs
-   even while the page is still loading; animating object-position repainted
-   the image every frame and stuttered on the first slide, when the main thread
-   is busiest. Each slide is taller than the hero so the drift never uncovers
-   an edge, and the layer clips them, which the hero itself cannot do without
-   also clipping the search suggestions.
+/* Homepage slides stack in the same box. Each new slide rises over the last in
+   six staggered columns, like bars in a chart, while the covered slide stays
+   opaque beneath it; the whole layer carries the .7 dimming, so two
+   photographs never blend. While a slide shows it drifts slowly upward. The
+   drift is a transform, which the compositor runs even while the page is still
+   loading; animating object-position repainted the image every frame and
+   stuttered on the first slide, when the main thread is busiest. Each slide is
+   taller than the hero so the drift never uncovers an edge, and the layer clips
+   them, which the hero itself cannot do without also clipping the search
+   suggestions.
    `is-active` shows a slide at its starting offset; `is-panning`, added just
-   after, moves it, so the first slide drifts as well. The offset is reset only
-   once the slide has faded out. */
-.hero-slides { position: absolute; inset: 0; overflow: hidden; }
+   after, moves it, so the first slide drifts as well. `is-entering` and
+   `is-leaving` last TRANSITION_MS in HomeHeroSlideshow. A slide's offset is
+   reset only long after it has been covered. */
+@property --hero-strip-0 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --hero-strip-1 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --hero-strip-2 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --hero-strip-3 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --hero-strip-4 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --hero-strip-5 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+.hero-slides { position: absolute; inset: 0; overflow: hidden; isolation: isolate; opacity: .7; }
 .hero-image.hero-slide {
   top: -5%;
   height: 110%;
   opacity: 0;
   object-position: center var(--hero-slide-y, 50%);
   transform: translate3d(0, 4%, 0);
-  transition: opacity 1.6s ease, transform 0s linear 1.6s;
+  transition: transform 0s linear 5s;
 }
-.hero-image.hero-slide.is-active { opacity: .7; will-change: transform, opacity; }
+.hero-image.hero-slide.is-leaving { opacity: 1; z-index: 1; }
+.hero-image.hero-slide.is-active { opacity: 1; z-index: 2; will-change: transform; }
 .hero-image.hero-slide.is-active.is-panning {
   transform: translate3d(0, -4%, 0);
-  /* The 6 s slide in HomeHeroSlideshow plus the 1.6 s fade. */
-  transition: opacity 1.6s ease, transform 7.6s linear;
+  /* The 6 s slide in HomeHeroSlideshow plus the reveal. */
+  transition: transform 7.6s linear;
 }
+.hero-image.hero-slide.is-entering {
+  /* A stepped skyline: each column's top edge sits at 100% minus its height. */
+  clip-path: polygon(
+    0% 100%,
+    0% calc(100% - var(--hero-strip-0)), 16.67% calc(100% - var(--hero-strip-0)),
+    16.67% calc(100% - var(--hero-strip-1)), 33.33% calc(100% - var(--hero-strip-1)),
+    33.33% calc(100% - var(--hero-strip-2)), 50% calc(100% - var(--hero-strip-2)),
+    50% calc(100% - var(--hero-strip-3)), 66.67% calc(100% - var(--hero-strip-3)),
+    66.67% calc(100% - var(--hero-strip-4)), 83.33% calc(100% - var(--hero-strip-4)),
+    83.33% calc(100% - var(--hero-strip-5)), 100% calc(100% - var(--hero-strip-5)),
+    100% 100%
+  );
+  animation:
+    hero-strip-0 .75s cubic-bezier(.3, 0, .2, 1) 0s both,
+    hero-strip-1 .75s cubic-bezier(.3, 0, .2, 1) .09s both,
+    hero-strip-2 .75s cubic-bezier(.3, 0, .2, 1) .18s both,
+    hero-strip-3 .75s cubic-bezier(.3, 0, .2, 1) .27s both,
+    hero-strip-4 .75s cubic-bezier(.3, 0, .2, 1) .36s both,
+    hero-strip-5 .75s cubic-bezier(.3, 0, .2, 1) .45s both;
+}
+@keyframes hero-strip-0 { from { --hero-strip-0: 0%; } to { --hero-strip-0: 100%; } }
+@keyframes hero-strip-1 { from { --hero-strip-1: 0%; } to { --hero-strip-1: 100%; } }
+@keyframes hero-strip-2 { from { --hero-strip-2: 0%; } to { --hero-strip-2: 100%; } }
+@keyframes hero-strip-3 { from { --hero-strip-3: 0%; } to { --hero-strip-3: 100%; } }
+@keyframes hero-strip-4 { from { --hero-strip-4: 0%; } to { --hero-strip-4: 100%; } }
+@keyframes hero-strip-5 { from { --hero-strip-5: 0%; } to { --hero-strip-5: 100%; } }
 @media (prefers-reduced-motion: reduce) {
-  .hero-image.hero-slide, .hero-image.hero-slide.is-active, .hero-image.hero-slide.is-active.is-panning { transform: none; transition: none; }
+  .hero-image.hero-slide, .hero-image.hero-slide.is-active, .hero-image.hero-slide.is-active.is-panning { transform: none; transition: none; animation: none; clip-path: none; }
 }
 .hero::after {
   content: "";
