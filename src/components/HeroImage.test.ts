@@ -53,6 +53,16 @@ describe('hero manifest', () => {
       'colombia-quipama-doorstep-2023',
       'syria-earthquake-assessment-2023',
       'drc-ndjili-rice-harvest-2025',
+      'drc-banana-motorbike-road-2023',
+      'drc-ndjili-river-canoe-2025',
+      'pakistan-sheep-flock-2022',
+      'afghanistan-mountain-interview-2025',
+      'car-cooking-fire-interview-2024',
+      'drc-lakeshore-fish-cleaning-2023',
+      'afghanistan-terraced-valley-interview-2023',
+      'syria-earthquake-farm-damage-2023',
+      'drc-ndjili-riverbank-canoes-2025',
+      'afghanistan-market-interview-2023',
     ])
   })
 

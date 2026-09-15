@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-15 - Twenty-two hero photographs revealed in rising strips
+
+- Each homepage hero photograph now rises over the previous one in six
+  staggered columns, like bars in a chart, replacing the crossfade. Reduced
+  motion still keeps the first photograph.
+- Ten FAO Flickr photographs join the sequence (DRC, Afghanistan, Central
+  African Republic, Syria, Pakistan), interleaved with the existing twelve.
+  The Pakistan sheep flock was straightened by 4°; at 1,547 px its largest
+  variant is 1,024 px.
+- Approved microdata users see the full licence, the DIEM citation and the
+  request to report derived products in the Microdata section.
+
 ## 2026-09-11 - Frame the homepage popup
 
 - The homepage campaign popup sits in a thin white mount with a navy hairline

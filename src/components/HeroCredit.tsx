@@ -78,6 +78,46 @@ const CREDITS: Partial<Record<HeroName, { text: string; href: string }>> = {
     text: 'Photo: ©FAO',
     href: 'https://www.flickr.com/photos/faoemergencies/52845070578/in/album-72177720307762521',
   },
+  'drc-banana-motorbike-road-2023': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/53329533994/in/album-72177720312654773',
+  },
+  'drc-ndjili-river-canoe-2025': {
+    text: 'Photo: ©FAO/Cécile Barrière',
+    href: 'https://www.flickr.com/photos/faoemergencies/54772380727/in/album-72177720328904503',
+  },
+  'pakistan-sheep-flock-2022': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/52145426406/in/album-72177720299779056',
+  },
+  'afghanistan-mountain-interview-2025': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/54501150373/in/album-72177720325914781',
+  },
+  'car-cooking-fire-interview-2024': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/53743008468/in/album-72177720317258756',
+  },
+  'drc-lakeshore-fish-cleaning-2023': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/53329417068/in/album-72177720312654773',
+  },
+  'afghanistan-terraced-valley-interview-2023': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/52829806979/in/album-72177720307634439',
+  },
+  'syria-earthquake-farm-damage-2023': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/52845070558/in/album-72177720307762521',
+  },
+  'drc-ndjili-riverbank-canoes-2025': {
+    text: 'Photo: ©FAO/Cécile Barrière',
+    href: 'https://www.flickr.com/photos/faoemergencies/54773453624/in/album-72177720328904503',
+  },
+  'afghanistan-market-interview-2023': {
+    text: 'Photo: ©FAO',
+    href: 'https://www.flickr.com/photos/faoemergencies/52829627901/in/album-72177720307634439',
+  },
 }
 
 export function HeroCredit({ name }: { name: HeroName }) {
