@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-09-15 - Recent releases on the Living Shock Atlas
+
+- The hazard impact atlas marks products released in the last six months with
+  OCHA humanitarian icons (CC0), one per shock type on a coloured disc,
+  on every country a product covers, up to three per
+  country with a "+N" count. "Released" reads `created`, not `modified`. When
+  the window holds fewer than five products, the latest five are shown.
+- Symbols open the product; hovering or focusing one names it in the caption.
+  A toggle, a legend of the shock types shown and a list of the same releases
+  sit under the map, and follow the region and shock filters. Multi-country
+  products without country categories appear only in the list. Hovering or
+  focusing a release card enlarges and rings its symbols on every country and
+  fades the others.
+
 ## 2026-09-15 - Twenty-two hero photographs revealed in rising strips
 
 - Each homepage hero photograph now rises over the previous one in six

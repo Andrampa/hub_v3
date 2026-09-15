@@ -71,6 +71,31 @@
 .impact-region-filters button { border-color: rgba(255, 255, 255, .45); color: #e5ecf4; }
 .impact-atlas .impact-region-filters button[aria-pressed="true"] { border-color: #fff; background: #fff; color: var(--deep-blue); }
 .impact-map-country--dimmed { opacity: .12; pointer-events: none; }
+.impact-map-release { cursor: pointer; }
+.impact-map-release .shock-glyph { filter: drop-shadow(0 1px 2px rgba(4,55,83,.45)); transform-box: fill-box; transform-origin: center; transition: transform .16s ease; }
+.impact-map-release:hover .shock-glyph, .impact-map-release:focus .shock-glyph { transform: scale(1.3); }
+.impact-map-release:focus { outline: none; }
+.impact-map-release:focus circle { stroke: var(--fao-navy); stroke-width: 2.6; }
+.impact-map-releases.has-highlight .impact-map-release:not(.is-highlighted) { opacity: .3; }
+.impact-map-release.is-highlighted .shock-glyph { transform: scale(1.45); }
+.impact-map-release.is-highlighted circle { stroke: #f5a066; stroke-width: 2.6; }
+.impact-map-release-more { fill: var(--fao-navy); font-size: 11px; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+.shock-icon { flex: none; width: 20px; height: 20px; }
+.impact-releases { margin-top: 22px; }
+.impact-releases-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.impact-releases-toggle { display: inline-flex; align-items: center; gap: 9px; color: #e5ecf4; font-size: var(--text-small); cursor: pointer; }
+.impact-releases-toggle input { width: 17px; height: 17px; accent-color: #f5a066; }
+.impact-releases-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; padding: 0; list-style: none; color: #d2e2e6; font-size: var(--text-micro); }
+.impact-releases-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.impact-releases-legend .shock-icon { width: 16px; height: 16px; }
+.impact-releases-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
+.impact-releases-list li.is-highlighted { border-color: #f5a066; background: rgba(245,160,102,.12); }
+.impact-releases-list li { transition: border-color .16s ease, background .16s ease; display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); }
+.impact-releases-list li > div { display: flex; flex-direction: column; min-width: 0; }
+.impact-releases-list a { color: white; font-size: var(--text-small); font-weight: 600; line-height: 1.35; }
+.impact-releases-list a:hover, .impact-releases-list a:focus-visible { color: #f5a066; text-decoration: underline; text-underline-offset: 3px; }
+.impact-releases-list span { margin-top: 3px; color: #c6dbe1; font-size: var(--text-micro); }
+.impact-releases-empty { margin: 14px 0 0; color: #c6dbe1; font-size: var(--text-small); }
 
 .impact-library { padding-block: 95px 105px; background: var(--line-faint); }
 .impact-view-switch { display: flex; border: 1px solid #b9cbcb; }
@@ -148,7 +173,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .impact-dossier, .impact-dossier-image img, .impact-map-country--covered { transition: none; }
+  .impact-dossier, .impact-dossier-image img, .impact-map-country--covered, .impact-map-release .shock-glyph { transition: none; }
 }
 
 /* Above the card's own gradient pseudo-element, which is painted last and would

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ImpactAtlasMap } from '../components/ImpactAtlasMap'
+import { ImpactAtlasMap, type AtlasRelease } from '../components/ImpactAtlasMap'
+import { ShockIcon } from '../components/ShockSymbol'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { HeroImage } from '../components/HeroImage'
@@ -14,6 +15,7 @@ import {
 } from '../services/impactAssessments'
 import { itemThumbnail } from '../services/arcgis'
 import { usePageMetadata } from '../hooks/usePageMetadata'
+import { RELEASE_MINIMUM, RELEASE_WINDOW_MONTHS, recentReleases } from '../lib/recentReleases'
 
 type ResultsView = 'details' | 'timeline'
 const RESULTS_STEP = 18
@@ -131,6 +133,8 @@ export default function HazardImpactAssessments() {
   const [language, setLanguage] = useState('All languages')
   const [view, setView] = useState<ResultsView>('timeline')
   const [visibleCount, setVisibleCount] = useState(RESULTS_STEP)
+  const [showReleases, setShowReleases] = useState(true)
+  const [highlightedRelease, setHighlightedRelease] = useState<string>()
   const [expandedTimelineYears, setExpandedTimelineYears] = useState<Set<number>>(() => new Set())
 
   useEffect(() => {
@@ -187,6 +191,24 @@ export default function HazardImpactAssessments() {
     ))
     return [...grouped.entries()].sort((a, b) => b[0] - a[0])
   }, [filtered])
+  const releases = useMemo(() => {
+    const selection = recentReleases(catalog?.items || [])
+    const items = selection.items.filter((item) => (
+      (shock === 'All shocks' || item.shockTypes.includes(shock))
+      && (region === ALL_REGIONS || item.countries.some((iso3) => countryDefinition(iso3).region === region))
+    ))
+    const symbols: AtlasRelease[] = items.flatMap((item) => item.countries
+      .map((iso3) => ({
+        id: `${item.id}-${iso3}`,
+        itemId: item.id,
+        title: item.title.trim(),
+        iso3,
+        shock: item.shockTypes.includes(shock) ? shock : item.shockTypes[0],
+        date: formatDate(item.created),
+        link: itemHubLink(item),
+      })))
+    return { ...selection, items, symbols }
+  }, [catalog, region, shock])
   const latest = useMemo(() => latestAssessments(catalog?.items || []), [catalog])
   const latestModified = Math.max(...(catalog?.items.map((item) => item.modified) || [0]))
 
@@ -276,7 +298,56 @@ export default function HazardImpactAssessments() {
                   visibleIso={region === ALL_REGIONS ? undefined : visibleIso}
                   selectedIso={country === 'All countries' ? undefined : country}
                   onSelect={setCountry}
+                  releases={showReleases ? releases.symbols : []}
+                  highlightedItemId={highlightedRelease}
                 />
+                <div className="impact-releases">
+                  <div className="impact-releases-head">
+                    <label className="impact-releases-toggle">
+                      <input type="checkbox" checked={showReleases} onChange={(event) => setShowReleases(event.target.checked)} />
+                      <span>
+                        {releases.fallback
+                          ? `Show the latest ${RELEASE_MINIMUM} releases on the map`
+                          : `Show releases from the last ${RELEASE_WINDOW_MONTHS} months on the map`}
+                      </span>
+                    </label>
+                    {showReleases && releases.items.length > 0 && (
+                      <ul className="impact-releases-legend" aria-label="Map symbols">
+                        {[...new Set(releases.symbols.map((symbol) => symbol.shock || 'Other'))].sort().map((value) => (
+                          <li key={value}><ShockIcon shock={value} />{value}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  {showReleases && (releases.items.length ? (
+                    <ol className="impact-releases-list" aria-label="Recently released products">
+                      {releases.items.map((item) => {
+                        const link = itemHubLink(item)
+                        const title = item.title.trim()
+                        return (
+                          <li
+                            key={item.id}
+                            className={highlightedRelease === item.id ? 'is-highlighted' : undefined}
+                            onMouseEnter={() => setHighlightedRelease(item.id)}
+                            onMouseLeave={() => setHighlightedRelease(undefined)}
+                            onFocus={() => setHighlightedRelease(item.id)}
+                            onBlur={() => setHighlightedRelease(undefined)}
+                          >
+                            <ShockIcon shock={item.shockTypes.includes(shock) ? shock : item.shockTypes[0]} />
+                            <div>
+                              {link.kind === 'product'
+                                ? <Link to={link.to}>{title}</Link>
+                                : <a href={link.href} target="_blank" rel="noreferrer">{title}</a>}
+                              <span>{countryLabel(item)} · <time dateTime={new Date(item.created).toISOString().slice(0, 10)}>{formatDate(item.created)}</time></span>
+                            </div>
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  ) : (
+                    <p className="impact-releases-empty">No recent releases match the current region and shock filters.</p>
+                  ))}
+                </div>
               </div>
             </section>
 
