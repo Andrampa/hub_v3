@@ -57,7 +57,13 @@
 .impact-section-heading--light > p { color: #c6dbe1; }
 .impact-section-heading--light .kicker { color: #f5a066; }
 .impact-map-wrap { position: relative; min-height: 500px; overflow: hidden; background: var(--line-faint); border: 1px solid rgba(255,255,255,.2); }
-.impact-map { display: block; width: 100%; height: auto; color: #aab9b7; }
+.impact-map { display: block; width: 100%; height: auto; color: #aab9b7; cursor: grab; touch-action: none; user-select: none; }
+.impact-map:active { cursor: grabbing; }
+.impact-map-zoom { position: absolute; top: 14px; right: 14px; z-index: 1; display: flex; flex-direction: column; box-shadow: 0 4px 14px rgba(6,48,65,.2); }
+.impact-map-zoom button { width: 34px; height: 34px; border: 0; border-bottom: 1px solid var(--line-faint); background: #fff; color: var(--fao-navy); font-size: 18px; line-height: 1; cursor: pointer; }
+.impact-map-zoom button:last-child { border-bottom: 0; font-size: 15px; }
+.impact-map-zoom button:hover:not(:disabled) { background: #eef4f5; }
+.impact-map-zoom button:disabled { color: #a9b6ba; cursor: default; }
 .impact-map-country { fill: #d9d9d9; stroke: #f6f8f7; stroke-width: .7; vector-effect: non-scaling-stroke; }
 .impact-map-country--covered { fill: #61a7ba; cursor: pointer; transition: fill .16s ease, opacity .16s ease; }
 .impact-map a:hover .impact-map-country--covered, .impact-map a:focus .impact-map-country--covered, .impact-map-country--covered.is-selected { fill: #d76321; }

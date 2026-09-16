@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useHref, useNavigate } from 'react-router-dom'
 import { geoNaturalEarth1, geoPath } from 'd3-geo'
 import { feature } from 'topojson-client'
@@ -26,6 +26,29 @@ export interface AtlasRelease {
 const SYMBOL_RADIUS = 9
 const SYMBOL_SPACING = 17
 const SYMBOLS_PER_COUNTRY = 3
+const MAP_WIDTH = 960
+const MAP_HEIGHT = 480
+// A country-level map: past this the 110m outlines break down.
+const MIN_ZOOM = 1
+const MAX_ZOOM = 8
+const DRAG_THRESHOLD = 4
+
+interface MapView { k: number; x: number; y: number }
+const INITIAL_VIEW: MapView = { k: 1, x: 0, y: 0 }
+
+/** Zooms about a point in viewBox units, keeping the map covering the frame. */
+function zoomView(view: MapView, nextK: number, px: number, py: number): MapView {
+  const k = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, nextK))
+  return clampView({ k, x: px - ((px - view.x) * k) / view.k, y: py - ((py - view.y) * k) / view.k })
+}
+
+function clampView({ k, x, y }: MapView): MapView {
+  return {
+    k,
+    x: Math.min(0, Math.max(MAP_WIDTH * (1 - k), x)),
+    y: Math.min(0, Math.max(MAP_HEIGHT * (1 - k), y)),
+  }
+}
 
 interface WorldProperties {
   id?: string
@@ -114,24 +137,110 @@ export function ImpactAtlasMap({
       return [{
         iso3,
         overflow: group.length - shown.length,
-        overflowX: centroid[0] + offset + SYMBOL_RADIUS + 3,
-        y: centroid[1],
+        cx: centroid[0],
+        cy: centroid[1],
+        overflowDx: offset + SYMBOL_RADIUS + 3,
         items: shown.map((release, index) => ({
           release,
-          x: centroid[0] - offset + index * SYMBOL_SPACING,
+          dx: -offset + index * SYMBOL_SPACING,
         })),
       }]
     })
   }, [paths, releases, visibleIso])
   const highlighted = hoveredIso ? countryByIso.get(hoveredIso) : undefined
 
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [view, setView] = useState<MapView>(INITIAL_VIEW)
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const gesture = useRef<{ dragged: boolean; startX: number; startY: number; pinchDistance?: number } | undefined>(undefined)
+
+  // A region filter refits the projection, so the previous zoom no longer applies.
+  useEffect(() => setView(INITIAL_VIEW), [visibleIso])
+
+  // React attaches wheel listeners as passive, which would scroll the page too.
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault()
+      const point = toViewBox(svg, event.clientX, event.clientY)
+      setView((current) => zoomView(current, current.k * Math.exp(-event.deltaY * 0.002), point.x, point.y))
+    }
+    svg.addEventListener('wheel', onWheel, { passive: false })
+    return () => svg.removeEventListener('wheel', onWheel)
+  }, [])
+
+  const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    if (pointers.current.size === 1) {
+      gesture.current = { dragged: false, startX: event.clientX, startY: event.clientY }
+    }
+  }
+
+  const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const previous = pointers.current.get(event.pointerId)
+    const state = gesture.current
+    if (!previous || !state) return
+    const next = { x: event.clientX, y: event.clientY }
+    pointers.current.set(event.pointerId, next)
+    if (!state.dragged) {
+      if (pointers.current.size < 2 && Math.hypot(next.x - state.startX, next.y - state.startY) < DRAG_THRESHOLD) return
+      state.dragged = true
+      // Captured only once dragging, so a plain click still reaches its country.
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }
+    if (pointers.current.size >= 2) {
+      const [a, b] = [...pointers.current.values()]
+      const distance = Math.hypot(a.x - b.x, a.y - b.y)
+      if (state.pinchDistance) {
+        const mid = toViewBox(event.currentTarget, (a.x + b.x) / 2, (a.y + b.y) / 2)
+        const ratio = distance / state.pinchDistance
+        setView((current) => zoomView(current, current.k * ratio, mid.x, mid.y))
+      }
+      state.pinchDistance = distance
+      return
+    }
+    const scale = MAP_WIDTH / event.currentTarget.getBoundingClientRect().width
+    setView((current) => clampView({
+      ...current,
+      x: current.x + (next.x - previous.x) * scale,
+      y: current.y + (next.y - previous.y) * scale,
+    }))
+  }
+
+  const onPointerEnd = (event: ReactPointerEvent<SVGSVGElement>) => {
+    pointers.current.delete(event.pointerId)
+    if (gesture.current) gesture.current.pinchDistance = undefined
+  }
+
+  const zoomBy = (factor: number) => setView((current) => zoomView(current, current.k * factor, MAP_WIDTH / 2, MAP_HEIGHT / 2))
+
   return (
     <>
       <div className="impact-map-wrap">
         {/* A group, not an image; see CountryMap for why `role="img"` around
             country links is wrong and what axe reports. */}
+        <div className="impact-map-zoom" role="group" aria-label="Map zoom">
+          <button type="button" onClick={() => zoomBy(1.6)} disabled={view.k >= MAX_ZOOM} aria-label="Zoom in">+</button>
+          <button type="button" onClick={() => zoomBy(1 / 1.6)} disabled={view.k <= MIN_ZOOM} aria-label="Zoom out">−</button>
+          <button type="button" onClick={() => setView(INITIAL_VIEW)} disabled={view.k === MIN_ZOOM} aria-label="Reset map view">⟲</button>
+        </div>
         <svg
+          ref={svgRef}
           className="impact-map"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerEnd}
+          onPointerCancel={onPointerEnd}
+          onClickCapture={(event) => {
+            // Ending a drag must not select the country or symbol under it.
+            if (gesture.current?.dragged) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+            gesture.current = undefined
+          }}
           viewBox="0 0 960 480"
           role="group"
           aria-label={`Living Shock Atlas: ${countries.length} countries with hazard impact assessments`}
@@ -139,6 +248,7 @@ export function ImpactAtlasMap({
         >
         <title>Living Shock Atlas</title>
         <desc id="impact-map-description">Select a highlighted country to filter the assessment dossiers below.</desc>
+        <g transform={`translate(${view.x} ${view.y}) scale(${view.k})`}>
         {paths.map(({ iso3, d }) => {
           const summary = countryByIso.get(iso3)
           if (!summary) return <path className="impact-map-country" d={d} key={iso3} />
@@ -165,15 +275,17 @@ export function ImpactAtlasMap({
             </a>
           )
         })}
+        </g>
+        {/* Symbols follow the zoom in position but keep their on-screen size. */}
         {symbols.length > 0 && (
           <g className={`impact-map-releases${highlightedItemId ? ' has-highlight' : ''}`}>
             {symbols.map((group) => (
               <g key={group.iso3}>
-                {group.items.map(({ release, x }) => (
-                  <ReleaseSymbol key={release.id} release={release} x={x} y={group.y} highlighted={release.itemId === highlightedItemId} onHover={setHoveredRelease} />
+                {group.items.map(({ release, dx }) => (
+                  <ReleaseSymbol key={release.id} release={release} x={group.cx * view.k + view.x + dx} y={group.cy * view.k + view.y} highlighted={release.itemId === highlightedItemId} onHover={setHoveredRelease} />
                 ))}
                 {group.overflow > 0 && (
-                  <text className="impact-map-release-more" x={group.overflowX} y={group.y + 4} aria-hidden="true">+{group.overflow}</text>
+                  <text className="impact-map-release-more" x={group.cx * view.k + view.x + group.overflowDx} y={group.cy * view.k + view.y + 4} aria-hidden="true">+{group.overflow}</text>
                 )}
               </g>
             ))}
@@ -209,6 +321,14 @@ export function ImpactAtlasMap({
       <MapDisclaimer />
     </>
   )
+}
+
+function toViewBox(svg: SVGSVGElement, clientX: number, clientY: number) {
+  const rect = svg.getBoundingClientRect()
+  return {
+    x: ((clientX - rect.left) * MAP_WIDTH) / rect.width,
+    y: ((clientY - rect.top) * MAP_HEIGHT) / rect.height,
+  }
 }
 
 function ReleaseSymbol({
