@@ -9,7 +9,8 @@ import { formatDate, isPhotoGalleryWrapper } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
 import { CITATION_LANGUAGES, citationModel, citationRound, citationText, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { CitationText } from '../components/CitationText'
-import { fetchStoryMapFlickrAlbum, isExplorableProduct, itemResourceAction, itemThumbnail } from '../services/arcgis'
+import { AnonymousDownloadLink } from '../components/AnonymousDownloadLink'
+import { fetchStoryMapFlickrAlbum, isExplorableProduct, itemResourceAction, itemThumbnail, publicItemDataUrl, usesAnonymousDownload } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
 import { fetchPhotoGalleries, galleryForFlickrAlbum, galleryForLegacyItem, type PhotoGallery } from '../services/photoGalleries'
 
@@ -279,7 +280,7 @@ export default function CatalogProduct() {
                   {item.type === 'PDF' ? (
                     <div className="catalog-product-hero-actions">
                       <button className="catalog-product-action" type="button" onClick={openPreview}>Preview PDF <i className="bi bi-file-earmark-pdf" aria-hidden="true" /></button>
-                      <a className="catalog-product-action catalog-product-action--secondary" href={action.href}>Download PDF <i className="bi bi-download" aria-hidden="true" /></a>
+                      <AnonymousDownloadLink className="catalog-product-action catalog-product-action--secondary" item={item}>Download PDF <i className="bi bi-download" aria-hidden="true" /></AnonymousDownloadLink>
                     </div>
                   ) : isExplorableProduct(item) ? (
                     <div className="catalog-product-hero-actions">
@@ -287,9 +288,22 @@ export default function CatalogProduct() {
                       <a className="catalog-product-action catalog-product-action--secondary" href={action.href} target="_blank" rel="noreferrer">Open data service <i className="bi bi-box-arrow-up-right" aria-hidden="true" /></a>
                     </div>
                   ) : (
-                    <a className="catalog-product-action" href={action.href} target="_blank" rel="noreferrer">
-                      {action.label}<i className="bi bi-box-arrow-up-right" aria-hidden="true" />
-                    </a>
+                    <>
+                      {usesAnonymousDownload(item) ? (
+                        <AnonymousDownloadLink className="catalog-product-action" item={item}>
+                          {action.label}<i className="bi bi-download" aria-hidden="true" />
+                        </AnonymousDownloadLink>
+                      ) : (
+                        <a className="catalog-product-action" href={action.href} target="_blank" rel="noreferrer">
+                          {action.label}<i className="bi bi-box-arrow-up-right" aria-hidden="true" />
+                        </a>
+                      )}
+                      {action.fallbackHref && (
+                        <a className="catalog-product-action-fallback" href={action.fallbackHref} target="_blank" rel="noreferrer">
+                          Download not working? Open the item page on ArcGIS
+                        </a>
+                      )}
+                    </>
                   )}
                   <p className="catalog-product-action-note">{item.type === 'PDF'
                     ? 'Preview in the Hub or download the original file.'
@@ -395,15 +409,15 @@ export default function CatalogProduct() {
                       >
                         {previewOpen ? 'Hide preview' : 'Preview PDF'}
                       </button>
-                      <a href={action.href}>Download PDF <i className="bi bi-download" aria-hidden="true" /></a>
+                      <AnonymousDownloadLink item={item}>Download PDF <i className="bi bi-download" aria-hidden="true" /></AnonymousDownloadLink>
                     </div>
                   </div>
                   {previewOpen && (
                     <div className="catalog-product-preview-frame" id="product-pdf-preview">
                       <Suspense fallback={<div className="catalog-pdf-loading" role="status"><span className="loader" />Preparing PDF viewer…</div>}>
-                        <PdfPreview title={item.title.trim()} url={action.href} />
+                        <PdfPreview title={item.title.trim()} url={item.access === 'public' ? publicItemDataUrl(item.id) : action.href} />
                       </Suspense>
-                      <p>Preview unavailable or difficult to read? <a href={action.href}>Download the PDF</a>.</p>
+                      <p>Preview unavailable or difficult to read? <AnonymousDownloadLink item={item}>Download the PDF</AnonymousDownloadLink>.</p>
                     </div>
                   )}
                 </section>

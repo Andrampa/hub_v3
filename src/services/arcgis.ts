@@ -176,12 +176,95 @@ export function itemResourceAction(item: ArcGISItem) {
       label: item.type === 'Image'
         ? 'View Image'
         : `Download ${item.type}`,
+      direct: true,
+      fallbackHref: itemPortalPage(item.id),
     }
   }
   return {
-    href: `${ARCGIS_PORTAL}/home/item.html?id=${item.id}`,
+    href: itemPortalPage(item.id),
     label: 'View in ArcGIS',
   }
+}
+
+/** The ArcGIS item page, the fallback when a direct file link fails. */
+export function itemPortalPage(itemId: string) {
+  return `${ARCGIS_PORTAL}/home/item.html?id=${encodeURIComponent(itemId)}`
+}
+
+/** Tokenless, per-call cache-busted `/data` URL for a public file item. */
+export function publicItemDataUrl(itemId: string, now = Date.now()) {
+  return `${REST_ROOT}/content/items/${encodeURIComponent(itemId)}/data?_=${now}`
+}
+
+/** Whether a catalogue item takes the session-independent download path. */
+export function usesAnonymousDownload(item: Pick<ArcGISItem, 'type' | 'access' | 'url'>) {
+  return !item.url && item.access === 'public' && DIRECT_FILE_TYPES.has(item.type) && item.type !== 'Image'
+}
+
+export type AnonymousDownloadResult = 'saved' | 'fallback'
+
+type DownloadDeps = {
+  fetch: typeof fetch
+  save: (blob: Blob, filename: string) => void
+  openFallback: (url: string) => void
+}
+
+const browserDownloadDeps: DownloadDeps = {
+  fetch: (...args) => fetch(...args),
+  save: (blob, filename) => {
+    const href = URL.createObjectURL(blob)
+    const link = Object.assign(document.createElement('a'), { href, download: filename, rel: 'noopener' })
+    document.body.append(link)
+    link.click()
+    link.remove()
+    setTimeout(() => URL.revokeObjectURL(href), 60_000)
+  },
+  openFallback: (url) => {
+    if (!window.open(url, '_blank', 'noopener,noreferrer')) window.location.assign(url)
+  },
+}
+
+/**
+ * Download a public file item without any of the viewer's ArcGIS state.
+ *
+ * A browser navigation to arcgis.com always sends the esri_auth cookie and can
+ * reuse a cached 302 to a ten-minute signed itemdata URL; signed-in viewers have
+ * received a 404 either way. Here the file is fetched at click time with
+ * `credentials: 'omit'`, `cache: 'no-store'` and no referrer, following the
+ * redirect to a freshly signed URL, and saved from a blob. No navigation to
+ * arcgis.com happens on this path, so cookies never apply. On any failure the
+ * ArcGIS item page opens, never `/data`, so the fallback cannot hit the same fault.
+ */
+export async function downloadPublicItem(
+  item: Pick<ArcGISItem, 'id' | 'title' | 'type'> & { name?: string },
+  deps: DownloadDeps = browserDownloadDeps,
+): Promise<AnonymousDownloadResult> {
+  try {
+    const response = await deps.fetch(publicItemDataUrl(item.id), {
+      credentials: 'omit',
+      cache: 'no-store',
+      referrerPolicy: 'no-referrer',
+    })
+    if (!response.ok || /[?&]token=/i.test(response.url)) throw new Error(`HTTP ${response.status}`)
+    deps.save(await response.blob(), downloadFilename(item, response.headers.get('content-disposition')))
+    return 'saved'
+  } catch {
+    deps.openFallback(itemPortalPage(item.id))
+    return 'fallback'
+  }
+}
+
+export function downloadFilename(
+  item: Pick<ArcGISItem, 'id' | 'title'> & { name?: string },
+  contentDisposition?: string | null,
+) {
+  const encoded = contentDisposition?.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+  const plain = contentDisposition?.match(/filename="?([^";]+)"?/i)?.[1]
+  let name = item.name?.trim() || plain?.trim()
+  if (encoded) {
+    try { name = decodeURIComponent(encoded) } catch { /* keep the plain name */ }
+  }
+  return (name || item.title.trim() || item.id).replace(/[\\/:*?"<>|]+/g, '_')
 }
 
 /**
