@@ -20,7 +20,10 @@ function familyCountry(family: EvidenceFamily) {
  * when there is no distinguishing image, so the image is no longer a gate.
  */
 function selectEvidence(families: EvidenceFamily[]) {
-  const candidates = [...families].sort((a, b) => b.latestCreated - a.latestCreated)
+  // Questionnaires are survey instruments, not publications, so they never headline the homepage.
+  const candidates = families
+    .filter((family) => !family.variants.some((variant) => variant.productTypes.includes('Questionnaires')))
+    .sort((a, b) => b.latestCreated - a.latestCreated)
   const selected: EvidenceFamily[] = []
   const countries = new Set<string>()
   for (const family of candidates) {
