@@ -1,3 +1,4 @@
+import { HUB_ORIGIN } from './hubOrigin'
 import { itemRound } from './catalog'
 import { itemLanguage } from './productFamilies'
 import type { CountryResource } from '../services/countries'
@@ -51,7 +52,7 @@ export interface CitationModel {
 
 const AUTHOR = 'FAO'
 const CONTAINER = 'DIEM Hub'
-const HUB_URL = 'https://data-in-emergencies.fao.org'
+const HUB_URL = HUB_ORIGIN
 
 const PHRASES: Record<CitationLanguage, {
   in: string; cited: string; placeholder: string; city: string; locale: string

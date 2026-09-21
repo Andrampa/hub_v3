@@ -1,3 +1,4 @@
+import { HUB_ORIGIN } from "./hubOrigin"
 import { describe, expect, it } from 'vitest'
 import {
   citationFor,
@@ -152,7 +153,7 @@ describe('living product citations', () => {
   it('follow the StoryMap example exactly', () => {
     const sahel = storymap({ created: Date.UTC(2024, 9, 1) })
     expect(citationFor(sahel, 'English', { on: new Date(Date.UTC(2026, 8, 9)) })).toBe(
-      'FAO. 2024. Monitoring floods in the Sahel and Central Africa, 2024. In: DIEM Hub. Rome. [Cited 9 September 2026]. https://data-in-emergencies.fao.org/catalog/d129b33705a84b6daaa5d6479f216f2f',
+      `FAO. 2024. Monitoring floods in the Sahel and Central Africa, 2024. In: DIEM Hub. Rome. [Cited 9 September 2026]. ${HUB_ORIGIN}/catalog/d129b33705a84b6daaa5d6479f216f2f`,
     )
   })
 
@@ -207,11 +208,11 @@ describe('shared citation rules', () => {
 describe('collectionCitationModel', () => {
   it('cites DIEM-Monitoring as a living collection, with a date for the reader to fill in', () => {
     expect(citationText(collectionCitationModel('English')))
-      .toBe('FAO. 2026. DIEM-Monitoring. In: DIEM Hub. Rome. [Cited date]. https://data-in-emergencies.fao.org')
+      .toBe(`FAO. 2026. DIEM-Monitoring. In: DIEM Hub. Rome. [Cited date]. ${HUB_ORIGIN}`)
     expect(citationText(collectionCitationModel('Français')))
-      .toBe('FAO. 2026. DIEM-Monitoring [DIEM-Suivi]. Dans : DIEM Hub. Rome. [Consulté le date]. https://data-in-emergencies.fao.org')
+      .toBe(`FAO. 2026. DIEM-Monitoring [DIEM-Suivi]. Dans : DIEM Hub. Rome. [Consulté le date]. ${HUB_ORIGIN}`)
     expect(citationText(collectionCitationModel('Español')))
-      .toBe('FAO. 2026. DIEM-Monitoring [DIEM-Monitoreo]. En: DIEM Hub. Roma. [Consultado el fecha]. https://data-in-emergencies.fao.org')
+      .toBe(`FAO. 2026. DIEM-Monitoring [DIEM-Monitoreo]. En: DIEM Hub. Roma. [Consultado el fecha]. ${HUB_ORIGIN}`)
   })
 
   it('uses the real access date when given one, and italicises the Hub', () => {

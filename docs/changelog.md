@@ -33,6 +33,53 @@
   the hero because the shared scroll effect ran while Suspense still showed its
   loading fallback.
 
+## 2026-09-21 - Package links open on the review server; unlisted items open by direct link
+
+- One constant, `HUB_ORIGIN` (`src/lib/hubOrigin.ts`), holds the Hub's own
+  address for every absolute link: package files, citations, documentation and
+  boundary links. It is the review server (`https://diem.review.fao.org`) until
+  go-live; the switch and the remaining old-site addresses are listed in
+  `docs/development_workflow.md`, "Going live".
+- Field descriptions and both reference-boundary items now link to their Hub
+  product page (`/catalog/<id>`) instead of the old site's `/documents` and
+  `/maps` pages.
+- A product page opens any public item in the content group at its direct
+  address. The `Discoverable product` role now only decides what listings show,
+  so unlisted items (field descriptions, boundaries) no longer read as withdrawn.
+
+## 2026-09-21 - Wording: "How to access data", "Your surveys"
+
+- `/data` is now titled **How to access data** (page title, header, footer,
+  breadcrumbs): it holds instructions only.
+- The phrase "survey (data) workspace" is gone from the guide and every page;
+  the section is **Your surveys** everywhere. Buttons that opened it now read
+  **See surveys available for download**.
+- The generations heading on `/data` no longer says "chosen for you"; it
+  presents one questionnaire refined over three generations.
+- The guide's **How to cite** shows one citation at a time with English /
+  Français / Español tabs and a copy button, in the body font, instead of three
+  stacked serif boxes.
+
+## 2026-09-21 - Validated gate in the explorer; clearer survey list and packages
+
+- **Dataset explorer:** community members now see aggregated rows only from
+  surveys the register marks Validated = Yes, as in the workspace, on top of
+  `opendata = 1`. Nothing is queried until the register answers; if it cannot
+  be read the explorer says so.
+- **Package limit explained:** at 10 surveys, clicking another survey no longer
+  does nothing. The row stays clickable and says, on the row, why it was not
+  added and what to do.
+- **Collection dates in the survey list,** from the survey register
+  ("Mar 2024 – Apr 2024"), beside the round.
+- **Generation badges link** to the data guide's explanation of the three
+  questionnaire generations (`/data/guide#generations`).
+- **Package documentation:** each survey folder carries
+  `documentation_and_metadata.txt` with the links from the end of the
+  workspace (generation, field descriptions and metadata, reference boundaries,
+  API and analysis tools, source services, data guide). It replaces the
+  `metadata/` folder's raw field lists and layer schemas. The tools list is now
+  one shared constant (`ANALYSIS_TOOLS`).
+
 ## 2026-09-21 - Two-level visibility for community members
 
 - **Fixed:** a DIEM community member was offered 0 aggregated surveys, because

@@ -330,8 +330,12 @@ export async function fetchCurrentCatalogProduct(id: string): Promise<CountryRes
   const response = await fetchPage(1, `id:${id}`)
   const exact = response.results.find((item) => item.id.toLowerCase() === id.toLowerCase())
   if (!exact) return undefined
-  const normalized = normalizeItem(exact)
-  return normalized.discoverable ? normalized.item : undefined
+  // Group membership is the gate, not the `Discoverable product` role. The role
+  // decides what the catalogue, search and country pages list; an item in the
+  // group without it (field descriptions, reference boundaries) is unlisted but
+  // still opens at its direct address, which is how packages and the data guide
+  // link to it.
+  return normalizeItem(exact).item
 }
 
 function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummary {

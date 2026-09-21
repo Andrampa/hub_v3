@@ -3,6 +3,7 @@ import {
   CROSS_COUNTRY_CODE,
   countryDefinition,
   fetchCountryCatalog,
+  fetchCurrentCatalogProduct,
   isCatalogItemId,
   itemCountryCodes,
   itemHasMultiCountryScope,
@@ -288,5 +289,26 @@ describe('isCatalogItemId', () => {
     // Right length and shape, wrong alphabet.
     expect(isCatalogItemId('499917g1518141209c2a6de55a79d991')).toBe(false)
     expect(isCatalogItemId(' 499917f1518141209c2a6de55a79d991')).toBe(false)
+  })
+})
+
+describe('fetchCurrentCatalogProduct', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  function groupAnswering(results: ArcGISItem[]) {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ total: results.length, results }) })))
+  }
+
+  it('opens an unlisted item in the group at its direct address', async () => {
+    // Field descriptions and reference boundaries carry no Discoverable role.
+    groupAnswering([record(id(7), ['/Categories/Administrative Boundaries'])])
+
+    expect((await fetchCurrentCatalogProduct(id(7)))?.id).toBe(id(7))
+  })
+
+  it('still refuses an item that is not in the group', async () => {
+    groupAnswering([])
+
+    expect(await fetchCurrentCatalogProduct(id(7))).toBeUndefined()
   })
 })

@@ -152,3 +152,26 @@ allowlist of the React source and build configuration. It excludes agent/AI
 context, internal documentation, local environment files, and `dist/`. Inspect
 the target repository’s diff, then commit and push it independently. Use
 `-AllowDirtyDeploymentRepository` only for an intentional, reviewed migration.
+
+## Going live
+
+Until go-live the Hub runs on the review server, `https://diem.review.fao.org`,
+and every link a reader follows outside the running site points there. When the
+Hub replaces the current site at `https://data-in-emergencies.fao.org`:
+
+1. `src/lib/hubOrigin.ts`: set `HUB_ORIGIN` to `https://data-in-emergencies.fao.org`.
+   This moves every absolute Hub link in one step: package files
+   (`documentation_and_metadata.txt`, `LICENCE.txt`, `manifest.json`), citations,
+   and the documentation and boundary links in `protectedData.ts`.
+2. Review the addresses that still name the **old** ArcGIS Hub site on the
+   production domain and only work while it is up:
+   - `protectedData.ts`: aggregated and microdata `href`s (`/maps/<id>`); point
+     them at `hubUrl('/catalog/<id>')` or the in-app explorer.
+   - `DataGuide.tsx`: `QUESTIONNAIRES_URL` (`/search?...`).
+   - `monitoring.ts`: `/datasets/<id>/explore` links.
+   - `dataExplorer.ts`: `DIEM_HUB_DOWNLOAD_API` (`/api/download/v1/items`), the
+     ArcGIS Hub download API, which does not exist on the new Hub.
+   - `SiteHeader.tsx`, `AboutDiem.tsx`: the account sign-up `redirect_uri`, which
+     must also be registered on the ArcGIS OAuth app.
+3. Canonical URLs and structured data already name the production address and
+   need no change.
