@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`/data` is the protected DIEM download workspace for household microdata, aggregated indicators, operational boundaries, guides, metadata and analysis tools.
+`/data` is the public overview of DIEM survey data. The protected workspace - aggregated indicators chosen by survey, household microdata, operational boundaries, metadata and analysis tools - is `/data/surveys`; see `docs/data_access_restructure.md`.
 
 The current production Hub remains unchanged. ArcGIS Online remains authoritative for every item and download.
 
@@ -73,11 +73,11 @@ without the other makes the two products contradict each other.
 | V2 | December 2022 – 2026 | Archive |
 | V1 | Before December 2022 | Archive |
 
-The reference generation renders first and expanded. Archives render as
-collapsed `<details>` blocks carrying their own data *and* their own field
-descriptions and codebooks, so a reader never has to work out which codebook
-belongs to which period. Moving a generation between roles is a single edit to
-`REFERENCE_GENERATION`; no layout change is involved.
+Surveys are chosen by country and round, not by generation: the workspace
+resolves each survey's generation and packages that generation's field schema
+and documentation links with it, so a reader never has to work out which
+codebook belongs to which period. `REFERENCE_GENERATION` still decides which
+generation the `/data` timeline presents as the current standard.
 
 V3 entries are marked `preview: true`. Their Phase 5 services are published and
 queryable but currently hold simulated records, and the UI must say so wherever
@@ -132,19 +132,77 @@ not been done yet.
 
 ## User Experience
 
-- `/data` anonymous state: purpose, the three-level access ladder, the three questionnaire generations, the microdata routes, sign-in and the public guide. No dataset is listed, because item titles and update dates are themselves protected metadata.
-- Authenticated hero: user identity and count of resources available to that account.
+- `/data`: a public overview, identical signed in or out apart from the hero
+  action. It explains aggregated data against household microdata (who can get
+  each and what is required), the three steps to the data, and the
+  questionnaire generations as a compact timeline, then routes to the survey
+  data workspace. It lists no dataset and requests no protected item metadata.
+  The `#aggregated` and `#microdata` anchors are kept for country-page links.
+- `/data/surveys`: the survey data workspace, where data is chosen by country
+  and round and downloaded as a package. See `docs/data_access_restructure.md`.
+  It also holds what `/data` used to carry for signed-in members: temporary
+  microdata grants, household microdata collections, the full microdata licence,
+  and — under technical resources — the source datasets, boundaries,
+  documentation and API tools. `GRANTS_ROUTE` (`/data/surveys#temporary-microdata`)
+  opens its microdata tab directly for a newly accepted grant.
 - `/data/:datasetId`: internal dataset explorer for supported microdata, aggregated data and boundary resources.
 - Explorer: real ArcGIS service geometry where available, interactive labelled basemap with selectable features and extent controls, live item/layer metadata, recommended country/round filters, matching-record count, table preview, copyable service/query URLs, and current-filter downloads.
 - Every dataset explorer links to the current administrative reference boundary
   dataset so analysts can join survey and aggregate records to the matching
   ADM geometry through the published administrative codes.
-- Microdata: FAM as the default route with its publication lag, direct request as the exception, the full microdata licence, and the datasets themselves only at tier 3.
-- Aggregated data: reference generation expanded, older generations as collapsed archives with their own documentation.
-- Documentation: field descriptions, codebooks and SDMX metadata per generation, plus the questionnaire catalogue.
-- Boundaries: current and historical ADM1/ADM2 operational references.
-- Tools: microdata labelling repository, DIEM API examples and FAO Microdata Catalogue.
-- Citations: copyable English, French and Spanish citation text plus licensing.
+- Microdata (workspace tab): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`.
+- Aggregated data (workspace): chosen by survey, not by generation; the generation is resolved per survey.
+- Documentation: field descriptions, codebooks and SDMX metadata per generation, each declaring an `audience` so aggregated packages link only aggregated documentation.
+- Boundaries: current and historical ADM1/ADM2 operational references, under workspace technical resources.
+- Tools: microdata labelling repository and DIEM API examples, under workspace technical resources.
+- Citations: English, French and Spanish citation text plus both licences, in `/data/guide`.
+
+## Content visibility
+
+The Hub applies the rule defined for the DIEM dashboard in register item 10 of
+`hh_survey_v3/docs/deferred_infrastructure_changes.md`, from one module,
+`src/services/visibility.ts`:
+
+- A **Contributor** (member of the Contributors group,
+  `capabilities.contributor`) sees every row, including data not yet validated
+  for publication.
+- Everyone else sees only rows with `opendata = 1`.
+- **Survey data only.** The rule governs aggregated data and household
+  microdata (grant views included). Administrative boundaries, documentation
+  and public catalogue datasets are outside it: they carry no flag and are
+  public by nature.
+- **Fails closed.** A layer with no `opendata` field has no row marked released,
+  so a non-Contributor gets nothing from it: discovery marks the source
+  `withheld` (not a failure, and not counted against the total) and the dataset
+  explorer says the dataset has not been released instead of showing "0
+  records". Every generation's pipeline writes the field, so this should only
+  ever surface a misconfigured layer.
+
+**The Hub does not currently behave like the dashboard.** The rule is shared;
+the enforcement is not:
+
+| | Hub | Dashboard today |
+|---|---|---|
+| `opendata = 1` filter | Enforced | Off (`enforceOpendata: false` until real surveys carry `opendata = 1`) |
+| Layer without the field | Withheld from non-Contributors | Shown unfiltered |
+| Survey register `round_validated` | Not applied | Hides unvalidated surveys |
+
+So today a non-Contributor can see `opendata = 0` rows in the dashboard that the
+Hub hides. The two converge when the dashboard sets `enforceOpendata: true` at
+the rebuild; the fail-closed and register differences remain.
+
+It is applied in three places, each of which funnels every query through it:
+survey discovery (the clause is stored on each theme, so `surveySliceWhere` -
+and therefore counts, CSV extracts and manifests - inherit it), the dataset
+explorer's single `where` (count, preview, map, downloads, API links, scripts),
+and the explorer's filter-option lists. Discovery results are cached per
+visibility scope. Test-data mode is Contributor-only, because every test survey
+is `opendata = 0`; `?test=1` is ignored for anyone else.
+
+**This is presentation, not security.** A public feature service returns every
+row to anyone who queries it directly. The real boundary is the rebuild
+topology in `docs/data_access_restructure.md` section 15: private mother tables
+for Contributors and public views exposing only `opendata = 1` rows.
 
 ## Public Dataset Explorer
 

@@ -13,7 +13,9 @@ import {
 
 /** Where the grants section lives, and how the dialog sends the user to it. */
 export const GRANTS_SECTION_ID = 'temporary-microdata'
-export const GRANTS_ROUTE = `/data#${GRANTS_SECTION_ID}`
+// The workspace opens its microdata tab when it arrives with this hash; the
+// grants section lives there now, not on the public /data overview.
+export const GRANTS_ROUTE = `/data/surveys#${GRANTS_SECTION_ID}`
 
 /**
  * A pending grant invitation is the one state where a user has been approved,

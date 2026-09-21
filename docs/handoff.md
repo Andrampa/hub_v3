@@ -1,5 +1,80 @@
 # Handoff
 
+## Active: survey-first data access workspace
+
+Status on 2026-09-21. The plan and its evidence are in
+`docs/data_access_restructure.md`. Nothing is committed.
+
+**What exists.** The switch is complete and atomic: `/data` is now the public
+overview and `/data/surveys` is the workspace that replaced its authenticated
+half.
+
+- `src/pages/DataAccess.tsx` — the public `/data` overview: two kinds of data,
+  three steps, the generation timeline, workspace CTA. Same page signed in or
+  out apart from the hero action. Keeps the `#aggregated` / `#microdata` anchors
+  country pages link to. Lists no dataset.
+- `src/pages/SurveyWorkspace.tsx` — sign-in gate, access summary, picker,
+  thematic selection, review, preflight and package download; the microdata tab
+  (FAM and request routes, temporary grants, household collections, full
+  licence); technical resources (source datasets, boundaries, documentation,
+  API tools).
+- `src/services/surveyAccess.ts`, `src/services/surveyBundle.ts`,
+  `src/services/bundleCompression.worker.ts` — discovery, the archive, and
+  compression in a dedicated worker. Do not replace the worker with fflate's own
+  async `zip`: that compresses small files synchronously on the calling thread,
+  which is every survey CSV.
+- `src/components/MicrodataLicence.tsx` — the one copy of the microdata terms.
+- `GRANTS_ROUTE` is now `/data/surveys#temporary-microdata`; the workspace opens
+  its microdata tab on that hash so an accepted grant lands on its data.
+- `/data/guide` carries the new download steps and all three citation languages.
+
+**Not yet verified with a real session.** Unit tests cover the pages against
+mocked services and the builder against a stubbed requester, mutation-checked on
+their key guards. The production build path ran in a browser with a stubbed
+requester (real worker, real zip, mid-compression cancel), and the public `/data`
+and `/data/guide` were checked in a browser at desktop and 375 px. No archive has
+been built from live ArcGIS and no signed-in state has been exercised.
+
+Next, in order:
+
+1. **The live signed-in test (plan section 14).** On
+   `https://localhost:5173/data/surveys`: build one small package and compare
+   its CSV row count with the count shown at review; open the microdata tab with
+   a household-data account, a temporary-grant account and one holding both,
+   and check the licence wording names the right path each time; confirm a
+   non-Contributor sees no unreleased (`opendata = 0`) survey and no test-data
+   control, while a Contributor sees both; confirm every live V1 and V2 layer
+   carries `opendata` - the Hub now withholds any that does not, which would show
+   as `withheld` sources under technical resources; accept a grant
+   invitation and confirm it lands on the microdata tab. Run all five account
+   states.
+2. **Remove dead CSS.** About twenty class families in `src/data-access.css`
+   served the old workspace and are now unreferenced. Offered as a separate task.
+3. **Plan step 8** — present and count temporary grants by survey in the
+   workspace, per section 6.
+4. **Prepare the V3 swap** (plan section 15): two items per V3 slot (public
+   `opendata = 1` view and Contributor mother table), one `V3_STATUS` switch in
+   place of seven `preview` flags, a pilot-ID guard test. Planned, not built.
+5. **Dashboard link, other repository.** `HUB_DATA_URL` in
+   `hh_survey_v3/development/phase6_web_app/js/core/config.js` still sends
+   signed-in users to `/data`, now the public overview; it should point to
+   `/data/surveys`. Its `DATA_ACCESS_CONFIG` also duplicates the V3 item IDs.
+6. **Navigation.** The plan names the workspace **Your surveys** in the site
+   navigation; the header still links only to `/data`.
+
+**No visual inspection yet.** Browser screenshots timed out throughout — the
+pane does not draw while the app window is behind others — so `/data`,
+`/data/guide` and the workspace were checked through the DOM (structure,
+widths, overflow at desktop and 375 px), not seen. The repository's manual
+visual-verification requirement is therefore still unmet for all three pages.
+
+Verification: 410 tests across 23 files and `npm run build` both passed on
+2026-09-21. While a worktree exists under `.claude/worktrees/`, plain
+`npm test` also runs that worktree's copies of the tests, because
+`vitest.config.ts` does not exclude `.claude/`; use
+`npx vitest run --exclude ".claude/**" --exclude "**/node_modules/**"` for this
+repository's own count.
+
 ## Pending AGOL work: roll out the difference-based community sync
 
 Status: the notebook is saved at

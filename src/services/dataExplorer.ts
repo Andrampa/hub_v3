@@ -232,12 +232,18 @@ export async function fetchFieldOptions(
   definition: DatasetDefinition,
   field: FeatureField,
   requester: ProtectedRequester,
+  /**
+   * The viewer's visibility clause. Unfiltered by the user's own filters on
+   * purpose, but never wider than what the viewer may see: otherwise a
+   * non-Contributor's round dropdown would list rounds not yet released.
+   */
+  baseWhere = '1=1',
 ): Promise<FieldOptions> {
   const coded = codedValueOptions(field)
   if (coded) return { values: coded, truncated: false }
 
   const response = await requester<QueryResponse>(`${definition.layerUrl}/query`, {
-    where: '1=1',
+    where: baseWhere,
     outFields: field.name,
     returnDistinctValues: 'true',
     returnGeometry: 'false',
@@ -623,25 +629,36 @@ async function fetchEsriGeoJsonPages(
   return { type: 'FeatureCollection', features } as GeoJsonResponse
 }
 
-async function fetchAllAttributes(
-  definition: DatasetDefinition,
+/**
+ * Every matching row of a layer, paged.
+ *
+ * Addressed by layer URL rather than by a resolved dataset, so a caller that
+ * already knows the layer - the survey package builder - uses the same
+ * pagination, the same ordering and the same explicit failure on a short page
+ * as an explorer download, instead of growing a second copy that drifts.
+ */
+export async function fetchLayerRows(
+  layerUrl: string,
+  layer: FeatureLayerInfo,
   where: string,
   requester: ProtectedRequester,
   expectedCount: number,
+  signal?: AbortSignal,
 ) {
   const rows: Record<string, unknown>[] = []
-  const pageSize = Math.min(definition.layer.maxRecordCount || 1000, 1000)
+  const pageSize = Math.min(layer.maxRecordCount || 1000, 1000)
   let offset = 0
   while (offset < expectedCount) {
+    signal?.throwIfAborted()
     const requested = Math.min(pageSize, expectedCount - offset)
-    const page = await requester<QueryResponse>(`${definition.layerUrl}/query`, {
+    const page = await requester<QueryResponse>(`${layerUrl}/query`, {
       where,
       outFields: '*',
       returnGeometry: 'false',
       resultOffset: String(offset),
       resultRecordCount: String(requested),
-      orderByFields: definition.layer.objectIdField ? `${definition.layer.objectIdField} ASC` : undefined,
-    })
+      orderByFields: layer.objectIdField ? `${layer.objectIdField} ASC` : undefined,
+    }, signal ? { signal } : undefined)
     const pageRows = (page.features || []).map((feature) => feature.attributes)
     rows.push(...pageRows)
     if (!pageRows.length) throw new Error(`The data service stopped after ${formatNumber(offset)} of ${formatNumber(expectedCount)} expected records. Narrow the filters and try again.`)
@@ -650,9 +667,24 @@ async function fetchAllAttributes(
   return rows
 }
 
-function csvCell(value: unknown) {
+function fetchAllAttributes(
+  definition: DatasetDefinition,
+  where: string,
+  requester: ProtectedRequester,
+  expectedCount: number,
+) {
+  return fetchLayerRows(definition.layerUrl, definition.layer, where, requester, expectedCount)
+}
+
+export function csvCell(value: unknown) {
   const text = value === null || value === undefined ? '' : String(value)
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+}
+
+/** CSV text with the byte-order mark Excel needs for accented characters. */
+export function rowsToCsv(columns: string[], rows: Record<string, unknown>[]) {
+  const lines = [columns.join(','), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
+  return `﻿${lines.join('\r\n')}`
 }
 
 export async function downloadCsv(
@@ -664,8 +696,7 @@ export async function downloadCsv(
   if (count > BROWSER_EXPORT_LIMIT) throw new Error(`This filtered result has more than ${formatNumber(BROWSER_EXPORT_LIMIT)} records. Use the service API for a larger automated extraction.`)
   const rows = await fetchAllAttributes(definition, where, requester, count)
   const columns = usableFields(definition.layer.fields).map((field) => field.name)
-  const lines = [columns.join(','), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
-  return new Blob(['\uFEFF', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
+  return new Blob([rowsToCsv(columns, rows)], { type: 'text/csv;charset=utf-8' })
 }
 
 export async function downloadGeoJson(

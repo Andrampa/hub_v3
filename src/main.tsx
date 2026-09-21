@@ -34,6 +34,7 @@ const CountryDetail = lazy(() => import('./pages/CountryDetail'))
 const DataAccess = lazy(() => import('./pages/DataAccess'))
 const DataGuide = lazy(() => import('./pages/DataGuide'))
 const MicrodataRequest = lazy(() => import('./pages/MicrodataRequest'))
+const SurveyWorkspace = lazy(() => import('./pages/SurveyWorkspace'))
 const DatasetExplorer = lazy(() => import('./pages/DatasetExplorer'))
 const HouseholdMonitoring = lazy(() => import('./pages/HouseholdMonitoring'))
 const MonitoringSystem = lazy(() => import('./pages/MonitoringSystem'))
@@ -73,6 +74,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/data" element={<DataAccess />} />
             <Route path="/data/guide" element={<DataGuide />} />
             <Route path="/data/microdata-request" element={<MicrodataRequest />} />
+            {/* Static segment, declared before `/data/:datasetId` so the dataset
+                route keeps every 32-character item id it already answers. */}
+            <Route path="/data/surveys" element={<SurveyWorkspace />} />
             <Route path="/data/grants/:datasetId" element={<DatasetExplorer />} />
             <Route path="/data/:datasetId" element={<DatasetExplorer />} />
             <Route path="/datasets/:datasetId" element={<DatasetExplorer />} />

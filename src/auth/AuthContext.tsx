@@ -168,6 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         authentication: manager,
         httpMethod: options.method || 'POST',
         params: { f: 'json', ...params },
+        signal: options.signal,
       }) as Promise<T>
   }, [manager, status])
 

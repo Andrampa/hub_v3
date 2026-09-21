@@ -90,6 +90,12 @@ h1, h2, h3, h4, h5, h6,
  * light surfaces, but it overrides inherited text color inside Hub's dark
  * panels.  Keep all heading and label text on those surfaces at accessible
  * contrast, rather than relying on inheritance.
+ *
+ * EVERY NEW DARK SURFACE MUST BE ADDED TO BOTH LISTS BELOW. A dark section that
+ * is missing here renders its headings in the theme's gray on navy, which is
+ * nearly unreadable - the survey workspace hero and the /data call-to-action
+ * band both shipped that way before being added. Setting an explicit heading
+ * colour in the section's own stylesheet as well is the belt to these braces.
  */
 :where(
   .hero,
@@ -105,6 +111,8 @@ h1, h2, h3, h4, h5, h6,
   .flood-reference,
   .data-gate-hero,
   .data-workspace-hero,
+  .workspace-hero,
+  .data-overview-cta,
   .data-section--deep,
   .access-pathway,
   .dataset-explorer-header,
@@ -131,6 +139,8 @@ h1, h2, h3, h4, h5, h6,
   .flood-reference,
   .data-gate-hero,
   .data-workspace-hero,
+  .workspace-hero,
+  .data-overview-cta,
   .data-section--deep,
   .access-pathway,
   .dataset-explorer-header,

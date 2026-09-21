@@ -6,7 +6,7 @@ import { SiteHeader } from '../components/SiteHeader'
 import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION } from '../services/protectedData'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
-import { collectionCitationModel } from '../lib/citation'
+import { CITATION_LANGUAGES, collectionCitationModel } from '../lib/citation'
 
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
@@ -62,7 +62,7 @@ export default function DataGuide() {
             <h1>Finding, downloading and citing DIEM data</h1>
             <p>Everything needed to explore, download and interpret DIEM monitoring data: what is published, which questionnaire generation produced it, how access is granted, and how to reference it correctly. This guide is public; the data itself requires a DIEM community account.</p>
             <div className="guide-hero-actions">
-              <Link to="/data">Go to the data workspace</Link>
+              <Link to="/data/surveys">Open the survey data workspace</Link>
               <a href={FAM_URL} target="_blank" rel="noreferrer">Browse microdata in FAM</a>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function DataGuide() {
                   )
                 })}
               </div>
-              <p>Archived generations remain fully available in the data workspace, together with the field descriptions and codebooks that belong to them. They are collapsed by default so the current standard stays the obvious starting point.</p>
+              <p>You do not need to choose a generation. The survey data workspace lists surveys by country and round and works out which generation holds each one. Every package carries, for each survey, the exact field schema of its data and links to that generation's field descriptions and codebooks, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
             </section>
 
             <section id="accessibility">
@@ -121,7 +121,7 @@ export default function DataGuide() {
                 <li><strong>With a DIEM community account.</strong> Aggregated survey data at the lowest administrative level each survey supports, administrative reference boundaries, all technical documentation, the data API, and the microdata request form.</li>
                 <li><strong>With approved microdata access.</strong> Anonymized household-level records for the surveys covered by your approval, valid for a week and renewable.</li>
               </ol>
-              <p>Accounts are free and can be created from the sign-in prompt on the data workspace. Privileges are assigned by an automated procedure: allow up to 15 minutes from account creation before full access activates. If the aggregated data section says access is missing immediately after you register, that is the provisioning window rather than a problem with your account.</p>
+              <p>Accounts are free and can be created from the sign-in prompt on the data workspace. Privileges are assigned by an automated procedure: allow up to 15 minutes from account creation before full access activates. If the workspace reports no aggregated surveys immediately after you register, that is the provisioning window rather than a problem with your account.</p>
             </section>
 
             <section id="aggregated">
@@ -130,11 +130,13 @@ export default function DataGuide() {
               <p>Data is organized by thematic area. In the current generation those are income and shocks, crop production, livestock and fisheries, food security and needs, and a set of optional indicators asked only in selected surveys. Earlier generations grouped the same material into four thematic datasets.</p>
               <h3>Downloading</h3>
               <ol className="guide-steps">
-                <li>Sign in and open the aggregated data section of the workspace.</li>
-                <li>Choose the generation, then the thematic area you need.</li>
-                <li>Select <em>Explore data</em> to open the dataset, then filter by country and survey round. Filtering before downloading is important: exports are capped, and an unfiltered global table is rarely what you want.</li>
-                <li>Choose a format and download. CSV and GeoJSON are generated directly in the browser; other formats are packaged for you.</li>
+                <li>Sign in and open the <Link to="/data/surveys">survey data workspace</Link>.</li>
+                <li>Choose the surveys you need, by country and round. A standard account can put up to ten surveys in one package. Contributor accounts are not limited by survey count; their packages are bounded instead by a larger budget of records and data files, which the review step checks before anything is downloaded.</li>
+                <li>Choose all available themes, or pick specific ones. Each theme says how many of your surveys carry it.</li>
+                <li>Review the package. Count the records first: the review names every file, the record total and any survey and theme combination that will be missing, and why.</li>
+                <li>Download. You receive one zip with a folder per survey, each holding a CSV per theme, the field schema of every file, and links to that generation's documentation. A README and a manifest record exactly which query produced each file.</li>
               </ol>
+              <p>Each dataset can still be opened on its own, with a map, filters and further formats, from <em>Technical resources and source datasets</em> at the foot of the workspace. That is also the route for extractions beyond the 20 000 records a browser download can build, through the generated Python and R scripts.</p>
               <p>Before analysing, read the field descriptions and the questionnaire for the generation you are working in. Several fields are only interpretable alongside them.</p>
             </section>
 
@@ -157,7 +159,7 @@ export default function DataGuide() {
             <section id="documentation">
               <h2>Documentation and metadata</h2>
               <p><strong>{reference.label} documentation is still being produced.</strong> The field descriptions, codebook and detailed metadata are written alongside the questionnaire itself and are published with the first {reference.label} survey. Older-generation documentation describes a different field set and different codes, so use it for orientation only, never to interpret {reference.label} values.</p>
-              <p>Each generation carries its own documentation set, available in the workspace alongside its data:</p>
+              <p>Each generation carries its own documentation set. Every downloaded package links the set for its surveys' generation, and the full list is under technical resources in the workspace:</p>
               <ul className="guide-list">
                 <li><strong>Field descriptions</strong> explaining the content of every field, for microdata and for aggregated data.</li>
                 <li><strong>Codebooks</strong> mapping coded values to labels.</li>
@@ -202,8 +204,16 @@ export default function DataGuide() {
             <section id="citation">
               <h2>How to cite</h2>
               <p>Any product or publication that mentions or includes DIEM data should carry the following citation, replacing the bracketed date with the date you accessed the data.</p>
-              <blockquote className="guide-citation"><CitationText model={collectionCitationModel('English')}/></blockquote>
-              <p>French and Spanish versions are available in the data workspace and can be copied directly. We would be glad to hear about any product based on DIEM data — please let the DIEM Hub team know when you publish.</p>
+              {/* All three languages live here now. They were on /data, which no
+                  longer carries a citation section; dropping two of three would
+                  have been a regression, not a simplification. */}
+              {CITATION_LANGUAGES.map((language) => (
+                <figure className="guide-citation-language" key={language}>
+                  <figcaption>{language}</figcaption>
+                  <blockquote className="guide-citation"><CitationText model={collectionCitationModel(language)}/></blockquote>
+                </figure>
+              ))}
+              <p>We would be glad to hear about any product based on DIEM data — please let the DIEM Hub team know when you publish.</p>
             </section>
 
             <section id="licensing">

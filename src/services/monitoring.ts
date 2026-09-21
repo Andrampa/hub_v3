@@ -368,4 +368,81 @@ export async function fetchCountryMonitoringCoverage(
   }
 }
 
+/** A per-country register has tens of rows; this only stops a runaway loop. */
+const MAX_REGISTER_PAGES = 20
+
+export interface SurveyCollectionPeriod {
+  start?: number
+  end?: number
+}
+
+/**
+ * Collection dates for specific surveys, from the public survey register.
+ *
+ * The aggregate data services carry only country and round, so this is the one
+ * place a survey's fieldwork period is recorded. Rounds are numbered per country
+ * across the whole programme rather than restarting per questionnaire
+ * generation - Nigeria's rounds 1-3 are 2021-22 and 4 onwards 2023 on, with no
+ * repeats - so country and round identify one register row. A pair that matches
+ * none, or more than one, is left out rather than guessed.
+ */
+export async function fetchSurveyCollectionPeriods(
+  surveys: Array<{ adm0Iso3: string; round: number }>,
+  signal?: AbortSignal,
+): Promise<Map<string, SurveyCollectionPeriod>> {
+  const periods = new Map<string, SurveyCollectionPeriod>()
+  const countries = Array.from(new Set(surveys.map((survey) => survey.adm0Iso3.toUpperCase())))
+    .filter((iso3) => /^[A-Z]{3}$/.test(iso3))
+  if (!countries.length) return periods
+
+  // Paged and ordered, and never cut short quietly. A truncated read would make
+  // a survey on a later page look as if the register held no dates for it -
+  // a false statement written into the manifest, not merely a missing one.
+  const rows: SurveyReleaseAttributes[] = []
+  for (let page = 0, offset = 0; ; page += 1) {
+    if (page >= MAX_REGISTER_PAGES) throw new Error('The survey register returned more pages than expected and was not read completely.')
+    const params = new URLSearchParams({
+      f: 'json',
+      where: `admin0_isocode IN (${countries.map((iso3) => `'${iso3}'`).join(',')})`,
+      outFields: 'ObjectId,admin0_isocode,round,coll_start_date,coll_end_date',
+      returnGeometry: 'false',
+      orderByFields: 'ObjectId ASC',
+      resultOffset: String(offset),
+      resultRecordCount: String(PAGE_SIZE),
+    })
+    const response = await fetch(`${SURVEY_RELEASE_QUERY_URL}?${params}`, { signal })
+    if (!response.ok) throw new Error(`Survey register request failed (${response.status})`)
+    const data = await response.json() as SurveyReleaseResponse
+    if (data.error) throw new Error(data.error.message || 'The survey register could not be read.')
+    const pageRows = (data.features || []).flatMap((feature) => feature.attributes ? [feature.attributes] : [])
+    rows.push(...pageRows)
+    // A full page means there may be more even without the flag: an explicit
+    // record count can suppress `exceededTransferLimit`, the same trap survey
+    // discovery guards against. "Full" is PAGE_SIZE because the register's own
+    // maxRecordCount is 2 000 (measured 2026-09-21), so it never returns fewer
+    // rows than requested unless it has run out.
+    if (!data.exceededTransferLimit && pageRows.length < PAGE_SIZE) break
+    if (!pageRows.length) throw new Error('The survey register reported more rows but returned none, so it was not read completely.')
+    offset += pageRows.length
+  }
+
+  const wanted = new Set(surveys.map((survey) => `${survey.adm0Iso3.toUpperCase()}:${Math.trunc(survey.round)}`))
+  const matches = new Map<string, SurveyCollectionPeriod[]>()
+  for (const attributes of rows) {
+    const round = Number(normalizedRoundValue(text(attributes.round)))
+    if (!Number.isInteger(round)) continue
+    const key = `${text(attributes.admin0_isocode).toUpperCase()}:${round}`
+    if (!wanted.has(key)) continue
+    const period = {
+      start: Number.isFinite(attributes.coll_start_date) ? attributes.coll_start_date : undefined,
+      end: Number.isFinite(attributes.coll_end_date) ? attributes.coll_end_date : undefined,
+    }
+    matches.set(key, [...(matches.get(key) || []), period])
+  }
+  for (const [key, candidates] of matches) {
+    if (candidates.length === 1 && (candidates[0].start || candidates[0].end)) periods.set(key, candidates[0])
+  }
+  return periods
+}
+
 export const SURVEY_RELEASE_SOURCE_URL = SURVEY_RELEASE_LAYER_URL

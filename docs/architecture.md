@@ -72,6 +72,11 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
 - `src/components/CountryMap.tsx`: projected published world geometry.
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
+- `src/pages/SurveyWorkspace.tsx`: the `/data/surveys` survey-first workspace —
+  sign-in gate that keeps its destination, access summary, progressive survey
+  picker with a per-package selection cap, scoped test-data mode, thematic
+  selection stating each theme's reach, the package review table, and the
+  package download with staged progress and cancellation.
 - `src/pages/HouseholdMonitoring.tsx`: the `/monitoring-system` survey release
   board and household monitoring product library.
 - `src/components/MonitoringProducts.tsx`: country-and-round product discovery,
@@ -99,6 +104,8 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/DatasetGeometryMap.tsx`: Leaflet map over the public ArcGIS light-gray basemap, with filtered service geometry, tooltips, popups and extent controls.
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
+- `src/services/surveyAccess.ts`: authenticated, generation-aware survey discovery, per-theme availability and requester-scoped in-memory caching for the planned survey-first workspace.
+- `src/services/surveyBundle.ts`: the survey package archive — one zip with per-survey folders, CSV per theme, schema and documentation metadata, README and manifest, built transactionally with a lazily loaded compressor.
 - `src/data-access.css`: data workspace visual and responsive behavior.
 - `src/services/arcgis.ts`: portal constants, pagination, fetch validation,
   resource URLs, and the Flickr album a legacy photo-gallery StoryMap links to.

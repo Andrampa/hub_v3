@@ -1,5 +1,255 @@
 # Changelog
 
+## 2026-09-21 - The visibility rule governs survey data only
+
+- The explorer applied the fail-closed rule to every dataset it opens, so
+  administrative boundaries and public catalogue datasets - which carry no
+  `opendata` flag and are not survey data - were withheld from every
+  non-Contributor. The rule now applies only to aggregated data and household
+  microdata, grant views included (`governedByVisibility`).
+- A withheld dataset no longer sends its filter-option query either.
+- `src/pages/DatasetExplorer.test.tsx` is new: the explorer had no tests, and both
+  defects lived in it.
+
+## 2026-09-21 - Fail closed on unflagged layers; scope the filter-option cache
+
+- A layer with no `opendata` field is now withheld from non-Contributors instead
+  of being shown unfiltered: without the flag no row is marked released.
+  Discovery marks the source `withheld` without querying it, and does not count
+  it against the viewer's total; the dataset explorer says the dataset has not
+  been released and sends no queries, rather than presenting "0 records".
+- The explorer's filter-option cache is keyed by visibility scope as well as by
+  field, so a round list read for a Contributor - unreleased rounds included -
+  is never offered to the same page viewed as a non-Contributor.
+
+## 2026-09-21 - Released-data visibility, grouped survey list, readable dark headings
+
+- **Only released data for non-Contributors.** Survey discovery, every package
+  count and extract, and the dataset explorer now show a non-Contributor only
+  rows with `opendata = 1`; Contributors see unreleased rows too
+  (`src/services/visibility.ts`). **Correction:** this entry first said it mirrors
+  the dashboard "so the two cannot disagree". That was false: the dashboard's
+  filter is switched off today (`enforceOpendata: false`), and it fails open on a
+  layer without the field where the Hub now fails closed. The differences are
+  set out in `docs/data_access.md`, "Content visibility". It is presentation,
+  not security — see `docs/data_access.md`, "Content visibility". Test-data mode
+  is now Contributor-only, since every test survey is `opendata = 0`.
+- **Survey list grouped by country.** The picker shows one collapsed row per
+  country with its round count, generations and how many rounds are selected;
+  it opens onto its rounds, latest first. Searching, "selected only", or a list
+  of one country opens everything that matches.
+- **Headings on dark sections were unreadable.** The FAO theme colours headings
+  a dark grey, and `src/fao-adaptation.css` whitens them only on an allowlist of
+  dark surfaces. The workspace hero and the `/data` call-to-action band were not
+  on it, so their headings rendered grey on navy. Both are added, with explicit
+  colours in their own rules as well, and the allowlist now says in capitals
+  that every new dark surface must join it.
+- The combined grant-and-household licence wording is plainer: "…and a temporary
+  grant issued following your request."
+- `docs/data_access_restructure.md` section 15 plans the V3 pilot-to-production
+  swap.
+
+## 2026-09-21 - Licence framing follows the access path actually held
+
+- The microdata licence now takes an explicit access state — `none`,
+  `temporaryGrant` or `householdGroup` — instead of a single `householdData`
+  flag. A temporary-grant holder, whose `householdData` is deliberately false,
+  was being shown "open the request form" beneath the grant they already held,
+  with the citation obligation hidden; a household-data group member was told
+  they had accepted the conditions "when requesting access", which may never
+  have happened. The grants component reports whether an active grant exists,
+  so the licence frames the same grants the user is looking at rather than a
+  second discovery that could disagree.
+- An account holding both a temporary grant and household-data access gets its
+  own framing, naming both. Letting the grant wording stand in for both left the
+  group collections outside the stated scope of the conditions.
+- The ten-survey limit is described as the standard account limit on `/data`
+  and in the guide. Contributor packages are bounded by the larger budget of
+  records and data files, as the workspace already applied.
+
+## 2026-09-21 - `/data` becomes the public overview; the workspace takes the rest
+
+- `/data` is now a short public overview, identical signed in or out apart
+  from the hero action: aggregated data against household microdata (who can
+  get each and what is required), three steps to the data, the questionnaire
+  generations as a timeline chosen for you, and the route into the survey data
+  workspace. It lists no dataset and requests no protected item metadata. The
+  `#aggregated` and `#microdata` anchors country pages link to are kept.
+- Everything the old signed-in `/data` carried moved into `/data/surveys` in
+  the same change, so no member loses access in between: temporary grants,
+  household microdata collections, the FAM and request routes and the full
+  microdata licence in the microdata tab; source datasets, boundaries,
+  documentation and API tools under technical resources.
+- `GRANTS_ROUTE` now sends an accepted grant recipient to
+  `/data/surveys#temporary-microdata`, and the workspace opens its microdata tab
+  on that hash — a hidden panel could not have been scrolled to.
+- The microdata terms are one component, `MicrodataLicence`, rather than markup
+  inside a page, so the workspace and any later page cannot carry diverging
+  copies.
+- `/data/guide`: the download steps now follow the survey-first flow; the claims
+  about collapsed generation blocks and copying citations from the workspace are
+  gone; English, French and Spanish citations all live in the guide.
+
+## 2026-09-21 - Complete register reads and preflight focus
+
+- The collection-date lookup now pages through the survey register in order
+  instead of reading a single page. A truncated read would have reported a
+  survey on a later page as having no recorded dates — a false statement in the
+  manifest, not merely a missing one. If paging stalls or runs away, the lookup
+  fails explicitly and the package records that the register could not be read.
+  A full page continues the read even without `exceededTransferLimit`, which an
+  explicit record count can suppress; the register's `maxRecordCount` is 2 000,
+  equal to the requested page, so a short page reliably marks the end.
+- Counting records now ends by moving focus to the preflight verdict: either
+  what blocks the download, or confirmation that the package is ready with its
+  record and file count. Focus previously stayed on the re-enabled Count button.
+- Changing the selection or themes now also clears a "cancelled" outcome, which
+  otherwise lingered to describe a package that no longer existed.
+- `src/services/monitoring.test.ts` is new: `monitoring.ts` previously had no
+  tests at all.
+
+## 2026-09-21 - Genuine cancellation, collection dates and the final package review
+
+- **Correction to the entry below.** It said compression moved to fflate's
+  worker-based `zip` so Cancel worked during compression. That was false for
+  this data: fflate compresses every file under 160 000 bytes with
+  `deflateSync` on the calling thread, which is nearly every survey CSV, so the
+  page still froze and an abort could not be heard until compression finished.
+  Compression now runs in a dedicated worker
+  (`src/services/bundleCompression.worker.ts`) that Cancel terminates outright.
+  Verified in a browser: aborted 20 ms into compression, the build settled as
+  cancelled at 21 ms and the worker was terminated.
+- The cancellation signal now reaches every request in flight — the schema
+  read, each count and each page of rows — through a new `signal` option on the
+  protected requester, instead of being checked only between slices. An abort
+  surfacing from the network layer is reported as a cancellation, not an error.
+- Aggregated packages no longer link microdata documentation. Documentation
+  entries in the resource manifest now declare an `audience`, and the package
+  takes only `aggregate` and `both`, failing closed on anything unlabelled. The
+  V2 microdata codebook and both archived V1 microdata items were previously
+  linked from aggregated packages.
+- The package budget is now named for what it counts, `dataFiles`, matching the
+  unit the Download button names. The archive's full entry count follows from it
+  exactly — three per data file, two per survey, three at the root.
+- Every survey's collection period is recorded in the manifest and `survey.txt`,
+  from the public survey register. Rounds are numbered per country across the
+  whole programme, so country and round identify one register row. A register
+  outage leaves the dates blank with the reason written down, and does not fail
+  an otherwise valid package.
+- Before generating, the review states the archive name, contents, licence,
+  omitted combinations, any test-data warning and whether preflight passed. When
+  the build ends — ready, failed or cancelled — focus moves to the outcome.
+
+## 2026-09-21 - Gate package downloads on a complete preflight
+
+- Download now enables only when every selected survey is confirmed, the current
+  record counts cover exactly the package, no count failed, and the total is
+  within budget. It was previously enabled with no counts at all, and a
+  selection left unconfirmed by a failed source could be dropped from the
+  archive without a word.
+- Package budgets bound the whole operation, not just each file: 50 000 records
+  and 60 files for members, 200 000 and 250 for contributors. They are set from
+  the probe's largest table, 2 698 rows across every survey, so they stop a
+  pathological case without touching real use. The builder re-counts and
+  re-checks the budget itself before fetching any rows.
+- Compression moved from the blocking `zipSync` to fflate's worker-based `zip`,
+  so Cancel works during compression too.
+- Every data file now ships with the schema of its own layer. A multi-theme
+  survey previously received the first theme's schema for every CSV.
+- `resources.txt` links the generation's published field descriptions and
+  codebooks from the resource manifest, and states plainly when a generation —
+  V3 today — has none, rather than promising links it did not contain.
+- The access summary reads "confirmed so far" rather than "available" while any
+  source is pending or unreachable, and derives its source states from
+  production sources only, so a failing test source cannot mark the production
+  total incomplete.
+
+## 2026-09-21 - Survey package builder
+
+- `src/services/surveyBundle.ts` builds one archive with folders, never nested
+  zips, and lays a single survey out exactly as it lays ten out, so a script
+  written against one package works against every package.
+- Each survey folder carries `survey.txt`, `data/` with one CSV per theme
+  filtered to that survey, and `metadata/` with `fields.csv` and
+  `layer-schema.json` generated from the authoritative layer definition plus
+  `resources.txt` for documentation that cannot be fetched. The root carries
+  `README.txt`, `manifest.json` and `LICENCE.txt`.
+- The manifest records item, layer, filter, record count and access date, with
+  the query endpoint and its parameters stored separately so no token-bearing
+  URL is ever written, and no account name in the archive at all.
+- Transactional: a slice over the 20 000-record browser limit, or any failed
+  request, aborts before compression. No partial archive is ever handed back as
+  though it were complete, and the selection survives the failure.
+- Test-data packages carry `TEST_DATA` in the archive name, every folder name
+  and every CSV name, with the warning repeated in `survey.txt` and `README.txt`.
+- Staged progress (checking access, reading schema, downloading, adding
+  documentation, compressing) with cancellation, announced through `aria-live`.
+- `fflate` loads as a separate chunk, fetched only when a package is built, and
+  `fetchLayerRows` / `rowsToCsv` are now shared with the explorer's download
+  path rather than reimplemented.
+
+## 2026-09-21 - Thematic selection and package review in the survey workspace
+
+- Step 2 offers all available themes or a custom choice, and every theme states
+  its reach against the current selection in words ("available for 2 of 4
+  selected surveys"), never by colour.
+- Step 3 reviews the package before anything is built: survey, questionnaire,
+  included themes, files, records and notes. Omitted combinations are named,
+  and "not collected for this survey" is kept distinct from "could not be
+  retrieved" — a fact about the survey against a failure that may clear.
+- Record counts are measured on request rather than on every click, since a
+  full selection is fifty queries, and are discarded whenever the selection or
+  the themes change so a stale estimate cannot be read as current.
+- `surveySliceWhere` now defines a survey's slice of a thematic table once, so
+  the counted estimate, the eventual download and the manifest cannot diverge.
+  Discovery keeps the country and round field names it resolved, per generation.
+
+## 2026-09-21 - Read-only survey data workspace at `/data/surveys`
+
+- Added the workspace route: a sign-in gate that returns the visitor to the
+  workspace rather than `/data`, an access summary that never presents a partial
+  count as a total, and a progressive survey picker that fills in as sources
+  confirm.
+- Selection is capped per package (ten for community members, uncapped for
+  contributors), with only unchecked rows locking at the cap. It survives a
+  refresh through versioned stable keys in `sessionStorage`, is revalidated once
+  discovery settles, and says when an unavailable survey was removed.
+- Test-data mode is opt-in from the technical section, carries `?test=1`, and
+  shows the simulated surveys *instead of* the production ones rather than
+  beside them. With its own selection scope on top, no sequence of clicks mixes
+  the two populations, and the access count stays production-only in both modes.
+- Selections are scoped to the signed-in account and are only pruned after a
+  complete discovery: a source that fails leaves the selection intact and
+  reports it as unconfirmed, rather than deleting it and calling it unavailable.
+- The microdata card asserts no access level. Temporary grants and the
+  household-data group are separate authorization paths and neither is read
+  here yet, so the copy is neutral and points to the microdata section.
+- The mode tabs follow the keyboard contract: roving `tabindex`, arrow-key
+  navigation, and both panels mounted with the inactive one hidden.
+- Discovery now separates access completeness from row-level warnings
+  (`warningSourceCount`, `unavailableSourceCount`), drops rows with no country
+  code silently while counting them, and releases progress listeners through an
+  `AbortSignal` so an unmounted page leaks nothing.
+- `/data`, `/data/:datasetId`, `/data/grants/:datasetId` and the `?country=`
+  and `?round=` deep links are unchanged.
+
+## 2026-09-20 - Ground the survey-first data workspace in live services
+
+- Measured the authenticated V1 and V2 aggregate sources and recorded their
+  canonical survey fields, resolved layers, row/schema sizes, pagination
+  implications and browser response times in the data-access restructure plan.
+- Added the generation-aware survey discovery contract. It merges themes on
+  `generation + adm0_iso3 + round`, preserves named partial and access states,
+  reveals sources progressively, excludes V3 test records by default, paginates
+  ordered distinct queries without silently truncating at the safety ceiling,
+  and caches protected results only in memory for the active requester.
+- Verified in the authenticated explorer that V1 and V2 expose numeric round
+  values. Invalid or null survey identities are now counted and reported as a
+  partial source while valid rows remain available; declared administrative
+  coverage is explicitly distinguished from coverage measured from the layer.
+- Covered the contract with focused tests; no route or visible data-access UI
+  has changed yet.
+
 ## 2026-09-15 - Recent releases on the Living Shock Atlas
 
 - The hazard impact atlas marks products released in the last six months with

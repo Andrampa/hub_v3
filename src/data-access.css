@@ -306,6 +306,8 @@
 .guide-body code { padding: 2px 5px; background: var(--line-faint); color: #2c5567; font-size: 13px; }
 .guide-list, .guide-steps { margin: 0 0 16px; padding-left: 20px; color: #55676d; font-size: 14px; line-height: 1.78; }
 .guide-steps li, .guide-list li { margin-bottom: 9px; }
+.guide-citation-language { margin: 0 0 6px; }
+.guide-citation-language figcaption { margin: 0 0 6px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
 .guide-citation { margin: 0 0 15px; padding: 20px 24px; background: #f2f6f5; border-left: 3px solid var(--fao-blue); color: #2f4f5c; font-size: 13px; line-height: 1.7; }
 .guide-generation-list { display: grid; gap: 14px; margin-bottom: 18px; }
 .guide-generation { padding: 22px 24px; background: white; border: 1px solid var(--line-soft); border-left: 3px solid #9eaaad; }
@@ -480,4 +482,43 @@
 @media (min-width: 721px) and (prefers-reduced-motion: no-preference) {
   .data-gate-hero, .data-workspace-hero { clip-path: inset(0); }
   .data-hero-image { position: fixed; height: 100vh; }
+}
+
+/*
+ * Public /data overview. The page explains and routes; the survey workspace at
+ * /data/surveys is where data is chosen, so nothing here lists a dataset.
+ */
+.data-overview-hero { grid-template-columns: minmax(0, 760px); min-height: 520px; }
+.data-overview-primary { display: inline-flex; align-items: center; gap: 10px; padding: 15px 20px; border: 1px solid white; background: var(--fao-blue); color: white !important; font-size: 13px; font-weight: 700; }
+.data-overview-primary:hover { background: #0d5488; }
+.data-overview-primary svg { width: 16px; }
+.data-overview-signed-in { color: #b9d7de; font-size: var(--text-small); }
+
+.data-overview-choices { padding-block: 84px 20px; }
+.data-overview-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.data-overview-choice { display: flex; flex-direction: column; padding: 28px 30px; background: var(--paper); border: 1px solid var(--line-soft); border-top: 3px solid var(--fao-blue); scroll-margin-top: 24px; }
+.data-overview-choice-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; background: var(--mist); color: var(--deep-blue); }
+.data-overview-choice h3 { margin: 16px 0 10px; color: var(--deep-blue); font-size: 21px; letter-spacing: -.01em; }
+.data-overview-choice > p { margin: 0; color: var(--ink-faint); font-size: 13px; line-height: 1.7; }
+.data-overview-choice dl { display: grid; gap: 12px; margin: 20px 0 22px; }
+.data-overview-choice dt { color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.data-overview-choice dd { margin: 3px 0 0; color: var(--ink); font-size: 13px; line-height: 1.6; }
+.data-overview-choice > a, .data-overview-choice-links a { display: inline-flex; align-items: center; gap: 7px; margin-top: auto; color: var(--fao-blue); font-size: 13px; font-weight: 700; }
+.data-overview-choice-links { display: flex; flex-wrap: wrap; gap: 20px; margin-top: auto; }
+
+.generation-strip-inventory { margin-top: auto !important; padding-top: 10px; border-top: 1px solid var(--line-faint); color: var(--ink-faint) !important; font-size: var(--text-small) !important; }
+
+.data-overview-cta { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 30px; margin-bottom: 90px; padding: 34px 38px; background: var(--fao-navy); color: white; }
+.data-overview-cta h2 { margin: 0 0 6px; color: #fff; font-size: 24px; letter-spacing: -.01em; }
+.data-overview-cta p { margin: 0; color: #c6dae1; font-size: 13px; }
+.data-overview-cta-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
+.data-overview-secondary { display: flex; flex-wrap: wrap; gap: 20px; margin: 0; padding: 0; list-style: none; }
+.data-overview-secondary a { display: inline-flex; align-items: center; gap: 7px; color: #d2e2e6; font-size: var(--text-small); font-weight: 700; }
+.data-overview-secondary a:hover { color: white; }
+.data-overview-secondary svg { width: 15px; }
+
+@media (max-width: 800px) {
+  .data-overview-choice-grid { grid-template-columns: 1fr; }
+  .data-overview-hero { min-height: 0; padding-block: 64px; }
+  .data-overview-cta { padding: 28px 24px; }
 }

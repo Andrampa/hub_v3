@@ -93,6 +93,12 @@ export interface ProtectedDataResource {
    */
   staticLink?: string
   href?: string
+  /**
+   * Which data a documentation item describes. Read wherever documentation is
+   * attached to a download, so an aggregated package never points its reader at
+   * a microdata codebook for fields the package does not contain.
+   */
+  audience?: 'aggregate' | 'microdata' | 'both'
 }
 
 export interface ProtectedArcGISItem {
@@ -148,6 +154,11 @@ export interface ProtectedRequestOptions {
    * requires it, and never for one carrying sensitive parameters.
    */
   method?: 'GET' | 'POST'
+  /**
+   * Aborts the request in flight. Without it, cancelling a long operation still
+   * waits for every request already sent to come back.
+   */
+  signal?: AbortSignal
 }
 
 export type ProtectedRequester = <T>(
@@ -356,6 +367,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     fallbackTitle: 'Field descriptions',
     description: 'Variable names, definitions and interpretation guidance for V2 microdata and aggregated data.',
     kind: 'metadata',
+    audience: 'both',
     href: 'https://data-in-emergencies.fao.org/documents/04287fcadb994341b0b70d19c8a02035/about',
   },
   {
@@ -364,6 +376,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     fallbackTitle: 'Microdata codebook',
     description: 'Official coded values and labels used in the V2 household microdata.',
     kind: 'metadata',
+    audience: 'microdata',
     href: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/41fa55934d2f462f86cd381ee8dc1fda/data',
   },
   {
@@ -372,6 +385,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     fallbackTitle: 'Detailed metadata (SDMX)',
     description: 'SDMX-based metadata describing the V2 aggregated thematic datasets.',
     kind: 'metadata',
+    audience: 'aggregate',
     href: 'https://hqfao.maps.arcgis.com/sharing/rest/content/items/01595314154948719aca7325d88c782a/data',
   },
   {
@@ -380,6 +394,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     fallbackTitle: 'Aggregated data field descriptions — archived',
     description: 'Field descriptions for the archived aggregated thematic datasets.',
     kind: 'metadata',
+    audience: 'aggregate',
     staticLink: 'https://www.arcgis.com/sharing/rest/content/items/9d0ec676be324584b257315be2fe0d17/data',
   },
   {
@@ -388,6 +403,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     fallbackTitle: 'Microdata field descriptions — archived',
     description: 'Field descriptions for the archived household microdata.',
     kind: 'metadata',
+    audience: 'microdata',
     staticLink: 'https://www.arcgis.com/sharing/rest/content/items/e256f41d26ae4dc9b5906270a1116d33/data',
   },
   {
@@ -396,6 +412,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     fallbackTitle: 'Microdata codebooks — archived',
     description: 'Coded values and labels used in the archived household microdata.',
     kind: 'metadata',
+    audience: 'microdata',
     staticLink: 'https://www.arcgis.com/sharing/rest/content/items/e59d08ded7c1440587493bf65236cf44/data',
   },
 ]

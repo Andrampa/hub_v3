@@ -146,7 +146,7 @@ function GrantBundleCard({ bundle }: { bundle: GrantBundle }) {
 /**
  * Brings the section into view when the dialog has just sent the user here.
  *
- * The dialog navigates to `/data#temporary-microdata` the moment ArcGIS
+ * The dialog navigates to `/data/surveys#temporary-microdata` the moment ArcGIS
  * confirms the membership, but the grant it points at is still being
  * discovered, so there is nothing to scroll to yet. Waiting for the bundles to
  * render and scrolling then is what makes "accept and open data" actually open
@@ -169,9 +169,20 @@ function useScrollToGrantsOnArrival(ready: boolean) {
   return sectionRef
 }
 
-export function TemporaryMicrodataGrants() {
+/**
+ * `onActiveGrantChange` reports whether the account currently holds an active
+ * grant, from this component's own discovery. A page that needs to know - to
+ * frame the licence, say - reads it here rather than running a second
+ * discovery of its own that could disagree with the list the user is looking at.
+ */
+export function TemporaryMicrodataGrants({ onActiveGrantChange }: { onActiveGrantChange?: (active: boolean) => void } = {}) {
   const { discovery, checking, check } = useMicrodataGrants()
   const sectionRef = useScrollToGrantsOnArrival(Boolean(discovery?.bundles.length))
+  const hasActiveGrant = Boolean(discovery?.bundles.some((bundle) => bundle.status === 'active'))
+
+  useEffect(() => {
+    onActiveGrantChange?.(hasActiveGrant)
+  }, [hasActiveGrant, onActiveGrantChange])
 
   // Most signed-in users have no temporary grant and never will: the ordinary
   // route to microdata is FAM or a request. Telling them they have no access

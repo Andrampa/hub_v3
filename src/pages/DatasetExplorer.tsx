@@ -5,6 +5,7 @@ import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
 import { ADMIN_REFERENCE_DATASET_ID } from '../services/protectedData'
+import { governedByVisibility, isWithheld, visibilityClause, withVisibility } from '../services/visibility'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import NotFound from './NotFound'
 import { DatasetGeometryMap } from '../components/DatasetGeometryMap'
@@ -247,7 +248,22 @@ export default function DatasetExplorer() {
   const recommendedFields = useMemo(() => recommendedFilterFields(fields), [fields])
   const remainingFields = useMemo(() => fields.filter((field) => !recommendedFields.includes(field)), [fields, recommendedFields])
   const draftFieldDefinition = fields.find((field) => field.name === draftField)
-  const where = useMemo(() => buildWhere(filters, fields), [filters, fields])
+  /*
+   * Every query below - count, preview, map, downloads, API links, scripts -
+   * derives from this one `where`, so the visibility rule is applied here once:
+   * a non-Contributor sees only released (opendata = 1) rows, on layers that
+   * carry the flag. Shared with the survey workspace and the dashboard; see
+   * src/services/visibility.ts. Presentation, not a security boundary.
+   */
+  const isContributor = Boolean(auth.user?.capabilities?.contributor)
+  // Survey data only: boundaries and catalogue datasets are outside the rule.
+  const visibility = useMemo(() => (
+    definition && governedByVisibility(definition.resource.kind)
+      ? visibilityClause(definition.layer, isContributor)
+      : undefined
+  ), [definition, isContributor])
+  const withheld = isWithheld(visibility)
+  const where = useMemo(() => withVisibility(buildWhere(filters, fields), visibility), [filters, fields, visibility])
   const links = definition ? apiLinks(definition, where) : undefined
   const scripts = definition ? bulkDownloadScripts(definition, where) : undefined
   const overDownloadLimit = count !== undefined && count > BROWSER_EXPORT_LIMIT
@@ -257,7 +273,11 @@ export default function DatasetExplorer() {
   // authorized technical user can still read it record by record. The copy
   // below says exactly that rather than claiming the data cannot be retrieved.
   const bulkExportBlocked = Boolean(definition?.grant && !definition.grant.bulkExportEnabled)
-  const draftOptions = fieldOptions[draftField]
+  // Options are cached per visibility scope as well as per field: a list read
+  // for a Contributor includes unreleased rounds and must never be offered once
+  // the same page is viewed as a non-Contributor, or the other way round.
+  const optionsKey = (fieldName: string) => `${visibility ?? 'all'}|${fieldName}`
+  const draftOptions = fieldOptions[optionsKey(draftField)]
   // A dropdown is only honest for an exact match: "contains" and the numeric
   // comparisons are about values the list does not enumerate.
   const showOptionList = draftOperator === 'equals' && !!draftOptions && !draftOptions.truncated && draftOptions.values.length > 0
@@ -322,18 +342,22 @@ export default function DatasetExplorer() {
   useEffect(() => {
     if (!definition || !draftField) return
     const field = fields.find((candidate) => candidate.name === draftField)
-    if (!field || !fieldSupportsOptions(field) || fieldOptions[draftField]) return
+    const key = optionsKey(draftField)
+    // Withheld: the list could only come back empty, so it is not asked for.
+    if (withheld || !field || !fieldSupportsOptions(field) || fieldOptions[key]) return
     let active = true
     setOptionsLoading(true)
-    withTimeout(fetchFieldOptions(definition, field, requester), 'The attribute value list did not respond in time.', 12000)
-      .then((options) => { if (active) setFieldOptions((current) => ({ ...current, [draftField]: options })) })
-      .catch(() => { if (active) setFieldOptions((current) => ({ ...current, [draftField]: { values: [], truncated: true } })) })
+    withTimeout(fetchFieldOptions(definition, field, requester, visibility), 'The attribute value list did not respond in time.', 12000)
+      .then((options) => { if (active) setFieldOptions((current) => ({ ...current, [key]: options })) })
+      .catch(() => { if (active) setFieldOptions((current) => ({ ...current, [key]: { values: [], truncated: true } })) })
       .finally(() => { if (active) setOptionsLoading(false) })
     return () => { active = false }
-  }, [requester, definition, draftField, fieldOptions, fields])
+    // optionsKey is derived from visibility, which is listed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requester, definition, draftField, fieldOptions, fields, visibility, withheld])
 
   useEffect(() => {
-    if (!definition) return
+    if (!definition || withheld) return
     let active = true
     setIsQuerying(true)
     setQueryError(undefined)
@@ -352,14 +376,14 @@ export default function DatasetExplorer() {
       })
       .finally(() => { if (active) setIsQuerying(false) })
     return () => { active = false }
-  }, [requester, definition, where])
+  }, [requester, definition, where, withheld])
 
   // A new filter invalidates the extent the map was showing, so the next
   // geometry load starts unbounded again and the map reframes itself.
   useEffect(() => { setMapExtent(undefined) }, [where])
 
   useEffect(() => {
-    if (!definition) return
+    if (!definition || withheld) return
     if (definition.isTable) {
       setGeometry(undefined)
       setMapError(undefined)
@@ -381,7 +405,7 @@ export default function DatasetExplorer() {
       .catch((error: Error) => { if (active) setMapError(error.message) })
       .finally(() => { if (active) setIsMapLoading(false) })
     return () => { active = false }
-  }, [requester, definition, mapExtent, where])
+  }, [requester, definition, mapExtent, where, withheld])
 
   function addFilter() {
     if (!draftField || !draftValue.trim()) return
@@ -499,7 +523,17 @@ export default function DatasetExplorer() {
           ? <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened.</strong><p>{definitionError}</p><Link to="/catalog">Return to the catalogue</Link></section>
           : <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened for your account.</strong><p>{definitionError}</p><Link to="/data">Return to data access</Link></section>)}
         {!definition && !definitionError && <main className="dataset-explorer-loading"><span className="loader"/><strong>Opening the data service</strong><p>Reading the layer schema and access permissions...</p></main>}
-        {definition && (
+        {/* Fail closed, and say why. A layer with no opendata flag has no row
+            marked as released, so a non-Contributor gets nothing from it; an
+            explorer showing "0 records" would read as an empty dataset. */}
+        {definition && withheld && (
+          <section className="dataset-explorer-error section-wrap" role="status">
+            <strong>This dataset has not been released.</strong>
+            <p>Its data service carries no release flag (<code>opendata</code>), so none of its records are marked as published. Until they are, it is available to DIEM Contributors only.</p>
+            <Link to="/data/surveys">Return to the survey data workspace</Link>
+          </section>
+        )}
+        {definition && !withheld && (
           <>
             <section className="dataset-command-bar">
               <div className="section-wrap">
