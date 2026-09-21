@@ -1,3 +1,4 @@
+import { HUB_ORIGIN } from '../lib/hubOrigin'
 import {
   BROWSER_EXPORT_LIMIT,
   fetchLayerRows,
@@ -7,9 +8,11 @@ import {
 } from './dataExplorer'
 import { formatNumber } from '../lib/format'
 import {
-  DATA_PORTAL,
+  ANALYSIS_TOOLS,
   DOCUMENTATION_RESOURCES,
   GENERATIONS,
+  REFERENCE_RESOURCES,
+  resourceLink,
   type ProtectedRequester,
 } from './protectedData'
 import { surveySliceWhere, type AvailableSurvey, type SurveyThemeSource } from './surveyAccess'
@@ -30,9 +33,9 @@ import { fetchSurveyCollectionPeriods, type SurveyCollectionPeriod } from './mon
  * The file ceiling counts *data files* - one CSV per survey and theme, the unit
  * the Download button names. It was once called plain `files` while counting
  * only these, which misdescribed the archive. The archive's full entry count
- * follows from it exactly: three entries per data file (the CSV and its two
- * schema files), two per survey, three at the root - so bounding data files
- * bounds the archive too.
+ * follows from it exactly: one entry per data file, two per survey (survey.txt
+ * and documentation_and_metadata.txt), three at the root - so bounding data
+ * files bounds the archive too.
  */
 export const PACKAGE_BUDGETS = {
   member: { records: 50_000, dataFiles: 60 },
@@ -70,7 +73,7 @@ https://www.fao.org/contact-us/terms/db-terms-of-use/en
 Required citation
 Source of data: FAO. [year]. [Country]: DIEM-Monitoring assessments results
 ([month and year]). In: FAO Data in Emergencies Hub. Rome. [date accessed].
-https://data-in-emergencies.fao.org
+${HUB_ORIGIN}
 
 Household-level microdata is NOT covered by this licence. It is released under
 separate and stricter conditions and is not included in this package.
@@ -200,39 +203,18 @@ function ensureLive(signal?: AbortSignal) {
   if (signal?.aborted) throw new BundleCancelled()
 }
 
-/**
- * The field list, from the authoritative layer definition.
- *
- * Every CSV therefore ships with its exact technical schema even when the
- * published codebook cannot be retrieved, which is the common case today: V3
- * documentation does not exist yet and cross-portal items are not fetchable
- * from the browser.
- */
-function fieldsCsv(layer: FeatureLayerInfo) {
-  const rows = layer.fields.map((field) => ({
-    name: field.name,
-    alias: field.alias || field.name,
-    type: field.type,
-    coded_values: field.domain?.codedValues
-      ? field.domain.codedValues.map((value) => `${value.code}=${value.name}`).join(' | ')
-      : '',
-  }))
-  return rowsToCsv(['name', 'alias', 'type', 'coded_values'], rows)
-}
-
-function documentationLink(resource: (typeof DOCUMENTATION_RESOURCES)[number]) {
-  return resource.staticLink || resource.href || `${DATA_PORTAL}/home/item.html?id=${resource.id}`
-}
 
 /**
- * Links to the generation's published documentation, and says plainly when
- * there is none.
+ * One plain-text file per survey with every link a reader needs to interpret
+ * its CSVs: the generation and why generations differ, that generation's
+ * aggregated field descriptions and metadata, the reference boundaries the ADM
+ * codes join to, the API and analysis tools, and the exact source services.
  *
- * The items are linked, not embedded: several live on another portal the
- * browser cannot read, and some need a signed-in session to open. The exact
- * technical schema of every file is embedded next door regardless.
+ * Items are linked, not embedded: several live on another portal the browser
+ * cannot read, and some need a signed-in session to open. This replaces the
+ * per-file field lists, which repeated the raw layer schema without explaining it.
  */
-function resourcesText(survey: AvailableSurvey, themes: SurveyThemeSource[]) {
+export function documentationText(survey: AvailableSurvey, themes: SurveyThemeSource[]) {
   const generation = GENERATIONS[survey.generation]
   // Aggregated documentation only, and fail closed: a document nobody has
   // labelled is left out rather than risk pointing at a microdata codebook for
@@ -241,16 +223,27 @@ function resourcesText(survey: AvailableSurvey, themes: SurveyThemeSource[]) {
     resource.version === survey.generation
     && (resource.audience === 'aggregate' || resource.audience === 'both')
   ))
+  const title = `Documentation and metadata - ${survey.countryName} (${survey.adm0Iso3}), Round ${survey.round}`
   const lines = [
-    `Documentation for ${generation.label} - ${generation.name}`,
+    title,
+    '='.repeat(title.length),
     '',
+    'Questionnaire generation',
+    '------------------------',
+    `${generation.label} - ${generation.name} (${generation.period})`,
+    'Each generation has its own fields, codes and data structure. Why, and what',
+    'that means for comparing surveys across generations:',
+    `${HUB_ORIGIN}/data/guide#generations`,
+    '',
+    `Aggregated data field descriptions and metadata (${generation.label})`,
+    '-'.repeat(`Aggregated data field descriptions and metadata (${generation.label})`.length),
   ]
   if (documents.length) {
     lines.push(
-      'Published field descriptions and codebooks for this generation. Some open',
-      'only after signing in to the DIEM Hub with the account that built this package.',
+      'What every column in this folder\'s CSVs means. Some open only after signing',
+      'in to the DIEM Hub with the account that built this package.',
       '',
-      ...documents.map((resource) => `- ${resource.fallbackTitle}: ${documentationLink(resource)}`),
+      ...documents.map((resource) => `- ${resource.fallbackTitle}: ${resourceLink(resource)}`),
     )
   } else {
     lines.push(
@@ -261,13 +254,26 @@ function resourcesText(survey: AvailableSurvey, themes: SurveyThemeSource[]) {
   }
   lines.push(
     '',
-    'The exact technical schema of every CSV in this folder is included alongside',
-    'this file, one *.fields.csv and one *.layer-schema.json per data file.',
+    'Administrative reference boundaries',
+    '-----------------------------------',
+    'Join geographic fields to these using the official ADM codes.',
     '',
-    'Source services:',
+    ...REFERENCE_RESOURCES.map((resource) => `- ${resource.fallbackTitle}: ${resourceLink(resource)}`),
+    '',
+    'API and analysis tools',
+    '----------------------',
+    ...ANALYSIS_TOOLS.map((tool) => `- ${tool.title} (${tool.kind}): ${tool.href}\n  ${tool.description}`),
+    '',
+    'Source services',
+    '---------------',
+    'The exact layers this folder\'s CSVs were read from. manifest.json records',
+    'the filter applied to each, so any table can be reproduced or refreshed.',
+    '',
     ...themes.map((theme) => `- ${theme.label}: ${theme.layerUrl}`),
     '',
-    'DIEM data access guide: https://data-in-emergencies.fao.org/data/guide',
+    'Citation, licences and methodology',
+    '----------------------------------',
+    `DIEM data access guide: ${HUB_ORIGIN}/data/guide`,
   )
   return `${lines.join('\n')}\n`
 }
@@ -443,18 +449,6 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
     files[path] = encode(rowsToCsv(columns, rows))
     recordCount += rows.length
 
-    // Schema per data file, named after it. Each theme is a different layer
-    // with its own fields; one schema per survey would describe only one CSV.
-    files[`${folder}/metadata/${stem}.fields.csv`] = encode(fieldsCsv(layer))
-    files[`${folder}/metadata/${stem}.layer-schema.json`] = encode(`${JSON.stringify({
-      data_file: `data/${stem}.csv`,
-      theme: theme.label,
-      layer_url: theme.layerUrl,
-      name: layer.name,
-      objectIdField: layer.objectIdField,
-      maxRecordCount: layer.maxRecordCount,
-      fields: layer.fields,
-    }, null, 2)}\n`)
 
     manifestFiles.push({
       path,
@@ -491,7 +485,7 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
     ensureLive(signal)
     const folder = surveyFolderName(survey)
     files[`${folder}/survey.txt`] = encode(surveyText(survey, themes, collectionFor(survey)))
-    files[`${folder}/metadata/resources.txt`] = encode(resourcesText(survey, themes))
+    files[`${folder}/documentation_and_metadata.txt`] = encode(documentationText(survey, themes))
     report('metadata', index + 1, bySurvey.size)
   }
 
@@ -503,7 +497,7 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
      * No account name. It would add a privacy exposure to a file that gets
      * forwarded, and reproducing the extract needs the query, not the person.
      */
-    hub: 'https://data-in-emergencies.fao.org',
+    hub: HUB_ORIGIN,
     licence: 'CC BY 4.0 with the FAO Statistical Database Terms of Use',
     test_data: testData,
     surveys: Array.from(bySurvey.values()).map(({ survey, themes }) => ({
@@ -578,7 +572,7 @@ export function readmeText(manifest: BundleManifest, recordCount: number) {
     lines.push(`  ${survey.country}, Round ${survey.round} (${survey.generation})`)
     lines.push(`  Themes: ${survey.themes.join(', ')}`)
     lines.push('  data/     one CSV per theme, filtered to this survey')
-    lines.push('  metadata/ field descriptions, the layer schema and source links')
+    lines.push('  documentation_and_metadata.txt  field descriptions, metadata, boundaries, tools and source links')
     lines.push('')
   }
 

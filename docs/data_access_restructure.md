@@ -444,10 +444,7 @@ DIEM_aggregated_2026-09-20.zip
 │  ├─ data/
 │  │  ├─ NGA_R08_v2_food-security.csv
 │  │  └─ NGA_R08_v2_crop-production.csv
-│  └─ metadata/
-│     ├─ fields.csv
-│     ├─ layer-schema.json
-│     └─ resources.txt
+│  └─ documentation_and_metadata.txt
 └─ COD_R12_v3/
    └─ ...
 ```
@@ -460,12 +457,13 @@ one package works against every package.
 - The generation appears in every directory and file name. Once files are
   unzipped, nothing else prevents a V2 and a V3 table from being combined by
   accident.
-- `fields.csv` and `layer-schema.json` are generated from the authoritative
-  ArcGIS layer definition, so every CSV ships with its exact technical schema
-  even when published documentation cannot be retrieved.
-- Published codebooks and field descriptions are included **only after
-  successful retrieval and validation**. Otherwise - CORS, or V3 documentation
-  that does not exist yet - `resources.txt` carries the authoritative links.
+- `documentation_and_metadata.txt` (2026-09-21, replacing `metadata/fields.csv`,
+  `layer-schema.json` and `resources.txt`, which repeated the raw layer schema
+  without explaining it) links, per survey: the generation and why generations
+  differ (`/data/guide#generations`), that generation's aggregated field
+  descriptions and metadata (or says none are published yet), the administrative
+  reference boundaries, the API and analysis tools, the exact source services,
+  and the data access guide. Same content as the end of the survey workspace.
 - `manifest.json` records item ID, layer ID, item-modified timestamp,
   generation, filter expression, record count, collection date, access date, and
   the query endpoint and parameters **stored separately**. No token-bearing URL

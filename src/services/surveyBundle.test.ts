@@ -1,3 +1,4 @@
+import { HUB_ORIGIN } from '../lib/hubOrigin'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildSurveyBundle,
@@ -101,9 +102,7 @@ describe('survey bundle', () => {
     expect(Object.keys(captured).sort()).toEqual([
       'LICENCE.txt',
       'NGA_R08_v2/data/NGA_R08_v2_food-security.csv',
-      'NGA_R08_v2/metadata/NGA_R08_v2_food-security.fields.csv',
-      'NGA_R08_v2/metadata/NGA_R08_v2_food-security.layer-schema.json',
-      'NGA_R08_v2/metadata/resources.txt',
+      'NGA_R08_v2/documentation_and_metadata.txt',
       'NGA_R08_v2/survey.txt',
       'README.txt',
       'manifest.json',
@@ -202,7 +201,7 @@ describe('survey bundle', () => {
     expect(captured['README.txt']).toContain('Nothing was omitted')
   })
 
-  it('carries the schema even though the codebook cannot be fetched', async () => {
+  it('replaces raw field lists with one documentation file of links', async () => {
     const { captured, zip } = capturingZip()
 
     await buildSurveyBundle({
@@ -214,49 +213,13 @@ describe('survey bundle', () => {
       now: NOW,
     })
 
-    expect(captured['NGA_R08_v2/metadata/NGA_R08_v2_food-security.fields.csv']).toContain('fcs_mean,Food consumption score,esriFieldTypeDouble')
-    expect(JSON.parse(captured['NGA_R08_v2/metadata/NGA_R08_v2_food-security.layer-schema.json']).fields).toHaveLength(4)
-    expect(captured['NGA_R08_v2/metadata/resources.txt']).toContain('https://example.test/food-security/FeatureServer/0')
-  })
-
-  it('gives every data file the schema of its own layer, not the first theme\'s', async () => {
-    const { captured, zip } = capturingZip()
-    const CROP_LAYER = {
-      ...LAYER,
-      name: 'diem_adm_repr_2_mview',
-      fields: [
-        { name: 'OBJECTID', alias: 'Object ID', type: 'esriFieldTypeOID' },
-        { name: 'adm0_iso3', alias: 'Country code', type: 'esriFieldTypeString' },
-        { name: 'round', alias: 'Round', type: 'esriFieldTypeInteger' },
-        { name: 'crop_area_ha', alias: 'Cropped area (ha)', type: 'esriFieldTypeDouble' },
-      ],
-    }
-    const requester = (async (url: string, params?: Record<string, unknown>) => {
-      if (url.endsWith('/query') && params?.returnCountOnly === 'true') return { count: 1 }
-      if (url.endsWith('/query')) return { features: [{ attributes: { adm0_iso3: 'NGA', round: 8 } }] }
-      return url.includes('crop-production') ? CROP_LAYER : LAYER
-    }) as ProtectedRequester
-
-    await buildSurveyBundle({
-      slices: [
-        { survey: survey('NGA', 8), theme: theme('food-security', 'Food security') },
-        { survey: survey('NGA', 8), theme: theme('crop-production', 'Crop production') },
-      ],
-      requester,
-      zip,
-      collectionPeriods: NO_PERIODS,
-      budget: PACKAGE_BUDGETS.member,
-      now: NOW,
-    })
-
-    const food = captured['NGA_R08_v2/metadata/NGA_R08_v2_food-security.fields.csv']
-    const crop = captured['NGA_R08_v2/metadata/NGA_R08_v2_crop-production.fields.csv']
-    expect(food).toContain('fcs_mean')
-    expect(food).not.toContain('crop_area_ha')
-    expect(crop).toContain('crop_area_ha')
-    expect(crop).not.toContain('fcs_mean')
-    expect(JSON.parse(captured['NGA_R08_v2/metadata/NGA_R08_v2_crop-production.layer-schema.json']).data_file)
-      .toBe('data/NGA_R08_v2_crop-production.csv')
+    expect(Object.keys(captured).some((path) => /fields\.csv$|layer-schema\.json$/.test(path))).toBe(false)
+    const text = captured['NGA_R08_v2/documentation_and_metadata.txt']
+    expect(text).toContain(`${HUB_ORIGIN}/data/guide#generations`)
+    expect(text).toContain('Administrative reference boundaries')
+    expect(text).toContain('3596c3ad318849068eda21517ade30be')
+    expect(text).toContain('https://github.com/Andrampa/DIEM_API/tree/main')
+    expect(text).toContain('https://example.test/food-security/FeatureServer/0')
   })
 
   it('links the generation\'s published documentation, and admits when there is none', async () => {
@@ -275,10 +238,10 @@ describe('survey bundle', () => {
       now: NOW,
     })
 
-    const v2Resources = captured['NGA_R08_v2/metadata/resources.txt']
+    const v2Resources = captured['NGA_R08_v2/documentation_and_metadata.txt']
     expect(v2Resources).toContain('Field descriptions:')
     expect(v2Resources).toContain('04287fcadb994341b0b70d19c8a02035')
-    const v3Resources = captured['COD_R12_v3/metadata/resources.txt']
+    const v3Resources = captured['COD_R12_v3/documentation_and_metadata.txt']
     expect(v3Resources).toContain('No field descriptions or codebook have been published for V3 yet')
     // An earlier generation's codebook must never stand in for the missing one.
     expect(v3Resources).not.toContain('04287fcadb994341b0b70d19c8a02035')
@@ -530,12 +493,12 @@ describe('survey bundle', () => {
       now: NOW,
     })
 
-    const v2 = captured['NGA_R08_v2/metadata/resources.txt']
+    const v2 = captured['NGA_R08_v2/documentation_and_metadata.txt']
     expect(v2).toContain('04287fcadb994341b0b70d19c8a02035') // field descriptions: both
     expect(v2).toContain('01595314154948719aca7325d88c782a') // SDMX: aggregated
     expect(v2).not.toContain('41fa55934d2f462f86cd381ee8dc1fda') // microdata codebook
 
-    const v1 = captured['AFG_R02_v1/metadata/resources.txt']
+    const v1 = captured['AFG_R02_v1/documentation_and_metadata.txt']
     expect(v1).toContain('9d0ec676be324584b257315be2fe0d17') // aggregated field descriptions
     expect(v1).not.toContain('e256f41d26ae4dc9b5906270a1116d33') // microdata field descriptions
     expect(v1).not.toContain('e59d08ded7c1440587493bf65236cf44') // microdata codebooks

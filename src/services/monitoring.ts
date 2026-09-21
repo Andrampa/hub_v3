@@ -484,3 +484,14 @@ export async function fetchValidatedSurveyKeys(signal?: AbortSignal): Promise<Se
   }
   return keys
 }
+
+let validatedSurveyKeys: Promise<Set<string>> | undefined
+
+/** `fetchValidatedSurveyKeys`, read once per session; a failed read is retried next time. */
+export function loadValidatedSurveyKeys() {
+  validatedSurveyKeys ||= fetchValidatedSurveyKeys().catch((error) => {
+    validatedSurveyKeys = undefined
+    throw error
+  })
+  return validatedSurveyKeys
+}

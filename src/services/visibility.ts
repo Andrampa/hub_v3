@@ -104,3 +104,31 @@ export function withVisibility(where: string, clause: string | undefined) {
 export function visibilityScope(contributor: boolean) {
   return contributor ? 'restricted' : 'public'
 }
+
+/**
+ * The survey-level gate as a `where` clause: rows of validated surveys only,
+ * grouped by country - `(iso3 = 'AFG' AND round IN (1,2)) OR ...`.
+ *
+ * `keys` are `ISO3:round` from the survey register (`fetchValidatedSurveyKeys`).
+ * Fails closed: no keys, or a layer without country and round fields, yields
+ * `WITHHELD_WHERE`. A text round field is compared as text.
+ */
+export function validatedSurveyClause(
+  keys: Set<string>,
+  countryField: Pick<FeatureLayerInfo['fields'][number], 'name'> | undefined,
+  roundField: Pick<FeatureLayerInfo['fields'][number], 'name' | 'type'> | undefined,
+) {
+  if (!countryField || !roundField || !keys.size) return WITHHELD_WHERE
+  const byCountry = new Map<string, number[]>()
+  for (const key of keys) {
+    const [iso3, round] = key.split(':')
+    if (!/^[A-Z]{3}$/.test(iso3) || !/^\d+$/.test(round)) continue
+    byCountry.set(iso3, [...(byCountry.get(iso3) || []), Number(round)])
+  }
+  if (!byCountry.size) return WITHHELD_WHERE
+  const textRound = roundField.type === 'esriFieldTypeString'
+  return Array.from(byCountry, ([iso3, rounds]) => {
+    const values = rounds.sort((a, b) => a - b).map((round) => (textRound ? `'${round}'` : String(round))).join(',')
+    return `(${countryField.name} = '${iso3}' AND ${roundField.name} IN (${values}))`
+  }).join(' OR ')
+}

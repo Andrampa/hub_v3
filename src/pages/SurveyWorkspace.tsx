@@ -9,7 +9,10 @@ import { SiteHeader } from '../components/SiteHeader'
 import { TemporaryMicrodataGrants } from '../components/TemporaryMicrodataGrants'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatNumber } from '../lib/format'
+import { hubPath } from '../lib/hubOrigin'
+import { fetchSurveyCollectionPeriods, type SurveyCollectionPeriod } from '../services/monitoring'
 import {
+  ANALYSIS_TOOLS,
   DATA_PORTAL,
   DOCUMENTATION_RESOURCES,
   GENERATIONS,
@@ -136,13 +139,13 @@ function clearStoredSelection(account: string, scope: SelectionScope) {
 function SignInGate() {
   const auth = useAuth()
   usePageMetadata({
-    title: 'Survey data workspace',
+    title: 'Your surveys',
     description: 'Sign in with a DIEM community account to choose surveys and download aggregated household survey data with its documentation.',
   })
   return (
     <main id="top" className="workspace-gate">
       <div className="section-wrap">
-        <span className="eyebrow"><span/> Survey data workspace</span>
+        <span className="eyebrow"><span/> Your surveys</span>
         <h1>Sign in to choose your surveys</h1>
         <p>The workspace lists the surveys your account can download — country by country, round by round — and packages them with the documentation that belongs to each one. Aggregated survey data is available to any DIEM community account.</p>
         <div className="workspace-gate-actions">
@@ -166,6 +169,16 @@ function SignInGate() {
  * separately as `warningSourceCount`, because a source that answered with an odd
  * row has still been checked and must not be reported as unreachable.
  */
+const MONTH_YEAR = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/** "Mar 2024 – Apr 2024", "Mar 2024" for one month, or the one end the register holds. */
+export function collectionPeriodLabel(period: SurveyCollectionPeriod) {
+  const start = period.start ? MONTH_YEAR.format(period.start) : undefined
+  const end = period.end ? MONTH_YEAR.format(period.end) : undefined
+  if (start && end) return start === end ? start : `${start} – ${end}`
+  return start ? `From ${start}` : end ? `Until ${end}` : ''
+}
+
 function AggregatedAccessCard({ result, onRetry }: {
   result?: SurveyDiscoveryResult
   onRetry: () => void
@@ -289,7 +302,7 @@ function SourceStatusLabel({ source }: { source: SurveySourceResult }) {
 
 export default function SurveyWorkspace() {
   usePageMetadata({
-    title: 'Survey data workspace',
+    title: 'Your surveys',
     description: 'Choose DIEM household surveys by country and round, and download aggregated survey data with the documentation that belongs to each generation.',
   })
   const auth = useAuth()
@@ -352,6 +365,10 @@ export default function SurveyWorkspace() {
   // One selection per scope, so a test survey can never reach a production package.
   const [selection, setSelection] = useState<Record<SelectionScope, string[]>>({ production: [], test: [] })
   const [droppedCount, setDroppedCount] = useState(0)
+  /** The survey a user tried to add past the cap, so the refusal is said on its row. */
+  const [limitNotice, setLimitNotice] = useState<string>()
+  /** Collection dates from the survey register, keyed `ISO3:round`. */
+  const [collectionPeriods, setCollectionPeriods] = useState<Map<string, SurveyCollectionPeriod>>()
   const [themeChoice, setThemeChoice] = useState<'all' | 'custom'>('all')
   const [chosenThemes, setChosenThemes] = useState<string[]>([])
   const [counts, setCounts] = useState<SurveySliceCount[]>()
@@ -447,6 +464,22 @@ export default function SurveyWorkspace() {
     return selection[scope].filter((key) => !available.has(key)).length
   }, [result?.status, scope, selection, settled, surveys])
 
+  // Collection dates for the list. Best effort: without them a row still shows
+  // its round and generation, and the package states the dates on its own.
+  const periodRequest = settled ? surveys.map((survey) => `${survey.adm0Iso3}:${survey.round}`).sort().join(',') : ''
+  useEffect(() => {
+    if (!periodRequest) return
+    const controller = new AbortController()
+    const identities = periodRequest.split(',').map((key) => {
+      const [adm0Iso3, round] = key.split(':')
+      return { adm0Iso3, round: Number(round) }
+    })
+    fetchSurveyCollectionPeriods(identities, controller.signal)
+      .then(setCollectionPeriods)
+      .catch(() => { if (!controller.signal.aborted) setCollectionPeriods(new Map()) })
+    return () => controller.abort()
+  }, [periodRequest])
+
   const selectedKeys = selection[scope]
   const unlimited = isContributor
   const atLimit = !unlimited && selectedKeys.length >= SELECTION_LIMIT
@@ -519,6 +552,13 @@ export default function SurveyWorkspace() {
   const fileCount = plan.reduce((total, entry) => total + entry.included.length, 0)
 
   const toggleSurvey = useCallback((key: string) => {
+    const keys = selection[scope]
+    // Past the cap a click is refused out loud, on the row, rather than ignored.
+    if (!keys.includes(key) && !isContributor && keys.length >= SELECTION_LIMIT) {
+      setLimitNotice(key)
+      return
+    }
+    setLimitNotice(undefined)
     setSelection((current) => {
       const keys = current[scope]
       const next = keys.includes(key)
@@ -528,7 +568,7 @@ export default function SurveyWorkspace() {
       return { ...current, [scope]: next }
     })
     setDroppedCount(0)
-  }, [accountKey, scope])
+  }, [accountKey, isContributor, scope, selection])
 
   const clearSelection = useCallback(() => {
     clearStoredSelection(accountKey, scope)
@@ -746,7 +786,7 @@ export default function SurveyWorkspace() {
   )
 
   if (auth.status === 'loading') {
-    return <><SiteHeader/><main className="workspace-loading"><span className="loader"/><strong>Opening your survey data workspace</strong></main><SiteFooter/></>
+    return <><SiteHeader/><main className="workspace-loading"><span className="loader"/><strong>Opening Your surveys</strong></main><SiteFooter/></>
   }
   if (auth.status !== 'authenticated') return <><SiteHeader/><SignInGate/><SiteFooter/></>
 
@@ -756,7 +796,7 @@ export default function SurveyWorkspace() {
       <main id="top" className="workspace-page">
         <section className="workspace-hero">
           <div className="section-wrap">
-            <span className="eyebrow"><span/> Survey data workspace</span>
+            <span className="eyebrow"><span/> Your surveys</span>
             <h1>Choose your surveys</h1>
             <p>Pick the countries and rounds you need. The Hub resolves which data infrastructure holds each survey and packages the matching documentation with it.</p>
           </div>
@@ -900,24 +940,47 @@ export default function SurveyWorkspace() {
                           <div className="survey-country-rounds-list" id={panelId}>
                             {group.surveys.map((survey) => {
                               const checked = selectedKeys.includes(survey.key)
+                              const locked = !checked && atLimit
+                              const noticeId = `limit-${survey.key}`
+                              const period = collectionPeriods?.get(`${survey.adm0Iso3}:${survey.round}`)
+                              const generation = GENERATIONS[survey.generation]
                               return (
-                                <label key={survey.key} className={checked ? 'survey-row survey-row--selected' : 'survey-row'}>
-                                  {/* Only unchecked rows lock at the cap: a user must always
-                                      be able to undo their own selection. */}
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    disabled={!checked && atLimit}
-                                    onChange={() => toggleSurvey(survey.key)}
-                                    aria-label={`${survey.countryName}, round ${survey.round}`}
-                                  />
-                                  <span className="survey-row-round">Round {survey.round}</span>
-                                  <span className="survey-row-generation">{GENERATIONS[survey.generation].label}</span>
+                                <div key={survey.key} className={checked ? 'survey-row survey-row--selected' : locked ? 'survey-row survey-row--locked' : 'survey-row'}>
+                                  {/* Only the checkbox and round form the label: the
+                                      generation is a link, and a link cannot live in one.
+                                      Rows past the cap stay clickable, so the click can
+                                      explain itself instead of doing nothing. */}
+                                  <label className="survey-row-pick">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      aria-disabled={locked || undefined}
+                                      aria-describedby={limitNotice === survey.key ? noticeId : undefined}
+                                      onChange={() => toggleSurvey(survey.key)}
+                                      aria-label={`${survey.countryName}, round ${survey.round}`}
+                                    />
+                                    <span className="survey-row-round">Round {survey.round}</span>
+                                  </label>
+                                  <span className="survey-row-dates">
+                                    {period ? collectionPeriodLabel(period) : collectionPeriods ? 'Dates not recorded' : ''}
+                                  </span>
+                                  <Link
+                                    className="survey-row-generation"
+                                    to="/data/guide#generations"
+                                    title={`${generation.label}: ${generation.name}. Why each questionnaire generation has its own structure and documentation`}
+                                  >
+                                    {generation.label}
+                                  </Link>
                                   <span className="survey-row-themes">{survey.themes.length} theme{survey.themes.length === 1 ? '' : 's'}</span>
                                   <span className={survey.testData ? 'survey-row-status survey-row-status--test' : 'survey-row-status'}>
                                     {survey.testData ? 'Test data' : 'Published'}
                                   </span>
-                                </label>
+                                  {limitNotice === survey.key && locked && (
+                                    <p className="survey-row-limit" id={noticeId} role="alert">
+                                      Round {survey.round} was not added: one package holds up to {SELECTION_LIMIT} surveys and you have selected {SELECTION_LIMIT}. Remove a selected survey to include this one, or download this package first and build a second one.
+                                    </p>
+                                  )}
+                                </div>
                               )
                             })}
                           </div>
@@ -1265,7 +1328,13 @@ export default function SurveyWorkspace() {
                     <span/>
                     <span className="source-row-message">{resource.description}</span>
                     <span className="source-row-links">
-                      <a href={resource.staticLink || resource.href || `${DATA_PORTAL}/home/item.html?id=${resource.id}`} target="_blank" rel="noreferrer">Open<Icon name="external"/></a>
+                      {(() => {
+                        const href = resource.staticLink || resource.href || `${DATA_PORTAL}/home/item.html?id=${resource.id}`
+                        const path = hubPath(href)
+                        return path
+                          ? <Link to={path}>Open</Link>
+                          : <a href={href} target="_blank" rel="noreferrer">Open<Icon name="external"/></a>
+                      })()}
                     </span>
                   </li>
                 ))}
@@ -1276,19 +1345,18 @@ export default function SurveyWorkspace() {
 
               <h3 className="technical-resources-heading">API and analysis tools</h3>
               <ul className="source-rows">
-                <li>
-                  <span className="source-row-title"><strong>DIEM data API</strong><small>Jupyter Notebook</small></span>
-                  <span/>
-                  <span className="source-row-message">Automated, authenticated downloads for your own workflows.</span>
-                  <span className="source-row-links"><a href="https://github.com/Andrampa/DIEM_API/tree/main" target="_blank" rel="noreferrer">Repository<Icon name="external"/></a></span>
-                </li>
-                <li>
-                  <span className="source-row-title"><strong>Microdata labelling</strong><small>Python and R</small></span>
-                  <span/>
-                  <span className="source-row-message">Detects the questionnaire generation and applies the official DIEM value labels.</span>
-                  <span className="source-row-links"><a href="https://github.com/Andrampa/diem-microdata-labelling" target="_blank" rel="noreferrer">Repository<Icon name="external"/></a></span>
-                </li>
+                {ANALYSIS_TOOLS.map((tool) => (
+                  <li key={tool.href}>
+                    <span className="source-row-title"><strong>{tool.title}</strong><small>{tool.kind}</small></span>
+                    <span/>
+                    <span className="source-row-message">{tool.description}</span>
+                    <span className="source-row-links"><a href={tool.href} target="_blank" rel="noreferrer">Repository<Icon name="external"/></a></span>
+                  </li>
+                ))}
               </ul>
+              <p className="technical-resources-note">
+                Every package carries these links for each survey, with the documentation for its generation, in <code>documentation_and_metadata.txt</code>.
+              </p>
 
               <p className="technical-resources-note">
                 Citation in English, French and Spanish, both licences and the methodology notes are in <Link to="/data/guide">the data access guide</Link>.

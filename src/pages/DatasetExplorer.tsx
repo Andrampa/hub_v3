@@ -5,7 +5,8 @@ import type { FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import '../dataset-explorer.css'
 import { useAuth } from '../auth/AuthContext'
 import { ADMIN_REFERENCE_DATASET_ID } from '../services/protectedData'
-import { governedByVisibility, isWithheld, visibilityClause, withVisibility } from '../services/visibility'
+import { governedByVisibility, isWithheld, validatedSurveyClause, visibilityClause, withVisibility } from '../services/visibility'
+import { loadValidatedSurveyKeys } from '../services/monitoring'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import NotFound from './NotFound'
 import { DatasetGeometryMap } from '../components/DatasetGeometryMap'
@@ -257,12 +258,36 @@ export default function DatasetExplorer() {
    */
   const isContributor = Boolean(auth.user?.capabilities?.contributor)
   // Survey data only: boundaries and catalogue datasets are outside the rule.
-  const visibility = useMemo(() => (
-    definition && governedByVisibility(definition.resource.kind)
-      ? visibilityClause(definition.layer, isContributor, definition.resource.kind)
-      : undefined
-  ), [definition, isContributor])
-  const withheld = isWithheld(visibility)
+  /*
+   * Survey-level gate: a non-Contributor sees aggregated rows only from surveys
+   * the survey register marks Validated = Yes, as in the survey workspace.
+   * undefined while the register loads (nothing is queried meanwhile), null if
+   * it could not be read (fail closed).
+   */
+  const needsSurveyGate = Boolean(definition && definition.resource.kind === 'aggregate' && !isContributor)
+  const [validatedSurveys, setValidatedSurveys] = useState<Set<string> | null>()
+  useEffect(() => {
+    if (!needsSurveyGate) return
+    let active = true
+    setValidatedSurveys(undefined)
+    loadValidatedSurveyKeys()
+      .then((keys) => { if (active) setValidatedSurveys(keys) })
+      .catch(() => { if (active) setValidatedSurveys(null) })
+    return () => { active = false }
+  }, [needsSurveyGate])
+  const surveyGatePending = needsSurveyGate && validatedSurveys === undefined
+  const registerUnavailable = needsSurveyGate && validatedSurveys === null
+  const visibility = useMemo(() => {
+    if (!definition || !governedByVisibility(definition.resource.kind)) return undefined
+    const rows = visibilityClause(definition.layer, isContributor, definition.resource.kind)
+    if (!needsSurveyGate || isWithheld(rows)) return rows
+    if (!validatedSurveys) return undefined
+    const targets = deepLinkFields(usableFields(definition.layer.fields))
+    const surveys = validatedSurveyClause(validatedSurveys, targets.country, targets.round)
+    return isWithheld(surveys) ? surveys : withVisibility(surveys, rows)
+  }, [definition, isContributor, needsSurveyGate, validatedSurveys])
+  // Nothing is queried while the gate is unknown or unreadable.
+  const withheld = isWithheld(visibility) || surveyGatePending || registerUnavailable
   const where = useMemo(() => withVisibility(buildWhere(filters, fields), visibility), [filters, fields, visibility])
   const links = definition ? apiLinks(definition, where) : undefined
   const scripts = definition ? bulkDownloadScripts(definition, where) : undefined
@@ -514,7 +539,7 @@ export default function DatasetExplorer() {
           <div className="section-wrap">
             {isPublicRoute
               ? <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/catalog">Catalogue</Link><span>/</span>{definition ? <Link to={`/catalog/${definition.resource.id}`}>{definition.resource.fallbackTitle}</Link> : <span>Dataset</span>}<span>/</span><span>Dataset explorer</span></nav>
-              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><Link to="/data/surveys">Your surveys</Link><span>/</span><span>Dataset explorer</span></nav>}
+              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">How to access data</Link><span>/</span><Link to="/data/surveys">Your surveys</Link><span>/</span><span>Dataset explorer</span></nav>}
             <div className="dataset-title-row"><div><span className="kicker">Live data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">{isPublicRoute ? 'Public data' : 'Authenticated access'}</span></div>
           </div>
         </header>
@@ -526,11 +551,21 @@ export default function DatasetExplorer() {
         {/* Fail closed, and say why. A layer with no opendata flag has no row
             marked as released, so a non-Contributor gets nothing from it; an
             explorer showing "0 records" would read as an empty dataset. */}
-        {definition && withheld && (
+        {definition && surveyGatePending && <main className="dataset-explorer-loading"><span className="loader"/><strong>Checking which surveys are validated</strong><p>Reading the DIEM survey register...</p></main>}
+        {definition && registerUnavailable && (
+          <section className="dataset-explorer-error section-wrap" role="alert">
+            <strong>The survey register could not be read.</strong>
+            <p>Records are shown only for surveys the register marks as validated, so nothing can be shown until it answers. Reload the page to try again.</p>
+            <Link to="/data/surveys">Return to Your surveys</Link>
+          </section>
+        )}
+        {definition && withheld && !surveyGatePending && !registerUnavailable && (
           <section className="dataset-explorer-error section-wrap" role="status">
             <strong>This dataset has not been released.</strong>
-            <p>Its data service carries no release flag (<code>opendata</code>), so none of its records are marked as published. Until they are, it is available to DIEM Contributors only.</p>
-            <Link to="/data/surveys">Return to the survey data workspace</Link>
+            {needsSurveyGate
+              ? <p>None of its surveys can be matched to a survey the DIEM survey register marks as validated. Until one is, it is available to DIEM Contributors only.</p>
+              : <p>Its data service carries no release flag (<code>opendata</code>), so none of its records are marked as published. Until they are, it is available to DIEM Contributors only.</p>}
+            <Link to="/data/surveys">Return to Your surveys</Link>
           </section>
         )}
         {definition && !withheld && (

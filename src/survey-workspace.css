@@ -101,7 +101,13 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .survey-country-generations { color: var(--ink-faint); font-size: var(--text-small); }
 .survey-country-selected { color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; text-align: right; }
 .survey-country-rounds-list { padding: 0 14px 12px 44px; }
-.survey-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 70px 90px 110px; align-items: center; gap: 14px; padding: 10px 14px; border: 1px solid var(--line-faint); cursor: pointer; }
+.survey-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 160px 44px 80px 100px; align-items: center; gap: 14px; padding: 10px 14px; border: 1px solid var(--line-faint); }
+/* The label spans checkbox and round; contents keeps both on the row grid. */
+.survey-row-pick { display: contents; cursor: pointer; }
+.survey-row-dates { color: var(--ink-muted); font-size: var(--text-small); }
+.survey-row--locked .survey-row-pick, .survey-row--locked input { cursor: not-allowed; }
+.survey-row--locked .survey-row-round { color: var(--ink-faint); }
+.survey-row-limit { grid-column: 1 / -1; margin: 4px 0 0; padding: 8px 12px; border-left: 3px solid #b4560d; background: #fdf3ea; color: #6b3208; font-size: var(--text-small); line-height: 1.5; }
 .survey-row + .survey-row { margin-top: -1px; }
 .survey-row:hover { background: #f7faf9; }
 .survey-row--selected { background: #f1f7fb; border-color: #bcd8ea; }
@@ -112,7 +118,9 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .survey-row-name small { color: var(--ink-faint); font-size: var(--text-micro); letter-spacing: .06em; }
 .survey-row-round { color: var(--ink); font-size: 13px; font-weight: 600; }
 /* Secondary by design: the Hub resolves the infrastructure, the user does not. */
-.survey-row-generation, .survey-row-themes { color: var(--ink-faint); font-size: var(--text-small); }
+.survey-row-themes { color: var(--ink-faint); font-size: var(--text-small); }
+.survey-row-generation { justify-self: start; padding: 1px 7px; border: 1px solid #bcd8ea; border-radius: 3px; color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; text-decoration: none; }
+.survey-row-generation:hover, .survey-row-generation:focus-visible { background: #f1f7fb; text-decoration: underline; }
 .survey-row-status { color: #2f6a4c; font-size: var(--text-small); font-weight: 700; }
 .survey-row-status--test { color: #b4560d; }
 .survey-empty { margin: 18px 0 4px; color: var(--ink-faint); font-size: 13px; }
@@ -208,7 +216,8 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
   .survey-country-generations { grid-area: gens; }
   .survey-country-selected { grid-area: selected; }
   .survey-country-rounds-list { padding: 0 10px 10px 16px; }
-  .survey-row { grid-template-columns: 22px 1fr auto; grid-template-areas: 'check round status' '. meta meta'; row-gap: 4px; padding: 12px; }
+  .survey-row { grid-template-columns: 22px 1fr auto; grid-template-areas: 'check round status' '. dates meta'; row-gap: 4px; padding: 12px; }
+  .survey-row-dates { grid-area: dates; }
   .survey-row input { grid-area: check; }
   .survey-row-round { grid-area: round; }
   .survey-row-generation { grid-area: meta; }

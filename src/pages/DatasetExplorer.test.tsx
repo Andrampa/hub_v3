@@ -27,6 +27,11 @@ vi.mock('../services/dataExplorer', async () => {
   const actual = await vi.importActual<typeof import('../services/dataExplorer')>('../services/dataExplorer')
   return { ...actual, fetchDatasetDefinition, fetchRecordCount, fetchTablePreview, fetchGeometryPreview, fetchFieldOptions }
 })
+const loadValidatedSurveyKeys = vi.fn()
+vi.mock('../services/monitoring', async () => {
+  const actual = await vi.importActual<typeof import('../services/monitoring')>('../services/monitoring')
+  return { ...actual, loadValidatedSurveyKeys }
+})
 vi.mock('../components/DatasetGeometryMap', () => ({ DatasetGeometryMap: () => null }))
 
 const { default: DatasetExplorer } = await import('./DatasetExplorer')
@@ -77,6 +82,7 @@ beforeEach(() => {
   auth.user = { username: 'alice', capabilities: { contributor: false } }
   for (const mock of [fetchDatasetDefinition, fetchRecordCount, fetchTablePreview, fetchGeometryPreview, fetchFieldOptions]) mock.mockReset()
   fetchRecordCount.mockResolvedValue(3)
+  loadValidatedSurveyKeys.mockReset().mockResolvedValue(new Set(['NGA:8', 'NGA:9', 'COD:4']))
   fetchTablePreview.mockResolvedValue({ features: [] })
   fetchFieldOptions.mockResolvedValue({ values: ['NGA'], truncated: false })
   container = document.createElement('div')
@@ -100,7 +106,7 @@ describe('dataset explorer visibility', () => {
     await open(AGGREGATE_ID)
 
     const breadcrumb = container.querySelector('nav[aria-label="Breadcrumb"]')
-    expect(breadcrumb?.querySelector('a[href="/data"]')?.textContent).toBe('Data access')
+    expect(breadcrumb?.querySelector('a[href="/data"]')?.textContent).toBe('How to access data')
     expect(breadcrumb?.querySelector('a[href="/data/surveys"]')?.textContent).toBe('Your surveys')
     expect(breadcrumb?.textContent).toContain('Dataset explorer')
   })
@@ -113,12 +119,44 @@ describe('dataset explorer visibility', () => {
     expect(whereOfFirstCount()).toBe('opendata = 1')
   })
 
-  it('shows a community member every published aggregated row, unfiltered', async () => {
+  it('limits aggregated data to validated surveys and released rows for a community member', async () => {
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+
+    await open(AGGREGATE_ID)
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
+
+    expect(whereOfFirstCount()).toBe("((adm0_iso3 = 'NGA' AND round IN (8,9)) OR (adm0_iso3 = 'COD' AND round IN (4))) AND opendata = 1")
+  })
+
+  it('gates an unflagged aggregated layer by validation alone', async () => {
     fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
 
     await open(AGGREGATE_ID)
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
 
     expect(container.textContent).not.toContain('has not been released')
+    expect(whereOfFirstCount()).toBe("(adm0_iso3 = 'NGA' AND round IN (8,9)) OR (adm0_iso3 = 'COD' AND round IN (4))")
+  })
+
+  it('queries nothing when the survey register cannot be read', async () => {
+    loadValidatedSurveyKeys.mockRejectedValue(new Error('down'))
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+
+    await open(AGGREGATE_ID)
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
+
+    expect(container.textContent).toContain('The survey register could not be read')
+    expect(fetchRecordCount).not.toHaveBeenCalled()
+    expect(fetchFieldOptions).not.toHaveBeenCalled()
+  })
+
+  it('does not gate a Contributor', async () => {
+    auth.user = { username: 'carla', capabilities: { contributor: true } }
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+
+    await open(AGGREGATE_ID)
+
+    expect(loadValidatedSurveyKeys).not.toHaveBeenCalled()
     expect(whereOfFirstCount()).toBe('1=1')
   })
 

@@ -35,6 +35,14 @@ vi.mock('../services/microdataGrants', async () => {
   const actual = await vi.importActual<typeof import('../services/microdataGrants')>('../services/microdataGrants')
   return { ...actual, fetchCurrentUserMicrodataGrants }
 })
+vi.mock('../services/monitoring', async () => {
+  const actual = await vi.importActual<typeof import('../services/monitoring')>('../services/monitoring')
+  return {
+    ...actual,
+    fetchSurveyCollectionPeriods: vi.fn().mockResolvedValue(new Map([['NGA:1', { start: Date.UTC(2024, 2, 4), end: Date.UTC(2024, 3, 20) }]])),
+  }
+})
+
 vi.mock('../services/surveyAccess', async () => {
   const actual = await vi.importActual<typeof import('../services/surveyAccess')>('../services/surveyAccess')
   return { ...actual, discoverAggregatedSurveys }
@@ -288,9 +296,42 @@ describe('survey selection', () => {
 
     const boxes = checkboxes()
     expect(boxes.filter((box) => box.checked)).toHaveLength(10)
-    expect(boxes.filter((box) => box.checked).every((box) => !box.disabled)).toBe(true)
-    expect(boxes.filter((box) => !box.checked).every((box) => box.disabled)).toBe(true)
+    expect(boxes.filter((box) => box.checked).every((box) => !box.getAttribute('aria-disabled'))).toBe(true)
+    expect(boxes.filter((box) => !box.checked).every((box) => box.getAttribute('aria-disabled') === 'true')).toBe(true)
     expect(container.textContent).toContain('the most one package can hold')
+  })
+
+  it('says why, on the row, when an eleventh survey is clicked', async () => {
+    const many = Array.from({ length: 12 }, (_, index) => survey('v2', 'NGA', index + 1))
+    discoverAggregatedSurveys.mockImplementation((_requester: unknown, options: { onProgress?: (value: SurveyDiscoveryResult) => void }) => {
+      const result = discovery({ surveys: many })
+      options.onProgress?.(result)
+      return Promise.resolve(result)
+    })
+
+    await render()
+    for (const box of checkboxes().slice(0, 10)) await click(box)
+    const eleventh = checkboxes().find((box) => !box.checked)!
+    await click(eleventh)
+
+    expect(checkboxes().filter((box) => box.checked)).toHaveLength(10)
+    const alert = container.querySelector('.survey-row-limit[role="alert"]')
+    expect(alert?.textContent).toContain('was not added: one package holds up to 10 surveys')
+    expect(eleventh.getAttribute('aria-describedby')).toBe(alert?.id)
+  })
+
+  it('shows collection dates and links each generation to its explanation', async () => {
+    discoverAggregatedSurveys.mockImplementation((_requester: unknown, options: { onProgress?: (value: SurveyDiscoveryResult) => void }) => {
+      const result = discovery({ surveys: [survey('v2', 'NGA', 1)] })
+      options.onProgress?.(result)
+      return Promise.resolve(result)
+    })
+
+    await render()
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
+
+    expect(container.querySelector('.survey-row-dates')?.textContent).toBe('Mar 2024 – Apr 2024')
+    expect(container.querySelector('a.survey-row-generation')?.getAttribute('href')).toBe('/data/guide#generations')
   })
 
   it('does not cap a contributor', async () => {
@@ -305,7 +346,8 @@ describe('survey selection', () => {
     await render()
     for (const box of checkboxes().slice(0, 11)) await click(box)
 
-    expect(checkboxes().filter((box) => box.disabled)).toHaveLength(0)
+    expect(checkboxes().filter((box) => box.getAttribute('aria-disabled'))).toHaveLength(0)
+    expect(checkboxes().filter((box) => box.checked)).toHaveLength(11)
   })
 
   it('keeps a selection that a failed source could not confirm', async () => {

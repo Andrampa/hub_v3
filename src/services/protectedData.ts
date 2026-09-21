@@ -1,3 +1,4 @@
+import { hubUrl } from '../lib/hubOrigin'
 export const DATA_PORTAL = 'https://hqfao.maps.arcgis.com'
 export const DATA_REST = 'https://hqfao-hub.maps.arcgis.com/sharing/rest'
 
@@ -347,7 +348,7 @@ export const REFERENCE_RESOURCES: ProtectedDataResource[] = [
     description: 'Operational ADM1 and ADM2 reference boundaries currently used by DIEM surveys.',
     kind: 'reference',
     period: 'Current',
-    href: 'https://data-in-emergencies.fao.org/maps/3596c3ad318849068eda21517ade30be/about',
+    href: hubUrl('/catalog/3596c3ad318849068eda21517ade30be'),
   },
   {
     id: '9b28ef1ee39842bd96919a05ddc136a7',
@@ -356,7 +357,7 @@ export const REFERENCE_RESOURCES: ProtectedDataResource[] = [
     description: 'Previous boundary configurations retained for historical survey traceability.',
     kind: 'reference',
     period: 'Archive',
-    href: 'https://data-in-emergencies.fao.org/maps/9b28ef1ee39842bd96919a05ddc136a7/about',
+    href: hubUrl('/catalog/9b28ef1ee39842bd96919a05ddc136a7'),
   },
 ]
 
@@ -368,7 +369,7 @@ export const DOCUMENTATION_RESOURCES: ProtectedDataResource[] = [
     description: 'Variable names, definitions and interpretation guidance for V2 microdata and aggregated data.',
     kind: 'metadata',
     audience: 'both',
-    href: 'https://data-in-emergencies.fao.org/documents/04287fcadb994341b0b70d19c8a02035/about',
+    href: hubUrl('/catalog/04287fcadb994341b0b70d19c8a02035'),
   },
   {
     id: '41fa55934d2f462f86cd381ee8dc1fda',
@@ -458,3 +459,28 @@ export async function fetchProtectedDataWorkspace(requester: ProtectedRequester)
 export function authoritativeResourceUrl(resource: ResolvedDataResource) {
   return resource.staticLink || `${DATA_PORTAL}/home/item.html?id=${resource.id}`
 }
+
+/**
+ * API and analysis tools, listed at the end of the survey workspace and in every
+ * package's documentation_and_metadata.txt. One list, so the two never drift.
+ */
+export const ANALYSIS_TOOLS = [
+  {
+    title: 'DIEM data API',
+    kind: 'Jupyter Notebook',
+    description: 'Automated, authenticated downloads for your own workflows.',
+    href: 'https://github.com/Andrampa/DIEM_API/tree/main',
+  },
+  {
+    title: 'Microdata labelling',
+    kind: 'Python and R',
+    description: 'Detects the questionnaire generation and applies the official DIEM value labels.',
+    href: 'https://github.com/Andrampa/diem-microdata-labelling',
+  },
+] as const
+
+/** Where a documentation or reference item opens, outside the Hub's own routes. */
+export function resourceLink(resource: Pick<ProtectedDataResource, 'id' | 'staticLink' | 'href'>) {
+  return resource.staticLink || resource.href || `${DATA_PORTAL}/home/item.html?id=${resource.id}`
+}
+

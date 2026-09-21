@@ -205,7 +205,10 @@ Hub hides. The two converge when the dashboard sets `enforceOpendata: true` at
 the rebuild; the fail-closed and register differences remain.
 
 The survey-level gate applies in the survey workspace (discovery, and so every
-count, extract and manifest). The feature-level clause applies in discovery (it
+count, extract and manifest) and in the dataset explorer, where it becomes a
+`(iso3 = 'AFG' AND round IN (1,2)) OR ...` clause ANDed with the row clause
+(`validatedSurveyClause`). The explorer queries nothing until the register has
+answered, and says so if it cannot be read. The feature-level clause applies in discovery (it
 is stored on each theme, so `surveySliceWhere` carries it), in the dataset
 explorer's single `where` (count, preview, map, downloads, API links, scripts),
 and the explorer's filter-option lists. Discovery results are cached per
