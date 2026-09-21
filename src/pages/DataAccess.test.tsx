@@ -85,7 +85,7 @@ describe('/data public overview', () => {
 
     const headings = Array.from(container.querySelectorAll('h2')).map((heading) => heading.textContent)
     expect(headings.indexOf('Aggregated data or household microdata'))
-      .toBeLessThan(headings.indexOf('Three questionnaire generations, chosen for you'))
+      .toBeLessThan(headings.indexOf('One questionnaire, refined over three generations'))
   })
 
   it('lists no dataset and requests no protected metadata', async () => {

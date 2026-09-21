@@ -306,9 +306,16 @@
 .guide-body code { padding: 2px 5px; background: var(--line-faint); color: #2c5567; font-size: 13px; }
 .guide-list, .guide-steps { margin: 0 0 16px; padding-left: 20px; color: #55676d; font-size: 14px; line-height: 1.78; }
 .guide-steps li, .guide-list li { margin-bottom: 9px; }
-.guide-citation-language { margin: 0 0 6px; }
-.guide-citation-language figcaption { margin: 0 0 6px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.guide-citation { margin: 0 0 15px; padding: 20px 24px; background: #f2f6f5; border-left: 3px solid var(--fao-blue); color: #2f4f5c; font-size: 13px; line-height: 1.7; }
+/* One citation at a time, chosen by language, as on catalogue product pages. */
+.guide-citation-card { margin: 18px 0 20px; padding: 18px 22px 20px; border: 1px solid var(--line-faint); border-top: 3px solid var(--fao-blue); background: #f7faf9; }
+.guide-citation-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.guide-citation-languages { display: flex; flex-wrap: wrap; gap: 6px; }
+.guide-citation-languages button { padding: 5px 11px; border: 1px solid var(--line); background: #fff; color: var(--ink-faint); font: inherit; font-size: var(--text-small); font-weight: 700; cursor: pointer; }
+.guide-citation-languages button[aria-pressed="true"] { border-color: var(--fao-blue); background: var(--fao-blue); color: #fff; }
+.guide-citation-copy { padding: 6px 12px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); font: inherit; font-size: var(--text-small); font-weight: 700; cursor: pointer; }
+.guide-citation-copy:hover, .guide-citation-copy:focus-visible { background: var(--fao-blue); color: #fff; }
+.guide-citation { margin: 16px 0 0; color: var(--ink-muted); font-family: inherit; font-size: 15px; line-height: 1.7; overflow-wrap: anywhere; }
+.guide-citation cite { font-style: italic; }
 .guide-generation-list { display: grid; gap: 14px; margin-bottom: 18px; }
 .guide-generation { padding: 22px 24px; background: white; border: 1px solid var(--line-soft); border-left: 3px solid #9eaaad; }
 .guide-generation--reference { background: #f4f9f8; border-left-color: var(--fao-blue); }

@@ -43,7 +43,7 @@ function HeroAction() {
     return (
       <div className="data-gate-actions">
         <Link className="data-overview-primary" to={WORKSPACE_ROUTE}>
-          <Icon name="table"/>Open your survey data workspace
+          <Icon name="table"/>See surveys available for download
         </Link>
         <span className="data-overview-signed-in">Signed in as {auth.user?.fullName || auth.user?.username}</span>
       </div>
@@ -73,8 +73,8 @@ function HeroAction() {
  */
 export default function DataAccess() {
   usePageMetadata({
-    title: 'Data access',
-    description: 'How to access DIEM household survey data: aggregated results for any DIEM community account, household microdata through the FAO Microdata Catalogue or by request, and the survey data workspace where both are chosen and downloaded.',
+    title: 'How to access data',
+    description: 'How to access DIEM household survey data: aggregated results for any DIEM community account, household microdata through the FAO Microdata Catalogue or by request, and Your surveys, where both are chosen and downloaded.',
   })
 
   return (
@@ -164,8 +164,8 @@ export default function DataAccess() {
         <section className="data-gate-generations section-wrap" aria-labelledby="generations-heading">
           <div className="data-gate-ladder-intro">
             <span className="kicker">How DIEM data has evolved</span>
-            <h2 id="generations-heading">Three questionnaire generations, chosen for you</h2>
-            <p>DIEM revised its questionnaire twice, and each revision changed the fields, codes and structure of the data. You do not need to pick one: the workspace knows which generation each survey belongs to and packages the matching documentation with it.</p>
+            <h2 id="generations-heading">One questionnaire, refined over three generations</h2>
+            <p>The DIEM questionnaire keeps improving with each monitoring cycle: every generation builds on what the previous one taught us, refining indicators, codes and data structure. Each survey in Your surveys is labelled with its generation and downloaded with the documentation that belongs to it.</p>
           </div>
           <div className="generation-strip">
             {[REFERENCE_GENERATION, ...ARCHIVE_GENERATIONS].map((id) => {
@@ -204,7 +204,7 @@ export default function DataAccess() {
             <p>The workspace lists every survey your account can download.</p>
           </div>
           <div className="data-overview-cta-actions">
-            <Link className="data-overview-primary" to={WORKSPACE_ROUTE}><Icon name="table"/>Open the survey data workspace</Link>
+            <Link className="data-overview-primary" to={WORKSPACE_ROUTE}><Icon name="table"/>See surveys available for download</Link>
             <ul className="data-overview-secondary">
               <li><Link to="/data/guide"><Icon name="book"/>Read the data access guide</Link></li>
               <li><Link to="/data/microdata-request"><Icon name="download"/>Request microdata</Link></li>

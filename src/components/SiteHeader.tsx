@@ -73,7 +73,7 @@ export function SiteHeader() {
                 <small>Explore survey results in the full-screen app</small>
               </Link>
               <Link to="/data" aria-current={pathname === '/data' ? 'page' : undefined}>
-                <strong>Data access</strong>
+                <strong>How to access data</strong>
                 <small>Access household survey data and related resources</small>
               </Link>
               <Link to="/data/surveys" aria-current={pathname === '/data/surveys' ? 'page' : undefined}>
@@ -158,7 +158,7 @@ export function SiteHeader() {
         <span className="mobile-nav-heading">Household surveys</span>
         <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>
         <Link to="/monitoring" onClick={() => setMobileMenuOpen(false)}>Survey explorer</Link>
-        <Link className={pathname === '/data' ? 'active' : ''} aria-current={pathname === '/data' ? 'page' : undefined} to="/data" onClick={() => setMobileMenuOpen(false)}>Data access</Link>
+        <Link className={pathname === '/data' ? 'active' : ''} aria-current={pathname === '/data' ? 'page' : undefined} to="/data" onClick={() => setMobileMenuOpen(false)}>How to access data</Link>
         <Link className={pathname === '/data/surveys' ? 'active' : ''} aria-current={pathname === '/data/surveys' ? 'page' : undefined} to="/data/surveys" onClick={() => setMobileMenuOpen(false)}>Your surveys</Link>
         <Link className={pathname === '/data/guide' ? 'active' : ''} aria-current={pathname === '/data/guide' ? 'page' : undefined} to="/data/guide" onClick={() => setMobileMenuOpen(false)}>Data access guide</Link>
         <span className="mobile-nav-heading">About DIEM</span>

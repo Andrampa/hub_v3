@@ -6,7 +6,7 @@ import { SiteHeader } from '../components/SiteHeader'
 import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION } from '../services/protectedData'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
-import { CITATION_LANGUAGES, collectionCitationModel } from '../lib/citation'
+import { CITATION_LANGUAGES, citationText, collectionCitationModel, type CitationLanguage } from '../lib/citation'
 
 const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
@@ -32,6 +32,18 @@ export default function DataGuide() {
     description: 'How to find, download, interpret and cite DIEM monitoring data: what is published, which questionnaire generation produced it, how access is granted, and the required citation. Public guide; the data itself needs a DIEM community account.',
   })
   const [activeSection, setActiveSection] = useState('about')
+  const [citationLanguage, setCitationLanguage] = useState<CitationLanguage>('English')
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const citationModel = collectionCitationModel(citationLanguage)
+
+  async function copyCitation() {
+    try {
+      await navigator.clipboard.writeText(citationText(citationModel))
+      setCopyState('copied')
+    } catch {
+      setCopyState('failed')
+    }
+  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -62,7 +74,7 @@ export default function DataGuide() {
             <h1>Finding, downloading and citing DIEM data</h1>
             <p>Everything needed to explore, download and interpret DIEM monitoring data: what is published, which questionnaire generation produced it, how access is granted, and how to reference it correctly. This guide is public; the data itself requires a DIEM community account.</p>
             <div className="guide-hero-actions">
-              <Link to="/data/surveys">Open the survey data workspace</Link>
+              <Link to="/data/surveys">See surveys available for download</Link>
               <a href={FAM_URL} target="_blank" rel="noreferrer">Browse microdata in FAM</a>
             </div>
           </div>
@@ -110,7 +122,7 @@ export default function DataGuide() {
                   )
                 })}
               </div>
-              <p>You do not need to choose a generation. The survey data workspace lists surveys by country and round and works out which generation holds each one. Every package carries, for each survey, the exact field schema of its data and links to that generation's field descriptions and codebooks, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
+              <p>You do not need to choose a generation. <Link to="/data/surveys">Your surveys</Link> lists surveys by country and round and works out which generation holds each one. Every package carries, for each survey, a documentation file linking that generation's field descriptions and metadata, the reference boundaries and the source services, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
             </section>
 
             <section id="accessibility">
@@ -121,7 +133,7 @@ export default function DataGuide() {
                 <li><strong>With a DIEM community account.</strong> Aggregated survey data at the lowest administrative level each survey supports, administrative reference boundaries, all technical documentation, the data API, and the microdata request form.</li>
                 <li><strong>With approved microdata access.</strong> Anonymized household-level records for the surveys covered by your approval, valid for a week and renewable.</li>
               </ol>
-              <p>Accounts are free and can be created from the sign-in prompt on the data workspace. Privileges are assigned by an automated procedure: allow up to 15 minutes from account creation before full access activates. If the workspace reports no aggregated surveys immediately after you register, that is the provisioning window rather than a problem with your account.</p>
+              <p>Accounts are free and can be created from the sign-in prompt on <Link to="/data/surveys">Your surveys</Link>. Privileges are assigned by an automated procedure: allow up to 15 minutes from account creation before full access activates. If the workspace reports no aggregated surveys immediately after you register, that is the provisioning window rather than a problem with your account.</p>
             </section>
 
             <section id="aggregated">
@@ -130,7 +142,7 @@ export default function DataGuide() {
               <p>Data is organized by thematic area. In the current generation those are income and shocks, crop production, livestock and fisheries, food security and needs, and a set of optional indicators asked only in selected surveys. Earlier generations grouped the same material into four thematic datasets.</p>
               <h3>Downloading</h3>
               <ol className="guide-steps">
-                <li>Sign in and open the <Link to="/data/surveys">survey data workspace</Link>.</li>
+                <li>Sign in and open <Link to="/data/surveys">Your surveys</Link>.</li>
                 <li>Choose the surveys you need, by country and round. A standard account can put up to ten surveys in one package. Contributor accounts are not limited by survey count; their packages are bounded instead by a larger budget of records and data files, which the review step checks before anything is downloaded.</li>
                 <li>Choose all available themes, or pick specific ones. Each theme says how many of your surveys carry it.</li>
                 <li>Review the package. Count the records first: the review names every file, the record total and any survey and theme combination that will be missing, and why.</li>
@@ -207,12 +219,29 @@ export default function DataGuide() {
               {/* All three languages live here now. They were on /data, which no
                   longer carries a citation section; dropping two of three would
                   have been a regression, not a simplification. */}
-              {CITATION_LANGUAGES.map((language) => (
-                <figure className="guide-citation-language" key={language}>
-                  <figcaption>{language}</figcaption>
-                  <blockquote className="guide-citation"><CitationText model={collectionCitationModel(language)}/></blockquote>
-                </figure>
-              ))}
+              <div className="guide-citation-card">
+                <div className="guide-citation-head">
+                  <div className="guide-citation-languages" role="group" aria-label="Citation language">
+                    {CITATION_LANGUAGES.map((language) => (
+                      <button
+                        key={language}
+                        type="button"
+                        aria-pressed={language === citationLanguage}
+                        onClick={() => { setCitationLanguage(language); setCopyState('idle') }}
+                      >
+                        {language}
+                      </button>
+                    ))}
+                  </div>
+                  <button type="button" className="guide-citation-copy" onClick={() => void copyCitation()}>
+                    {copyState === 'copied' ? 'Copied' : copyState === 'failed' ? 'Copy blocked — select and press Ctrl+C' : 'Copy citation'}
+                  </button>
+                </div>
+                <p className="guide-citation" lang={citationLanguage === 'Français' ? 'fr' : citationLanguage === 'Español' ? 'es' : 'en'}>
+                  <CitationText model={citationModel}/>
+                </p>
+                <span className="sr-only" aria-live="polite">{copyState === 'copied' ? 'Citation copied to the clipboard.' : ''}</span>
+              </div>
               <p>We would be glad to hear about any product based on DIEM data — please let the DIEM Hub team know when you publish.</p>
             </section>
 

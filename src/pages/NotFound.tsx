@@ -14,7 +14,7 @@ export default function NotFound() {
       <main id="top" className="route-not-found section-wrap">
         <span className="kicker">Page not found</span>
         <h1>This DIEM Hub page does not exist.</h1>
-        <p>The address may be outdated, or the content may have moved into the country or data workspace.</p>
+        <p>The address may be outdated, or the content may have moved to a country page or to Your surveys.</p>
         <div>
           <Link to="/">Return to the hub</Link>
           <Link to="/countries">Explore countries</Link>

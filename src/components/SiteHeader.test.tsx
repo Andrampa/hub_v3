@@ -55,7 +55,7 @@ describe('SiteHeader household survey navigation', () => {
   })
 
   it.each([
-    ['/data', 'Data access'],
+    ['/data', 'How to access data'],
     ['/data/surveys', 'Your surveys'],
     ['/data/guide', 'Data access guide'],
   ])('marks only the exact data destination current at %s', async (pathname, label) => {
@@ -77,7 +77,7 @@ describe('SiteFooter household survey navigation', () => {
     })
 
     const navigation = container.querySelector('nav[aria-label="Site sections"]')
-    expect(navigation?.querySelector('a[href="/data"]')?.textContent).toBe('Data access')
+    expect(navigation?.querySelector('a[href="/data"]')?.textContent).toBe('How to access data')
     expect(navigation?.querySelector('a[href="/data/surveys"]')?.textContent).toBe('Your surveys')
     expect(navigation?.querySelector('a[href="/data/guide"]')?.textContent).toBe('Data access guide')
   })

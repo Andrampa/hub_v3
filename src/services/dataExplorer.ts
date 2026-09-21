@@ -297,7 +297,7 @@ export async function fetchDatasetDefinition(
   requester: ProtectedRequester,
 ): Promise<DatasetDefinition> {
   const resource = resourceForDataset(datasetId)
-  if (!resource) throw new Error('This dataset is not configured in the DIEM data workspace.')
+  if (!resource) throw new Error('This dataset is not configured in the DIEM Hub.')
   const resolved = await resolveProtectedResource(resource, requester)
   if (resolved.access === 'restricted') throw new Error('Your community account does not have access to this dataset.')
   if (resolved.access !== 'available' || !resolved.item) throw new Error('The dataset details could not be read from the content platform.')
