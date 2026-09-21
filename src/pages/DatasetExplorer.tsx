@@ -514,14 +514,14 @@ export default function DatasetExplorer() {
           <div className="section-wrap">
             {isPublicRoute
               ? <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/catalog">Catalogue</Link><span>/</span>{definition ? <Link to={`/catalog/${definition.resource.id}`}>{definition.resource.fallbackTitle}</Link> : <span>Dataset</span>}<span>/</span><span>Dataset explorer</span></nav>
-              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><span>Dataset explorer</span></nav>}
+              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">Data access</Link><span>/</span><Link to="/data/surveys">Your surveys</Link><span>/</span><span>Dataset explorer</span></nav>}
             <div className="dataset-title-row"><div><span className="kicker">Live data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">{isPublicRoute ? 'Public data' : 'Authenticated access'}</span></div>
           </div>
         </header>
 
         {definitionError && (isPublicRoute
           ? <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened.</strong><p>{definitionError}</p><Link to="/catalog">Return to the catalogue</Link></section>
-          : <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened for your account.</strong><p>{definitionError}</p><Link to="/data">Return to data access</Link></section>)}
+          : <section className="dataset-explorer-error section-wrap" role="alert"><strong>This dataset cannot be opened for your account.</strong><p>{definitionError}</p><Link to="/data/surveys">Return to Your surveys</Link></section>)}
         {!definition && !definitionError && <main className="dataset-explorer-loading"><span className="loader"/><strong>Opening the data service</strong><p>Reading the layer schema and access permissions...</p></main>}
         {/* Fail closed, and say why. A layer with no opendata flag has no row
             marked as released, so a non-Contributor gets nothing from it; an

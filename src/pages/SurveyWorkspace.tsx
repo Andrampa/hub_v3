@@ -179,7 +179,9 @@ function AggregatedAccessCard({ result, onRetry }: {
     !source.testData && source.status !== 'excluded-test' && source.status !== 'withheld'
   )) || []
   const pendingCount = sources.filter((source) => source.status === 'checking').length
-  const unavailableCount = sources.filter((source) => source.status === 'restricted' || source.status === 'failed').length
+  const restrictedCount = sources.filter((source) => source.status === 'restricted').length
+  const failedCount = sources.filter((source) => source.status === 'failed').length
+  const unavailableCount = restrictedCount + failedCount
   const warningCount = sources.filter((source) => source.status === 'confirmed-with-warnings').length
 
   if (!result || (sources.length > 0 && pendingCount === sources.length)) {
@@ -199,6 +201,23 @@ function AggregatedAccessCard({ result, onRetry }: {
   // "Available" claims a total. Until every source has answered, the number is
   // only what has been confirmed so far, and the headline says exactly that.
   const incomplete = pending || unavailableCount > 0
+
+  // Every production item returning 403 is an ArcGIS provisioning failure,
+  // not evidence that the catalogue contains zero surveys. Community
+  // membership establishes eligibility; the cross-organization sync supplies
+  // the item authorization. Keep those two facts distinct in the UI.
+  if (!pending && surveys.length === 0 && sources.length > 0 && restrictedCount === sources.length) {
+    return (
+      <article className="access-card">
+        <h2>Aggregated survey data</h2>
+        <p className="access-card-lede"><strong>Access is still being provisioned.</strong></p>
+        <p className="access-card-state access-card-state--warn">
+          This is a valid DIEM community account, but ArcGIS has not authorized it to open the aggregated data sources yet. Access normally activates within 15 minutes of account creation. If this account is older, contact the DIEM Hub team.
+          <button type="button" onClick={onRetry}>Check again</button>
+        </p>
+      </article>
+    )
+  }
 
   return (
     <article className="access-card">
@@ -1205,7 +1224,7 @@ export default function SurveyWorkspace() {
               {!isContributor ? null : !testMode ? (
                 <button type="button" className="test-mode-open" onClick={enterTestMode}>
                   <Icon name="flask"/>Open test-data mode
-                  <small>Adds the simulated review surveys to the picker. They stay out of every count and package.</small>
+                  <small>Shows simulated review surveys instead of production surveys. Test and production data never share a package.</small>
                 </button>
               ) : (
                 <button type="button" className="test-mode-open" onClick={leaveTestMode}>

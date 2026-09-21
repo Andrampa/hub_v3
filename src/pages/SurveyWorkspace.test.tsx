@@ -174,6 +174,29 @@ afterEach(async () => {
 })
 
 describe('survey workspace access states', () => {
+  it('reports an authorization delay instead of claiming that a community account has zero surveys', async () => {
+    discoverAggregatedSurveys.mockImplementation((_requester: unknown, options: { onProgress?: (value: SurveyDiscoveryResult) => void }) => {
+      const result = discovery({
+        status: 'unavailable',
+        unavailableSourceCount: 2,
+        surveys: [],
+        sources: [
+          { resourceId: 'a', generation: 'v2', themeId: 'food-security', themeLabel: 'Food security', testData: false, status: 'restricted' },
+          { resourceId: 'b', generation: 'v1', themeId: 'crop-production', themeLabel: 'Crop production', testData: false, status: 'restricted' },
+        ],
+      })
+      options.onProgress?.(result)
+      return Promise.resolve(result)
+    })
+
+    await render()
+
+    const card = container.querySelector('.access-card')?.textContent
+    expect(card).toContain('Access is still being provisioned')
+    expect(card).toContain('valid DIEM community account')
+    expect(card).not.toContain('0 surveys')
+  })
+
   it('counts only production surveys and never presents a partial count as a total', async () => {
     discoverAggregatedSurveys.mockImplementation((_requester: unknown, options: { onProgress?: (value: SurveyDiscoveryResult) => void }) => {
       const result = discovery({
@@ -352,6 +375,7 @@ describe('test-data mode', () => {
     expect(container.textContent).toContain('Nigeria')
     expect(container.textContent).not.toContain('Chad')
     expect(container.querySelector('.access-card-lede')?.textContent).toContain('1 survey available')
+    expect(container.querySelector('.test-mode-open')?.textContent).toContain('instead of production surveys')
   })
 
   it('shows simulated surveys alone, never beside production ones', async () => {

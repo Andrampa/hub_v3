@@ -146,7 +146,9 @@ describe('access matrix', () => {
     // must not be given the generation-wide master layers by side effect.
     const grantRecipient = deriveCommunityCapabilities([])
     expect(grantRecipient.householdData).toBe(false)
-    expect(grantRecipient.aggregatedData).toBe(false)
+    // Organization validation happens before capability derivation, so every
+    // caller here is a DIEM Community member and eligible for aggregates.
+    expect(grantRecipient.aggregatedData).toBe(true)
   })
 
   it('treats a contributor as holding both broad data capabilities', () => {

@@ -28,7 +28,8 @@ function activeSection(pathname: string): NavSection | undefined {
 
 export function SiteHeader() {
   const auth = useAuth()
-  const active = activeSection(useLocation().pathname)
+  const { pathname } = useLocation()
+  const active = activeSection(pathname)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
@@ -71,9 +72,17 @@ export function SiteHeader() {
                 <strong>Survey explorer</strong>
                 <small>Explore survey results in the full-screen app</small>
               </Link>
-              <Link to="/data">
+              <Link to="/data" aria-current={pathname === '/data' ? 'page' : undefined}>
                 <strong>Data access</strong>
                 <small>Access household survey data and related resources</small>
+              </Link>
+              <Link to="/data/surveys" aria-current={pathname === '/data/surveys' ? 'page' : undefined}>
+                <strong>Your surveys</strong>
+                <small>Choose and download surveys available to your account</small>
+              </Link>
+              <Link to="/data/guide" aria-current={pathname === '/data/guide' ? 'page' : undefined}>
+                <strong>Data access guide</strong>
+                <small>Understand access, metadata, licensing and citation</small>
               </Link>
           </NavDropdown>
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
@@ -149,7 +158,9 @@ export function SiteHeader() {
         <span className="mobile-nav-heading">Household surveys</span>
         <Link className={active === 'monitoring' ? 'active' : ''} to="/monitoring-system" onClick={() => setMobileMenuOpen(false)}>Catalogue</Link>
         <Link to="/monitoring" onClick={() => setMobileMenuOpen(false)}>Survey explorer</Link>
-        <Link className={active === 'data' ? 'active' : ''} to="/data" onClick={() => setMobileMenuOpen(false)}>Data access</Link>
+        <Link className={pathname === '/data' ? 'active' : ''} aria-current={pathname === '/data' ? 'page' : undefined} to="/data" onClick={() => setMobileMenuOpen(false)}>Data access</Link>
+        <Link className={pathname === '/data/surveys' ? 'active' : ''} aria-current={pathname === '/data/surveys' ? 'page' : undefined} to="/data/surveys" onClick={() => setMobileMenuOpen(false)}>Your surveys</Link>
+        <Link className={pathname === '/data/guide' ? 'active' : ''} aria-current={pathname === '/data/guide' ? 'page' : undefined} to="/data/guide" onClick={() => setMobileMenuOpen(false)}>Data access guide</Link>
         <span className="mobile-nav-heading">About DIEM</span>
         <Link className={active === 'about' ? 'active' : ''} to="/about" onClick={() => setMobileMenuOpen(false)}>What is DIEM?</Link>
         <Link className={active === 'about' ? 'active' : ''} to="/photo-galleries" onClick={() => setMobileMenuOpen(false)}>Photo galleries</Link>

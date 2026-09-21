@@ -1,5 +1,38 @@
 # Changelog
 
+## 2026-09-21 - Community aggregate eligibility and provisioning state
+
+- Every validated DIEM Community account now receives the `aggregatedData`
+  capability. The FAO Community Members group is the cross-organization ArcGIS
+  provisioning mechanism, not a separate entitlement.
+- When every aggregate source returns 403, the workspace reports delayed
+  ArcGIS authorization instead of the misleading "0 surveys available". The
+  external repair remains adding the account to role 1 and running the
+  community synchronization notebook.
+
+## 2026-09-21 - Clearer paths into survey data
+
+- The Household surveys menu now exposes the public data overview, **Your
+  surveys**, and the data access guide on desktop and mobile. Exact current-page
+  markers distinguish those related destinations for assistive technology and
+  in the mobile menu. The footer mirrors the same destinations.
+- Protected dataset explorers keep **Your surveys** in their breadcrumb trail,
+  instead of returning an authenticated user only to the public overview.
+- Contributor test-mode copy now says simulated surveys replace production
+  surveys. The previous word "adds" contradicted the enforced separation.
+- The signed-out `/data` hero links to the public guide instead of sending a
+  visitor from one sign-in gate to the workspace's second sign-in gate.
+- The local HTTP browser-test callback is documented as
+  `http://127.0.0.1:4174/oauth-callback.html`; ArcGIS must register that exact
+  redirect before authenticated browser testing can use it.
+
+## 2026-09-21 - Reliable navigation to lazy-page anchors
+
+- Hash links now wait for lazy route content to mount before scrolling. Links
+  such as `/data#microdata` previously preserved the fragment but remained at
+  the hero because the shared scroll effect ran while Suspense still showed its
+  loading fallback.
+
 ## 2026-09-21 - The visibility rule governs survey data only
 
 - The explorer applied the fail-closed rule to every dataset it opens, so

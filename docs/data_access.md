@@ -17,8 +17,9 @@ The current production Hub remains unchanged. ArcGIS Online remains authoritativ
 Tier decides what is *offered*. ArcGIS item sharing decides what is *authorized*;
 every protected item is still resolved against the active identity.
 
-Tier 2 is derived from organization membership, not from the aggregated-data
-group (`c8ae74a0f2de480abe6f72876a52b0cc`). ArcGIS cannot add Hub community
+Tier 2 and `capabilities.aggregatedData` are derived from validated organization
+membership, not from the aggregated-data group
+(`c8ae74a0f2de480abe6f72876a52b0cc`). ArcGIS cannot add Hub community
 accounts to that FAO group itself; the internal community-sync notebook
 (`scripts/agol_notebooks/`, see its README) adds new accounts on its next
 scheduled run, planned every 15 minutes.
@@ -30,6 +31,11 @@ could plainly see their data — group-membership derivation and item resolution
 can disagree, and only resolution reflects what the user actually has. The
 notice offers the provisioning window as a likely explanation rather than
 asserting it, and offers a re-check.
+
+When every production source returns 403, the workspace does not report
+"0 surveys": that would describe the catalogue rather than the authorization
+failure. It identifies the delayed ArcGIS provisioning explicitly and directs
+older accounts to the Hub team.
 
 Presentation rule: dataset cards lead with the curated manifest label, not the
 live ArcGIS title. Infrastructure services are named for the pipeline that

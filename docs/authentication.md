@@ -9,7 +9,9 @@ DIEM Hub 3.0 accepts ArcGIS accounts that are enabled members of the FAO Data in
 - OAuth client ID: `7ZnjQhVHwjuYi1FM`
 - Community portal: `https://hqfao-hub.maps.arcgis.com`
 - Community organization ID: `D5aXW6TZFpeM2wke`
-- Development callbacks: `https://localhost:5173/oauth-callback.html` and `https://localhost:5174/oauth-callback.html`.
+- Development callbacks: `https://localhost:5173/oauth-callback.html`,
+  `https://localhost:5174/oauth-callback.html`, and
+  `http://127.0.0.1:4174/oauth-callback.html` for the local browser-test mode.
 
 The redirect URI is always derived from `window.location.origin`, in development
 as well as production. It must never be hardcoded to one development port. When

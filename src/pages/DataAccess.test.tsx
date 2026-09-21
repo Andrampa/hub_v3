@@ -108,12 +108,13 @@ describe('/data public overview', () => {
     expect(current).toContain('No production data yet')
   })
 
-  it('routes every primary action into the workspace', async () => {
+  it('routes data actions into the workspace and offers the public guide', async () => {
     await render()
 
     const workspaceLinks = container.querySelectorAll('a[href="/data/surveys"]')
-    expect(workspaceLinks.length).toBeGreaterThanOrEqual(3)
-    expect(container.querySelector('a[href="/data/guide"]')).not.toBe(null)
+    expect(workspaceLinks.length).toBeGreaterThanOrEqual(2)
+    const guideLink = container.querySelector('.data-gate-secondary[href="/data/guide"]')
+    expect(guideLink?.textContent).toContain('Read the data access guide')
     expect(container.querySelector('a[href="/data/microdata-request"]')).not.toBe(null)
   })
 })

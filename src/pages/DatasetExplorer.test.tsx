@@ -93,6 +93,17 @@ function whereOfFirstCount() {
 }
 
 describe('dataset explorer visibility', () => {
+  it('keeps the protected workspace in the breadcrumb trail', async () => {
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+
+    await open(AGGREGATE_ID)
+
+    const breadcrumb = container.querySelector('nav[aria-label="Breadcrumb"]')
+    expect(breadcrumb?.querySelector('a[href="/data"]')?.textContent).toBe('Data access')
+    expect(breadcrumb?.querySelector('a[href="/data/surveys"]')?.textContent).toBe('Your surveys')
+    expect(breadcrumb?.textContent).toContain('Dataset explorer')
+  })
+
   it('limits survey data to released rows for a non-Contributor', async () => {
     fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
 

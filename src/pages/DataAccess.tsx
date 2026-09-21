@@ -54,7 +54,7 @@ function HeroAction() {
       <button type="button" onClick={() => void auth.signIn()} disabled={auth.status === 'authenticating' || auth.status === 'loading'}>
         <Icon name="lock"/>{auth.status === 'authenticating' ? 'Opening sign in…' : 'Sign in or create an account'}
       </button>
-      <Link className="data-gate-secondary" to={WORKSPACE_ROUTE}><Icon name="table"/>Go to the survey data workspace</Link>
+      <Link className="data-gate-secondary" to="/data/guide"><Icon name="book"/>Read the data access guide</Link>
     </div>
   )
 }

@@ -34,6 +34,7 @@ export function SiteFooter() {
             <li><Link to="/monitoring-system">Surveys catalogue</Link></li>
             <li><Link to="/monitoring">Survey explorer</Link></li>
             <li><Link to="/data">Data access</Link></li>
+            <li><Link to="/data/surveys">Your surveys</Link></li>
             <li><Link to="/data/guide">Data access guide</Link></li>
           </ul>
         </div>

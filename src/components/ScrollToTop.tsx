@@ -17,11 +17,32 @@ export default function ScrollToTop() {
 
   useEffect(() => {
     if (hash) {
-      const target = document.querySelector(hash)
-      if (target) {
-        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY, behavior: 'instant' })
-        return
+      let id: string
+      try {
+        id = decodeURIComponent(hash.slice(1))
+      } catch {
+        id = hash.slice(1)
       }
+
+      const scrollToTarget = () => {
+        const target = document.getElementById(id)
+        if (!target) return false
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY, behavior: 'instant' })
+        return true
+      }
+
+      if (scrollToTarget()) return
+
+      // Route pages are lazy-loaded. On a cold navigation this effect runs while
+      // Suspense is still showing its fallback, before the anchor exists. Watch
+      // the app root until the route mounts instead of silently leaving the user
+      // at the top of the wrong section.
+      const root = document.getElementById('root') || document.body
+      const observer = new MutationObserver(() => {
+        if (scrollToTarget()) observer.disconnect()
+      })
+      observer.observe(root, { childList: true, subtree: true })
+      return () => observer.disconnect()
     }
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [pathname, hash])

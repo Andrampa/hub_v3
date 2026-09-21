@@ -3,7 +3,8 @@
 ## Active: survey-first data access workspace
 
 Status on 2026-09-21. The plan and its evidence are in
-`docs/data_access_restructure.md`. Nothing is committed.
+`docs/data_access_restructure.md`. The main workspace implementation is in
+commit `5ae327b`; the later navigation, anchor and test changes are uncommitted.
 
 **What exists.** The switch is complete and atomic: `/data` is now the public
 overview and `/data/surveys` is the workspace that replaced its authenticated
@@ -28,26 +29,24 @@ half.
   its microdata tab on that hash so an accepted grant lands on its data.
 - `/data/guide` carries the new download steps and all three citation languages.
 
-**Not yet verified with a real session.** Unit tests cover the pages against
-mocked services and the builder against a stubbed requester, mutation-checked on
-their key guards. The production build path ran in a browser with a stubbed
-requester (real worker, real zip, mid-compression cancel), and the public `/data`
-and `/data/guide` were checked in a browser at desktop and 375 px. No archive has
-been built from live ArcGIS and no signed-in state has been exercised.
+**Partly verified with a real session.** A signed-in Contributor account holding
+both household-group access and an active temporary grant was exercised through
+the local HTTP browser-test origin. Discovery returned 208 production surveys;
+all four V2 and four V1 sources reported Published, while the five V3 test
+sources remained excluded. The combined microdata licence, grant route and
+11,696-record scoped grant view rendered correctly. A Tonga round 1 aggregate
+package preflight counted 16 records in four files and reached live compression.
+The in-app browser then remounted the page while handling the download, so the
+archive contents and CSV row counts still need checking in a normal browser.
 
 Next, in order:
 
-1. **The live signed-in test (plan section 14).** On
-   `https://localhost:5173/data/surveys`: build one small package and compare
-   its CSV row count with the count shown at review; open the microdata tab with
-   a household-data account, a temporary-grant account and one holding both,
-   and check the licence wording names the right path each time; confirm a
-   non-Contributor sees no unreleased (`opendata = 0`) survey and no test-data
-   control, while a Contributor sees both; confirm every live V1 and V2 layer
-   carries `opendata` - the Hub now withholds any that does not, which would show
-   as `withheld` sources under technical resources; accept a grant
-   invitation and confirm it lands on the microdata tab. Run all five account
-   states.
+1. **Finish the live signed-in matrix (plan section 14).** In a normal browser,
+   inspect the Tonga package and compare its four CSV row counts with the
+   16-record preflight total. Still run separate community-only,
+   household-group-only and temporary-grant-only accounts; the combined
+   household-group-plus-grant Contributor state is verified. Accept a fresh
+   invitation and confirm it lands on the microdata tab.
 2. **Remove dead CSS.** About twenty class families in `src/data-access.css`
    served the old workspace and are now unreferenced. Offered as a separate task.
 3. **Plan step 8** — present and count temporary grants by survey in the
@@ -59,14 +58,20 @@ Next, in order:
    `hh_survey_v3/development/phase6_web_app/js/core/config.js` still sends
    signed-in users to `/data`, now the public overview; it should point to
    `/data/surveys`. Its `DATA_ACCESS_CONFIG` also duplicates the V3 item IDs.
-6. **Navigation.** The plan names the workspace **Your surveys** in the site
-   navigation; the header still links only to `/data`.
+**Authenticated visual inspection is partial.** Public navigation and layout
+were checked in the local HTTP test mode at desktop and 375 px. The authenticated
+workspace was then checked at the in-app browser's 735 px responsive width, with
+no horizontal page overflow. This found and fixed a lazy-route anchor race:
+`/data#microdata` kept its fragment but stayed at the hero until
+`ScrollToTop.tsx` was changed to wait for the target to mount. Authenticated
+navigation, protected states and package verification still require a
+registered local origin. The HTTP browser-test callback is
+`http://127.0.0.1:4174/oauth-callback.html` and is now registered in AGOL.
 
-**No visual inspection yet.** Browser screenshots timed out throughout — the
-pane does not draw while the app window is behind others — so `/data`,
-`/data/guide` and the workspace were checked through the DOM (structure,
-widths, overflow at desktop and 375 px), not seen. The repository's manual
-visual-verification requirement is therefore still unmet for all three pages.
+The Household surveys menu now links to `/data`, `/data/surveys` as **Your
+surveys**, and `/data/guide` on desktop and mobile. The signed-out `/data` hero
+uses the guide as its secondary action instead of sending visitors to a second
+sign-in gate.
 
 Verification: 410 tests across 23 files and `npm run build` both passed on
 2026-09-21. While a worktree exists under `.claude/worktrees/`, plain
@@ -98,6 +103,16 @@ Remaining: make sure the AGOL task runs every 15 minutes with
 `/data` and `/data/guide` "within 15 minutes" copy relies on that schedule.
 The first real departure will be the first test of the departure check;
 expect a `Departures: …` line.
+
+**2026-09-21 provisioning failure:** Community account
+`andrea.amparore_faohub_testaccount` reported no aggregated surveys. Community
+membership establishes eligibility, but the eight V1/V2 aggregate items remain
+cross-organization protected and require the FAO Community Members group
+`c8ae74a0f2de480abe6f72876a52b0cc`. Confirm this username has a role-table row
+with role 1, then run the notebook and verify it appears in that group. This is
+also evidence that the promised 15-minute schedule is absent, delayed or
+failing. The app now reports this as an authorization/provisioning failure
+instead of "0 surveys available"; it cannot override ArcGIS sharing.
 
 ## Pending ArcGIS work: retire the photo-gallery StoryMap wrappers
 

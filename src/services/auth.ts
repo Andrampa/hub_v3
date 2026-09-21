@@ -86,7 +86,12 @@ export function deriveCommunityCapabilities(groupIds: string[]): CommunityCapabi
   const contributor = memberships.has(DIEM_ACCESS_GROUPS.contributor)
   return {
     contributor,
-    aggregatedData: contributor || memberships.has(DIEM_ACCESS_GROUPS.aggregatedData),
+    // This function is called only after `assertCommunityAccount`: every valid
+    // Community member is eligible for aggregated data. Membership of the
+    // cross-organization FAO group is the ArcGIS provisioning mechanism, not a
+    // separate product entitlement. Treating it as one hid aggregate entry
+    // points from valid members while the sync was delayed or unhealthy.
+    aggregatedData: true,
     householdData: contributor || memberships.has(DIEM_ACCESS_GROUPS.householdData),
   }
 }
