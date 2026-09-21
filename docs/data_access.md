@@ -172,12 +172,19 @@ The Hub applies the rule defined for the DIEM dashboard in register item 10 of
 - A **Contributor** (member of the Contributors group,
   `capabilities.contributor`) sees every row, including data not yet validated
   for publication.
-- Everyone else sees only rows with `opendata = 1`.
-- **Survey data only.** The rule governs aggregated data and household
-  microdata (grant views included). Administrative boundaries, documentation
+- Everyone else (DIEM community members) is filtered at two levels:
+  - **Survey level:** the workspace offers only surveys whose survey-register
+    row (`OER_Monitoring_System_View`) is `round_validated = Yes`, matched on
+    ISO3 and round number (`fetchValidatedSurveyKeys`). If the register cannot
+    be read, discovery fails closed and says so.
+  - **Feature level:** within those surveys, only rows with `opendata = 1`.
+- **Survey data only** (aggregated tables and household microdata, grant views
+  included). Administrative boundaries, documentation
   and public catalogue datasets are outside it: they carry no flag and are
   public by nature.
-- **Fails closed.** A layer with no `opendata` field has no row marked released,
+- **Unflagged aggregated layers fail open** (the survey-level gate still
+  applies); withholding them hid every published survey from community members.
+- **Unflagged microdata fails closed.** A layer with no `opendata` field has no row marked released,
   so a non-Contributor gets nothing from it: discovery marks the source
   `withheld` (not a failure, and not counted against the total) and the dataset
   explorer says the dataset has not been released instead of showing "0
@@ -191,15 +198,15 @@ the enforcement is not:
 |---|---|---|
 | `opendata = 1` filter | Enforced | Off (`enforceOpendata: false` until real surveys carry `opendata = 1`) |
 | Layer without the field | Withheld from non-Contributors | Shown unfiltered |
-| Survey register `round_validated` | Not applied | Hides unvalidated surveys |
+| Survey register `round_validated` | Applied in the survey workspace | Hides unvalidated surveys |
 
 So today a non-Contributor can see `opendata = 0` rows in the dashboard that the
 Hub hides. The two converge when the dashboard sets `enforceOpendata: true` at
 the rebuild; the fail-closed and register differences remain.
 
-It is applied in three places, each of which funnels every query through it:
-survey discovery (the clause is stored on each theme, so `surveySliceWhere` -
-and therefore counts, CSV extracts and manifests - inherit it), the dataset
+The survey-level gate applies in the survey workspace (discovery, and so every
+count, extract and manifest). The feature-level clause applies in discovery (it
+is stored on each theme, so `surveySliceWhere` carries it), in the dataset
 explorer's single `where` (count, preview, map, downloads, API links, scripts),
 and the explorer's filter-option lists. Discovery results are cached per
 visibility scope. Test-data mode is Contributor-only, because every test survey

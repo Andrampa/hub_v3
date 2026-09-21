@@ -1,4 +1,5 @@
 import { countryDefinition } from './countries'
+import { fetchValidatedSurveyKeys } from './monitoring'
 import {
   AGGREGATE_RESOURCES,
   resolveProtectedResource,
@@ -98,6 +99,12 @@ export interface SurveyDiscoveryOptions {
   includeTestData?: boolean
   /** Contributors see rows not yet released; everyone else only `opendata = 1`. */
   contributor?: boolean
+  /**
+   * Survey-level gate for non-Contributors: the `ISO3:round` keys the register
+   * marks Validated = Yes. Undefined applies no gate (Contributors). Null means
+   * the register could not be read, and every source fails closed.
+   */
+  validatedSurveys?: Set<string> | null
   refresh?: boolean
   onProgress?: (result: SurveyDiscoveryResult) => void
   /**
@@ -274,7 +281,7 @@ async function discoverSource(
 
     const layerUrl = `${serviceUrl}/${layerReference.id}`
     const layer = await requester<FeatureLayerInfo>(layerUrl)
-    const visibilityWhere = visibilityClause(layer, contributor)
+    const visibilityWhere = visibilityClause(layer, contributor, resource.kind)
     // Fail closed, and say so: no flag means nothing is marked released. No query
     // is sent, since it could only come back empty.
     if (isWithheld(visibilityWhere)) {
@@ -339,12 +346,16 @@ function buildDiscoveryResult(
   resources: readonly ProtectedDataResource[],
   outcomes: Array<SourceOutcome | undefined>,
   excluded: SurveySourceResult[],
+  validatedSurveys?: Set<string>,
 ): SurveyDiscoveryResult {
   const surveyMap = new Map<string, AvailableSurvey>()
 
   for (const outcome of outcomes) {
     if (!outcome || !('surveys' in outcome)) continue
     for (const identity of outcome.surveys) {
+      // Test surveys are not in the register; test mode is Contributor-only.
+      if (validatedSurveys && !outcome.theme.testData
+        && !validatedSurveys.has(`${identity.adm0Iso3}:${identity.round}`)) continue
       const key = surveyKey(outcome.theme.generation, identity.adm0Iso3, identity.round)
       const current = surveyMap.get(key)
       if (current) {
@@ -396,7 +407,7 @@ function buildDiscoveryResult(
 export async function discoverSurveyAvailability(
   resources: readonly ProtectedDataResource[],
   requester: ProtectedRequester,
-  options: Pick<SurveyDiscoveryOptions, 'includeTestData' | 'contributor' | 'onProgress' | 'signal'> = {},
+  options: Pick<SurveyDiscoveryOptions, 'includeTestData' | 'contributor' | 'validatedSurveys' | 'onProgress' | 'signal'> = {},
 ): Promise<SurveyDiscoveryResult> {
   const included = resources.filter((resource) => resource.kind === 'aggregate' && (options.includeTestData || !resource.preview))
   const excluded = resources
@@ -407,14 +418,25 @@ export async function discoverSurveyAvailability(
     if (options.signal?.aborted) return
     options.onProgress?.(result)
   }
-  report(buildDiscoveryResult(included, outcomes, excluded))
+  // Without the register no survey can be shown to a community member as
+  // validated, so nothing is queried and every source says why.
+  if (options.validatedSurveys === null) {
+    const failed = included.map((resource) => ({
+      source: sourceSummary(resource, 'failed', { message: 'The survey register could not be read, so no survey can be confirmed as validated.' }),
+    }))
+    const result = buildDiscoveryResult(included, failed, excluded)
+    report(result)
+    return result
+  }
+  const validated = options.validatedSurveys
+  report(buildDiscoveryResult(included, outcomes, excluded, validated))
 
   await Promise.all(included.map(async (resource, index) => {
     outcomes[index] = await discoverSource(resource, requester, Boolean(options.contributor))
-    report(buildDiscoveryResult(included, outcomes, excluded))
+    report(buildDiscoveryResult(included, outcomes, excluded, validated))
   }))
 
-  return buildDiscoveryResult(included, outcomes, excluded)
+  return buildDiscoveryResult(included, outcomes, excluded, validated)
 }
 
 interface AggregateCacheEntry {
@@ -473,15 +495,20 @@ export function discoverAggregatedSurveys(
   if (options.onProgress) subscribe(listeners, options.onProgress, options.signal)
   let latest: SurveyDiscoveryResult | undefined
   let entry: AggregateCacheEntry | undefined
-  const promise = discoverSurveyAvailability(AGGREGATE_RESOURCES, requester, {
+  // Contributors see every survey; community members only validated ones.
+  const register = options.contributor
+    ? Promise.resolve(undefined)
+    : loadValidatedSurveys().catch(() => null)
+  const promise = register.then((validatedSurveys) => discoverSurveyAvailability(AGGREGATE_RESOURCES, requester, {
     includeTestData: options.includeTestData,
     contributor: options.contributor,
+    validatedSurveys,
     onProgress: (result) => {
       latest = result
       if (entry) entry.latest = result
       for (const listener of listeners) listener(result)
     },
-  })
+  }))
   entry = { promise, latest, listeners }
   requesterCache.set(mode, entry)
   return promise
@@ -539,6 +566,13 @@ export async function countSurveySlices(
       onProgress?.(completed, slices.length)
     }
   }))
+}
+
+/** Replaceable in tests; the register is public, so it needs no requester. */
+let loadValidatedSurveys: () => Promise<Set<string>> = () => fetchValidatedSurveyKeys()
+
+export function setValidatedSurveyLoaderForTests(loader: () => Promise<Set<string>>) {
+  loadValidatedSurveys = loader
 }
 
 export function clearSurveyAccessCache(requester?: ProtectedRequester) {

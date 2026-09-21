@@ -25,8 +25,11 @@ import type { FeatureLayerInfo } from './dataExplorer'
  *    `*_opening_data_to_public*.py` scripts in `hh_survey`), so a layer without
  *    it is a configuration error to surface, not a case to paper over.
  *
- * The dashboard additionally hides surveys whose register row is not
- * `round_validated = Yes`; the Hub filters on `opendata` only.
+ * Two levels, both skipped for Contributors:
+ * - Survey level: a community member is offered only surveys whose register row
+ *   is `round_validated = Yes` (`fetchValidatedSurveyKeys`, applied in
+ *   `discoverAggregatedSurveys`).
+ * - Feature level: within an offered survey, only rows with `opendata = 1`.
  *
  * SCOPE OF ENFORCEMENT. This governs what the Hub shows, counts and packages.
  * It is not a security boundary: a public feature service returns every row to
@@ -53,13 +56,21 @@ export const WITHHELD_WHERE = '1=0'
  * The clause restricting a layer to publicly released rows for this viewer, or
  * undefined for a Contributor, who sees everything.
  *
- * Fails closed: a layer with no `opendata` field yields `WITHHELD_WHERE`. A
- * missing flag means no row has been marked released, not that every row has.
+ * Microdata fails closed: a layer with no `opendata` field yields
+ * `WITHHELD_WHERE`. Aggregated data fails open (see below).
  */
-export function visibilityClause(layer: Pick<FeatureLayerInfo, 'fields'> | undefined, contributor: boolean) {
+export function visibilityClause(
+  layer: Pick<FeatureLayerInfo, 'fields'> | undefined,
+  contributor: boolean,
+  kind?: string,
+) {
   if (contributor) return undefined
   const field = opendataField(layer)
-  return field ? `${field} = 1` : WITHHELD_WHERE
+  if (field) return `${field} = 1`
+  // Aggregated data fails open: which surveys a community member sees is decided
+  // at survey level by the register's Validated flag (`fetchValidatedSurveyKeys`),
+  // and withholding an unflagged aggregate table hid every published survey.
+  return kind === 'aggregate' ? undefined : WITHHELD_WHERE
 }
 
 export function isWithheld(clause: string | undefined) {
@@ -67,13 +78,12 @@ export function isWithheld(clause: string | undefined) {
 }
 
 /**
- * Whether the rule governs a resource at all: survey data only - aggregated
- * tables and household microdata, grant views included.
+ * Whether the row-level rule governs a resource at all: survey data only -
+ * aggregated tables and household microdata, grant views included.
  *
  * The dataset explorer also opens administrative boundaries and public
  * catalogue datasets. They are not survey data, carry no `opendata` flag and
- * are public by nature; applying a fail-closed rule to them withheld unrelated
- * data from every non-Contributor.
+ * are public by nature.
  */
 export function governedByVisibility(kind: string | undefined) {
   return kind === 'aggregate' || kind === 'microdata'

@@ -4,9 +4,13 @@ import {
   clearSurveyAccessCache,
   discoverAggregatedSurveys,
   discoverSurveyAvailability,
+  setValidatedSurveyLoaderForTests,
   surveyKey,
   surveySliceWhere,
 } from './surveyAccess'
+
+// The register is a live public service; never reach it from a unit test.
+beforeEach(() => setValidatedSurveyLoaderForTests(async () => new Set()))
 
 function resource(
   id: string,
@@ -368,69 +372,63 @@ describe('content visibility in discovery', () => {
     { adm0_iso3: 'NGA', round: 9, opendata: 0 },
   ]
 
-  it('offers a non-Contributor only surveys with released rows', async () => {
-    const { requester, wheres } = flaggedLayer(ROWS)
+  const GATE_ROWS = [
+    { adm0_iso3: 'NGA', round: 8, opendata: 1 },
+    { adm0_iso3: 'NGA', round: 9, opendata: 0 },
+    { adm0_iso3: 'NGA', round: 10, opendata: 1 },
+  ]
+  const VALIDATED = new Set(['NGA:8', 'NGA:9'])
 
-    const result = await discoverSurveyAvailability([resource('flagged', 'v3', 'Food security')], requester)
+  it('offers a community member only validated surveys, and only their released rows', async () => {
+    const { requester, wheres } = flaggedLayer(GATE_ROWS)
 
+    const result = await discoverSurveyAvailability([resource('flagged', 'v2', 'Food security')], requester, { validatedSurveys: VALIDATED })
+
+    // Round 10 has released rows but is not validated; round 9 is validated but has none released.
     expect(wheres[0]).toBe('opendata = 1')
-    expect(result.surveys.map((survey) => survey.key)).toEqual(['v3:NGA:8'])
+    expect(result.surveys.map((survey) => survey.key)).toEqual(['v2:NGA:8'])
+    expect(surveySliceWhere(result.surveys[0], result.surveys[0].themes[0])).toBe("(adm0_iso3 = 'NGA' AND round = 8) AND opendata = 1")
   })
 
-  it('offers a Contributor unreleased surveys too', async () => {
-    const { requester, wheres } = flaggedLayer(ROWS)
+  it('offers a Contributor every survey and every row, validated or not', async () => {
+    const { requester, wheres } = flaggedLayer(GATE_ROWS)
 
-    const result = await discoverSurveyAvailability([resource('flagged', 'v3', 'Food security')], requester, { contributor: true })
+    const result = await discoverSurveyAvailability([resource('flagged', 'v2', 'Food security')], requester, { contributor: true })
 
     expect(wheres[0]).toBe('1=1')
-    expect(result.surveys.map((survey) => survey.key)).toEqual(['v3:NGA:8', 'v3:NGA:9'])
+    expect(result.surveys.map((survey) => survey.key)).toEqual(['v2:NGA:8', 'v2:NGA:9', 'v2:NGA:10'])
   })
 
-  it('carries the clause into every survey slice, so counts and downloads apply it too', async () => {
-    const { requester } = flaggedLayer(ROWS)
+  it('reads an unflagged aggregated layer unfiltered for a community member, still gated by validation', async () => {
+    const { requester, wheres } = flaggedLayer(GATE_ROWS, false)
 
-    const result = await discoverSurveyAvailability([resource('flagged', 'v3', 'Food security')], requester)
-    const survey = result.surveys[0]
+    const result = await discoverSurveyAvailability([resource('legacy', 'v1', 'Food security')], requester, { validatedSurveys: VALIDATED })
 
-    expect(surveySliceWhere(survey, survey.themes[0])).toBe("(adm0_iso3 = 'NGA' AND round = 8) AND opendata = 1")
+    expect(wheres[0]).toBe('1=1')
+    expect(result.status).toBe('complete')
+    expect(result.surveys.map((survey) => survey.key)).toEqual(['v1:NGA:8', 'v1:NGA:9'])
   })
 
-  it('withholds a layer without the flag from a non-Contributor, without querying it', async () => {
-    const { requester, wheres } = flaggedLayer(ROWS, false)
+  it('fails closed when the register cannot be read, and says so', async () => {
+    const { requester, wheres } = flaggedLayer(GATE_ROWS)
 
-    const result = await discoverSurveyAvailability([resource('legacy', 'v1', 'Food security')], requester)
+    const result = await discoverSurveyAvailability([resource('flagged', 'v2', 'Food security')], requester, { validatedSurveys: null })
 
     expect(wheres).toHaveLength(0)
     expect(result.surveys).toEqual([])
-    expect(result.sources[0]).toMatchObject({ status: 'withheld', message: expect.stringContaining('no opendata flag') })
+    expect(result.status).toBe('failed')
+    expect(result.sources[0].message).toContain('survey register')
   })
 
-  it('does not call a withheld source a failure or the total incomplete', async () => {
-    const flagged = flaggedLayer(ROWS)
-    const unflagged = flaggedLayer(ROWS, false)
-    const requester = (async (url: string, params?: Record<string, unknown>) => (
-      url.includes('legacy') ? unflagged.requester(url, params) : flagged.requester(url, params)
-    )) as ProtectedRequester
+  it('reads the register for a community member only', async () => {
+    const loader = vi.fn().mockResolvedValue(VALIDATED)
+    setValidatedSurveyLoaderForTests(loader)
+    const { requester } = flaggedLayer(GATE_ROWS)
 
-    const result = await discoverSurveyAvailability(
-      [resource('flagged', 'v3', 'Food security'), resource('legacy', 'v1', 'Crop production')],
-      requester,
-    )
-
-    // What this viewer may see was read in full: the withheld source is outside it.
-    expect(result.status).toBe('complete')
-    expect(result.unavailableSourceCount).toBe(0)
-  })
-
-  it('shows a Contributor a layer without the flag, unfiltered', async () => {
-    const { requester, wheres } = flaggedLayer(ROWS, false)
-
-    const result = await discoverSurveyAvailability([resource('legacy', 'v1', 'Food security')], requester, { contributor: true })
-
-    expect(wheres[0]).toBe('1=1')
-    // Unreleased round 9 included, and no clause on the slice.
-    expect(result.surveys.map((survey) => survey.key)).toEqual(['v1:NGA:8', 'v1:NGA:9'])
-    expect(surveySliceWhere(result.surveys[0], result.surveys[0].themes[0])).toBe("adm0_iso3 = 'NGA' AND round = 8")
+    await discoverAggregatedSurveys(requester, { contributor: true })
+    expect(loader).not.toHaveBeenCalled()
+    await discoverAggregatedSurveys(requester, { contributor: false })
+    expect(loader).toHaveBeenCalledTimes(1)
   })
 
   it('never serves one visibility scope\'s cached discovery to the other', async () => {

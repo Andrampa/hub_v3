@@ -259,7 +259,7 @@ export default function DatasetExplorer() {
   // Survey data only: boundaries and catalogue datasets are outside the rule.
   const visibility = useMemo(() => (
     definition && governedByVisibility(definition.resource.kind)
-      ? visibilityClause(definition.layer, isContributor)
+      ? visibilityClause(definition.layer, isContributor, definition.resource.kind)
       : undefined
   ), [definition, isContributor])
   const withheld = isWithheld(visibility)

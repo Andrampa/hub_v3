@@ -446,3 +446,41 @@ export async function fetchSurveyCollectionPeriods(
 }
 
 export const SURVEY_RELEASE_SOURCE_URL = SURVEY_RELEASE_LAYER_URL
+
+/**
+ * The surveys the register marks `round_validated = Yes`, keyed `ISO3:round`
+ * (round as an integer, so "Round 08" and 8 meet). Community members are offered
+ * only these surveys in the data workspace; Contributors see every survey.
+ *
+ * Throws when the register cannot be read: the caller must fail closed rather
+ * than treat an unreadable register as "everything is validated".
+ */
+export async function fetchValidatedSurveyKeys(signal?: AbortSignal): Promise<Set<string>> {
+  const keys = new Set<string>()
+  let offset = 0
+  while (true) {
+    const params = new URLSearchParams({
+      f: 'json',
+      where: `round_validated = 'Yes'`,
+      outFields: 'ObjectId,admin0_isocode,round,round_validated',
+      returnGeometry: 'false',
+      orderByFields: 'ObjectId ASC',
+      resultOffset: String(offset),
+      resultRecordCount: String(PAGE_SIZE),
+    })
+    const response = await fetch(`${SURVEY_RELEASE_QUERY_URL}?${params}`, { signal })
+    if (!response.ok) throw new Error(`Survey register request failed (${response.status})`)
+    const data = await response.json() as SurveyReleaseResponse
+    if (data.error) throw new Error(data.error.message || 'The survey register could not be read.')
+    const rows = (data.features || []).flatMap((feature) => feature.attributes ? [feature.attributes] : [])
+    for (const attributes of rows) {
+      if (text(attributes.round_validated).toLowerCase() !== 'yes') continue
+      const iso3 = text(attributes.admin0_isocode).toUpperCase()
+      const round = Number(normalizedRoundValue(text(attributes.round)))
+      if (/^[A-Z]{3}$/.test(iso3) && Number.isInteger(round)) keys.add(`${iso3}:${round}`)
+    }
+    if (!data.exceededTransferLimit || rows.length === 0) break
+    offset += rows.length
+  }
+  return keys
+}

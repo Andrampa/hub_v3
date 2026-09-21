@@ -33,6 +33,7 @@ const { default: DatasetExplorer } = await import('./DatasetExplorer')
 const { ADMIN_REFERENCE_DATASET_ID } = await import('../services/protectedData')
 
 const AGGREGATE_ID = '499917f1518141209c2a6de55a79d991'
+const MICRODATA_ID = 'fd3f8386f8dd40abaa6fdbc033580b65'
 
 declare global { var IS_REACT_ACT_ENVIRONMENT: boolean }
 
@@ -104,12 +105,21 @@ describe('dataset explorer visibility', () => {
     expect(breadcrumb?.textContent).toContain('Dataset explorer')
   })
 
-  it('limits survey data to released rows for a non-Contributor', async () => {
-    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+  it('limits household microdata to released rows for a non-Contributor', async () => {
+    fetchDatasetDefinition.mockResolvedValue(definition(MICRODATA_ID, 'microdata', true))
+
+    await open(MICRODATA_ID)
+
+    expect(whereOfFirstCount()).toBe('opendata = 1')
+  })
+
+  it('shows a community member every published aggregated row, unfiltered', async () => {
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
 
     await open(AGGREGATE_ID)
 
-    expect(whereOfFirstCount()).toBe('opendata = 1')
+    expect(container.textContent).not.toContain('has not been released')
+    expect(whereOfFirstCount()).toBe('1=1')
   })
 
   it('does not apply the rule to boundaries, which carry no flag and are not survey data', async () => {
@@ -123,9 +133,9 @@ describe('dataset explorer visibility', () => {
   })
 
   it('withholds unflagged survey data and sends no query of any kind, options included', async () => {
-    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
+    fetchDatasetDefinition.mockResolvedValue(definition(MICRODATA_ID, 'microdata', false))
 
-    await open(AGGREGATE_ID)
+    await open(MICRODATA_ID)
 
     expect(container.textContent).toContain('This dataset has not been released')
     expect(fetchRecordCount).not.toHaveBeenCalled()
@@ -135,18 +145,18 @@ describe('dataset explorer visibility', () => {
 
   it('shows a Contributor unflagged survey data, unfiltered', async () => {
     auth.user = { username: 'carla', capabilities: { contributor: true } }
-    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
+    fetchDatasetDefinition.mockResolvedValue(definition(MICRODATA_ID, 'microdata', false))
 
-    await open(AGGREGATE_ID)
+    await open(MICRODATA_ID)
 
     expect(container.textContent).not.toContain('has not been released')
     expect(whereOfFirstCount()).toBe('1=1')
   })
 
   it('asks for filter options within the viewer\'s visibility', async () => {
-    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+    fetchDatasetDefinition.mockResolvedValue(definition(MICRODATA_ID, 'microdata', true))
 
-    await open(AGGREGATE_ID)
+    await open(MICRODATA_ID)
 
     const optionCalls = fetchFieldOptions.mock.calls
     expect(optionCalls.length).toBeGreaterThan(0)

@@ -33,6 +33,18 @@
   the hero because the shared scroll effect ran while Suspense still showed its
   loading fallback.
 
+## 2026-09-21 - Two-level visibility for community members
+
+- **Fixed:** a DIEM community member was offered 0 aggregated surveys, because
+  aggregated layers without an `opendata` field were withheld outright. They
+  now fail open; unflagged microdata still fails closed.
+- **Survey level:** non-Contributors are offered only surveys the survey register
+  marks `round_validated = Yes` (`fetchValidatedSurveyKeys` in
+  `monitoring.ts`). An unreadable register fails closed with a named message.
+- **Feature level:** within those surveys, `opendata = 1` still filters rows for
+  non-Contributors, in discovery, counts, extracts and the dataset explorer.
+- Contributors see every survey and every row, as before.
+
 ## 2026-09-21 - The visibility rule governs survey data only
 
 - The explorer applied the fail-closed rule to every dataset it opens, so

@@ -47,6 +47,12 @@ describe('scope of the rule', () => {
     expect(governedByVisibility('microdata')).toBe(true)
   })
 
+  it('fails open on an unflagged aggregate, closed on unflagged microdata', () => {
+    const withoutFlag = { fields: [{ name: 'round', alias: '', type: 'esriFieldTypeInteger' }] }
+    expect(visibilityClause(withoutFlag, false, 'aggregate')).toBeUndefined()
+    expect(visibilityClause(withoutFlag, false, 'microdata')).toBe(WITHHELD_WHERE)
+  })
+
   it('leaves boundaries, documentation and catalogue datasets alone', async () => {
     const { governedByVisibility } = await import('./visibility')
     expect(governedByVisibility('reference')).toBe(false)
