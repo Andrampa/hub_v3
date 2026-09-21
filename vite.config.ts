@@ -143,6 +143,13 @@ export default defineConfig(({ mode }) => ({
     port: mode === 'http-test' ? 4174 : 5173,
     strictPort: true,
   },
+  optimizeDeps: {
+    // fflate is imported only by the package-compression worker, which loads on
+    // the first Download click. Undeclared, Vite discovers it then, re-optimizes
+    // and invalidates the module the worker just requested, so the first package
+    // after every dev-server start failed with "could not be compressed".
+    include: ['fflate'],
+  },
   build: {
     rollupOptions: {
       input: ['index.html', 'oauth-callback.html'],
