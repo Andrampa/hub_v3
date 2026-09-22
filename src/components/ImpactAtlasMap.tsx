@@ -4,7 +4,7 @@ import { geoNaturalEarth1, geoPath } from 'd3-geo'
 import type { FeatureCollection, MultiPolygon } from 'geojson'
 import type { ImpactCountrySummary } from '../services/impactAssessments'
 import type { HubLinkTarget } from '../services/countries'
-import { worldAreaCollection, worldAreas, worldBoundaries } from '../lib/unGeometry'
+import { worldAreaCollection, worldAreas, worldBoundaries, WORLD_GEOMETRY_SOURCE } from '../lib/unGeometry'
 import { MapDisclaimer } from './MapDisclaimer'
 import { MapZoomControls } from './MapZoomControls'
 import { ShockGlyph } from './ShockSymbol'
@@ -190,7 +190,7 @@ export function ImpactAtlasMap({
         )}
         </div>
       </div>
-      <MapDisclaimer />
+      <MapDisclaimer source={WORLD_GEOMETRY_SOURCE} />
     </>
   )
 }

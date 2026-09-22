@@ -13,6 +13,22 @@
   simplified geometry; the credit line follows whichever background is drawn.
 - The map legend moved to the bottom-left corner, clear of the credit line and
   scale bar.
+- Map review follow-up: boundary lines are a darker slate, legible on the blue
+  covered fill; Jammu and Kashmir and Aksai Chin take the ordinary grey rather
+  than white; both world maps stop at 4x, and the geometry is generalized for
+  that zoom (57 KB compressed, down from 82 KB). The country-profile outline
+  has a visible light outline and light UN lines, and adds a neutral area only
+  when a disputed-type UN line separates it from the country, so Afghanistan
+  no longer shows Jammu and Kashmir.
+- Abyei is now drawn on the world maps and on the Sudan and South Sudan
+  profile maps, from UN Geospatial's ClearMap service, as a neutral area with
+  its dotted limits. The profile outline no longer draws over dashed or dotted
+  UN lines, so South Sudan's northern boundary shows as dashed.
+- Review follow-up: the dataset map now shows the full map disclaimer, which
+  the UN basemap requires on any map that can show Israel; the shared
+  disclaimer gains the UN's Falkland Islands (Malvinas) sentence on every map.
+  The fallback also covers failures MapLibre reports after the style is
+  attached: UN boundary tiles that never load, or a lost WebGL context.
 
 ## 2026-09-22 - UN boundaries on the Hub's world maps
 

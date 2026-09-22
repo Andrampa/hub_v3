@@ -1,14 +1,16 @@
 import L from 'leaflet'
 import { BASEMAP_ATTRIBUTION, FALLBACK_ATTRIBUTION, loadBasemapStyle } from '../lib/unBasemapStyle'
+import { boundarySources, watchBasemapHealth } from './basemapHealth'
 
 // Background for the Leaflet dataset map, beneath the DIEM features.
 //
 // The ArcGIS vector style is drawn by MapLibre inside Leaflet's tile pane, so
 // the DIEM layers, popups and controls keep working exactly as before. MapLibre
-// is loaded with the map, not with the page. When the style or its services
-// cannot be reached, or the browser has no WebGL, the map falls back to the
-// Hub's own UN geometry drawn by Leaflet: the table, filters and downloads never
-// depend on the background.
+// is loaded with the map, not with the page. The map falls back to the Hub's own
+// UN geometry, drawn by Leaflet, when the style or its service metadata cannot
+// be read, when the browser has no WebGL, or when MapLibre later reports that
+// the UN boundaries cannot be drawn (basemapHealth.ts). The fallback happens at
+// most once, and the table, filters and downloads never depend on either.
 
 const FALLBACK_PANE = 'diemBasemapFallback'
 const FALLBACK_DASHES: Record<string, string | undefined> = {
@@ -53,13 +55,23 @@ export function addDatasetBasemap(map: L.Map) {
   const controller = new AbortController()
   let layer: L.Layer | undefined
   let removed = false
+  let fellBack = false
   let attribution: string | undefined
-  const credit = (text: string) => {
+  let stopWatching: (() => void) | undefined
+
+  const credit = (text?: string) => {
+    if (attribution) map.attributionControl?.removeAttribution(attribution)
     attribution = text
-    map.attributionControl?.addAttribution(text)
+    if (text) map.attributionControl?.addAttribution(text)
   }
 
   const useFallback = async () => {
+    if (fellBack || removed) return
+    fellBack = true
+    stopWatching?.()
+    layer?.remove()
+    layer = undefined
+    credit(undefined)
     const fallback = await fallbackLayer(map)
     if (removed) return
     layer = fallback.addTo(map)
@@ -84,7 +96,6 @@ export function addDatasetBasemap(map: L.Map) {
       const gl = maplibreGL({ style, interactive: false, attributionControl: false })
       try {
         layer = gl.addTo(map)
-        credit(BASEMAP_ATTRIBUTION)
       } catch {
         // The WebGL context failed after all. Detach the half-added layer by
         // hand: its own onRemove assumes a MapLibre map that never existed.
@@ -93,16 +104,20 @@ export function addDatasetBasemap(map: L.Map) {
         delete (map as unknown as { _layers: Record<number, L.Layer> })._layers[L.Util.stamp(gl)]
         layer = undefined
         await useFallback()
+        return
       }
+      credit(BASEMAP_ATTRIBUTION)
+      stopWatching = watchBasemapHealth(gl.getMaplibreMap(), boundarySources(style), () => void useFallback())
     } catch {
-      if (!removed) await useFallback()
+      await useFallback()
     }
   })()
 
   return () => {
     removed = true
     controller.abort()
+    stopWatching?.()
     layer?.remove()
-    if (attribution) map.attributionControl?.removeAttribution(attribution)
+    credit(undefined)
   }
 }

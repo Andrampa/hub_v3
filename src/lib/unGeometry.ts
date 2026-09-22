@@ -1,6 +1,6 @@
-import { feature, merge, neighbors } from 'topojson-client'
+import { feature, merge, mesh } from 'topojson-client'
 import type { Feature, FeatureCollection, LineString, MultiLineString, MultiPolygon } from 'geojson'
-import type { GeometryCollection, MultiPolygon as TopoMultiPolygon, Polygon as TopoPolygon, Topology } from 'topojson-specification'
+import type { GeometryCollection, GeometryObject, MultiPolygon as TopoMultiPolygon, Polygon as TopoPolygon, Topology } from 'topojson-specification'
 import world from '../assets/geo/un-world.topo.json'
 
 // World geometry for the Hub's projected maps: UN Geodata simplified, built by
@@ -115,29 +115,53 @@ areaGeometries.forEach((geometry) => {
   codesByIso.set(key, (codesByIso.get(key) || new Set()).add(geometry.properties!.iso3cd))
 })
 
-const areaNeighbours = neighbors(areaGeometries)
+const neutralCodes = new Set(areaGeometries.map((geometry) => geometry.properties!).filter((properties) => areaKind(properties) === 'neutral').map((properties) => properties.iso3cd))
+const flattenArcs = (value: unknown): number[] => (Array.isArray(value) ? value.flatMap(flattenArcs) : [value as number])
+const arcIndex = (index: number) => (index < 0 ? ~index : index)
+
+// Arcs that carry a UN line other than an international boundary: a solid
+// outline must never be drawn along them, or it would hide the dashed or
+// dotted symbol the UN gives them.
+const specialLineArcs = new Set((topology.objects.lines.geometries as (GeometryObject & { arcs?: unknown })[])
+  .filter((geometry) => geometry.type && (geometry.properties as LineProperties).bdytyp !== 1)
+  .flatMap((geometry) => flattenArcs(geometry.arcs).map(arcIndex)))
 
 /**
- * A country with the neutral areas that touch it, and only the boundaries that
- * outline those shapes: the country-profile outline, where India is shown with
- * Jammu and Kashmir beside it rather than silently cropped.
+ * A country with the neutral areas it is in dispute over, for the
+ * country-profile outline: Pakistan and India are shown with Jammu and Kashmir
+ * beside them rather than silently cropped.
+ *
+ * A neutral area counts only when a UN line other than an international
+ * boundary (`bdytyp` 1) separates it from the country. Afghanistan touches
+ * Jammu and Kashmir only along an international boundary, so it is drawn alone.
+ *
+ * `outline` is the country's own edge, coast included, without the stretches
+ * it shares with those neutral areas: they keep their dashed or dotted UN line
+ * rather than disappearing under a solid outline.
  */
 export function countryWithDisputedSurroundings(iso3: string) {
   const country = worldAreas.find((area) => area.iso3 === iso3 && area.kind === 'country')
   if (!country) return undefined
   const ownCodes = codesByIso.get(iso3) || new Set<string>()
-  const neutralCodes = new Set<string>()
-  areaGeometries.forEach((geometry, index) => {
-    if (!ownCodes.has(geometry.properties!.iso3cd)) return
-    areaNeighbours[index].forEach((neighbour) => {
-      const properties = areaGeometries[neighbour].properties!
-      if (areaKind(properties) === 'neutral') neutralCodes.add(properties.iso3cd)
-    })
+  const disputedNeighbours = new Set<string>()
+  lineFeatures.forEach(({ properties }) => {
+    if (properties.bdytyp === 1) return
+    const codes = properties.iso3cd.split('_')
+    if (!codes.some((code) => ownCodes.has(code))) return
+    codes.forEach((code) => { if (neutralCodes.has(code)) disputedNeighbours.add(code) })
   })
-  const neutral = worldAreas.filter((area) => area.kind === 'neutral' && neutralCodes.has(area.iso3))
-  const outlined = new Set([...ownCodes, ...neutralCodes])
+  const neutral = worldAreas.filter((area) => area.kind === 'neutral' && disputedNeighbours.has(area.iso3))
+  const outlined = new Set([...ownCodes, ...disputedNeighbours])
   const boundaries = groupLines(lineFeatures.filter((line) => line.properties.iso3cd.split('_').some((code) => outlined.has(code))))
-  return { country, neutral, boundaries }
+  // The country's edge: arcs used once by its own areas (coast and borders,
+  // not the seams between its own parts), less the specially symbolized ones.
+  const uses = new Map<number, number>()
+  areaGeometries
+    .filter((geometry) => ownCodes.has(geometry.properties!.iso3cd))
+    .forEach((geometry) => flattenArcs(geometry.arcs).map(arcIndex).forEach((arc) => uses.set(arc, (uses.get(arc) || 0) + 1)))
+  const edge = [...uses].filter(([arc, count]) => count === 1 && !specialLineArcs.has(arc)).map(([arc]) => [arc])
+  const outline = mesh(topology, { type: 'MultiLineString', arcs: edge } as unknown as GeometryObject)
+  return { country, neutral, boundaries, outline }
 }
 
 export const WORLD_GEOMETRY_SOURCE = (world as unknown as { source: { name: string; publisher: string; modified: string } }).source

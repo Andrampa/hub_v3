@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo'
 import type { FeatureCollection, MultiPolygon } from 'geojson'
 import type { CountrySummary } from '../services/countries'
-import { countryWithDisputedSurroundings, worldAreaCollection, worldAreas, worldBoundaries } from '../lib/unGeometry'
+import { countryWithDisputedSurroundings, worldAreaCollection, worldAreas, worldBoundaries, WORLD_GEOMETRY_SOURCE } from '../lib/unGeometry'
 import { MapDisclaimer } from './MapDisclaimer'
 import { MapZoomControls } from './MapZoomControls'
 import { UnBoundaries } from './UnBoundaries'
@@ -99,21 +99,21 @@ export function CountryMap({
         )}
         </div>
       </div>
-      <MapDisclaimer />
+      <MapDisclaimer source={WORLD_GEOMETRY_SOURCE} />
     </>
   )
 }
 
 /**
- * A country's outline for its profile page, drawn with any neutral area it
- * touches (India with Jammu and Kashmir) and the UN lines around them. The
- * frame fits those shapes only, never the unrelated neighbours.
+ * A country's outline for its profile page, drawn with any neutral area it is
+ * in dispute over (Pakistan with Jammu and Kashmir) and the UN lines around
+ * them. The frame fits those shapes only, never the unrelated neighbours.
  */
 export function CountryShape({ iso3, name }: { iso3: string; name: string }) {
   const shape = useMemo(() => {
     const surroundings = countryWithDisputedSurroundings(geometryIso(iso3))
     if (!surroundings) return undefined
-    const { country, neutral, boundaries } = surroundings
+    const { country, neutral, boundaries, outline } = surroundings
     const frame: FeatureCollection<MultiPolygon> = {
       type: 'FeatureCollection',
       features: [country.feature, ...neutral.map((area) => area.feature)],
@@ -121,6 +121,7 @@ export function CountryShape({ iso3, name }: { iso3: string; name: string }) {
     const path = geoPath(geoMercator().fitExtent([[22, 16], [238, 174]], frame))
     return {
       country: path(country.feature) || '',
+      outline: path(outline) || '',
       neutral: neutral.map((area) => ({ iso3: area.iso3, d: path(area.feature) || '' })),
       boundaries,
       path,
@@ -131,8 +132,10 @@ export function CountryShape({ iso3, name }: { iso3: string; name: string }) {
   return (
     <svg className="country-shape" viewBox="0 0 260 190" role="img" aria-label={`Map outline of ${name}`}>
       <title>{name}</title>
-      {shape.neutral.map(({ iso3: code, d }) => <path className="map-area--neutral" d={d} key={code} />)}
       <path className="country-shape-country" d={shape.country} />
+      {/* Above the country: Abyei lies across Sudan and South Sudan's fills. */}
+      {shape.neutral.map(({ iso3: code, d }) => <path className="map-area--neutral" d={d} key={code} />)}
+      <path className="country-shape-outline" d={shape.outline} />
       <UnBoundaries boundaries={shape.boundaries} path={shape.path} />
     </svg>
   )

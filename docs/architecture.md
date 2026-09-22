@@ -8,7 +8,8 @@ Browser
   -> ArcGIS OAuth with PKCE (optional community session)
   -> typed ArcGIS catalog service
   -> ArcGIS Online Portal REST API
-  -> public ArcGIS light-gray basemap tiles
+  -> FAO-customised ArcGIS vector basemap style (UN boundaries) via MapLibre
+  -> bundled UN Geodata simplified world geometry (SVG maps, basemap fallback)
   -> existing DIEM Hub packaged-download generator (transitional)
   -> authoritative item/resource links
   -> same-origin Firebase invitation-validation function
@@ -101,7 +102,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/CountryPhotoGalleries.tsx`: the country page's field-photograph
   band, filtered by stored ISO3 codes and hidden when a country has none.
 - `src/pages/DatasetExplorer.tsx`: internal map, filter, preview, export and API experience for a protected data service.
-- `src/components/DatasetGeometryMap.tsx`: Leaflet map over the public ArcGIS light-gray basemap, with filtered service geometry, tooltips, popups and extent controls.
+- `src/components/DatasetGeometryMap.tsx`: Leaflet map with filtered service geometry, tooltips, popups, extent controls and the full map disclaimer. Its background (`datasetBasemap.ts`) is the FAO-customised ArcGIS vector style with UN boundaries and UN names, drawn by MapLibre; `basemapHealth.ts` swaps it once for the bundled UN geometry when the style, WebGL or the UN boundary tiles fail.
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
 - `src/services/surveyAccess.ts`: authenticated, generation-aware survey discovery, per-theme availability and requester-scoped in-memory caching for the planned survey-first workspace.

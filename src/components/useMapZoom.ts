@@ -5,9 +5,10 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type P
 
 export const MAP_WIDTH = 960
 export const MAP_HEIGHT = 480
-// A country-level map: past this the generalized outlines break down.
+// A country-level map: the geometry is generalized for this zoom, and past it
+// the simplified outlines show (scripts/build_un_boundaries.mjs).
 export const MIN_ZOOM = 1
-export const MAX_ZOOM = 8
+export const MAX_ZOOM = 4
 const DRAG_THRESHOLD = 4
 
 export interface MapView { k: number; x: number; y: number }

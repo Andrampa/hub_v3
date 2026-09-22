@@ -61,7 +61,6 @@
 .impact-map:active { cursor: grabbing; }
 /* No outlines on the fills: every boundary is a UN line drawn on top (maps.css). */
 .impact-map-country { --map-fill: #d9d9d9; }
-.impact-map-country.map-area--neutral { --map-fill: #eef1f1; }
 .impact-map-country--covered { --map-fill: #61a7ba; cursor: pointer; transition: fill .16s ease, stroke .16s ease, opacity .16s ease; }
 .impact-map a:hover .impact-map-country--covered, .impact-map a:focus .impact-map-country--covered, .impact-map-country--covered.is-selected { --map-fill: #d76321; }
 .impact-map a:focus { outline: none; }

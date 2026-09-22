@@ -49,7 +49,7 @@ describe('CountryMap', () => {
     // The boundaries follow the country fills inside the zoomed group.
     expect(boundaries?.parentElement?.getAttribute('transform')).toBe('translate(0 0) scale(1)')
     // Neutral areas are drawn, never linked.
-    expect(container.querySelectorAll('.country-map .map-area--neutral')).toHaveLength(2)
+    expect(container.querySelectorAll('.country-map .map-area--neutral')).toHaveLength(3)
     expect(container.querySelector('a .map-area--neutral')).toBeNull()
   })
 

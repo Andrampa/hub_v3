@@ -5,6 +5,7 @@ import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'ge
 import type { MapExtent } from '../services/dataExplorer'
 import { formatNumber } from '../lib/format'
 import { addDatasetBasemap } from './datasetBasemap'
+import { MapDisclaimer } from './MapDisclaimer'
 
 function propertyValue(properties: GeoJsonProperties | null, patterns: RegExp[]) {
   if (!properties) return undefined
@@ -168,6 +169,7 @@ export function DatasetGeometryMap({
   }
 
   return (
+    <>
     <section className="dataset-map-shell" aria-label="Interactive map preview">
       <div ref={containerRef} className="dataset-leaflet-map" />
       <div className="dataset-map-summary" aria-live="polite">
@@ -179,5 +181,8 @@ export function DatasetGeometryMap({
       <button type="button" className="dataset-map-reset" onClick={resetExtent}>Reset data extent</button>
       <div className="dataset-map-legend"><span /> Filtered DIEM features</div>
     </section>
+    {/* The map pans worldwide, so it carries the full disclaimer its UN basemap requires. */}
+    <MapDisclaimer />
+    </>
   )
 }

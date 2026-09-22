@@ -19,11 +19,20 @@ const AREAS_LAYER = 2
 const LINES_LAYER = 1
 // 0 is coastline and 99 marks non-boundary construction lines; both are left out.
 const DRAWN_LINE_TYPES = new Set([1, 2, 3, 4])
-// Simplification threshold in metres: under one pixel at the Hub's 8x maximum
-// zoom on the 960-unit world map, where a pixel is about 5 km at the equator.
-const INTERVAL_METRES = 4000
-// Coordinate grid: 360 degrees / 20,000 steps is 0.4 pixel at 8x.
-const QUANTIZATION = 20000
+// Simplification threshold in metres: under one pixel at the Hub's 4x maximum
+// zoom on the 960-unit world map, where a pixel is about 10 km at the equator.
+const INTERVAL_METRES = 8000
+// Coordinate grid: 360 degrees / 10,000 steps is 0.4 pixel at 4x.
+const QUANTIZATION = 10000
+// UN Geodata simplified has no Abyei area. UN Geospatial's own ClearMap service
+// publishes it, at its 1:20 million and larger scale, as the unsettled area
+// `xAB` with its dotted limits (type 4, "other line of separation"), from one
+// dataset so the area and its limits coincide. They are added as published and
+// drawn over Sudan and South Sudan; neither country's area is cut.
+const CLEARMAP = 'https://geoservices.un.org/arcgis/rest/services/ClearMap_Topo/MapServer'
+const CLEARMAP_AREAS_LAYER = 110
+const CLEARMAP_LINES_LAYER = 94
+const ABYEI = 'xAB'
 const OUTPUT = new URL('../src/assets/geo/un-world.topo.json', import.meta.url)
 
 async function getJson(url) {
@@ -34,15 +43,15 @@ async function getJson(url) {
   return body
 }
 
-async function queryLayer(layer, where, outFields) {
-  const count = (await getJson(`${SERVICE}/${layer}/query?where=${encodeURIComponent(where)}&returnCountOnly=true&f=json`)).count
+async function queryLayer(layer, where, outFields, service = SERVICE, orderBy = 'objectid') {
+  const count = (await getJson(`${service}/${layer}/query?where=${encodeURIComponent(where)}&returnCountOnly=true&f=json`)).count
   const features = []
   while (features.length < count) {
-    const page = await getJson(`${SERVICE}/${layer}/query?${new URLSearchParams({
+    const page = await getJson(`${service}/${layer}/query?${new URLSearchParams({
       where,
       outFields,
       outSR: '4326',
-      orderByFields: 'objectid',
+      orderByFields: orderBy,
       resultOffset: String(features.length),
       f: 'geojson',
     })}`)
@@ -55,6 +64,23 @@ async function queryLayer(layer, where, outFields) {
 const item = await getJson(`${ITEM}?f=json`)
 const areas = await queryLayer(AREAS_LAYER, '1=1', 'objectid,iso3cd,isoclr,stscod')
 const lines = await queryLayer(LINES_LAYER, 'bdytyp NOT IN (0, 99)', 'objectid,iso3cd,bdytyp')
+
+// Abyei, renamed only into this file's attribute names. ClearMap names the
+// Abyei side of its limits `XXX`; it becomes `xAB` so the Hub can tell which
+// countries the area is disputed between.
+const abyeiArea = await queryLayer(CLEARMAP_AREAS_LAYER, `ISO3CD = '${ABYEI}'`, 'OBJECTID,ISO3CD,ISOADM,STSCOD', CLEARMAP, 'OBJECTID')
+const abyeiLimits = await queryLayer(CLEARMAP_LINES_LAYER, "ISO3CD IN ('SDN_XXX', 'SSD_XXX')", 'OBJECTID,ISO3CD,BDYTYP', CLEARMAP, 'OBJECTID')
+if (abyeiArea.features.length !== 1 || !abyeiLimits.features.length) {
+  throw new Error(`ClearMap returned ${abyeiArea.features.length} Abyei areas and ${abyeiLimits.features.length} limit lines; inspect the service before rebuilding.`)
+}
+areas.features.push(...abyeiArea.features.map((area) => ({
+  ...area,
+  properties: { iso3cd: area.properties.ISO3CD, isoclr: area.properties.ISOADM, stscod: area.properties.STSCOD },
+})))
+lines.features.push(...abyeiLimits.features.map((line) => ({
+  ...line,
+  properties: { iso3cd: line.properties.ISO3CD.replace('XXX', ABYEI), bdytyp: line.properties.BDYTYP },
+})))
 
 const unknownTypes = [...new Set(lines.features.map((line) => line.properties.bdytyp))]
   .filter((type) => !DRAWN_LINE_TYPES.has(type))
@@ -108,6 +134,7 @@ topology.source = {
   retrieved: new Date().toISOString().slice(0, 10),
   simplification: `mapshaper -simplify interval=${INTERVAL_METRES} keep-shapes, shared topology`,
   terms: 'Non-commercial use; the United Nations must be credited as the source.',
+  abyei: `${CLEARMAP} layers ${CLEARMAP_AREAS_LAYER} (area ${ABYEI}) and ${CLEARMAP_LINES_LAYER} (limits), UN Geospatial ClearMap`,
 }
 await writeFile(OUTPUT, `${JSON.stringify(topology)}\n`)
 console.log(`Wrote ${areas.features.length} areas and ${lines.features.length} boundary lines (source modified ${topology.source.modified}).`)

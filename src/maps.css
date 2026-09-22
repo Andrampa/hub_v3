@@ -1,8 +1,8 @@
 /* Shared by the projected SVG world maps: UN boundary symbols and zoom controls. */
 
-/* One mid-grey for every UN line, legible on covered and uncovered fills.
-   Width and dashes stay the same on screen at every zoom. */
-.map-boundary { fill: none; stroke: #6b777c; stroke-width: .75; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+/* One dark slate for every UN line, legible on the blue covered fill as well
+   as the grey one. Width and dashes stay the same on screen at every zoom. */
+.map-boundary { fill: none; stroke: #33434a; stroke-width: .8; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
 .map-boundary--undetermined { stroke-dasharray: 3.5 2.5; }
 .map-boundary--control { stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 0 2.6; }
 .map-boundary--mandate { stroke-dasharray: 5 2 1 2; }
@@ -11,8 +11,8 @@
    otherwise leave a pale seam, which shows through the gaps of dashed and
    dotted UN lines; the matching outline closes it without drawing a boundary. */
 .map-country, .impact-map-country { fill: var(--map-fill); stroke: var(--map-fill); stroke-width: .6; vector-effect: non-scaling-stroke; }
-.map-area--neutral { --map-fill: #eef1f1; pointer-events: none; }
-.country-shape .map-area--neutral { fill: var(--map-fill); }
+/* Neutral areas take the ordinary uncovered fill; only their UN lines set them apart. */
+.map-area--neutral { pointer-events: none; }
 
 .map-zoom { position: absolute; top: 14px; right: 14px; z-index: 1; display: flex; flex-direction: column; box-shadow: 0 4px 14px rgba(6,48,65,.2); }
 .map-zoom button { width: 34px; height: 34px; border: 0; border-bottom: 1px solid var(--line-faint); background: #fff; color: var(--fao-navy); font-size: 18px; line-height: 1; cursor: pointer; }

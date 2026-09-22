@@ -28,7 +28,6 @@
 .country-map:active { cursor: grabbing; }
 /* No outlines on the fills: every boundary is a UN line drawn on top (maps.css). */
 .country-map .map-country { --map-fill: #d7dfdd; }
-.country-map .map-country.map-area--neutral { --map-fill: #eef1f1; }
 .country-map .map-country--covered { --map-fill: #71a9bd; cursor: pointer; transition: fill .16s ease, stroke .16s ease, opacity .16s ease; }
 .country-map a:hover .map-country--covered, .country-map a:focus .map-country--covered { --map-fill: var(--orange); }
 .country-map a:focus { outline: none; }
@@ -92,6 +91,12 @@
 .country-profile-map { min-width: 0; display: flex; flex-direction: column; align-items: center; color: #a9c5cf; font-size: var(--text-small); text-transform: uppercase; letter-spacing: .09em; }
 .country-shape { width: 100%; max-width: 270px; height: auto; color: #78b5c8; }
 .country-shape .country-shape-country { fill: currentColor; }
+/* On the dark panel: a light outline round the country, and its UN lines in the
+   same light tone, with any neutral area in dispute tinted, not white, over both
+   the country fill and the panel. */
+.country-shape .country-shape-outline { fill: none; stroke: #d7e9ee; stroke-width: 1; stroke-linejoin: round; }
+.country-shape .map-area--neutral { fill: rgba(215, 233, 238, .4); }
+.country-shape .map-boundary { stroke: #d7e9ee; stroke-width: 1; }
 .country-shape--fallback { min-height: 190px; display: grid; place-items: center; color: #7daebb; font-size: 45px; font-weight: 700; }
 .country-editorial { padding-block: 76px 22px; background: #f6f7f4; }
 .country-editorial-story { position: relative; overflow: hidden; background: white; border: 1px solid var(--line-soft); box-shadow: 0 24px 60px rgba(5, 49, 69, .12); }
