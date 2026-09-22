@@ -89,7 +89,7 @@ export function usePageMetadata({ title, description, structuredData, canonicalP
   useEffect(() => {
     if (!title) return
     const previousTitle = document.title
-    const fullTitle = title === SITE_NAME ? title : `${title} | ${SITE_NAME}`
+    const fullTitle = title === SITE_NAME ? `${title} | FAO` : `${title} | ${SITE_NAME} | FAO`
     const canonical = `${CANONICAL_ORIGIN}${path}`
     document.title = fullTitle
 
