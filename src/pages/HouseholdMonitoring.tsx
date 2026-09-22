@@ -3,8 +3,7 @@ import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { HeroImage } from '../components/HeroImage'
 import { HeroCredit } from '../components/HeroCredit'
-import { MonitoringProducts } from '../components/MonitoringProducts'
-import { SurveyReleases } from '../components/SurveyReleases'
+import { SurveyCatalogue } from '../components/SurveyCatalogue'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 
 export default function HouseholdMonitoring() {
@@ -34,8 +33,7 @@ export default function HouseholdMonitoring() {
             </Link>
           </div>
         </section>
-        <SurveyReleases />
-        <MonitoringProducts />
+        <SurveyCatalogue />
       </main>
       <SiteFooter />
     </>

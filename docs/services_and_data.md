@@ -124,34 +124,29 @@ case-insensitive matches for publisher-provided tags `Impact assessment` and
 
 `src/services/monitoring.ts` reads the public monitoring statistics service and the public `OER_Monitoring_System_View` item (`9a548eaacfb34089b21e0b28685955db`, layer `0`). The survey pipeline preserves the reviewed legacy dashboard rules: upcoming surveys are unvalidated, current, non-Uganda rounds; published surveys are validated records with a publication date. Placeholder rounds 98 and 99 remain excluded. Product item IDs are linked to their authoritative ArcGIS item pages, while the country brief and survey explorer retain their established DIEM Hub routes.
 
-`src/services/monitoringProducts.ts` joins those authoritative survey-round
-product item IDs to the Hub content-group inventory. The join makes group
-membership a prerequisite for discovery and supplies stable country/round
-relationships. Unlinked items are eligible only through the Household
-monitoring system pillar, the Monitoring products category branch, or a small
-set of exact publisher tags. Exact `Impact Assessment` tag matches are excluded
-when a legacy round-table link conflicts with the item's published identity.
-The controlled monitoring product taxonomy omits Interactive charts; chart
-links remain available on the release board.
+`src/services/monitoringProducts.ts` (`fetchSurveyRoundCatalog`) attaches to
+each survey round the products its monitoring record links to. A link whose
+item is in the Hub content group takes that item's title, languages and Hub
+product page; a link the group does not hold keeps the monitoring service's
+URL. Catalog items no round links to are not listed: they belong to other DIEM
+work. Exact `Impact Assessment` tag matches are excluded when a legacy
+round-table link conflicts with the item's published identity. Interactive
+charts are omitted; the table's Explore action opens the survey instead. If the
+catalog request fails, the rounds still load with their raw links and a notice.
 
-Product-library visibility is audience-aware without changing the release
-board: public and non-Contributor sessions receive only products linked to
-validated/published rows, while recognized Contributors may also receive
-product links on current incoming rows and categorized unlinked monitoring
-resources. `fetchSurveyReleases` keeps its original default behavior for the
-public board; its opt-in option exposes incoming-row product links only to the
-Contributor library caller. Obsolete rows, placeholder rounds 98/99 and the
+Product visibility is audience-aware: public and non-Contributor sessions
+receive only products linked to validated/published rows, while recognized
+Contributors also receive product links on current incoming rows.
+`fetchSurveyReleases` exposes incoming-row product links only through its
+opt-in option, which only the Contributor table request sets. Obsolete rows, placeholder rounds 98/99 and the
 existing reviewed exclusions remain filtered by `src/services/monitoring.ts`.
 
-The homepage renders that pipeline as the arrival and departure board through
-`src/components/SurveyReleases.tsx`. The component pages the whole layer once,
-keeps the service ordering (inbound rounds first by expected publication, then
-published rounds most recent first), and filters by status client-side. Arrivals
-are rounds still inbound and Departures are rounds already released; the status
-column keeps the literal Incoming/Published wording so the board framing never
-changes what a row asserts. When the layer holds no unvalidated, non-outdated
-rounds the Arrivals count is legitimately zero; this is a data state, not a
-failure, and the board says so.
+`/monitoring-system` renders that pipeline as the survey rounds table through
+`src/components/SurveyCatalogue.tsx`. It keeps the service ordering (upcoming
+rounds first by expected publication, then published rounds most recent first)
+as its default sort, and filters client-side. The status filter appears only
+while the layer holds upcoming rounds; zero upcoming rounds is a data state,
+not a failure.
 
 `src/services/monitoringThemes.ts` resolves which thematic areas the Monitoring
 application can open for one survey, mirroring that application's own

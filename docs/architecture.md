@@ -24,7 +24,7 @@ generator; this is an external runtime dependency, not a competing data store.
 
 ## Startup / Execution Sequence
 
-1. The router selects the homepage, complete product catalog, household monitoring release board,
+1. The router selects the homepage, complete product catalog, household survey rounds table,
    full-screen survey Explorer, hazard-impact assessment page, flood-analysis
    page, About DIEM overview, contact page, country explorer, country detail,
    or protected data page.
@@ -78,12 +78,14 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
   picker with a per-package selection cap, scoped test-data mode, thematic
   selection stating each theme's reach, the package review table, and the
   package download with staged progress and cancellation.
-- `src/pages/HouseholdMonitoring.tsx`: the `/monitoring-system` survey release
-  board and household monitoring product library.
-- `src/components/MonitoringProducts.tsx`: country-and-round product discovery,
-  controlled filters and product links below the release board.
-- `src/services/monitoringProducts.ts`: Hub-group eligibility, monitoring-round
-  item-ID matching and product-category normalization.
+- `src/pages/HouseholdMonitoring.tsx`: the `/monitoring-system` page: the
+  Survey Explorer banner and the survey rounds table.
+- `src/components/SurveyCatalogue.tsx`: one row per household survey round with
+  fieldwork and publication dates, product links and the Explore action;
+  search, status, year, product and language filters and column sorting, all
+  kept in the page address.
+- `src/services/monitoringProducts.ts`: joins each round's product links to Hub
+  catalog items (title, language, product page) and normalizes product types.
 - `src/pages/MonitoringSystem.tsx`: the `/monitoring` shell, which embeds the
   live DIEM monitoring dashboard full screen.
 - `src/services/monitoringEmbed.ts`: monitoring-app URL configuration, bridge message validation, visualization-state normalization, and Hub URL construction.

@@ -52,7 +52,6 @@
 .household-explorer-banner a { flex: 0 0 275px; min-height: 58px; padding: 15px 18px; display: flex; align-items: center; justify-content: space-between; gap: 18px; border: 1px solid rgba(255,255,255,.5); background: white; color: var(--deep-blue); font-size: 12px; font-weight: 800; line-height: 1.35; transition: transform .18s ease, box-shadow .18s ease; }
 .household-explorer-banner a span { color: var(--orange); font-size: 21px; }
 .household-explorer-banner a:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(2, 34, 50, .25); }
-.household-monitoring-page .survey-board { padding-top: 76px; }
 .programme-hero, .contact-hero { position: relative; overflow: hidden; padding: 96px 0 105px; color: white; background: var(--deep-blue); }
 .programme-hero-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .programme-hero::after, .contact-hero::after { content: ''; position: absolute; width: 520px; height: 520px; right: -100px; top: -260px; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; box-shadow: 0 0 0 70px rgba(255,255,255,.025), 0 0 0 140px rgba(255,255,255,.025); }

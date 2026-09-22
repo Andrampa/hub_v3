@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-22 - One survey rounds table on /monitoring-system
+
+- The arrival and departure board and the product library below it listed the
+  same country-rounds twice. Both are replaced by one light table: country,
+  round, fieldwork, publication date, the round's products as links, and an
+  Explore action that opens the thematic-area chooser.
+- Search, status (shown only while upcoming rounds exist), year, product and
+  language filters, and sorting by country, round or date. Filters are kept in
+  the address, so a filtered view can be shared. 15 rows at a time; rows
+  become cards on narrow screens.
+- Only products a survey round links to are listed; catalog items no round
+  points at (the former Contributor-only "Other resources") are dropped.
+- If the Hub catalog request fails, rounds still load with their monitoring
+  links and a retry notice.
+- Page and sharing titles end in "| FAO"; the FAO emblem is the favicon.
+
 ## 2026-09-22 - UN boundaries on the dataset explorer maps
 
 - `/data/:datasetId` maps now draw the FAO-customised ArcGIS vector style

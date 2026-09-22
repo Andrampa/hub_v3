@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { SurveyRelease } from '../services/monitoring'
 import { monitoringCountryPath } from '../services/monitoringEmbed'
 import { fetchSurveyThemes, type ThemeOption } from '../services/monitoringThemes'
+import '../survey-theme-picker.css'
 
 export function SurveyThemePicker({
   release,

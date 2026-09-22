@@ -1,0 +1,173 @@
+/* Survey rounds: one light table of every household survey round and the
+   products it published. Rows turn into compact cards on narrow screens. */
+
+.survey-catalogue { padding-block: 76px 96px; }
+.survey-catalogue .section-heading { margin-bottom: 28px; }
+
+.survey-catalogue :focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 2px; }
+
+/* Toolbar */
+.rounds-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+.rounds-search { flex: 1 1 260px; }
+.rounds-search input,
+.rounds-toolbar select {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+}
+.rounds-search input {
+  padding-left: 38px;
+  background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234a5d64' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") no-repeat 13px center / 16px;
+}
+.rounds-toolbar select { width: auto; min-width: 150px; padding-right: 32px; cursor: pointer; }
+.rounds-search input:hover, .rounds-toolbar select:hover { border-color: #b9cbcb; }
+
+.rounds-status { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.rounds-status button { padding: 7px 14px; border: 0; border-radius: 5px; background: none; color: var(--ink-muted); font-size: 13px; font-weight: 600; cursor: pointer; }
+.rounds-status button[aria-pressed='true'] { background: var(--deep-blue); color: white; }
+
+.rounds-summary { display: flex; align-items: center; gap: 14px; margin: 18px 0 12px; color: var(--ink-muted); font-size: 13px; }
+.rounds-summary strong { color: var(--deep-blue); }
+.rounds-summary button,
+.rounds-notice button { padding: 0; border: 0; background: none; color: var(--fao-blue); font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+.rounds-notice { margin: 0 0 12px; padding: 10px 14px; border-left: 3px solid var(--orange); background: #fff7ef; color: var(--ink); font-size: 13px; }
+
+/* Table */
+.rounds-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: var(--paper);
+  font-size: 14px;
+}
+
+.rounds-table thead th {
+  padding: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: #f3f6f7;
+  text-align: left;
+}
+.rounds-table thead th > button,
+.rounds-table thead th:not(:has(button)) {
+  padding: 12px 16px;
+  color: var(--ink-muted);
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.rounds-table thead th > button { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; cursor: pointer; }
+.rounds-table thead th > button span { color: #9aabb0; font-size: 12px; letter-spacing: 0; }
+.rounds-table thead th > button:hover,
+.rounds-table thead th > button.is-active { color: var(--deep-blue); }
+.rounds-table thead th > button.is-active span { color: var(--orange); }
+
+.rounds-table tbody :is(th, td) { padding: 14px 16px; border-bottom: 1px solid var(--line-faint); text-align: left; vertical-align: middle; }
+.rounds-table tbody tr:last-child :is(th, td) { border-bottom: 0; }
+.rounds-table tbody tr { transition: background .15s ease; }
+.rounds-table tbody tr:hover { background: #f7fafb; }
+
+.rounds-country { color: var(--deep-blue); font-weight: 700; }
+.rounds-country > span { display: inline-flex; align-items: center; gap: 10px; }
+.rounds-country .flag { flex: none; }
+.rounds-round { color: var(--deep-blue); font-variant-numeric: tabular-nums; font-weight: 600; }
+.rounds-fieldwork, .rounds-date { color: var(--ink-muted); }
+.rounds-date time { white-space: nowrap; }
+.rounds-badge { display: inline-block; margin-right: 8px; padding: 2px 8px; border-radius: 999px; background: #fdebdc; color: #a6480c; font-size: var(--text-micro); font-weight: 700; }
+
+.round-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 6px 3px 0;
+  padding: 5px 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--deep-blue);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: border-color .15s ease, background .15s ease;
+}
+.round-chip small { color: var(--ink-faint); font-size: var(--text-micro); font-weight: 600; letter-spacing: .04em; }
+.round-chip:hover { border-color: var(--fao-blue); background: #eef5fa; }
+.rounds-none { color: var(--ink-faint); font-size: 13px; }
+
+.rounds-action { width: 1%; text-align: right; }
+.rounds-action button {
+  padding: 8px 14px;
+  border: 1px solid var(--fao-blue);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--fao-blue);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.rounds-action button span { transition: margin .15s ease; }
+.rounds-action button:hover { background: var(--fao-blue); color: white; }
+.rounds-action button:hover span { margin-left: 3px; }
+
+.rounds-more { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; color: var(--ink-faint); font-size: 13px; }
+.rounds-more button { padding: 11px 22px; border: 1px solid var(--deep-blue); border-radius: 6px; background: var(--paper); color: var(--deep-blue); font-weight: 700; cursor: pointer; }
+.rounds-more button:hover { background: var(--deep-blue); color: white; }
+
+/* Loading and empty states */
+.rounds-skeleton { display: grid; gap: 8px; }
+.rounds-skeleton span { height: 52px; border-radius: 8px; background: linear-gradient(90deg, #eef2f2 0%, #f8faf9 50%, #eef2f2 100%) 0 0 / 200% 100%; animation: rounds-shimmer 1.4s ease-in-out infinite; }
+@keyframes rounds-shimmer { to { background-position: -200% 0; } }
+
+.rounds-message { display: grid; justify-items: center; gap: 10px; padding: 48px 20px; border: 1px dashed var(--line); border-radius: 10px; background: var(--paper); color: var(--ink-muted); text-align: center; }
+.rounds-message strong { color: var(--deep-blue); }
+.rounds-message p { margin: 0; font-size: 13px; }
+.rounds-message button { padding: 9px 16px; border: 1px solid var(--fao-blue); border-radius: 6px; background: var(--paper); color: var(--fao-blue); font-weight: 700; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rounds-skeleton span { animation: none; }
+  .rounds-table tbody tr, .round-chip, .rounds-action button, .rounds-action button span { transition: none; }
+}
+
+/* Narrow screens: each round becomes a card. */
+@media (max-width: 760px) {
+  .survey-catalogue { padding-block: 56px 72px; }
+  .rounds-toolbar select { flex: 1 1 calc(50% - 5px); min-width: 0; }
+  .rounds-status { flex: 1 1 100%; }
+  .rounds-status button { flex: 1; }
+
+  .rounds-table, .rounds-table tbody, .rounds-table tr { display: block; }
+  .rounds-table { border: 0; background: none; }
+  .rounds-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  .rounds-table tbody tr {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    margin-bottom: 10px;
+    padding: 16px;
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    background: var(--paper);
+  }
+  .rounds-table tbody :is(th, td) { padding: 0; border: 0; }
+  .rounds-country { grid-column: 1; font-size: 15px; }
+  .rounds-round { grid-column: 2; justify-self: end; }
+  .rounds-round::before { content: 'Round '; color: var(--ink-faint); font-weight: 400; }
+  .rounds-fieldwork, .rounds-date { grid-column: 1 / -1; font-size: 13px; white-space: normal; }
+  .rounds-fieldwork::before, .rounds-date::before { content: attr(data-label) ' · '; color: var(--ink-faint); }
+  .rounds-products { grid-column: 1 / -1; margin-top: 6px; }
+  .rounds-action { grid-column: 1 / -1; width: auto; }
+  .rounds-action:empty { display: none; }
+  .rounds-action button { width: 100%; }
+}
