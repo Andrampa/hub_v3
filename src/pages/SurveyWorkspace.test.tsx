@@ -610,6 +610,51 @@ describe('thematic areas and review', () => {
     expect(container.querySelector('.package-preflight')?.textContent).toContain('360 records')
   })
 
+  it('offers combined files, keeps measured counts and passes the selected layout to the builder', async () => {
+    auth.requestProtected.mockResolvedValue({ count: 2 })
+    buildSurveyBundle.mockResolvedValue({ fileName: 'x.zip', blob: new Blob(['zip']), fileCount: 6, recordCount: 6 })
+    await selectBothSurveys()
+    expect(container.querySelectorAll('.package-layout-choice input')).toHaveLength(2)
+    expect(container.querySelector('.package-preflight')?.textContent).toContain('3 data files')
+    await click(container.querySelectorAll('.package-layout-choice input')[1])
+    expect(container.querySelector('.package-preflight')?.textContent).toContain('2 data files')
+    expect(container.querySelectorAll('.package-generated-files li')).toHaveLength(2)
+    expect(container.querySelector('.package-generated-files')?.textContent).toContain('v2_food-security.csv')
+    const countButton = Array.from(container.querySelectorAll('.package-actions button')).find((button) => button.textContent?.startsWith('Count'))!
+    await click(countButton)
+    expect(container.querySelector('.package-preflight')?.textContent).toContain('6 records')
+    const downloadButton = Array.from(container.querySelectorAll('.package-actions button')).find((button) => button.textContent?.startsWith('Download'))!
+    await click(downloadButton)
+    expect(buildSurveyBundle.mock.calls.at(-1)?.[0].layout).toBe('combined-by-source')
+    expect(sessionStorage.getItem('diem.survey-package-layout.alice.production')).toBe('combined-by-source')
+    await click(container.querySelectorAll('.package-layout-choice input')[0])
+    expect(container.querySelector('.package-preflight')?.textContent).toContain('6 records')
+    expect(container.querySelector('.package-outcome')).toBe(null)
+  })
+
+  it('blocks an oversized combined file while offering separate folders', async () => {
+    auth.requestProtected.mockResolvedValue({ count: 11_000 })
+    discoverAggregatedSurveys.mockImplementation((_requester: unknown, options: { onProgress?: (value: SurveyDiscoveryResult) => void }) => {
+      const result = discovery({ surveys: [survey('v2', 'NGA', 8), survey('v2', 'TCD', 3)] })
+      options.onProgress?.(result)
+      return Promise.resolve(result)
+    })
+    await selectBothSurveys()
+    await click(container.querySelectorAll('.package-layout-choice input')[1])
+    const countButton = Array.from(container.querySelectorAll('.package-actions button')).find((button) => button.textContent?.startsWith('Count'))!
+    await click(countButton)
+    expect(container.querySelector('.package-blocker')?.textContent).toContain('Use separate survey folders')
+    await click(container.querySelectorAll('.package-layout-choice input')[0])
+    expect(container.querySelector('.package-blocker')).toBe(null)
+  })
+
+  it('restores the account-scoped layout preference with a fresh selection', async () => {
+    sessionStorage.setItem('diem.survey-package-layout.alice.production', 'combined-by-source')
+    await selectBothSurveys()
+    expect((container.querySelectorAll('.package-layout-choice input')[1] as HTMLInputElement).checked).toBe(true)
+    expect(container.querySelector('.package-preflight')?.textContent).toContain('2 data files')
+  })
+
   it('discards a measurement once the selection changes', async () => {
     auth.requestProtected.mockResolvedValue({ count: 120 })
     await selectBothSurveys()

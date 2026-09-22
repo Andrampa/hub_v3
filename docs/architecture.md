@@ -108,7 +108,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
 - `src/services/surveyAccess.ts`: authenticated, generation-aware survey discovery, per-theme availability and requester-scoped in-memory caching for the planned survey-first workspace.
-- `src/services/surveyBundle.ts`: the survey package archive — one zip with per-survey folders, CSV per theme, schema and documentation metadata, README and manifest, built transactionally with a lazily loaded compressor.
+- `src/services/surveyBundle.ts`: the survey package archive — one zip with either per-survey folders or compatible surveys combined by source and questionnaire generation, plus documentation, README and manifest, built transactionally with a lazily loaded compressor.
 - `src/data-access.css`: data workspace visual and responsive behavior.
 - `src/services/arcgis.ts`: portal constants, pagination, fetch validation,
   resource URLs, and the Flickr album a legacy photo-gallery StoryMap links to.

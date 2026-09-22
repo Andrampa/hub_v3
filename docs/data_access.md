@@ -157,7 +157,7 @@ not been done yet.
   dataset so analysts can join survey and aggregate records to the matching
   ADM geometry through the published administrative codes.
 - Microdata (workspace tab): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`.
-- Aggregated data (workspace): chosen by survey, not by generation; the generation is resolved per survey.
+- Aggregated data (workspace): chosen by survey, with its generation resolved automatically. Multi-survey packages offer separate survey folders or combined CSVs per compatible source and generation. The review counts output files for the selected layout while separately limiting source slices and records.
 - Documentation: field descriptions, codebooks and SDMX metadata per generation, each declaring an `audience` so aggregated packages link only aggregated documentation.
 - Boundaries: current and historical ADM1/ADM2 operational references, under workspace technical resources.
 - Tools: microdata labelling repository and DIEM API examples, under workspace technical resources.

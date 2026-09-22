@@ -145,7 +145,18 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .theme-empty { margin: 14px 0 0; color: var(--ink-faint); font-size: var(--text-small); }
 
 /* Step 3 - review */
+.package-layout-choice { margin: 0 0 18px; padding: 0; border: 0; }
+.package-layout-choice legend { margin-bottom: 10px; color: var(--deep-blue); font-size: 13px; font-weight: 700; }
+.package-layout-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.package-layout-choice label { display: flex; align-items: start; gap: 11px; min-width: 0; padding: 14px 16px; border: 1px solid var(--line); cursor: pointer; }
+.package-layout-choice label:has(input:checked) { border-color: var(--fao-blue); background: #f1f7fb; }
+.package-layout-choice input { margin-top: 2px; accent-color: var(--fao-blue); }
+.package-layout-choice strong { display: block; color: var(--deep-blue); font-size: 13px; }
+.package-layout-choice small { display: block; margin-top: 3px; color: var(--ink-faint); font-size: var(--text-small); line-height: 1.55; }
 .package-preflight { margin: 0 0 16px; padding: 12px 15px; background: var(--mist); color: var(--deep-blue); font-size: 13px; font-weight: 700; }
+.package-generated-files { margin-top: 18px; }
+.package-generated-files h3 { margin: 0 0 8px; color: var(--deep-blue); font-size: 13px; }
+.package-generated-files ul { margin: 0; padding-left: 20px; color: var(--ink-faint); font-size: var(--text-small); line-height: 1.65; overflow-wrap: anywhere; }
 .package-table-wrap { overflow-x: auto; }
 .package-table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
 .package-table th, .package-table td { padding: 11px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line-faint); }

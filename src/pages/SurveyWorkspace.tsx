@@ -25,12 +25,18 @@ import {
 
 import {
   buildSurveyBundle,
+  bundleDataFileCount,
   bundleFileName,
+  bundleSourceKey,
+  combinedFileNames,
+  groupBundleSlices,
   isBundleCancelled,
   packageBudgetProblem,
   PACKAGE_BUDGETS,
   type BundleProgress,
+  type BundleLayout,
 } from '../services/surveyBundle'
+import { BROWSER_EXPORT_LIMIT } from '../services/dataExplorer'
 import {
   countSurveySlices,
   discoverAggregatedSurveys,
@@ -47,6 +53,7 @@ const SELECTION_LIMIT = 10
 
 const SELECTION_STORAGE_KEY = 'diem.survey-selection'
 const SELECTION_SCHEMA_VERSION = 1
+const LAYOUT_STORAGE_KEY = 'diem.survey-package-layout'
 
 type WorkspaceMode = 'aggregated' | 'microdata'
 type SelectionScope = 'production' | 'test'
@@ -133,6 +140,25 @@ function clearStoredSelection(account: string, scope: SelectionScope) {
     sessionStorage.removeItem(storageKey(account, scope))
   } catch {
     // Nothing to recover: the selection lives in component state regardless.
+  }
+}
+
+function readStoredLayout(account: string, scope: SelectionScope): BundleLayout {
+  if (!account) return 'per-survey'
+  try {
+    return sessionStorage.getItem(`${LAYOUT_STORAGE_KEY}.${account}.${scope}`) === 'combined-by-source'
+      ? 'combined-by-source' : 'per-survey'
+  } catch {
+    return 'per-survey'
+  }
+}
+
+function writeStoredLayout(account: string, scope: SelectionScope, layout: BundleLayout) {
+  if (!account) return
+  try {
+    sessionStorage.setItem(`${LAYOUT_STORAGE_KEY}.${account}.${scope}`, layout)
+  } catch {
+    // The preference is optional; the current selection still works.
   }
 }
 
@@ -364,6 +390,7 @@ export default function SurveyWorkspace() {
   const accountKey = auth.user?.username || ''
   // One selection per scope, so a test survey can never reach a production package.
   const [selection, setSelection] = useState<Record<SelectionScope, string[]>>({ production: [], test: [] })
+  const [layoutPreference, setLayoutPreference] = useState<BundleLayout>('per-survey')
   const [droppedCount, setDroppedCount] = useState(0)
   /** The survey a user tried to add past the cap, so the refusal is said on its row. */
   const [limitNotice, setLimitNotice] = useState<string>()
@@ -403,6 +430,10 @@ export default function SurveyWorkspace() {
       test: readStoredSelection(accountKey, 'test'),
     })
   }, [accountKey])
+
+  useEffect(() => {
+    setLayoutPreference(readStoredLayout(accountKey, scope))
+  }, [accountKey, scope])
 
   useEffect(() => {
     if (auth.status !== 'authenticated') return
@@ -549,8 +580,6 @@ export default function SurveyWorkspace() {
     })
   }, [activeThemeIds, result?.sources, selectedSurveys, themeCatalogue])
 
-  const fileCount = plan.reduce((total, entry) => total + entry.included.length, 0)
-
   const toggleSurvey = useCallback((key: string) => {
     const keys = selection[scope]
     // Past the cap a click is refused out loud, on the row, rather than ignored.
@@ -616,6 +645,10 @@ export default function SurveyWorkspace() {
     () => plan.flatMap((entry) => entry.included.map((theme) => ({ survey: entry.survey, theme }))),
     [plan],
   )
+  const layout: BundleLayout = selectedSurveys.length > 1 ? layoutPreference : 'per-survey'
+  const generatedGroups = useMemo(() => groupBundleSlices(bundleSlices), [bundleSlices])
+  const generatedFileNames = useMemo(() => combinedFileNames(generatedGroups), [generatedGroups])
+  const fileCount = bundleDataFileCount(bundleSlices, layout)
 
   const budget = unlimited ? PACKAGE_BUDGETS.contributor : PACKAGE_BUDGETS.member
   const packageHasTestData = bundleSlices.some(({ survey }) => survey.testData)
@@ -651,8 +684,24 @@ export default function SurveyWorkspace() {
     }
     if (!countsCoverPackage) return 'Count the records first. A package is built only from a measured selection.'
     if (countErrors) return `${formatNumber(countErrors)} file${countErrors === 1 ? '' : 's'} could not be counted. Count again before building the package.`
-    return packageBudgetProblem(countedRecords, bundleSlices.length, budget)
+    const budgetProblem = packageBudgetProblem(countedRecords, fileCount, budget, bundleSlices.length)
+    if (budgetProblem) return budgetProblem
+    if (layout === 'combined-by-source') {
+      for (const group of generatedGroups) {
+        const total = group.reduce((sum, { survey, theme }) => sum + (counts?.find((entry) => entry.surveyKey === survey.key && entry.themeId === theme.id)?.count || 0), 0)
+        if (total > BROWSER_EXPORT_LIMIT) return `${group[0].theme.label} (${GENERATIONS[group[0].survey.generation].label}) would make a ${formatNumber(total)}-record CSV, above the ${formatNumber(BROWSER_EXPORT_LIMIT)}-record file limit. Use separate survey folders for this selection.`
+      }
+    }
+    return undefined
   })()
+
+  function chooseLayout(next: BundleLayout) {
+    setLayoutPreference(next)
+    writeStoredLayout(accountKey, scope, next)
+    setBundleReady(undefined)
+    setBundleError(undefined)
+    setBundleCancelled(false)
+  }
 
   async function downloadPackage() {
     const controller = new AbortController()
@@ -664,6 +713,7 @@ export default function SurveyWorkspace() {
     try {
       const bundle = await buildSurveyBundle({
         slices: bundleSlices,
+        layout,
         omitted: plan.flatMap((entry) => entry.omitted.map((item) => ({
           surveyKey: entry.survey.key,
           themeLabel: item.label,
@@ -1058,6 +1108,21 @@ export default function SurveyWorkspace() {
                     : 'The review lists every survey, its themes, the file count and the record count before anything is downloaded.'}</p>
                 ) : (
                   <>
+                    {selectedSurveys.length > 1 && (
+                      <fieldset className="package-layout-choice">
+                        <legend>How should the data be arranged?</legend>
+                        <div className="package-layout-options">
+                          <label>
+                            <input type="radio" name="package-layout" checked={layout === 'per-survey'} disabled={Boolean(bundleProgress)} onChange={() => chooseLayout('per-survey')}/>
+                            <span><strong>Separate survey folders</strong><small>One CSV per survey and theme.</small></span>
+                          </label>
+                          <label>
+                            <input type="radio" name="package-layout" checked={layout === 'combined-by-source'} disabled={Boolean(bundleProgress)} onChange={() => chooseLayout('combined-by-source')}/>
+                            <span><strong>Combine compatible surveys</strong><small>One CSV per theme and questionnaire generation when surveys use the same source. Country and round identify each row.</small></span>
+                          </label>
+                        </div>
+                      </fieldset>
+                    )}
                     <p className="package-preflight">
                       {formatNumber(selectedSurveys.length)} survey{selectedSurveys.length === 1 ? '' : 's'} · {formatNumber(activeThemeIds.length)} theme{activeThemeIds.length === 1 ? '' : 's'} · {formatNumber(fileCount)} data file{fileCount === 1 ? '' : 's'}
                       {counts && <> · {formatNumber(counts.reduce((total, entry) => total + (entry.count || 0), 0))} records</>}
@@ -1071,7 +1136,7 @@ export default function SurveyWorkspace() {
                             <th scope="col">Survey</th>
                             <th scope="col">Questionnaire</th>
                             <th scope="col">Included themes</th>
-                            <th scope="col">Files</th>
+                            <th scope="col">{layout === 'per-survey' ? 'Files' : 'Themes'}</th>
                             <th scope="col">Records</th>
                             <th scope="col">Notes</th>
                           </tr>
@@ -1105,6 +1170,18 @@ export default function SurveyWorkspace() {
                       </table>
                     </div>
 
+                    {layout === 'combined-by-source' && (
+                      <div className="package-generated-files">
+                        <h3>Generated data files</h3>
+                        <ul>{generatedGroups.map((group) => (
+                          <li key={bundleSourceKey(group[0].theme)}>
+                          <strong>{generatedFileNames.get(bundleSourceKey(group[0].theme))}</strong> — {group.length} survey{group.length === 1 ? '' : 's'} · {GENERATIONS[group[0].survey.generation].label}
+                            {countsCoverPackage && !countErrors && ` · ${formatNumber(group.reduce((sum, { survey, theme }) => sum + (counts?.find((entry) => entry.surveyKey === survey.key && entry.themeId === theme.id)?.count || 0), 0))} records`}
+                          </li>
+                        ))}</ul>
+                      </div>
+                    )}
+
                     {/* Stated immediately before generating, per plan section 10:
                         what the file will be called, what it holds, under which
                         licence, what is missing, and whether preflight passed.
@@ -1120,7 +1197,7 @@ export default function SurveyWorkspace() {
                         <dd>
                           {formatNumber(selectedSurveys.length)} survey{selectedSurveys.length === 1 ? '' : 's'} · {formatNumber(fileCount)} data file{fileCount === 1 ? '' : 's'}
                           {countsCoverPackage && !countErrors && <> · {formatNumber(countedRecords)} records</>}
-                          , each with its field schema
+                          , with documentation for each questionnaire generation
                         </dd>
                       </div>
                       <div>
@@ -1202,7 +1279,7 @@ export default function SurveyWorkspace() {
                           ? <><strong>The package was not created.</strong> {bundleError} Your selection has been kept, so you can try again or remove the survey that failed.</>
                           : bundleCancelled
                             ? 'The package was cancelled. Nothing was downloaded, and your selection has been kept.'
-                            : `${bundleReady} downloaded. It contains one folder per survey, each with its data, its field schemas and links to the published documentation.`}
+                            : `${bundleReady} downloaded. ${layout === 'combined-by-source' ? 'It contains combined data files grouped by questionnaire generation, with survey details and documentation.' : 'It contains one folder per survey, with data and documentation.'}`}
                       </p>
                     )}
                   </>

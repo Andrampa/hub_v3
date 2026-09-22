@@ -35,6 +35,15 @@ and `npm run build`.
 
 ## Active: survey-first data access workspace
 
+**2026-09-22 combined aggregate export:** implemented in
+`src/services/surveyBundle.ts` and `src/pages/SurveyWorkspace.tsx`. The default
+per-survey layout and the new combined-by-source layout pass the full test suite
+and `npm run build`. Public guide and signed-out workspace were checked at
+desktop and mobile widths. A live authenticated ArcGIS acceptance check remains:
+select two surveys that share a V2 theme in `src/pages/SurveyWorkspace.tsx`,
+download both layouts, and compare CSV row counts and manifest contributions to
+the preflight counts. Exact verification command: `npm run build`.
+
 Status on 2026-09-21. The plan and its evidence are in
 `docs/data_access_restructure.md`. The main workspace implementation is in
 commit `5ae327b`; the later navigation, anchor and test changes are uncommitted.

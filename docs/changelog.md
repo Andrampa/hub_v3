@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-09-22 - Combined aggregated survey packages
+
+- The survey workspace now offers a combined export layout for multiple surveys.
+  Compatible surveys share one CSV per source and questionnaire generation;
+  separate survey folders remain the default.
+- Combined packages include a generation-level survey index and documentation,
+  a versioned manifest with actual contribution counts, and the source queries.
+  Preflight and build enforce output-file, source-slice and record limits, with
+  an option to return to separate folders when a combined file exceeds 20,000 rows.
+
 ## 2026-09-22 - One survey rounds table on /monitoring-system
 
 - The arrival and departure board and the product library below it listed the

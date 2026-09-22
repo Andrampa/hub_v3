@@ -30,24 +30,24 @@ import { fetchSurveyCollectionPeriods, type SurveyCollectionPeriod } from './mon
  * operation runs out of memory or dies mid-download, and anything bigger belongs
  * to the generated scripts or the planned export service.
  *
- * The file ceiling counts *data files* - one CSV per survey and theme, the unit
- * the Download button names. It was once called plain `files` while counting
- * only these, which misdescribed the archive. The archive's full entry count
- * follows from it exactly: one entry per data file, two per survey (survey.txt
- * and documentation_and_metadata.txt), three at the root - so bounding data
- * files bounds the archive too.
+ * Data-file and source-slice ceilings are separate: a combined CSV can contain
+ * many survey/theme slices, each of which still needs a count and row query.
  */
 export const PACKAGE_BUDGETS = {
-  member: { records: 50_000, dataFiles: 60 },
-  contributor: { records: 200_000, dataFiles: 250 },
+  member: { records: 50_000, dataFiles: 60, sourceSlices: 60 },
+  contributor: { records: 200_000, dataFiles: 250, sourceSlices: 250 },
 } as const
 
-export type PackageBudget = { records: number; dataFiles: number }
+export type PackageBudget = { records: number; dataFiles: number; sourceSlices?: number }
+export type BundleLayout = 'per-survey' | 'combined-by-source'
 
 /** Why a package cannot be built as selected, in words a user can act on; undefined when it can. */
-export function packageBudgetProblem(recordCount: number, dataFileCount: number, budget: PackageBudget) {
+export function packageBudgetProblem(recordCount: number, dataFileCount: number, budget: PackageBudget, sourceSliceCount = dataFileCount) {
   if (dataFileCount > budget.dataFiles) {
     return `This package would hold ${formatNumber(dataFileCount)} data files; one package can hold ${formatNumber(budget.dataFiles)}. Remove some surveys or themes and build a second package.`
+  }
+  if (sourceSliceCount > (budget.sourceSlices ?? budget.dataFiles)) {
+    return `This package would read ${formatNumber(sourceSliceCount)} survey and theme combinations; one package can read ${formatNumber(budget.sourceSlices ?? budget.dataFiles)}. Remove some surveys or themes and build a second package.`
   }
   if (recordCount > budget.records) {
     return `This package would hold ${formatNumber(recordCount)} records; one package can hold ${formatNumber(budget.records)}. Remove some surveys or themes, or use the generated Python or R script for larger extractions.`
@@ -58,9 +58,8 @@ export function packageBudgetProblem(recordCount: number, dataFileCount: number,
 /**
  * Bundle contract, per `docs/data_access_restructure.md` section 11.
  *
- * One archive with folders - never nested zips - and the same layout for one
- * survey as for ten, so a script written against one package works against
- * every package.
+ * One archive with folders, never nested zips. The manifest identifies the
+ * selected layout so readers can handle either archive shape.
  */
 export const AGGREGATED_LICENCE = `DIEM aggregated survey data
 
@@ -103,6 +102,7 @@ export interface BundleSlice {
 
 export interface BundleOptions {
   slices: BundleSlice[]
+  layout?: BundleLayout
   /** Combinations the review named as omitted, carried into the archive. */
   omitted?: Array<{ surveyKey: string; themeLabel: string; reason: string }>
   requester: ProtectedRequester
@@ -191,6 +191,63 @@ function safeName(value: string) {
   return value.normalize('NFKD').replace(/[^\w.-]+/g, '-').replace(/^-|-$/g, '').toLowerCase()
 }
 
+/** The exact source contract required for rows to share a CSV. */
+export function bundleSourceKey(theme: SurveyThemeSource) {
+  return JSON.stringify([
+    theme.generation, theme.resourceId, theme.layerId, theme.layerUrl.replace(/\/+$/, ''),
+    theme.id, theme.countryField, theme.roundField, theme.visibilityWhere || '', theme.testData,
+  ])
+}
+
+export function groupBundleSlices(slices: BundleSlice[]): BundleSlice[][] {
+  const groups = new Map<string, BundleSlice[]>()
+  for (const slice of slices) {
+    const key = bundleSourceKey(slice.theme)
+    const group = groups.get(key)
+    if (group) group.push(slice)
+    else groups.set(key, [slice])
+  }
+  return Array.from(groups.values())
+}
+
+export function bundleDataFileCount(slices: BundleSlice[], layout: BundleLayout) {
+  return layout === 'combined-by-source' ? groupBundleSlices(slices).length : slices.length
+}
+
+export function combinedFileName(theme: SurveyThemeSource) {
+  const prefix = theme.testData ? 'TEST_DATA_' : ''
+  return `${prefix}${theme.generation}_${safeName(theme.label)}.csv`
+}
+
+/** Only sources with the same human filename need a suffix. */
+export function combinedFileNames(groups: BundleSlice[][]) {
+  const names = new Map<string, string>()
+  const used = new Set<string>()
+  const baseCounts = new Map<string, number>()
+  for (const group of groups) {
+    const base = combinedFileName(group[0].theme)
+    baseCounts.set(base, (baseCounts.get(base) || 0) + 1)
+  }
+  for (const group of groups) {
+    const theme = group[0].theme
+    const key = bundleSourceKey(theme)
+    const base = combinedFileName(theme)
+    let name = base
+    if ((baseCounts.get(base) || 0) > 1 || used.has(name)) {
+      const suffix = `${safeName(theme.resourceId).slice(0, 8)}_${theme.layerId}`
+      name = base.replace(/\.csv$/, `_${suffix}.csv`)
+      let number = 2
+      while (used.has(name)) {
+        name = base.replace(/\.csv$/, `_${suffix}_${number}.csv`)
+        number += 1
+      }
+    }
+    names.set(key, name)
+    used.add(name)
+  }
+  return names
+}
+
 function isoDate(value: Date) {
   return value.toISOString().slice(0, 10)
 }
@@ -214,16 +271,15 @@ function ensureLive(signal?: AbortSignal) {
  * cannot read, and some need a signed-in session to open. This replaces the
  * per-file field lists, which repeated the raw layer schema without explaining it.
  */
-export function documentationText(survey: AvailableSurvey, themes: SurveyThemeSource[]) {
-  const generation = GENERATIONS[survey.generation]
+function documentationForGeneration(generationId: AvailableSurvey['generation'], title: string, themes: SurveyThemeSource[]) {
+  const generation = GENERATIONS[generationId]
   // Aggregated documentation only, and fail closed: a document nobody has
   // labelled is left out rather than risk pointing at a microdata codebook for
   // fields this package does not contain.
   const documents = DOCUMENTATION_RESOURCES.filter((resource) => (
-    resource.version === survey.generation
+    resource.version === generationId
     && (resource.audience === 'aggregate' || resource.audience === 'both')
   ))
-  const title = `Documentation and metadata - ${survey.countryName} (${survey.adm0Iso3}), Round ${survey.round}`
   const lines = [
     title,
     '='.repeat(title.length),
@@ -234,6 +290,7 @@ export function documentationText(survey: AvailableSurvey, themes: SurveyThemeSo
     'Each generation has its own fields, codes and data structure. Why, and what',
     'that means for comparing surveys across generations:',
     `${HUB_ORIGIN}/data/guide#generations`,
+    generation.comparability,
     '',
     `Aggregated data field descriptions and metadata (${generation.label})`,
     '-'.repeat(`Aggregated data field descriptions and metadata (${generation.label})`.length),
@@ -276,6 +333,22 @@ export function documentationText(survey: AvailableSurvey, themes: SurveyThemeSo
     `DIEM data access guide: ${HUB_ORIGIN}/data/guide`,
   )
   return `${lines.join('\n')}\n`
+}
+
+export function documentationText(survey: AvailableSurvey, themes: SurveyThemeSource[]) {
+  return documentationForGeneration(
+    survey.generation,
+    `Documentation and metadata - ${survey.countryName} (${survey.adm0Iso3}), Round ${survey.round}`,
+    themes,
+  )
+}
+
+function combinedDocumentationText(generationId: AvailableSurvey['generation'], themes: SurveyThemeSource[]) {
+  return documentationForGeneration(
+    generationId,
+    `Documentation and metadata - ${GENERATIONS[generationId].label} combined survey data`,
+    Array.from(new Map(themes.map((theme) => [bundleSourceKey(theme), theme])).values()),
+  )
 }
 
 interface CollectionRecord {
@@ -323,10 +396,11 @@ function surveyText(survey: AvailableSurvey, themes: SurveyThemeSource[], collec
 
 interface ManifestFile {
   path: string
-  survey: string
-  country: string
-  adm0_iso3: string
-  round: number
+  survey?: string
+  surveys?: Array<{ key: string; adm0_iso3: string; round: number; record_count: number }>
+  country?: string
+  adm0_iso3?: string
+  round?: number
   generation: string
   theme: string
   item_id: string
@@ -335,10 +409,13 @@ interface ManifestFile {
   item_modified?: string
   /** Endpoint and parameters are separate: no token-bearing URL is ever written. */
   query_endpoint: string
-  query_parameters: Record<string, string>
+  query_parameters?: Record<string, string>
+  source_queries?: Array<{ survey: string; parameters: Record<string, string> }>
+  country_field: string
+  round_field: string
   record_count: number
-  collection_start: string | null
-  collection_end: string | null
+  collection_start?: string | null
+  collection_end?: string | null
   test_data: boolean
 }
 
@@ -368,7 +445,16 @@ export async function buildSurveyBundle(options: BundleOptions): Promise<BundleR
 
 async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResult> {
   const { slices, requester, onProgress, signal } = options
+  const layout = options.layout || 'per-survey'
+  const groups = groupBundleSlices(slices)
+  const combinedNames = combinedFileNames(groups)
   if (!slices.length) throw new Error('Select at least one survey and thematic area.')
+  if (slices.some(({ survey, theme }) => survey.generation !== theme.generation || survey.testData !== theme.testData)) {
+    throw new Error('The selected survey and source do not have matching questionnaire generation or test-data status. Refresh the survey list and try again.')
+  }
+  if (new Set(slices.map(({ survey }) => survey.testData)).size > 1) {
+    throw new Error('Test data and survey results cannot be included in the same package.')
+  }
   const now = options.now?.() || new Date()
   const accessed = isoDate(now)
   const report = (stage: BundleStage, completed: number, total: number, label?: string) => {
@@ -406,13 +492,29 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
       returnGeometry: 'false',
     }, { signal })
     const count = counted.count || 0
-    if (count > BROWSER_EXPORT_LIMIT) {
+    if (layout === 'per-survey' && count > BROWSER_EXPORT_LIMIT) {
       throw new Error(`${label} holds ${formatNumber(count)} records, more than the ${formatNumber(BROWSER_EXPORT_LIMIT)} a browser download can build. Use the generated Python or R script for this survey instead.`)
     }
     counts.push(count)
     report('counting', index + 1, slices.length, label)
   }
-  const overBudget = packageBudgetProblem(counts.reduce((total, count) => total + count, 0), slices.length, options.budget)
+  if (layout === 'combined-by-source') {
+    const groupCounts = new Map<string, number>()
+    slices.forEach((slice, index) => {
+      const key = bundleSourceKey(slice.theme)
+      groupCounts.set(key, (groupCounts.get(key) || 0) + counts[index])
+    })
+    for (const group of groups) {
+      const total = groupCounts.get(bundleSourceKey(group[0].theme)) || 0
+      if (total > BROWSER_EXPORT_LIMIT) {
+        throw new Error(`${group[0].theme.label} (${group[0].theme.generation}) would contain ${formatNumber(total)} records in one CSV, more than the ${formatNumber(BROWSER_EXPORT_LIMIT)} a browser download can build. Use separate survey folders for this selection.`)
+      }
+    }
+  }
+  const overBudget = packageBudgetProblem(
+    counts.reduce((total, count) => total + count, 0),
+    bundleDataFileCount(slices, layout), options.budget, slices.length,
+  )
   if (overBudget) throw new Error(overBudget)
 
   // Enrichment, not a precondition: a register outage leaves the dates blank
@@ -431,6 +533,8 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
     periodsUnavailable,
   )
 
+  const combinedRows = new Map<string, Record<string, unknown>[]>()
+  const combinedEntries = new Map<string, ManifestFile>()
   for (const [index, slice] of slices.entries()) {
     ensureLive(signal)
     const { survey, theme } = slice
@@ -445,12 +549,39 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
     const rows = count ? await fetchLayerRows(theme.layerUrl, layer, where, requester, count, signal) : []
     const folder = surveyFolderName(survey)
     const stem = `${folder}_${safeName(theme.label)}`
-    const path = `${folder}/data/${stem}.csv`
-    files[path] = encode(rowsToCsv(columns, rows))
+    const path = layout === 'per-survey'
+      ? `${folder}/data/${stem}.csv`
+      : `${theme.testData ? 'TEST_DATA_' : ''}${theme.generation}/data/${combinedNames.get(bundleSourceKey(theme))}`
     recordCount += rows.length
 
-
-    manifestFiles.push({
+    const queryParameters = { where, outFields: '*', returnGeometry: 'false', f: 'json' }
+    if (layout === 'combined-by-source') {
+      const key = bundleSourceKey(theme)
+      const existingRows = combinedRows.get(key) || []
+      existingRows.push(...rows)
+      combinedRows.set(key, existingRows)
+      const existing = combinedEntries.get(key)
+      const contribution = { key: survey.key, adm0_iso3: survey.adm0Iso3, round: survey.round, record_count: rows.length }
+      if (existing) {
+        existing.surveys!.push(contribution)
+        existing.source_queries!.push({ survey: survey.key, parameters: queryParameters })
+        existing.record_count += rows.length
+      } else {
+        const entry: ManifestFile = {
+          path, surveys: [contribution], generation: survey.generation, theme: theme.label,
+          item_id: theme.resourceId, layer_id: theme.layerId, layer_name: theme.layerName,
+          item_modified: theme.itemModified ? new Date(theme.itemModified).toISOString() : undefined,
+          query_endpoint: `${theme.layerUrl}/query`,
+          source_queries: [{ survey: survey.key, parameters: queryParameters }],
+          country_field: theme.countryField, round_field: theme.roundField,
+          record_count: rows.length, test_data: theme.testData,
+        }
+        combinedEntries.set(key, entry)
+        manifestFiles.push(entry)
+      }
+    } else {
+      files[path] = encode(rowsToCsv(columns, rows))
+      manifestFiles.push({
       path,
       survey: survey.key,
       country: survey.countryName,
@@ -463,14 +594,36 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
       layer_name: theme.layerName,
       item_modified: theme.itemModified ? new Date(theme.itemModified).toISOString() : undefined,
       query_endpoint: `${theme.layerUrl}/query`,
-      query_parameters: { where, outFields: '*', returnGeometry: 'false', f: 'json' },
+      query_parameters: queryParameters,
+      country_field: theme.countryField,
+      round_field: theme.roundField,
       record_count: rows.length,
       collection_start: collectionFor(survey).collection_start,
       collection_end: collectionFor(survey).collection_end,
       test_data: theme.testData,
-    })
+      })
+    }
     report('downloading', index + 1, slices.length, label)
   }
+
+  if (layout === 'combined-by-source') {
+    const paths = new Set<string>()
+    for (const group of groups) {
+      const theme = group[0].theme
+      const key = bundleSourceKey(theme)
+      const layer = layers.get(theme.layerUrl)!
+      const columns = usableFields(layer.fields).map((field) => field.name)
+      const entry = combinedEntries.get(key)!
+      if (paths.has(entry.path)) throw new Error(`Two data sources would produce the same file name: ${entry.path}`)
+      paths.add(entry.path)
+      if ((combinedRows.get(key) || []).length > BROWSER_EXPORT_LIMIT) {
+        throw new Error(`${theme.label} (${theme.generation}) grew beyond the ${formatNumber(BROWSER_EXPORT_LIMIT)}-record file limit while downloading. Use separate survey folders for this selection.`)
+      }
+      files[entry.path] = encode(rowsToCsv(columns, combinedRows.get(key) || []))
+    }
+  }
+  const finalBudgetProblem = packageBudgetProblem(recordCount, bundleDataFileCount(slices, layout), options.budget, slices.length)
+  if (finalBudgetProblem) throw new Error(finalBudgetProblem)
 
   ensureLive(signal)
   const bySurvey = new Map<string, { survey: AvailableSurvey; themes: SurveyThemeSource[] }>()
@@ -479,18 +632,53 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
     if (entry) entry.themes.push(theme)
     else bySurvey.set(survey.key, { survey, themes: [theme] })
   }
+  const surveyMetadata = Array.from(bySurvey.values()).map(({ survey, themes }) => ({
+    key: survey.key,
+    country: survey.countryName,
+    adm0_iso3: survey.adm0Iso3,
+    round: survey.round,
+    generation: survey.generation,
+    folder: layout === 'per-survey' ? surveyFolderName(survey) : `${survey.testData ? 'TEST_DATA_' : ''}${survey.generation}`,
+    ...collectionFor(survey),
+    themes: themes.map((theme) => theme.label),
+    test_data: survey.testData,
+  }))
 
-  report('metadata', 0, bySurvey.size)
-  for (const [index, { survey, themes }] of Array.from(bySurvey.values()).entries()) {
-    ensureLive(signal)
-    const folder = surveyFolderName(survey)
-    files[`${folder}/survey.txt`] = encode(surveyText(survey, themes, collectionFor(survey)))
-    files[`${folder}/documentation_and_metadata.txt`] = encode(documentationText(survey, themes))
-    report('metadata', index + 1, bySurvey.size)
+  if (layout === 'per-survey') {
+    report('metadata', 0, bySurvey.size)
+    for (const [index, { survey, themes }] of Array.from(bySurvey.values()).entries()) {
+      ensureLive(signal)
+      const folder = surveyFolderName(survey)
+      files[`${folder}/survey.txt`] = encode(surveyText(survey, themes, collectionFor(survey)))
+      files[`${folder}/documentation_and_metadata.txt`] = encode(documentationText(survey, themes))
+      report('metadata', index + 1, bySurvey.size)
+    }
+  } else {
+    const generations = Array.from(new Set(slices.map(({ survey }) => survey.generation)))
+    report('metadata', 0, generations.length)
+    for (const [index, generationId] of generations.entries()) {
+      ensureLive(signal)
+      const generationSlices = slices.filter(({ survey }) => survey.generation === generationId)
+      const folder = `${generationSlices[0].survey.testData ? 'TEST_DATA_' : ''}${generationId}`
+      const members = surveyMetadata.filter((survey) => survey.generation === generationId)
+      const header = ['survey_key', 'adm0_iso3', 'country', 'round', 'generation', 'collection_start', 'collection_end', 'collection_period_source', 'themes', 'test_data']
+      const data = members.map((survey) => ({
+        survey_key: survey.key, adm0_iso3: survey.adm0_iso3, country: survey.country,
+        round: survey.round, generation: survey.generation,
+        collection_start: survey.collection_start, collection_end: survey.collection_end,
+        collection_period_source: survey.collection_period_source,
+        themes: survey.themes.join('; '), test_data: survey.test_data,
+      }))
+      files[`${folder}/surveys.csv`] = encode(rowsToCsv(header, data))
+      files[`${folder}/documentation_and_metadata.txt`] = encode(combinedDocumentationText(generationId, generationSlices.map(({ theme }) => theme)))
+      report('metadata', index + 1, generations.length)
+    }
   }
 
   const testData = slices.some((slice) => slice.survey.testData)
   const manifest = {
+    package_schema_version: 2,
+    layout,
     generated: now.toISOString(),
     accessed,
     /*
@@ -500,17 +688,7 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
     hub: HUB_ORIGIN,
     licence: 'CC BY 4.0 with the FAO Statistical Database Terms of Use',
     test_data: testData,
-    surveys: Array.from(bySurvey.values()).map(({ survey, themes }) => ({
-      key: survey.key,
-      country: survey.countryName,
-      adm0_iso3: survey.adm0Iso3,
-      round: survey.round,
-      generation: survey.generation,
-      folder: surveyFolderName(survey),
-      ...collectionFor(survey),
-      themes: themes.map((theme) => theme.label),
-      test_data: survey.testData,
-    })),
+    surveys: surveyMetadata,
     files: manifestFiles,
     not_included: options.omitted || [],
   }
@@ -535,6 +713,8 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
 }
 
 type BundleManifest = {
+  package_schema_version: number
+  layout: BundleLayout
   generated: string
   accessed: string
   test_data: boolean
@@ -567,13 +747,29 @@ export function readmeText(manifest: BundleManifest, recordCount: number) {
   }
 
   lines.push('Contents', '--------')
-  for (const survey of manifest.surveys) {
-    lines.push(`${survey.folder}/`)
-    lines.push(`  ${survey.country}, Round ${survey.round} (${survey.generation})`)
-    lines.push(`  Themes: ${survey.themes.join(', ')}`)
-    lines.push('  data/     one CSV per theme, filtered to this survey')
-    lines.push('  documentation_and_metadata.txt  field descriptions, metadata, boundaries, tools and source links')
-    lines.push('')
+  if (manifest.layout === 'per-survey') {
+    for (const survey of manifest.surveys) {
+      lines.push(`${survey.folder}/`)
+      lines.push(`  ${survey.country}, Round ${survey.round} (${survey.generation})`)
+      lines.push(`  Themes: ${survey.themes.join(', ')}`)
+      lines.push('  data/     one CSV per theme, filtered to this survey')
+      lines.push('  documentation_and_metadata.txt  field descriptions, metadata, boundaries, tools and source links')
+      lines.push('')
+    }
+  } else {
+    lines.push('Surveys share a CSV only when they use the same questionnaire generation and source layer.')
+    lines.push('Use the country and round columns to identify rows from each survey.', '')
+    for (const folder of new Set(manifest.surveys.map((survey) => survey.folder))) {
+      lines.push(`${folder}/`, '  surveys.csv  survey identities, collection periods and included themes',
+        '  documentation_and_metadata.txt  field descriptions and source links')
+      for (const file of manifest.files.filter((entry) => entry.path.startsWith(`${folder}/`))) {
+        lines.push(`  ${file.path.slice(folder.length + 1)}: ${formatNumber(file.record_count)} records`)
+        for (const survey of file.surveys || []) {
+          lines.push(`    ${survey.key}: ${formatNumber(survey.record_count)} records`)
+        }
+      }
+      lines.push('')
+    }
   }
 
   lines.push(

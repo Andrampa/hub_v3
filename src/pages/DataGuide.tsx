@@ -122,7 +122,7 @@ export default function DataGuide() {
                   )
                 })}
               </div>
-              <p>You do not need to choose a generation. <Link to="/data/surveys">Your surveys</Link> lists surveys by country and round and works out which generation holds each one. Every package carries, for each survey, a documentation file linking that generation's field descriptions and metadata, the reference boundaries and the source services, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
+              <p>You do not need to choose a generation. <Link to="/data/surveys">Your surveys</Link> lists surveys by country and round and works out which generation holds each one. Every package links the relevant generation's field descriptions and metadata, reference boundaries and source services, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
             </section>
 
             <section id="accessibility">
@@ -143,10 +143,10 @@ export default function DataGuide() {
               <h3>Downloading</h3>
               <ol className="guide-steps">
                 <li>Sign in and open <Link to="/data/surveys">Your surveys</Link>.</li>
-                <li>Choose the surveys you need, by country and round. A standard account can put up to ten surveys in one package. Contributor accounts are not limited by survey count; their packages are bounded instead by a larger budget of records and data files, which the review step checks before anything is downloaded.</li>
+                <li>Choose the surveys you need, by country and round. A standard account can put up to ten surveys in one package. Contributor accounts are not limited by survey count; their packages are bounded instead by larger limits on records, data files and survey-theme combinations, which the review step checks before anything is downloaded.</li>
                 <li>Choose all available themes, or pick specific ones. Each theme says how many of your surveys carry it.</li>
                 <li>Review the package. Count the records first: the review names every file, the record total and any survey and theme combination that will be missing, and why.</li>
-                <li>Download. You receive one zip with a folder per survey, each holding a CSV per theme, the field schema of every file, and links to that generation's documentation. A README and a manifest record exactly which query produced each file.</li>
+                <li>Download. Choose separate survey folders or, for multiple surveys, combine compatible surveys into one CSV per theme and questionnaire generation. The zip includes documentation, a README and a manifest recording the source queries and each survey's contribution.</li>
               </ol>
               <p>Each dataset can still be opened on its own, with a map, filters and further formats, from <em>Technical resources and source datasets</em> at the foot of the workspace. That is also the route for extractions beyond the 20 000 records a browser download can build, through the generated Python and R scripts.</p>
               <p>Before analysing, read the field descriptions and the questionnaire for the generation you are working in. Several fields are only interpretable alongside them.</p>

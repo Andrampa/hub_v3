@@ -2,6 +2,9 @@ import { HUB_ORIGIN } from '../lib/hubOrigin'
 import { describe, expect, it, vi } from 'vitest'
 import {
   buildSurveyBundle,
+  bundleDataFileCount,
+  combinedFileNames,
+  groupBundleSlices,
   isBundleCancelled,
   packageBudgetProblem,
   PACKAGE_BUDGETS,
@@ -550,5 +553,153 @@ describe('survey bundle', () => {
     }).catch((reason) => reason)
 
     expect(isBundleCancelled(error)).toBe(true)
+  })
+
+  it('combines compatible surveys with actual contribution counts and source queries', async () => {
+    const { captured, bytes, zip } = capturingZip()
+    const source = theme('food-security', 'Food security')
+    const slices = [
+      { survey: survey('NGA', 8), theme: source },
+      { survey: survey('TCD', 3), theme: source },
+    ]
+    const requester = (async (url: string, params?: Record<string, unknown>) => {
+      if (!url.endsWith('/query')) return LAYER
+      const tcd = String(params?.where).includes("'TCD'")
+      if (params?.returnCountOnly === 'true') return { count: tcd ? 1 : 2 }
+      const rows = tcd
+        ? [{ OBJECTID: 3, adm0_iso3: 'TCD', round: 3, fcs_mean: 33 }]
+        : [{ OBJECTID: 1, adm0_iso3: 'NGA', round: 8, fcs_mean: 41 }, { OBJECTID: 2, adm0_iso3: 'NGA', round: 8, fcs_mean: 42 }]
+      return { features: rows.map((attributes) => ({ attributes })) }
+    }) as ProtectedRequester
+
+    const result = await buildSurveyBundle({ slices, layout: 'combined-by-source', requester, zip,
+      collectionPeriods: NO_PERIODS, budget: PACKAGE_BUDGETS.member, now: NOW })
+
+    expect(bundleDataFileCount(slices, 'combined-by-source')).toBe(1)
+    expect(result.recordCount).toBe(3)
+    const csvPath = Object.keys(captured).find((path) => path.endsWith('.csv') && path.includes('/data/'))!
+    expect(csvPath).toBe('v2/data/v2_food-security.csv')
+    expect(captured[csvPath]).toContain('NGA,8,41')
+    expect(captured[csvPath]).toContain('TCD,3,33')
+    expect(Object.keys(captured)).toContain('v2/surveys.csv')
+    expect(captured['v2/surveys.csv']).toContain('v2:TCD:3')
+    expect(Array.from(bytes['v2/surveys.csv'].slice(0, 3))).toEqual([0xef, 0xbb, 0xbf])
+    expect(captured['v2/surveys.csv']).toContain('\r\n')
+    expect(captured['v2/documentation_and_metadata.txt']).toContain('combined survey data')
+    expect(captured['v2/documentation_and_metadata.txt']).toContain('V2 changed field names, definitions and codebooks relative to V1')
+    expect(captured['README.txt']).toContain('v2:TCD:3: 1 records')
+    const manifest = JSON.parse(captured['manifest.json'])
+    expect(manifest).toMatchObject({ package_schema_version: 2, layout: 'combined-by-source' })
+    expect(manifest.files).toHaveLength(1)
+    expect(manifest.files[0].surveys).toEqual([
+      { key: 'v2:NGA:8', adm0_iso3: 'NGA', round: 8, record_count: 2 },
+      { key: 'v2:TCD:3', adm0_iso3: 'TCD', round: 3, record_count: 1 },
+    ])
+    expect(manifest.files[0].source_queries.map((entry: { parameters: { where: string } }) => entry.parameters.where)).toEqual([
+      "adm0_iso3 = 'NGA' AND round = 8", "adm0_iso3 = 'TCD' AND round = 3",
+    ])
+  })
+
+  it('separates generations and incompatible sources in combined mode', async () => {
+    const { captured, zip } = capturingZip()
+    const base = theme('food-security', 'Food security')
+    const v3 = { ...survey('TCD', 3), key: 'v3:TCD:3', generation: 'v3' as const }
+    const slices = [
+      { survey: survey('NGA', 8), theme: base },
+      { survey: survey('TCD', 3), theme: { ...base, countryField: 'iso3' } },
+      { survey: v3, theme: { ...base, generation: 'v3' as const, resourceId: 'v3-item', layerUrl: 'https://example.test/v3/FeatureServer/0' } },
+    ]
+    expect(groupBundleSlices(slices)).toHaveLength(3)
+    await buildSurveyBundle({ slices, layout: 'combined-by-source', requester: requesterFor(0), zip,
+      collectionPeriods: NO_PERIODS, budget: PACKAGE_BUDGETS.member, now: NOW })
+    const manifest = JSON.parse(captured['manifest.json'])
+    expect(manifest.files).toHaveLength(3)
+    expect(new Set(manifest.files.map((file: { path: string }) => file.path)).size).toBe(3)
+    expect(Object.keys(captured)).toContain('v3/surveys.csv')
+    expect(captured['v3/documentation_and_metadata.txt']).toContain('Treat comparisons with V2 and V1 as limited')
+    expect(manifest.files.map((file: { path: string }) => file.path).filter((path: string) => path.startsWith('v2/'))).toEqual([
+      expect.stringMatching(/^v2\/data\/v2_food-security_item-foo_0/),
+      expect.stringMatching(/^v2\/data\/v2_food-security_item-foo_0/),
+    ])
+  })
+
+  it('adds a suffix only when two distinct sources would share a filename', () => {
+    const base = theme('food-security', 'Food security')
+    const other = { ...base, resourceId: 'other-item' }
+    const one = { survey: survey('NGA', 8), theme: base }
+    const two = { survey: survey('TCD', 3), theme: other }
+    expect(Array.from(combinedFileNames(groupBundleSlices([one])).values())).toEqual(['v2_food-security.csv'])
+    const names = Array.from(combinedFileNames(groupBundleSlices([one, two])).values())
+    expect(new Set(names).size).toBe(2)
+    expect(names.every((name) => name.startsWith('v2_food-security_'))).toBe(true)
+  })
+
+  it('counts metadata progress by generation in combined mode', async () => {
+    const { zip } = capturingZip()
+    const progress: BundleProgress[] = []
+    const source = theme('food-security', 'Food security')
+    await buildSurveyBundle({
+      slices: [
+        { survey: survey('NGA', 8), theme: source },
+        { survey: survey('TCD', 3), theme: source },
+      ],
+      layout: 'combined-by-source', requester: requesterFor(0), zip,
+      collectionPeriods: NO_PERIODS, budget: PACKAGE_BUDGETS.member, now: NOW,
+      onProgress: (entry) => progress.push(entry),
+    })
+    expect(progress.filter((entry) => entry.stage === 'metadata').map(({ completed, total }) => [completed, total])).toEqual([[0, 1], [1, 1]])
+  })
+
+  it('offers separate folders when a combined CSV exceeds the file limit', async () => {
+    const { zip } = capturingZip()
+    const source = theme('food-security', 'Food security')
+    const slices = [
+      { survey: survey('NGA', 8), theme: source },
+      { survey: survey('TCD', 3), theme: source },
+    ]
+    await expect(buildSurveyBundle({ slices, layout: 'combined-by-source', requester: requesterFor(11_000), zip,
+      collectionPeriods: NO_PERIODS, budget: PACKAGE_BUDGETS.member, now: NOW }))
+      .rejects.toThrow(/Use separate survey folders/)
+    expect(zip).not.toHaveBeenCalled()
+  })
+
+  it('keeps the source-slice ceiling even when many slices produce one file', () => {
+    expect(packageBudgetProblem(100, 1, PACKAGE_BUDGETS.member, 61)).toMatch(/61 survey and theme combinations/)
+  })
+
+  it('keeps zero-row contributions, omissions and visibility in a combined package', async () => {
+    const { captured, zip } = capturingZip()
+    const source = { ...theme('food-security', 'Food security'), visibilityWhere: 'opendata = 1' }
+    const slices = [
+      { survey: survey('NGA', 8), theme: source },
+      { survey: survey('TCD', 3), theme: source },
+    ]
+    const requester = (async (url: string, params?: Record<string, unknown>) => {
+      if (!url.endsWith('/query')) return LAYER
+      if (params?.returnCountOnly === 'true') return { count: 0 }
+      throw new Error('No row fetch should be needed for zero counts')
+    }) as ProtectedRequester
+    await buildSurveyBundle({ slices, layout: 'combined-by-source', requester, zip,
+      omitted: [{ surveyKey: 'v2:TCD:3', themeLabel: 'Crop production', reason: 'Not collected for this survey' }],
+      collectionPeriods: NO_PERIODS, budget: PACKAGE_BUDGETS.member, now: NOW })
+    const manifest = JSON.parse(captured['manifest.json'])
+    expect(manifest.files[0].record_count).toBe(0)
+    expect(manifest.files[0].surveys.map((entry: { record_count: number }) => entry.record_count)).toEqual([0, 0])
+    expect(manifest.files[0].source_queries[0].parameters.where).toBe("(adm0_iso3 = 'NGA' AND round = 8) AND opendata = 1")
+    expect(manifest.not_included).toHaveLength(1)
+    expect(captured['README.txt']).toContain('v2:TCD:3 - Crop production: Not collected for this survey')
+  })
+
+  it('refuses a direct caller that mixes test and production surveys', async () => {
+    const { zip } = capturingZip()
+    await expect(buildSurveyBundle({
+      slices: [
+        { survey: survey('NGA', 8), theme: theme('food-security', 'Food security') },
+        { survey: survey('TCD', 99, true), theme: theme('food-security', 'Food security', true) },
+      ],
+      layout: 'combined-by-source', requester: requesterFor(0), zip,
+      collectionPeriods: NO_PERIODS, budget: PACKAGE_BUDGETS.member, now: NOW,
+    })).rejects.toThrow(/cannot be included in the same package/)
+    expect(zip).not.toHaveBeenCalled()
   })
 })

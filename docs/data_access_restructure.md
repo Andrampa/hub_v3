@@ -407,7 +407,10 @@ dropped, and the removal is stated rather than silent:
 
 ## 10. Review and download
 
-The preflight line (`6 surveys · 3 themes · 17 files · ~42,000 records`) leads
+The review offers two layouts when more than one survey is selected: separate
+survey folders (default) or combined CSVs for surveys using the same source
+within one questionnaire generation. The preflight line (`6 surveys · 3 themes ·
+17 files · ~42,000 records`) reflects the chosen layout and leads
 into a concrete table:
 
 | Survey | Generation | Included themes | Files | Records | Notes |
@@ -416,6 +419,9 @@ into a concrete table:
 | Chad, Round 12 | V3 | 2 | 2 | 5,108 | Crop theme not collected |
 
 The primary action names its result: **Download 17 files for 6 surveys**.
+Combined mode retains the survey-level review table and adds the exact output
+file list. Counts stay per survey and theme, and are reusable when the layout
+choice changes.
 
 Immediately before generating, state: archive filename, estimated size when
 reliable, licence, any missing combinations, any test-data warning, and whether
@@ -449,8 +455,32 @@ DIEM_aggregated_2026-09-20.zip
    └─ ...
 ```
 
-The layout is identical for one survey and for ten, so a script written against
-one package works against every package.
+The existing per-survey layout remains the default. Combined mode has one
+folder per questionnaire generation, with one CSV per compatible source:
+
+```text
+DIEM_aggregated_2026-09-20.zip
+├─ README.txt
+├─ manifest.json
+├─ LICENCE.txt
+├─ v2/
+│  ├─ surveys.csv
+│  ├─ documentation_and_metadata.txt
+│  └─ data/
+│     └─ v2_food-security.csv
+└─ v3/
+   └─ ...
+```
+
+Two slices are compatible only when generation, item ID, layer ID and URL,
+theme ID, country and round fields, visibility clause, and test-data status all
+match. The country and round columns remain in each CSV. If two distinct
+sources have the same generation and theme label, their file names receive a
+short source suffix to keep both files. In combined mode, `surveys.csv` carries
+each survey's identity, collection dates, themes and test
+status; the metadata file names the generation and its distinct source layers.
+Test packages use `TEST_DATA_` in folder and data-file names and carry the root
+README warning. Test and production selections cannot enter the same package.
 
 - CSV is the bundle format for every generation in the first release. Excel is a
   later addition.
@@ -464,9 +494,14 @@ one package works against every package.
   descriptions and metadata (or says none are published yet), the administrative
   reference boundaries, the API and analysis tools, the exact source services,
   and the data access guide. Same content as the end of the survey workspace.
-- `manifest.json` records item ID, layer ID, item-modified timestamp,
-  generation, filter expression, record count, collection date, access date, and
-  the query endpoint and parameters **stored separately**. No token-bearing URL
+- `manifest.json` has `package_schema_version: 2` and `layout` (`per-survey` or
+  `combined-by-source`). A missing version identifies older per-survey packages.
+  Each per-survey file entry retains `survey`; each combined file entry has
+  `surveys[]` with survey key, ISO3, round and actual downloaded row count, plus
+  a `source_queries[]` entry per survey. Both variants record `country_field`
+  and `round_field`. It records item ID, layer ID, item-modified timestamp,
+  generation, actual record count and access date. Collection dates live with
+  each survey, and query endpoints and parameters are **stored separately**. No token-bearing URL
   is ever written into an archive.
 - `README.txt` is the human recap of the same content, including a "not
   included" section naming every omitted combination and why.
@@ -484,10 +519,12 @@ one package works against every package.
   wording is "up to ten surveys in one download package".
 - **Contributors get a measured package budget**, not the word "unlimited". An
   unbounded browser operation exhausts memory or dies mid-download. The budget -
-  total estimated records and file count - is set from the step-1 and step-5
+  total estimated records, output data files and source survey/theme slices - is set from the step-1 and step-5
   measurements, and a contributor who needs more builds more than one package.
 - **Every individual file remains subject to the 20,000-record browser export
-  limit** documented in `docs/data_access.md`. Larger extractions belong to the
+  limit** documented in `docs/data_access.md`. A combined file can exceed this
+  limit even when each separate survey file is within it; in that case, the
+  review offers separate survey folders. Larger individual slices belong to the
   generated Python/R scripts today and to the planned asynchronous export service
   (Phase D) in the end.
 - The ten-survey cap is a usability guardrail, not a control. The aggregate
