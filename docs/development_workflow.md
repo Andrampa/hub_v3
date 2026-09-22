@@ -50,13 +50,20 @@ search tokenising, the ArcGIS category extractors, and the progressive loader's
 contract. Add to these before changing any of them — two live defects were found
 by writing them, and both were invisible to the type checker.
 
-Three generated outputs must be regenerated rather than hand-edited:
+Four generated outputs must be regenerated rather than hand-edited:
 
 ```powershell
 node scripts/generate-icons.mjs   # src/icons.css, after adding a bi-* class
 node scripts/vendor-fonts.mjs     # src/assets/fonts, after a theme font change
 npm run optimize:heroes           # src/assets/heroes/*, after a hero change
+npm run build:boundaries          # src/assets/geo/un-world.topo.json, after a UN Geodata release
 ```
+
+`build:boundaries` fails, rather than writing a file, when the UN source adds a
+boundary type the maps have no symbol for, or when a boundary line no longer
+sits on an area edge. Review the listed features before changing the script's
+reviewed exceptions. Communications should see the map screenshots before a
+rebuilt file ships.
 
 ## Hero Images
 

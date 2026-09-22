@@ -473,8 +473,8 @@ h1, h2, h3, h4, h5, h6,
 .region-filters button { border-radius: 0; }
 .region-filters button[aria-pressed="true"],
 .product-filter-grid button[aria-pressed="true"] { background: var(--fao-blue); border-color: var(--fao-blue); }
-.country-map .map-country--covered { fill: #5792c9; transition: none; }
-.country-map a:hover .map-country--covered, .country-map a:focus .map-country--covered { fill: var(--fao-blue); }
+.country-map .map-country--covered { --map-fill: #5792c9; transition: none; }
+.country-map a:hover .map-country--covered, .country-map a:focus .map-country--covered { --map-fill: var(--fao-blue); }
 .country-editorial-story { box-shadow: none; }
 .country-editorial-banner::after { background: rgba(28, 71, 103, .42); }
 .country-editorial-richtext { color: #545454; }

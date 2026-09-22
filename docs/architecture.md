@@ -70,7 +70,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/HubAreaCards.tsx`: static programme/country pathways plus the manual Products, Research and Risk portfolio carousel.
 - `src/components/FeaturedEvidence.tsx`: compact recent-evidence selection for the homepage.
 - `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
-- `src/components/CountryMap.tsx`: projected published world geometry.
+- `src/components/CountryMap.tsx`, `src/components/ImpactAtlasMap.tsx`: projected SVG world maps over UN Geodata simplified (`src/lib/unGeometry.ts`), with UN boundary symbols (`UnBoundaries.tsx`) and shared zoom (`useMapZoom.ts`, `MapZoomControls.tsx`).
 - `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
 - `src/pages/SurveyWorkspace.tsx`: the `/data/surveys` survey-first workspace —
   sign-in gate that keeps its destination, access summary, progressive survey

@@ -86,7 +86,7 @@
 .dataset-results-toolbar { min-height: 45px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; background: #f8fbfa; border-bottom: 1px solid var(--line-soft); color: var(--ink-faint); font-size: var(--text-small); }
 .dataset-results-toolbar span:last-child { color: var(--ink-faint); text-align: right; }
 .dataset-map-shell { position: relative; overflow: hidden; min-height: 570px; background: var(--line-soft); }
-.dataset-leaflet-map { width: 100%; height: 570px; background: var(--line-soft); }
+.dataset-leaflet-map { width: 100%; height: 570px; background: #cfd3d4; } /* the basemap's water, shown while it loads */
 .dataset-map-shell .leaflet-container { font-family: inherit; }
 .dataset-map-shell .leaflet-top.leaflet-left { right: 0; left: auto; }
 .dataset-map-shell .leaflet-top.leaflet-left .leaflet-control { margin-right: 10px; margin-left: 0; }
@@ -100,7 +100,7 @@
 .dataset-map-summary span { display: block; margin-top: 3px; color: var(--ink-faint); font-size: var(--text-small); }
 .dataset-map-reset { position: absolute; z-index: 500; right: 12px; top: 84px; padding: 8px 10px; border: 1px solid rgba(4,63,97,.18); background: rgba(255,255,255,.95); color: var(--deep-blue); box-shadow: 0 2px 8px rgba(33,58,65,.14); font-size: var(--text-micro); font-weight: 700; cursor: pointer; }
 .dataset-map-reset:hover { background: #f2f6f5; }
-.dataset-map-legend { position: absolute; z-index: 500; right: 18px; bottom: 26px; display: flex; align-items: center; gap: 7px; padding: 7px 9px; background: rgba(255,255,255,.9); color: var(--ink-muted); font-size: var(--text-micro); }
+.dataset-map-legend { position: absolute; z-index: 500; left: 18px; bottom: 26px; display: flex; align-items: center; gap: 7px; padding: 7px 9px; background: rgba(255,255,255,.9); color: var(--ink-muted); font-size: var(--text-micro); }
 .dataset-map-legend span { width: 13px; height: 10px; background: #0072bc; border: 1px solid white; }
 .dataset-map-empty { min-height: 420px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; padding: 30px; background: #e5ecf4; color: var(--deep-blue); text-align: center; }
 .dataset-map-empty span { color: var(--ink-faint); font-size: var(--text-small); }

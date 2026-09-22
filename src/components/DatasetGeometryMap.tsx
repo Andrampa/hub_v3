@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import type { Feature, FeatureCollection, GeoJsonProperties, Geometry } from 'geojson'
 import type { MapExtent } from '../services/dataExplorer'
 import { formatNumber } from '../lib/format'
+import { addDatasetBasemap } from './datasetBasemap'
 
 function propertyValue(properties: GeoJsonProperties | null, patterns: RegExp[]) {
   if (!properties) return undefined
@@ -84,17 +85,7 @@ export function DatasetGeometryMap({
       zoomControl: true,
       attributionControl: true,
     })
-    L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Basemap contributors',
-      maxZoom: 16,
-    }).addTo(map)
-    const referencePane = map.createPane('diemReferencePane')
-    referencePane.style.zIndex = '350'
-    referencePane.style.pointerEvents = 'none'
-    L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 16,
-      pane: 'diemReferencePane',
-    }).addTo(map)
+    const removeBasemap = addDatasetBasemap(map)
     L.control.scale({ imperial: false, position: 'bottomright' }).addTo(map)
 
     // Debounced so a drag or a pinch-zoom reports one extent, not thirty.
@@ -118,6 +109,7 @@ export function DatasetGeometryMap({
     return () => {
       window.clearTimeout(pending)
       map.off('moveend zoomend', reportExtent)
+      removeBasemap()
       map.remove()
       mapRef.current = undefined
       dataLayerRef.current = undefined

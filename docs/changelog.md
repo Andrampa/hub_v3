@@ -1,5 +1,43 @@
 # Changelog
 
+## 2026-09-22 - UN boundaries on the dataset explorer maps
+
+- `/data/:datasetId` maps now draw the FAO-customised ArcGIS vector style
+  (item `58420c8cfe754b11ba4d9ecd07a62da0`) beneath the DIEM features, instead
+  of the Esri Light Gray base and reference tiles, whose boundaries followed
+  Esri's worldview. The background shows UN boundaries, including the Abyei
+  area, and UN country names.
+- MapLibre draws the style inside Leaflet, so features, popups, extent loading
+  and the reset control are unchanged. It is loaded only when a map opens.
+- Without the style or WebGL, the map falls back to the Hub's UN Geodata
+  simplified geometry; the credit line follows whichever background is drawn.
+- The map legend moved to the bottom-left corner, clear of the credit line and
+  scale bar.
+
+## 2026-09-22 - UN boundaries on the Hub's world maps
+
+- `/countries`, `/hazard-impact-assessments` and the country-profile outline
+  now draw UN Geodata simplified instead of Natural Earth 110m, answering the
+  communications review that disputed boundaries did not follow FAO.org
+  practice. Somaliland, Kosovo and Northern Cyprus are no longer separate
+  shapes; Jammu and Kashmir and Aksai Chin are neutral areas; boundaries are
+  drawn as the UN's solid, dashed, dotted and dash-dot lines.
+- Fills and lines come from one shared topology built by
+  `npm run build:boundaries`, which fails on an unknown line type or on a
+  boundary that leaves the area edges. Fill colours and line symbols are read
+  from the UN attributes, not from a list in the code.
+- Fills are outlined in their own colour, which closes the anti-aliasing seam
+  that otherwise showed through dashed and dotted lines.
+- `/countries` now zooms like the hazard map, through the shared
+  `useMapZoom` hook and `MapZoomControls`.
+- Tanzania is highlighted on the countries map again: the map no longer
+  converts `TZA` to the retired `TZN` code.
+- The map disclaimer credits United Nations Geospatial.
+- `/countries` no longer widens to 873 px on phones. Screen-reader text in the
+  coverage matrix is absolutely positioned and escaped the matrix's scroll
+  clip, because the scroller was not its containing block; the scroller is now
+  `position: relative`.
+
 ## 2026-09-21 - Community aggregate eligibility and provisioning state
 
 - Every validated DIEM Community account now receives the `aggregatedData`

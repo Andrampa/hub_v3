@@ -1,5 +1,38 @@
 # Handoff
 
+## Active: UN boundaries on Hub maps
+
+Status on 2026-09-22. Parts A and B are implemented and committed on `main`.
+What remains is outside the code.
+
+**Done.** Part A: `/countries`, `/hazard-impact-assessments` and the
+country-profile outline draw UN Geodata simplified (see
+`docs/country_explorer.md` "Map Behavior"; rebuild with
+`npm run build:boundaries`). Part B: `/data/:datasetId` maps draw ArcGIS style
+`58420c8cfe754b11ba4d9ecd07a62da0` through MapLibre with UN country names
+(`src/components/datasetBasemap.ts`, `src/lib/unBasemapStyle.ts`; see
+`docs/services_and_data.md`). Part B was verified in headless Chrome through a
+temporary harness rendering `DatasetGeometryMap` with sample features: style,
+tiles, sprite and fonts load; popups, extent reporting and panning work; the
+fallback works with the style blocked and with WebGL disabled; 375 px layout.
+It has **not** been checked on a real protected dataset while signed in.
+
+Next, in order:
+
+1. **Signed-in check** of one `/data/:datasetId` map on the review server:
+   filter refit, pan loading, popup, reset extent.
+2. **Communications review** of the SVG map screenshots and one dataset map.
+3. **Governance.** Move items `58420c8cfe754b11ba4d9ecd07a62da0` (style) and
+   `f114e97a90d84e43ad1b3f9a04256f88` (sprite) off `Andrea.Amparore_hqfao` to an
+   institutional account, then update the IDs in `src/lib/unBasemapStyle.ts`
+   and `docs/service_manifest.md` if they change. The Esri labels item
+   `f3b7e6a9757449428f76895ed4ef7ef6` is not used: the Hub shows UN names.
+4. Name who may change the disputed-boundary symbology in that style, and
+   re-check the maps after any change.
+
+Verification: `npx vitest run --exclude ".claude/**" --exclude "**/node_modules/**"`
+and `npm run build`.
+
 ## Active: survey-first data access workspace
 
 Status on 2026-09-21. The plan and its evidence are in

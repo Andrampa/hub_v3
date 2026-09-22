@@ -55,7 +55,17 @@ but do not appear as independent country products.
 
 ## Map Behavior
 
-The map uses published 110m world geometry and links available shapes by ISO3. Tiny island states omitted by that generalized geometry remain fully accessible in the country directory. The directory is the complete and accessible navigation surface; the map is an additional spatial entry point. Country cards use the local ISO metadata with FlagCDN images, hiding the image if that optional display asset fails.
+The `/countries` and `/hazard-impact-assessments` maps and the country-profile outline draw UN Geodata simplified (UN Geospatial), the UN's generalized world dataset, so disputed boundaries follow UN practice as FAO publications require. `src/assets/geo/un-world.topo.json` is built by `npm run build:boundaries` from the official service and is committed; nothing is requested at runtime.
+
+- Country areas and boundary lines are one shared topology, simplified together, so a boundary is the same arc as the edge of both fills it separates.
+- Fills carry no visible outline. Every boundary is a UN line drawn on top in one mid-grey, styled from the UN `bdytyp` attribute: solid international boundary (1), dash-dot former Palestine Mandate line (2), dashed undetermined boundary (3), dotted Line of Control (4). Width and dash stay constant on screen at every zoom, and the lines take no pointer events.
+- Fills follow the UN `isoclr` attribute. An area whose fill code is not an ISO 3166 code (Jammu and Kashmir, Aksai Chin) is neutral pale grey and never linked. A disputed area the UN colours as a state (Halaib as Sudan, Ilemi as South Sudan, Arunachal Pradesh as India) is part of that state's shape and link. A territory coloured as its administering state (Greenland) stays a plain, unlinked area. No political list lives in the code.
+- Abyei has no area in UN Geodata simplified; at this scale the dashed Sudan/South Sudan line is the UN's own depiction, and the disclaimer states its status.
+- Both world maps zoom up to 8x by wheel, drag, pinch and the +/−/reset buttons. Ending a drag never opens a country.
+- The country-profile outline shows the country with any neutral area it touches (Pakistan with Jammu and Kashmir), framed to those shapes only.
+- The disclaimer credits United Nations Geospatial, as the UN Geodata terms require.
+
+Tiny island states narrower than the map's coordinate grid remain fully accessible in the country directory. The directory is the complete and accessible navigation surface; the map is an additional spatial entry point. Country cards use the local ISO metadata with FlagCDN images, hiding the image if that optional display asset fails.
 
 ## Filter State
 
