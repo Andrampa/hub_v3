@@ -12,7 +12,7 @@ import { itemLanguage, type ProductFamily } from '../lib/productFamilies'
  *
  * Rounds run across, product types down, so a gap in a row reads as a gap in
  * coverage at a glance. Round numbers are parsed from titles - the content
- * group holds no round field - so only products whose title states a round can
+ * group holds no round field - so only products whose title or summary states a round can
  * appear here; everything else is counted underneath rather than silently
  * dropped, because an unparsed title would otherwise render as a false gap.
  */

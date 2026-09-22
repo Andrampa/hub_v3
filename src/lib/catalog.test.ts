@@ -44,6 +44,11 @@ describe('itemYear', () => {
 })
 
 describe('itemRound', () => {
+  it('falls back to the summary when the title states no round', () => {
+    expect(itemRound(item({ title: 'West Bank - DIEM brief', snippet: 'DIEM Monitoring Brief - Round 2' }))).toBe(2)
+    expect(itemRound(item({ title: 'Mali - Brief - Round 7', snippet: 'Round 3' }))).toBe(7)
+  })
+
   it('reads a round in every language the group publishes', () => {
     expect(itemRound(item({ title: 'Mali - Brief - Round 7' }))).toBe(7)
     expect(itemRound(item({ title: 'RDC - Note - cycle 11' }))).toBe(11)

@@ -103,9 +103,18 @@ export function distinctSummary(item: ArcGISItem) {
  */
 const ROUND_IN_TITLE = /\b(?:round|cycle|ronde|ronda|ciclo)\s*#?\s*(\d+)\b/i
 
+/**
+ * The round a title states, else the one its summary states. Some briefs carry
+ * the round only in the summary ("DIEM Monitoring Brief - Round 2"), and a
+ * title-only reading left them out of round-based views.
+ */
+function roundMatch(item: ArcGISItem) {
+  return item.title.match(ROUND_IN_TITLE) ?? item.snippet?.match(ROUND_IN_TITLE) ?? undefined
+}
+
 export function itemEdition(item: ArcGISItem) {
-  const round = item.title.match(ROUND_IN_TITLE)
-  if (round) return `Round ${round[1]}`
+  const round = roundMatch(item)
+  if (round) return `Round ${Number(round[1])}`
   const monthYear = item.title.match(/\b(0[1-9]|1[0-2])[\s/-](20\d{2})\b/)
   if (monthYear) return `${monthYear[1]}/${monthYear[2]}`
   const year = item.title.match(/\b(20[1-3]\d)\b/)
@@ -113,14 +122,15 @@ export function itemEdition(item: ArcGISItem) {
 }
 
 /**
- * The round number a title declares, or undefined when it declares none.
+ * The round number a title (or, failing that, its summary) declares, or
+ * undefined when neither declares one.
  *
  * Rounds are parsed from titles because the content group holds no round field,
  * so anything built on this must show only what parses and say so: a title
  * written differently is a missing number, not a missing product.
  */
 export function itemRound(item: ArcGISItem) {
-  const match = item.title.match(ROUND_IN_TITLE)
+  const match = roundMatch(item)
   if (!match) return undefined
   const round = Number(match[1])
   // A three-digit "round" is a period or a typo, never a survey round; DIEM is
