@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import '../data-access.css'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION } from '../services/protectedData'
+import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION, REFERENCE_RESOURCES } from '../services/protectedData'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
 import { CITATION_LANGUAGES, citationText, collectionCitationModel, type CitationLanguage } from '../lib/citation'
@@ -186,6 +186,13 @@ export default function DataGuide() {
               <h2>Administrative boundaries</h2>
               <p>DIEM publishes operational administrative reference boundaries at levels 1 and 2. They are compiled from operational sources, primarily datasets distributed through the OCHA Humanitarian Data Exchange, and validated with FAO country offices. Because DIEM surveys are designed and implemented within individual countries, no cross-country harmonization is applied: the priority is boundary references that humanitarian actors accept and that are current for field implementation, even where these differ from officially endorsed national versions whose formal adoption takes longer.</p>
               <p>The current reference dataset is updated as operational configurations change. When a boundary changes at country level, the previous configuration for the affected units moves to the archived reference dataset, so historical survey data stays traceable to the boundaries in use at the time of collection. If a pcode cannot be found in the current dataset, look for it in the archive.</p>
+              <p>Both layers open in the dataset explorer, where they can be filtered by country and downloaded:</p>
+              <ul className="guide-list">
+                {REFERENCE_RESOURCES.map((resource) => (
+                  <li key={resource.id}><Link to={`/data/${resource.id}`}>{resource.fallbackTitle}</Link> &mdash; {resource.description}</li>
+                ))}
+              </ul>
+              <p>They are also listed under &ldquo;Technical resources and source datasets&rdquo; at the foot of <Link to="/data/surveys">Your surveys</Link>.</p>
             </section>
 
             <section id="methodology">

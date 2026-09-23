@@ -201,3 +201,69 @@ describe('dataset explorer visibility', () => {
     expect(optionCalls.every((call) => call[3] === 'opendata = 1')).toBe(true)
   })
 })
+
+describe('table paging and sorting', () => {
+  const page = (start: number, size = 30) => ({
+    features: Array.from({ length: size }, (_, index) => ({ attributes: { OBJECTID: start + index, adm0_iso3: 'NGA', round: start + index } })),
+  })
+
+  async function click(node: Element | null | undefined) {
+    await act(async () => { (node as HTMLElement).click() })
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
+  }
+
+  function moreButton() {
+    return [...container.querySelectorAll('.dataset-table-more button')][0]
+  }
+
+  it('appends the next page of records without repeating rows', async () => {
+    fetchRecordCount.mockResolvedValue(70)
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
+    fetchTablePreview.mockResolvedValueOnce(page(1)).mockResolvedValueOnce(page(31))
+
+    await open(AGGREGATE_ID)
+    expect(container.querySelectorAll('.dataset-table-scroll tbody tr').length).toBe(30)
+
+    await click(moreButton())
+
+    expect(container.querySelectorAll('.dataset-table-scroll tbody tr').length).toBe(60)
+    // Offset is what the second page asked for; the first asked for none.
+    expect(fetchTablePreview.mock.calls[1][4]).toBe(30)
+    expect(container.textContent).toContain('Showing 60 of 70 records')
+  })
+
+  it('stops offering more when the service ignores the offset', async () => {
+    fetchRecordCount.mockResolvedValue(70)
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
+    fetchTablePreview.mockResolvedValue(page(1))
+
+    await open(AGGREGATE_ID)
+    await click(moreButton())
+
+    expect(container.querySelectorAll('.dataset-table-scroll tbody tr').length).toBe(30)
+    expect(moreButton()).toBeUndefined()
+  })
+
+  it('sorts the whole result on the service and restarts from the first page', async () => {
+    fetchRecordCount.mockResolvedValue(70)
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', false))
+    fetchTablePreview.mockResolvedValue(page(1))
+
+    await open(AGGREGATE_ID)
+    const header = container.querySelector('.dataset-table-scroll th .dataset-sort')
+    await click(header)
+
+    const ascending = fetchTablePreview.mock.calls.at(-1)!
+    expect(ascending[4]).toBe(0)
+    expect(ascending[5]).toEqual({ field: 'adm0_iso3', direction: 'ASC' })
+    expect(container.querySelector('.dataset-table-scroll th')?.getAttribute('aria-sort')).toBe('ascending')
+
+    await click(container.querySelector('.dataset-table-scroll th .dataset-sort'))
+    expect(fetchTablePreview.mock.calls.at(-1)![5]).toEqual({ field: 'adm0_iso3', direction: 'DESC' })
+
+    // A third press clears the sort rather than cycling back to ascending.
+    await click(container.querySelector('.dataset-table-scroll th .dataset-sort'))
+    expect(fetchTablePreview.mock.calls.at(-1)![5]).toBeUndefined()
+    expect(container.querySelector('.dataset-table-scroll th')?.getAttribute('aria-sort')).toBe('none')
+  })
+})

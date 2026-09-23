@@ -1360,6 +1360,32 @@ export default function SurveyWorkspace() {
               </section>
             )}
 
+            {/* The boundary layers were reachable only from the collapsed
+                technical panel below, which people did not open. Surveys carry
+                pcodes and nothing else, so the layer that resolves them belongs
+                in the visible flow. */}
+            <section className="workspace-step" aria-labelledby="step-boundaries">
+              <h2 id="step-boundaries">Administrative reference boundaries</h2>
+              <p>Survey records carry ADM1 and ADM2 pcodes. Join them to these layers to map results or to read unit names. If a pcode is missing from the current layer, the boundary has since changed and the archive holds the configuration in use at the time of collection. <Link to="/data/guide#boundaries">How the boundaries are compiled</Link></p>
+              <ul className="source-rows">
+                {REFERENCE_RESOURCES.map((resource) => (
+                  <li key={resource.id}>
+                    <span className="source-row-title">
+                      <strong>{resource.fallbackTitle}</strong>
+                      <small>{resource.description}</small>
+                    </span>
+                    <span/>
+                    <span/>
+                    <span className="source-row-links">
+                      {resource.staticLink
+                        ? <a href={resource.staticLink} target="_blank" rel="noreferrer">Open<Icon name="external"/></a>
+                        : <Link to={`/data/${resource.id}`}>Explore</Link>}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
           </div>
 
           <details className="technical-resources">

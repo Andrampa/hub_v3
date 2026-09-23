@@ -29,6 +29,7 @@ import {
   fetchGeometryPreview,
   fetchRecordCount,
   fetchTablePreview,
+  TABLE_PAGE_SIZE,
   fieldIsNumeric,
   fieldIsText,
   FILTER_OPTION_LIMIT,
@@ -44,6 +45,7 @@ import {
   type FeatureField,
   type FieldOptions,
   type MapExtent,
+  type TableSort,
 } from '../services/dataExplorer'
 import { formatDate, formatNumber } from '../lib/format'
 
@@ -226,6 +228,16 @@ export default function DatasetExplorer() {
   const [draftValue, setDraftValue] = useState('')
   const [count, setCount] = useState<number>()
   const [previewRows, setPreviewRows] = useState<Record<string, unknown>[]>([])
+  // Sorting and paging are server-side: the table holds one page at a time and
+  // grows by appending, so a sort has to restart from the first page rather
+  // than reorder what is already on screen.
+  const [sort, setSort] = useState<TableSort>()
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [pageError, setPageError] = useState<string>()
+  // The service stopped returning new rows, either because the result is
+  // exhausted or because it ignored resultOffset. Either way there is nothing
+  // further to ask for.
+  const [pagesExhausted, setPagesExhausted] = useState(false)
   const [geometry, setGeometry] = useState<FeatureCollection<Geometry, GeoJsonProperties>>()
   const [geometryTruncated, setGeometryTruncated] = useState(false)
   // The extent the map last settled on. Undefined until the map reports one,
@@ -386,9 +398,11 @@ export default function DatasetExplorer() {
     let active = true
     setIsQuerying(true)
     setQueryError(undefined)
+    setPageError(undefined)
+    setPagesExhausted(false)
     Promise.allSettled([
       withTimeout(fetchRecordCount(definition, where, requester), 'The record count did not respond in time.'),
-      withTimeout(fetchTablePreview(definition, where, requester), 'The table preview did not respond in time.'),
+      withTimeout(fetchTablePreview(definition, where, requester, TABLE_PAGE_SIZE, 0, sort), 'The table preview did not respond in time.'),
     ])
       .then(([countResult, tableResult]) => {
         if (!active) return
@@ -396,12 +410,16 @@ export default function DatasetExplorer() {
           .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
           .map((result) => result.reason instanceof Error ? result.reason.message : 'The data service could not complete a query.')
         if (countResult.status === 'fulfilled') setCount(countResult.value)
-        if (tableResult.status === 'fulfilled') setPreviewRows((tableResult.value.features || []).map((feature) => feature.attributes))
+        if (tableResult.status === 'fulfilled') {
+          const rows = (tableResult.value.features || []).map((feature) => feature.attributes)
+          setPreviewRows(rows)
+          setPagesExhausted(rows.length < TABLE_PAGE_SIZE)
+        }
         if (errors.length) setQueryError(errors.join(' '))
       })
       .finally(() => { if (active) setIsQuerying(false) })
     return () => { active = false }
-  }, [requester, definition, where, withheld])
+  }, [requester, definition, where, withheld, sort])
 
   // A new filter invalidates the extent the map was showing, so the next
   // geometry load starts unbounded again and the map reframes itself.
@@ -431,6 +449,32 @@ export default function DatasetExplorer() {
       .finally(() => { if (active) setIsMapLoading(false) })
     return () => { active = false }
   }, [requester, definition, mapExtent, where, withheld])
+
+  function loadMore() {
+    if (!definition || isLoadingMore) return
+    setIsLoadingMore(true)
+    setPageError(undefined)
+    withTimeout(fetchTablePreview(definition, where, requester, TABLE_PAGE_SIZE, previewRows.length, sort), 'The next page of records did not respond in time.')
+      .then((page) => {
+        const rows = (page.features || []).map((feature) => feature.attributes)
+        const objectId = definition.layer.objectIdField
+        // A service without pagination support ignores resultOffset and hands
+        // back the first page again. Dropping rows already held turns that into
+        // an honest "nothing more" instead of a duplicated table.
+        const seen = objectId ? new Set(previewRows.map((row) => row[objectId])) : undefined
+        const fresh = seen ? rows.filter((row) => !seen.has(row[objectId!])) : rows
+        if (fresh.length) setPreviewRows((current) => [...current, ...fresh])
+        if (!fresh.length || rows.length < TABLE_PAGE_SIZE) setPagesExhausted(true)
+      })
+      .catch((error: Error) => setPageError(error.message))
+      .finally(() => setIsLoadingMore(false))
+  }
+
+  function toggleSort(column: string) {
+    setSort((current) => current?.field !== column
+      ? { field: column, direction: 'ASC' }
+      : current.direction === 'ASC' ? { field: column, direction: 'DESC' } : undefined)
+  }
 
   function addFilter() {
     if (!draftField || !draftValue.trim()) return
@@ -674,9 +718,11 @@ export default function DatasetExplorer() {
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{API_LINK_LABELS[label] || label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>
               <div className="dataset-results-panel">
-                <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : `Previewing ${formatNumber(previewRows.length)} records`}</span><span>{definition.layer.name}</span></div>
+                <div className="dataset-results-toolbar"><span>{isQuerying ? 'Refreshing filtered results...' : count === undefined ? `Showing ${formatNumber(previewRows.length)} records` : `Showing ${formatNumber(previewRows.length)} of ${formatNumber(count)} records`}</span><span>{definition.layer.name}</span></div>
                 {!definition.isTable && (geometry ? <DatasetGeometryMap collection={geometry} totalCount={count || 0} truncated={geometryTruncated} isLoadingView={isMapLoading} fitKey={where} onExtentChange={setMapExtent} /> : isMapLoading ? <div className="dataset-map-loading"><span className="loader"/><strong>Loading map geometry</strong><p>The data table remains available while spatial features load.</p></div> : <div className="dataset-map-unavailable"><strong>Map preview is temporarily unavailable.</strong><p>{mapError || 'The service did not return geometry for the current filters.'}</p></div>)}
-                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {formatNumber(fields.length)} attributes are included. Scroll horizontally to inspect the complete schema.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <TableScroll><table><thead><tr>{visibleColumns.map((column) => <th key={column}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}</th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</TableScroll>}</section>
+                <section className="dataset-table-section" id="dataset-table" aria-labelledby="table-preview-heading"><div><span className="kicker">Record preview</span><h2 id="table-preview-heading">Inspect the matching data</h2><p className="table-help">All {formatNumber(fields.length)} attributes are included. Scroll horizontally to inspect the complete schema, and select a column heading to sort the whole result by that field.</p></div>{queryError ? <p className="dataset-query-error">{queryError}</p> : <TableScroll><table><thead><tr>{visibleColumns.map((column) => <th key={column} aria-sort={sort?.field !== column ? 'none' : sort.direction === 'ASC' ? 'ascending' : 'descending'}><button type="button" className={`dataset-sort${sort?.field === column ? ' dataset-sort--active' : ''}`} onClick={() => toggleSort(column)}>{fieldLabel(fields.find((field) => field.name === column) || { name: column, alias: column, type: '' })}<span aria-hidden="true">{sort?.field !== column ? '↕' : sort.direction === 'ASC' ? '↑' : '↓'}</span></button></th>)}</tr></thead><tbody>{previewRows.map((row, rowIndex) => <tr key={rowIndex}>{visibleColumns.map((column) => <td key={column}>{row[column] === null || row[column] === undefined ? '—' : String(row[column])}</td>)}</tr>)}</tbody></table>{!previewRows.length && !isQuerying && <p className="dataset-no-results">No records match the current filters.</p>}</TableScroll>}{!queryError && previewRows.length > 0 && <div className="dataset-table-more">{pageError && <p className="dataset-query-error">{pageError}</p>}{pagesExhausted || (count !== undefined && previewRows.length >= count)
+                  ? <p>All {formatNumber(previewRows.length)} matching records are shown.</p>
+                  : <><button type="button" onClick={loadMore} disabled={isLoadingMore || isQuerying}>{isLoadingMore ? 'Loading records...' : `Load ${formatNumber(TABLE_PAGE_SIZE)} more records`}</button>{count !== undefined && <p>{formatNumber(count - previewRows.length)} more match the current filters. Use a download or the API for the full result.</p>}</>}</div>}</section>
               </div>
             </section>
           </>

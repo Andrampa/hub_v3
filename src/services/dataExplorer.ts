@@ -431,18 +431,41 @@ export async function fetchRecordCount(definition: DatasetDefinition, where: str
   return response.count || 0
 }
 
+/** Rows fetched per table page, and the step the "Load more" button advances by. */
+export const TABLE_PAGE_SIZE = 30
+
+export interface TableSort {
+  field: string
+  direction: 'ASC' | 'DESC'
+}
+
+/**
+ * One page of attribute rows.
+ *
+ * The object id is always appended to the sort so paging stays stable: without
+ * a unique tie-breaker a service is free to return ties in a different order
+ * on every request, and rows then repeat or vanish between pages.
+ */
 export async function fetchTablePreview(
   definition: DatasetDefinition,
   where: string,
   requester: ProtectedRequester,
-  limit = 30,
+  limit = TABLE_PAGE_SIZE,
+  offset = 0,
+  sort?: TableSort,
 ) {
+  const objectId = definition.layer.objectIdField
+  const clauses = [
+    sort && `${sort.field} ${sort.direction}`,
+    objectId && `${objectId} ASC`,
+  ].filter(Boolean) as string[]
   return requester<QueryResponse>(`${definition.layerUrl}/query`, {
     where,
     outFields: '*',
     returnGeometry: 'false',
     resultRecordCount: String(limit),
-    orderByFields: definition.layer.objectIdField ? `${definition.layer.objectIdField} ASC` : undefined,
+    resultOffset: offset ? String(offset) : undefined,
+    orderByFields: clauses.length ? clauses.join(',') : undefined,
   })
 }
 
