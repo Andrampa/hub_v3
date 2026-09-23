@@ -1,5 +1,69 @@
 # Handoff
 
+## Active: survey-first microdata packages
+
+Status on 2026-09-23: the reviewed plan is in
+`docs/microdata_access_restructure.md`. `discoverMicrodataMasterSurveys` applies
+the Contributor/test-data and validated-survey rules without sharing the
+aggregate cache. `src/services/microdataSurveyAccess.ts` confirms visible rows
+in grant scopes and merges master/grant availability. `src/services/microdataBundle.ts`
+is a separate transactional archive-builder prototype with revalidation,
+bounded-page CSV encoding and caller-supplied budgets. Grant discovery uses
+one-row probes and keeps distinct issue causes; V3 roles and licence text now
+have single sources. The workspace now shares that grant discovery with a
+country-grouped microdata picker, account-scoped survey selection, V3 component
+choice, an authorization-aware record-count preflight, and a cancellable
+download action under a measured package budget. The full microdata licence is
+immediately before the download control.
+
+Authenticated checks on 2026-09-22 found no `opendata` field on either V1 or V2
+master item. Their creator confirmed on 2026-09-23 that both are ArcGIS views
+defined with `opendata = 1` and that the field is deliberately hidden. The
+manifest now explicitly declares those two items release-filtered; undeclared
+unflagged microdata still fails closed. V1 has 187,400 total rows and V2
+514,270; Nigeria V1 round 1 had 2,709 and Nigeria V2 round 8 had 5,025.
+These examples do not establish a safe ten-survey browser budget.
+
+After the user signed in again on 2026-09-23, the live explorer returned these
+additional country/round counts: Yemen V1 round 4 = 2,452; Yemen V2 round 31 =
+3,300; Fiji V2 round 1 = 1,300; Chad V1 round 2 = 1,692; Chad V2 round 10 =
+4,839. All checked samples are below the explorer's 20,000-row single-extract
+ceiling, but neither CSV bytes nor peak browser memory was measured. No
+household rows or tokens were copied into the repository.
+Simulated COD V3 round 99 returned 9,100 rows in each component (mandatory 372
+attributes, optional 551), underscoring why the V3 two-file case needs its own
+byte and memory probe.
+
+The signed-in explorer started a V3 optional test-data CSV download on
+2026-09-23, but the browser did not expose a file size in the workspace. A
+temporary local-only package probe subsequently measured actual builder output
+without saving files: Nigeria V2 round 8, 5,025 records, 3,633,994 CSV bytes,
+500,898 ZIP bytes and approximately 57 MB reported peak JS heap; V3 COD round
+99 with both tables, 18,200 records, 15,067,305 CSV bytes, 2,175,200 ZIP
+bytes and approximately 69 MB peak; ten production surveys (eight Nigeria,
+two Yemen), 29,182 records, 19,330,097 CSV bytes, 2,512,309 ZIP bytes and
+approximately 69 MB peak. The temporary probe control was removed. No
+household rows or tokens were copied into the repository.
+
+On 2026-09-23 the signed-in workspace resolved 208 accessible production
+microdata surveys. Nigeria V2 round 8 passed the new live preflight at 5,025
+records in one file. The picker and count were visually checked in the browser;
+the grouped layout still needs responsive checks.
+
+The browser budget is 50,000 counted records, 40 MB of actual encoded CSV and
+20 files. Count and file limits are checked during preflight and rechecked by
+the builder; the byte limit is checked during row download before any archive
+is offered. The signed-in browser passed the live picker and Nigeria V2 round
+8 count preflight, and the grouped layout was inspected at 375 px.
+
+Next: the signed-in session expired immediately after the final build, before
+the enabled download action could be accepted end-to-end. Sign in again and
+test a small package, cancellation, the V3 optional package and error states
+in `src/components/MicrodataPackagePicker.tsx`; also run browser checks with a
+temporary-grant account and an export-disabled grant account. Exact verification commands:
+`npx vitest run src/services/microdataBundle.test.ts src/services/microdataSurveyAccess.test.ts src/services/surveyAccess.test.ts`
+and `npm run build` (both pass; full suite 776 tests in 50 files passes).
+
 ## Active: UN boundaries on Hub maps
 
 Status on 2026-09-22. Parts A and B are implemented and committed on `main`.

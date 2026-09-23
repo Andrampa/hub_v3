@@ -144,7 +144,7 @@ export function isBundleCancelled(error: unknown) {
  * compression had finished. The worker, and fflate inside it, load only when a
  * package is actually built.
  */
-function compressInWorker(files: Record<string, Uint8Array>, signal?: AbortSignal) {
+export function compressInWorker(files: Record<string, Uint8Array>, signal?: AbortSignal) {
   ensureLive(signal)
   const worker = new Worker(new URL('./bundleCompression.worker.ts', import.meta.url), { type: 'module' })
   return new Promise<Uint8Array>((resolve, reject) => {

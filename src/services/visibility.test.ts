@@ -19,6 +19,13 @@ describe('content visibility', () => {
     expect(isWithheld(visibilityClause(withoutFlag, false))).toBe(true)
   })
 
+  it('trusts only an explicitly declared release-filtered microdata view', () => {
+    expect(visibilityClause(withoutFlag, false, 'microdata', true)).toBeUndefined()
+    expect(visibilityClause(withoutFlag, false, 'microdata', false)).toBe(WITHHELD_WHERE)
+    expect(visibilityClause(withoutFlag, false, 'aggregate', true)).toBeUndefined()
+    expect(visibilityClause(withFlag, false, 'microdata', true)).toBe('opendata = 1')
+  })
+
   it('still shows a Contributor a layer without the flag', () => {
     expect(visibilityClause(withoutFlag, true)).toBeUndefined()
   })

@@ -919,6 +919,23 @@ describe('microdata tab', () => {
     expect(panel).toContain('the microdataset will not be redisseminated')
   })
 
+  it('offers the package picker only to an account holding a microdata path, and keeps the licence either way', async () => {
+    // Most community members hold neither path. A picker that opens with "no
+    // surveys are available to this account" announces an absence where there
+    // was no expectation, which is the same reason the grants section renders
+    // nothing at all without a grant.
+    await render('/data/surveys#temporary-microdata')
+    expect(container.querySelector('#step-microdata-package')).toBe(null)
+    expect(container.querySelector('#panel-microdata')?.textContent)
+      .toContain('the microdataset will not be redisseminated')
+
+    auth.user = { username: 'hana', capabilities: { contributor: false, aggregatedData: true, householdData: true } }
+    await render('/data/surveys#temporary-microdata')
+    expect(container.querySelector('#step-microdata-package')).not.toBe(null)
+    expect(container.querySelector('#panel-microdata')?.textContent)
+      .toContain('the microdataset will not be redisseminated')
+  })
+
   it('lists household collections only for an account holding household-data access', async () => {
     auth.requestProtected.mockImplementation(async (url: string) => {
       const id = /\/content\/items\/([^/?]+)/.exec(url)?.[1]

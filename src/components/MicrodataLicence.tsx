@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { MICRODATA_LICENCE_TERMS as terms } from '../services/microdataLicence'
 import '../data-access.css'
 
 /**
@@ -53,18 +54,15 @@ export function MicrodataLicence({ access }: { access: MicrodataAccess }) {
       <div className="microdata-licence-body">
         <div>
           <h4>Confidentiality</h4>
-          <p>Users shall not take any action with the purpose of identifying any individual entity — person, household or enterprise — in the microdataset. If such a disclosure is made inadvertently, no use will be made of the information and it will be reported immediately to FAO.</p>
+          <p>{terms.confidentiality}</p>
         </div>
         <div>
           <h4>Access conditions</h4>
-          <p>Microdatasets disseminated by FAO are released for research and statistical purposes only. Users working for a commercial company will not be granted access, regardless of the stated purpose. Users requesting access must agree that:</p>
+          <p>{terms.purpose}</p>
           <ul>
-            <li>the microdataset will be used only for statistical or research purposes;</li>
-            <li>any results derived from it will report aggregated information only, never specific individual entities or data subjects;</li>
-            <li>no action will be taken with the purpose of identifying any individual entity in the microdataset;</li>
-            <li>the microdataset will not be redisseminated, or shared with anyone other than the individuals granted access by FAO.</li>
+            {terms.conditions.map((condition) => <li key={condition}>{condition}</li>)}
           </ul>
-          <p className="microdata-licence-aside">On that last point: if colleagues will work with the data, tell the DIEM Hub team so they can be granted access too.</p>
+          <p className="microdata-licence-aside">{terms.colleagues}</p>
         </div>
       </div>
       {/* Whoever holds data is bound to cite it; only someone without access is
@@ -73,11 +71,11 @@ export function MicrodataLicence({ access }: { access: MicrodataAccess }) {
         <div className="microdata-licence-body">
           <div>
             <h4>Citation</h4>
-            <p>All products or publications that mention or include DIEM data must include the following citation:</p>
+            <p>{terms.citationIntro}</p>
           </div>
           <div>
-            <p className="microdata-licence-citation">Source of data: FAO. 2025. <em>Name of the country</em>: DIEM-Monitoring assessments results (<em>Month and Year</em>). In: FAO Data in Emergencies Hub. Rome. <em>Cited date</em>. https://data-in-emergencies.fao.org</p>
-            <p>Finally, we would greatly appreciate it if you could inform the DIEM Hub team of the release of any product based on DIEM data.</p>
+            <p className="microdata-licence-citation">{terms.citation}</p>
+            <p>{terms.releaseNotice}</p>
           </div>
         </div>
       ) : (

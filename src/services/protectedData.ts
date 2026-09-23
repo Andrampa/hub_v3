@@ -87,6 +87,10 @@ export interface ProtectedDataResource {
    * survey data. The UI must say so wherever the resource is offered.
    */
   preview?: boolean
+  /** ArcGIS view definition already restricts this item to opendata = 1; the view hides that field. */
+  releaseFiltered?: boolean
+  /** Household table role; stable across V3 item replacements. */
+  microdataComponent?: 'household' | 'mandatory' | 'optional'
   /**
    * Documentation held outside the community portal. These are opened as plain
    * links and are never resolved against ArcGIS, so a cross-portal item never
@@ -177,6 +181,7 @@ export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
     kind: 'microdata',
     period: '2026 onwards',
     preview: true,
+    microdataComponent: 'mandatory',
   },
   {
     id: '877fb415ef4e4ef28967fa4b49670ee5',
@@ -186,6 +191,7 @@ export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
     kind: 'microdata',
     period: '2026 onwards',
     preview: true,
+    microdataComponent: 'optional',
   },
   {
     id: '2d15e5b7768949b4905e452fcc5e0440',
@@ -194,6 +200,8 @@ export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
     description: 'Fully anonymized household survey records collected with the V2 questionnaire.',
     kind: 'microdata',
     period: '2023–2026',
+    releaseFiltered: true,
+    microdataComponent: 'household',
     href: 'https://data-in-emergencies.fao.org/maps/2d15e5b7768949b4905e452fcc5e0440',
   },
   {
@@ -203,6 +211,8 @@ export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
     description: 'Household survey records collected with the original questionnaire and data structure.',
     kind: 'microdata',
     period: '2021–2022',
+    releaseFiltered: true,
+    microdataComponent: 'household',
     href: 'https://data-in-emergencies.fao.org/maps/f1d017ac889f44ceae76d07977eb5bc1',
   },
 ]
@@ -483,4 +493,3 @@ export const ANALYSIS_TOOLS = [
 export function resourceLink(resource: Pick<ProtectedDataResource, 'id' | 'staticLink' | 'href'>) {
   return resource.staticLink || resource.href || `${DATA_PORTAL}/home/item.html?id=${resource.id}`
 }
-

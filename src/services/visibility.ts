@@ -56,17 +56,19 @@ export const WITHHELD_WHERE = '1=0'
  * The clause restricting a layer to publicly released rows for this viewer, or
  * undefined for a Contributor, who sees everything.
  *
- * Microdata fails closed: a layer with no `opendata` field yields
- * `WITHHELD_WHERE`. Aggregated data fails open (see below).
+ * Microdata fails closed without a row flag unless its configured ArcGIS view
+ * is explicitly declared release-filtered. Aggregated data fails open.
  */
 export function visibilityClause(
   layer: Pick<FeatureLayerInfo, 'fields'> | undefined,
   contributor: boolean,
   kind?: string,
+  releaseFiltered = false,
 ) {
   if (contributor) return undefined
   const field = opendataField(layer)
   if (field) return `${field} = 1`
+  if (kind === 'microdata' && releaseFiltered) return undefined
   // Aggregated data fails open: which surveys a community member sees is decided
   // at survey level by the register's Validated flag (`fetchValidatedSurveyKeys`),
   // and withholding an unflagged aggregate table hid every published survey.

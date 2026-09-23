@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-09-23 - Microdata package groundwork and survey picker
+
+- Added microdata-specific master and temporary-grant survey confirmation,
+  applying the existing validated-survey and `opendata` gates to actual visible
+  rows before treating grant scope as downloadable survey data.
+- Added a separate transactional microdata archive-builder prototype with
+  source revalidation, version-matched documentation links, separate V3 tables,
+  and caller-supplied memory limits. It is not connected to a download control;
+  realistic package sizes still require authenticated measurement.
+- V3 component roles are manifest metadata rather than a hardcoded item ID.
+  The workspace and archive now share one source for microdata licence terms.
+  Grant discovery uses one-row probes, retains distinct failure causes and
+  propagates cancellation; the builder encodes household CSVs in bounded pages.
+- Signed-in schema checks found no exposed `opendata` field on the V1/V2 master
+  items. Their creator confirmed that both are ArcGIS views already restricted
+  to `opendata = 1`; the manifest now declares those two items release-filtered.
+  Other unflagged microdata still fails closed for non-Contributors.
+- The workspace now offers a country-grouped microdata survey picker, an
+  account-scoped ten-survey selection, V3 mandatory/optional choice, and a live
+  access-and-record-count preflight. It shares the temporary-grant discovery
+  result with the existing grant list. Signed-in one-survey, V3 two-table, and
+  ten-survey browser probes informed a 50,000-record / 40 MB encoded-CSV budget.
+  The cancellable download is enabled after preflight, with the full microdata
+  licence at the download point and no partial archive on failure.
+
 ## 2026-09-22 - Combined aggregated survey packages
 
 - The survey workspace now offers a combined export layout for multiple surveys.

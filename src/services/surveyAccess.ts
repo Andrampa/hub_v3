@@ -2,6 +2,7 @@ import { countryDefinition } from './countries'
 import { fetchValidatedSurveyKeys } from './monitoring'
 import {
   AGGREGATE_RESOURCES,
+  MICRODATA_RESOURCES,
   resolveProtectedResource,
   type DataGeneration,
   type ProtectedDataResource,
@@ -114,6 +115,8 @@ export interface SurveyDiscoveryOptions {
    */
   signal?: AbortSignal
 }
+
+type SurveyResourceKind = 'aggregate' | 'microdata'
 
 interface QueryResponse {
   features?: Array<{ attributes: Record<string, unknown> }>
@@ -281,7 +284,7 @@ async function discoverSource(
 
     const layerUrl = `${serviceUrl}/${layerReference.id}`
     const layer = await requester<FeatureLayerInfo>(layerUrl)
-    const visibilityWhere = visibilityClause(layer, contributor, resource.kind)
+    const visibilityWhere = visibilityClause(layer, contributor, resource.kind, resource.releaseFiltered)
     // Fail closed, and say so: no flag means nothing is marked released. No query
     // is sent, since it could only come back empty.
     if (isWithheld(visibilityWhere)) {
@@ -407,11 +410,12 @@ function buildDiscoveryResult(
 export async function discoverSurveyAvailability(
   resources: readonly ProtectedDataResource[],
   requester: ProtectedRequester,
-  options: Pick<SurveyDiscoveryOptions, 'includeTestData' | 'contributor' | 'validatedSurveys' | 'onProgress' | 'signal'> = {},
+  options: Pick<SurveyDiscoveryOptions, 'includeTestData' | 'contributor' | 'validatedSurveys' | 'onProgress' | 'signal'> & { resourceKind?: SurveyResourceKind } = {},
 ): Promise<SurveyDiscoveryResult> {
-  const included = resources.filter((resource) => resource.kind === 'aggregate' && (options.includeTestData || !resource.preview))
+  const resourceKind = options.resourceKind || 'aggregate'
+  const included = resources.filter((resource) => resource.kind === resourceKind && (options.includeTestData || !resource.preview))
   const excluded = resources
-    .filter((resource) => resource.kind === 'aggregate' && resource.preview && !options.includeTestData)
+    .filter((resource) => resource.kind === resourceKind && resource.preview && !options.includeTestData)
     .map((resource) => sourceSummary(resource, 'excluded-test'))
   const outcomes: Array<SourceOutcome | undefined> = new Array(included.length)
   const report = (result: SurveyDiscoveryResult) => {
@@ -437,6 +441,28 @@ export async function discoverSurveyAvailability(
   }))
 
   return buildDiscoveryResult(included, outcomes, excluded, validated)
+}
+
+/**
+ * Discover generation-wide household layers without sharing the aggregate
+ * cache. Grants have their own live discovery path and are merged later in the
+ * workspace; a stale cached master list must not stand in for current access.
+ */
+export async function discoverMicrodataMasterSurveys(
+  requester: ProtectedRequester,
+  options: Pick<SurveyDiscoveryOptions, 'contributor' | 'includeTestData' | 'validatedSurveys' | 'onProgress' | 'signal'> = {},
+): Promise<SurveyDiscoveryResult> {
+  const contributor = Boolean(options.contributor)
+  const validatedSurveys = contributor ? undefined
+    : Object.hasOwn(options, 'validatedSurveys') ? options.validatedSurveys
+    : await loadValidatedSurveys().catch(() => null)
+  return discoverSurveyAvailability(MICRODATA_RESOURCES, requester, {
+    ...options,
+    resourceKind: 'microdata',
+    // The production/test split is a policy decision, not a query parameter.
+    includeTestData: contributor && Boolean(options.includeTestData),
+    validatedSurveys,
+  })
 }
 
 interface AggregateCacheEntry {

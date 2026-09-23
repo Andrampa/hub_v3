@@ -156,7 +156,7 @@ not been done yet.
 - Every dataset explorer links to the current administrative reference boundary
   dataset so analysts can join survey and aggregate records to the matching
   ADM geometry through the published administrative codes.
-- Microdata (workspace tab): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`.
+- Microdata (workspace tab): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`. The survey-first picker merges accessible master and temporary-grant scopes, allows up to ten surveys per package, offers V3 mandatory/optional choice, and performs live access-and-record-count preflight before the cancellable archive download. The browser package limits are 50,000 records, 40 MB of actual encoded CSV and 20 data files; if a limit or live authorization check fails, no partial archive is offered.
 - Aggregated data (workspace): chosen by survey, with its generation resolved automatically. Multi-survey packages offer separate survey folders or combined CSVs per compatible source and generation. The review counts output files for the selected layout while separately limiting source slices and records.
 - Documentation: field descriptions, codebooks and SDMX metadata per generation, each declaring an `audience` so aggregated packages link only aggregated documentation.
 - Boundaries: current and historical ADM1/ADM2 operational references, under workspace technical resources.
@@ -197,7 +197,7 @@ the enforcement is not:
 | | Hub | Dashboard today |
 |---|---|---|
 | `opendata = 1` filter | Enforced | Off (`enforceOpendata: false` until real surveys carry `opendata = 1`) |
-| Layer without the field | Withheld from non-Contributors | Shown unfiltered |
+| Layer without the field | Withheld from non-Contributors unless its resource explicitly declares a release-filtered ArcGIS view | Shown unfiltered |
 | Survey register `round_validated` | Applied in the survey workspace | Hides unvalidated surveys |
 
 So today a non-Contributor can see `opendata = 0` rows in the dashboard that the
@@ -215,10 +215,14 @@ and the explorer's filter-option lists. Discovery results are cached per
 visibility scope. Test-data mode is Contributor-only, because every test survey
 is `opendata = 0`; `?test=1` is ignored for anyone else.
 
-**This is presentation, not security.** A public feature service returns every
-row to anyone who queries it directly. The real boundary is the rebuild
-topology in `docs/data_access_restructure.md` section 15: private mother tables
-for Contributors and public views exposing only `opendata = 1` rows.
+**This is presentation, not security.** An unrestricted feature service returns
+every row to anyone who queries it directly. The V1/V2 microdata items are
+release-filtered ArcGIS views created with `opendata = 1` in the view definition;
+they intentionally omit that field from their schema. Only those two items are
+declared `releaseFiltered` in `src/services/protectedData.ts`. Undeclared
+unflagged microdata still fails closed. ArcGIS view sharing and its server-side
+definition are the actual boundary; the broader rebuild topology is in
+`docs/data_access_restructure.md` section 15.
 
 ## Public Dataset Explorer
 

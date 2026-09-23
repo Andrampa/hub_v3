@@ -24,6 +24,7 @@
 | `docs/temporary_microdata_grants.md` | User-specific temporary microdata grants: cross-org discovery, bundles, export policy, catalogue exclusion |
 | `docs/data_access_strategy.md` | Proposed `/data` restructure: questionnaire generations, publication-tier decision, microdata routing, phasing |
 | `docs/data_access_restructure.md` | Planned survey-first `/data` rework: public overview, `/data/surveys` workspace, survey availability matrix, package contract, V3 test-record policy |
+| `docs/microdata_access_restructure.md` | Planned survey-first microdata rework: the two access paths, visibility gates, V3 mandatory/optional components, microdata package contract, measured limits |
 | `docs/user_journeys.md` | Public discovery behavior |
 | `docs/design_review_2026-09-03.md` | Prioritised design/product review backlog: top 10 changes, findings by lens, do-not-do list |
 | `docs/development_workflow.md` | Commands and verification |
@@ -37,6 +38,7 @@
 - Microdata, aggregated downloads, guides, or protected items: `data_access.md`, then `authentication.md`.
 - Temporary, user-specific microdata access: `temporary_microdata_grants.md`, then `authentication.md`.
 - Planning the `/data` rework or V3 data publication: `data_access_restructure.md` for the survey-first plan, then `data_access_strategy.md`, then `data_access.md`.
+- Planning the microdata rework: `microdata_access_restructure.md`, then `temporary_microdata_grants.md`, then `data_access.md`.
 - ArcGIS endpoint work: `services_and_data.md`, then `service_manifest.md`.
 - Authentication or protected access: `authentication.md`, then `services_and_data.md`.
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.

@@ -77,7 +77,10 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
   sign-in gate that keeps its destination, access summary, progressive survey
   picker with a per-package selection cap, scoped test-data mode, thematic
   selection stating each theme's reach, the package review table, and the
-  package download with staged progress and cancellation.
+  package download with staged progress and cancellation. Its microdata tab
+  shares live grant discovery with `MicrodataPackagePicker.tsx`, which owns the
+  separate household survey selection, count preflight and budgeted archive
+  download through `microdataBundle.ts`.
 - `src/pages/HouseholdMonitoring.tsx`: the `/monitoring-system` page: the
   Survey Explorer banner and the survey rounds table.
 - `src/components/SurveyCatalogue.tsx`: one row per household survey round with

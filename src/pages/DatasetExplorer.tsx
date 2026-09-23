@@ -279,7 +279,7 @@ export default function DatasetExplorer() {
   const registerUnavailable = needsSurveyGate && validatedSurveys === null
   const visibility = useMemo(() => {
     if (!definition || !governedByVisibility(definition.resource.kind)) return undefined
-    const rows = visibilityClause(definition.layer, isContributor, definition.resource.kind)
+    const rows = visibilityClause(definition.layer, isContributor, definition.resource.kind, definition.resource.releaseFiltered)
     if (!needsSurveyGate || isWithheld(rows)) return rows
     if (!validatedSurveys) return undefined
     const targets = deepLinkFields(usableFields(definition.layer.fields))

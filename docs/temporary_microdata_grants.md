@@ -24,6 +24,15 @@ Most users have no grant and never will, since the ordinary route to microdata
 is FAM or a request; announcing an absence invents a lack where there was no
 expectation. It also means an expired or revoked grant leaves no trace behind.
 
+The survey-first microdata picker consumes that same live grant discovery
+result; it does not run a second grant search. It confirms visible rows within
+each approved country/round scope before showing a survey. An active view with
+bulk export disabled remains explore-only and cannot be selected for a package.
+Immediately before packaging, the Hub re-resolves each item and grant scope,
+rechecks the export switch and visible row count, and aborts the entire package
+if any authorization or source changed. Stored selection contains only stable
+survey keys under the signed-in account, never grant metadata or household rows.
+
 ## Authentication stays Community-only
 
 The Hub signs users in against the Community organization `D5aXW6TZFpeM2wke`

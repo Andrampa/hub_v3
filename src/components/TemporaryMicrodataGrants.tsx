@@ -175,7 +175,10 @@ function useScrollToGrantsOnArrival(ready: boolean) {
  * frame the licence, say - reads it here rather than running a second
  * discovery of its own that could disagree with the list the user is looking at.
  */
-export function TemporaryMicrodataGrants({ onActiveGrantChange }: { onActiveGrantChange?: (active: boolean) => void } = {}) {
+export function TemporaryMicrodataGrants({ onActiveGrantChange, onDiscoveryChange }: {
+  onActiveGrantChange?: (active: boolean) => void
+  onDiscoveryChange?: (discovery: GrantDiscovery | undefined, checking: boolean) => void
+} = {}) {
   const { discovery, checking, check } = useMicrodataGrants()
   const sectionRef = useScrollToGrantsOnArrival(Boolean(discovery?.bundles.length))
   const hasActiveGrant = Boolean(discovery?.bundles.some((bundle) => bundle.status === 'active'))
@@ -183,6 +186,10 @@ export function TemporaryMicrodataGrants({ onActiveGrantChange }: { onActiveGran
   useEffect(() => {
     onActiveGrantChange?.(hasActiveGrant)
   }, [hasActiveGrant, onActiveGrantChange])
+
+  useEffect(() => {
+    onDiscoveryChange?.(discovery, checking)
+  }, [discovery, checking, onDiscoveryChange])
 
   // Most signed-in users have no temporary grant and never will: the ordinary
   // route to microdata is FAM or a request. Telling them they have no access

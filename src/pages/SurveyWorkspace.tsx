@@ -4,9 +4,11 @@ import '../survey-workspace.css'
 import { useAuth } from '../auth/AuthContext'
 import { GRANTS_SECTION_ID } from '../components/MicrodataInvitationDialog'
 import { MicrodataLicence, type MicrodataAccess } from '../components/MicrodataLicence'
+import { MicrodataPackagePicker } from '../components/MicrodataPackagePicker'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { TemporaryMicrodataGrants } from '../components/TemporaryMicrodataGrants'
+import type { GrantDiscovery } from '../services/microdataGrants'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatNumber } from '../lib/format'
 import { hubPath } from '../lib/hubOrigin'
@@ -361,6 +363,12 @@ export default function SurveyWorkspace() {
   // Reported by the grants list itself, so the licence frames the same grants
   // the user can see rather than a second discovery that might disagree.
   const [hasActiveGrant, setHasActiveGrant] = useState(false)
+  const [grantDiscovery, setGrantDiscovery] = useState<GrantDiscovery>()
+  const [grantChecking, setGrantChecking] = useState(false)
+  const onGrantDiscoveryChange = useCallback((discovery: GrantDiscovery | undefined, checking: boolean) => {
+    setGrantDiscovery(discovery)
+    setGrantChecking(checking)
+  }, [])
   // Each path held gets named; both at once is its own state rather than one
   // path standing in for the other.
   const microdataAccess: MicrodataAccess = hasActiveGrant
@@ -1310,7 +1318,21 @@ export default function SurveyWorkspace() {
             {/* Mounted even while this tab is hidden, so grant discovery has
                 already run by the time someone opens it. It renders nothing for
                 an account with no grant. */}
-            <TemporaryMicrodataGrants onActiveGrantChange={setHasActiveGrant} />
+            <TemporaryMicrodataGrants onActiveGrantChange={setHasActiveGrant} onDiscoveryChange={onGrantDiscoveryChange} />
+
+            {/* Offered only to an account that holds one of the two microdata
+                paths. Most community members hold neither, and a picker that
+                opens with "no surveys are available to this account" announces
+                an absence where there was no expectation - the same reason the
+                grants section above renders nothing at all without a grant.
+                The licence still stands on its own for everyone else: it is
+                published in full at tier 2, beside the request route. */}
+            {householdData || hasActiveGrant ? (
+              <MicrodataPackagePicker grantDiscovery={grantDiscovery} grantChecking={grantChecking}
+                householdData={householdData} contributor={isContributor} testMode={testMode} licenceAccess={microdataAccess} />
+            ) : (
+              <MicrodataLicence access={microdataAccess} />
+            )}
 
             {householdData && (
               <section className="workspace-step" aria-labelledby="step-household">
@@ -1338,7 +1360,6 @@ export default function SurveyWorkspace() {
               </section>
             )}
 
-            <MicrodataLicence access={microdataAccess} />
           </div>
 
           <details className="technical-resources">

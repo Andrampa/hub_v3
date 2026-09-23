@@ -3,6 +3,7 @@ import type { ProtectedDataResource, ProtectedRequester } from './protectedData'
 import {
   clearSurveyAccessCache,
   discoverAggregatedSurveys,
+  discoverMicrodataMasterSurveys,
   discoverSurveyAvailability,
   setValidatedSurveyLoaderForTests,
   surveyKey,
@@ -418,6 +419,45 @@ describe('content visibility in discovery', () => {
     expect(result.surveys).toEqual([])
     expect(result.status).toBe('failed')
     expect(result.sources[0].message).toContain('survey register')
+  })
+
+  it('discovers microdata with both visibility gates and fails closed without an opendata field', async () => {
+    const microdata = { ...resource('household', 'v2', 'Household'), kind: 'microdata' as const }
+    const flagged = flaggedLayer(GATE_ROWS)
+    const visible = await discoverSurveyAvailability([microdata], flagged.requester, {
+      resourceKind: 'microdata', validatedSurveys: VALIDATED,
+    })
+    expect(visible.surveys.map((survey) => survey.key)).toEqual(['v2:NGA:8'])
+    expect(surveySliceWhere(visible.surveys[0], visible.surveys[0].themes[0])).toContain('opendata = 1')
+
+    const unflagged = flaggedLayer(GATE_ROWS, false)
+    const withheld = await discoverSurveyAvailability([microdata], unflagged.requester, {
+      resourceKind: 'microdata', validatedSurveys: VALIDATED,
+    })
+    expect(withheld.sources[0].status).toBe('withheld')
+    expect(withheld.surveys).toEqual([])
+    expect(unflagged.wheres).toHaveLength(0)
+
+    const declaredView = await discoverSurveyAvailability([{ ...microdata, releaseFiltered: true }], unflagged.requester, {
+      resourceKind: 'microdata', validatedSurveys: VALIDATED,
+    })
+    expect(declaredView.sources[0].status).toBe('confirmed')
+    expect(declaredView.surveys.map((survey) => survey.key)).toEqual(['v2:NGA:8', 'v2:NGA:9'])
+    expect(unflagged.wheres).toContain('1=1')
+  })
+
+  it('keeps V3 master test data out of non-Contributor microdata discovery', async () => {
+    const loader = vi.fn().mockResolvedValue(VALIDATED)
+    setValidatedSurveyLoaderForTests(loader)
+    const { requester } = flaggedLayer(GATE_ROWS)
+    const member = await discoverMicrodataMasterSurveys(requester, { includeTestData: true })
+    expect(member.sources.filter((source) => source.generation === 'v3').every((source) => source.status === 'excluded-test')).toBe(true)
+    expect(member.surveys.every((survey) => survey.generation !== 'v3')).toBe(true)
+    expect(loader).toHaveBeenCalledTimes(1)
+
+    const contributor = await discoverMicrodataMasterSurveys(requester, { contributor: true, includeTestData: true })
+    expect(contributor.surveys.some((survey) => survey.generation === 'v3')).toBe(true)
+    expect(loader).toHaveBeenCalledTimes(1)
   })
 
   it('reads the register for a community member only', async () => {
