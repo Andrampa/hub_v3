@@ -800,7 +800,18 @@ export const HUB_DOWNLOAD_FORMATS: Array<{ format: HubDownloadFormat; label: str
   { format: 'kml', label: 'KML / KMZ', spatial: true, route: 'kml', extension: 'kmz' },
 ]
 
-const DIEM_HUB_DOWNLOAD_API = 'https://data-in-emergencies.fao.org/api/download/v1/items'
+/**
+ * ArcGIS's own Hub Download API, called directly rather than through the
+ * `/api/download/v1/items` path the previous site served on this Hub's domain.
+ * That path was never the Hub's: the previous site proxied this service, and the
+ * new Hub does not, so the address had to name the service itself. It is the
+ * same generator, sharing the same export jobs, and it follows the same v1
+ * contract (`layers`, `where`, `redirect`, a query token, `202` polling), so
+ * `downloadProtected` needs no change.
+ *
+ * Phase 2 replaces this dependency with generation the Hub owns.
+ */
+const DIEM_HUB_DOWNLOAD_API = 'https://hub.arcgis.com/api/download/v1/items'
 
 export function hubDownloadRequest(definition: DatasetDefinition, format: HubDownloadFormat, where: string) {
   const descriptor = HUB_DOWNLOAD_FORMATS.find((candidate) => candidate.format === format)

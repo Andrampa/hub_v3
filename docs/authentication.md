@@ -89,7 +89,7 @@ Contributors also see links on current incoming rows. The rounds themselves,
 including upcoming ones, are public for every audience. Contributor catalog reads use the authenticated request boundary;
 page components never receive the token.
 
-The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-service hostname, so `downloadProtected` does not pass it to ArcGIS REST JS authentication. It follows the Hub v1 contract inside the provider: adds the short-lived ArcGIS token to same-origin Hub requests, follows documented `202` job-status responses, and never forwards that token to a different origin. Phase 2 removes this query-token transport together with the legacy Hub export dependency.
+The transitional ArcGIS Hub Download API is not an ArcGIS-federated feature-service hostname, so `downloadProtected` does not pass it to ArcGIS REST JS authentication. It follows the Hub v1 contract inside the provider: adds the short-lived ArcGIS token to each URL it requests itself, follows documented `202` job-status responses, and drops the token from a `resultUrl` the job status points at another origin. An HTTP redirect is a different matter: `fetch` follows one transparently, carrying the query string it was given, so the token travels with it - which is why the export origin must stay an ArcGIS one. That origin is `hub.arcgis.com`, the generator ArcGIS itself operates: the previous site proxied it on the Hub’s own domain, and the Hub does not, so the token now travels to the ArcGIS service that issued it rather than to a proxy. Phase 2 removes this query-token transport together with the legacy Hub export dependency.
 
 ## Embedded Monitoring Dashboard Handoff
 

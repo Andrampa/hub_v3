@@ -202,7 +202,6 @@ export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
     period: '2023–2026',
     releaseFiltered: true,
     microdataComponent: 'household',
-    href: 'https://data-in-emergencies.fao.org/maps/2d15e5b7768949b4905e452fcc5e0440',
   },
   {
     id: 'f1d017ac889f44ceae76d07977eb5bc1',
@@ -213,7 +212,6 @@ export const MICRODATA_RESOURCES: ProtectedDataResource[] = [
     period: '2021–2022',
     releaseFiltered: true,
     microdataComponent: 'household',
-    href: 'https://data-in-emergencies.fao.org/maps/f1d017ac889f44ceae76d07977eb5bc1',
   },
 ]
 
@@ -276,7 +274,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Incomes, shocks and needs',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/499917f1518141209c2a6de55a79d991',
   },
   {
     id: '1b006938d6a344aeb5a309f69f3e344b',
@@ -286,7 +283,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Crop production',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/1b006938d6a344aeb5a309f69f3e344b',
   },
   {
     id: '71460258c059453d8eab2d7c56a7b0c5',
@@ -296,7 +292,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Livestock production',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/71460258c059453d8eab2d7c56a7b0c5',
   },
   {
     id: 'fbef5b1ef85840838166a6b4d359f9bb',
@@ -306,7 +301,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Food security',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/fbef5b1ef85840838166a6b4d359f9bb',
   },
   {
     id: '6e4f7208540643e68531d15b2e08e8dd',
@@ -316,7 +310,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Incomes, shocks and needs',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/6e4f7208540643e68531d15b2e08e8dd',
   },
   {
     id: 'ffe31542ff8841dba63e701f09d877e7',
@@ -326,7 +319,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Crop production',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/ffe31542ff8841dba63e701f09d877e7',
   },
   {
     id: 'eab64778a6de4936b51a869acf589936',
@@ -336,7 +328,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Livestock production',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/eab64778a6de4936b51a869acf589936',
   },
   {
     id: '263f1c1964164ebe82382a03b4a4e1ea',
@@ -346,7 +337,6 @@ export const AGGREGATE_RESOURCES: ProtectedDataResource[] = [
     kind: 'aggregate',
     thematicLayer: 'Food security',
     admFamily: 'ADM1 / ADM2',
-    href: 'https://data-in-emergencies.fao.org/maps/263f1c1964164ebe82382a03b4a4e1ea',
   },
 ]
 

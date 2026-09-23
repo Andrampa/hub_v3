@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-09-23 - The Hub serves the production domain
+
+- `HUB_ORIGIN` is `https://data-in-emergencies.fao.org`. Every absolute Hub link
+  moves with it: package files, citations, and the documentation and boundary
+  links in `protectedData.ts`. Canonical URLs and structured data already named
+  this address.
+- Removed the legacy `/maps/<id>` links from the microdata and aggregated
+  resources. They named a path the previous site served and the Hub does not, so
+  on the production origin `hubPath` would have read them as in-app routes and
+  sent a reader to the 404 page. The entries now follow the V3 convention of
+  carrying no `href`, and open their ArcGIS item page.
+- Packaged dataset exports call ArcGIS's own
+  `hub.arcgis.com/api/download/v1/items` rather than the same path on the Hub's
+  domain, which the previous site proxied. It is the same generator, sharing the
+  same export jobs and the same v1 contract, so the download flow is unchanged.
+  Hub-owned generation remains Phase 2 work.
+- The data access guide links the Hub's own catalogue, filtered to
+  questionnaires, in place of the previous site's `/search` tag query.
+- The country brief link is built from `HUB_ORIGIN`; the Hub routes
+  `/datasets/:datasetId/explore` itself.
+- Addresses the previous site served on this domain - `/documents/<id>/about`,
+  `/maps/<id>`, `/apps/<id>/explore`, and the `org::title` slug form - now open
+  the same product in this catalogue instead of the 404 page. A slug is resolved
+  through ArcGIS's own Hub API, which outlives the previous site. This matters
+  beyond bookmarks and published reports: 39 such links are written into the
+  country page introductions in the editorial table, and all 39 resolve to a
+  published product. `/search` opens the catalogue.
+- Added `public/torii-provider-arcgis/hub-redirect.html`, a static page at the
+  address the account-creation link registers as its OAuth redirect. The
+  previous site served it; without it a reader who had just created an account
+  would land on the Hub's 404 page. It completes no sign-in - the credential
+  belongs to the account-creation application, not to the Hub's OAuth client -
+  and drops the fragment that carries it.
+
 ## 2026-09-23 - Microdata package groundwork and survey picker
 
 - Added microdata-specific master and temporary-grant survey confirmation,

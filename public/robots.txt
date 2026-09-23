@@ -6,10 +6,13 @@
 # ArcGIS sharing and the reader's own token, which a crawler does not have.
 #
 # /oauth-callback.html only ever receives a redirect carrying a token fragment.
-# It has no content to index and no reason to appear in a result page.
+# It has no content to index and no reason to appear in a result page. The same
+# is true of /torii-provider-arcgis/hub-redirect.html, where ArcGIS returns a
+# reader who has just created a community account.
 
 User-agent: *
 Allow: /
 Disallow: /oauth-callback.html
+Disallow: /torii-provider-arcgis/hub-redirect.html
 
 Sitemap: https://data-in-emergencies.fao.org/sitemap.xml

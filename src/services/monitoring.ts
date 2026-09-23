@@ -1,3 +1,5 @@
+import { hubUrl } from '../lib/hubOrigin'
+
 const MONITORING_STATISTICS_URL = 'https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/monitoring_system_sde_diem_statistics_for_homepage/FeatureServer/0/query'
 
 interface MonitoringStatisticsResponse {
@@ -173,11 +175,16 @@ function arcgisItemId(value: unknown) {
   return match?.[1]?.toLowerCase()
 }
 
+/**
+ * A bare item id becomes a Hub dataset address. The Hub routes
+ * `/datasets/:datasetId/explore` itself, so this outlives the previous site,
+ * which served the same path.
+ */
 function countryBriefUrl(value: unknown) {
   const idOrUrl = text(value)
   if (!idOrUrl) return undefined
   if (/^https:\/\//i.test(idOrUrl)) return idOrUrl
-  return `https://data-in-emergencies.fao.org/datasets/${encodeURIComponent(idOrUrl)}/explore`
+  return hubUrl(`/datasets/${encodeURIComponent(idOrUrl)}/explore`)
 }
 
 // Only the Monitoring application may host a dashboard link, so an unexpected

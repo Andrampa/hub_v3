@@ -160,25 +160,42 @@ context, internal documentation, local environment files, and `dist/`. Inspect
 the target repository’s diff, then commit and push it independently. Use
 `-AllowDirtyDeploymentRepository` only for an intentional, reviewed migration.
 
-## Going live
+## The production domain
 
-Until go-live the Hub runs on the review server, `https://diem.review.fao.org`,
-and every link a reader follows outside the running site points there. When the
-Hub replaces the current site at `https://data-in-emergencies.fao.org`:
+The Hub serves `https://data-in-emergencies.fao.org`, the address the previous
+ArcGIS Hub site held. `HUB_ORIGIN` in `src/lib/hubOrigin.ts` is the single
+constant every absolute Hub link is built from: package files
+(`documentation_and_metadata.txt`, `LICENCE.txt`, `manifest.json`), citations,
+and the documentation and boundary links in `protectedData.ts`. Canonical URLs
+and structured data name the same address independently, because they must
+survive a deployment at another origin.
 
-1. `src/lib/hubOrigin.ts`: set `HUB_ORIGIN` to `https://data-in-emergencies.fao.org`.
-   This moves every absolute Hub link in one step: package files
-   (`documentation_and_metadata.txt`, `LICENCE.txt`, `manifest.json`), citations,
-   and the documentation and boundary links in `protectedData.ts`.
-2. Review the addresses that still name the **old** ArcGIS Hub site on the
-   production domain and only work while it is up:
-   - `protectedData.ts`: aggregated and microdata `href`s (`/maps/<id>`); point
-     them at `hubUrl('/catalog/<id>')` or the in-app explorer.
-   - `DataGuide.tsx`: `QUESTIONNAIRES_URL` (`/search?...`).
-   - `monitoring.ts`: `/datasets/<id>/explore` links.
-   - `dataExplorer.ts`: `DIEM_HUB_DOWNLOAD_API` (`/api/download/v1/items`), the
-     ArcGIS Hub download API, which does not exist on the new Hub.
-   - `SiteHeader.tsx`, `AboutDiem.tsx`: the account sign-up `redirect_uri`, which
-     must also be registered on the ArcGIS OAuth app.
-3. Canonical URLs and structured data already name the production address and
-   need no change.
+Two consequences outlive the transition:
+
+- `hubPath` treats any address on `HUB_ORIGIN` as an in-app route, so a link
+  built on that origin must name a path the Hub actually routes. A path the
+  previous site served but the Hub does not would navigate to the 404 page
+  instead of opening anything.
+- Addresses the previous site served on this domain, and the Hub does not, now
+  name what serves them instead. `dataExplorer.ts` calls ArcGIS's own
+  `hub.arcgis.com/api/download/v1/items` for packaged exports, and
+  `DataGuide.tsx` links the Hub's catalogue rather than the previous site's
+  `/search`. `public/torii-provider-arcgis/hub-redirect.html` is kept as a
+  static file because the account-creation link in `SiteHeader.tsx` and
+  `AboutDiem.tsx` registers that exact address as its OAuth redirect.
+
+The review server, `https://diem.review.fao.org`, still hosts pre-release
+builds. A build deployed there writes production addresses into the files it
+produces, which is deliberate: a package or a citation outlives the deployment
+that produced it.
+
+### Addresses inherited with the domain
+
+The domain carries every link ever written to the previous site: bookmarks,
+published reports, and the `/documents/<id>/about` links inside the country page
+introductions in the editorial table. `src/lib/legacyHubAddress.ts` translates
+the previous site's item viewers - `/documents`, `/maps` and `/apps` - into
+`/catalog/:itemId`, resolving the `org::title` slug form through ArcGIS's own
+Hub API. A path that names no item still reaches the 404 page, as do the
+previous site's own `/pages` addresses, which named authored pages rather than
+products.

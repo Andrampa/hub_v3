@@ -44,6 +44,7 @@ const HazardImpactAssessments = lazy(() => import('./pages/HazardImpactAssessmen
 const AboutDiem = lazy(() => import('./pages/AboutDiem'))
 const Contact = lazy(() => import('./pages/Contact'))
 const PhotoGalleries = lazy(() => import('./pages/PhotoGalleries'))
+const LegacyHubRoute = lazy(() => import('./pages/LegacyHubRoute'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function RouteLoading() {
@@ -91,6 +92,14 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/about" element={<AboutDiem />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/photo-galleries" element={<PhotoGalleries />} />
+            {/* Addresses the previous site served on this domain. */}
+            <Route path="/documents/:identifier/*" element={<LegacyHubRoute />} />
+            <Route path="/documents/:identifier" element={<LegacyHubRoute />} />
+            <Route path="/maps/:identifier/*" element={<LegacyHubRoute />} />
+            <Route path="/maps/:identifier" element={<LegacyHubRoute />} />
+            <Route path="/apps/:identifier/*" element={<LegacyHubRoute />} />
+            <Route path="/apps/:identifier" element={<LegacyHubRoute />} />
+            <Route path="/search" element={<RenamedRoute to="/catalog" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

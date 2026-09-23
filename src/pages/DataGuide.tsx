@@ -8,7 +8,11 @@ import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
 import { CITATION_LANGUAGES, citationText, collectionCitationModel, type CitationLanguage } from '../lib/citation'
 
-const QUESTIONNAIRES_URL = 'https://data-in-emergencies.fao.org/search?sort=Date%20Created%7Ccreated%7Cdesc&tags=household%2520survey%2520questionnaire'
+/**
+ * The Hub's own catalogue, filtered to questionnaires. This replaces a tag
+ * search on the previous site, whose `/search` route the Hub does not serve.
+ */
+const QUESTIONNAIRES_PATH = '/catalog?product=Questionnaires'
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
 const FAM_POLICY_URL = 'https://www.fao.org/food-agriculture-microdata/en/'
 
@@ -176,7 +180,7 @@ export default function DataGuide() {
                 <li><strong>Field descriptions</strong> explaining the content of every field, for microdata and for aggregated data.</li>
                 <li><strong>Codebooks</strong> mapping coded values to labels.</li>
                 <li><strong>Detailed metadata</strong> following the SDMX metadata framework for the aggregated thematic datasets.</li>
-                <li><strong>Questionnaires</strong> — the template in Kobo and GeoPoll formats, plus the survey-specific versions used in each country and round. <a href={QUESTIONNAIRES_URL} target="_blank" rel="noreferrer">Browse the questionnaire catalogue</a>.</li>
+                <li><strong>Questionnaires</strong> — the template in Kobo and GeoPoll formats, plus the survey-specific versions used in each country and round. <Link to={QUESTIONNAIRES_PATH}>Browse the questionnaire catalogue</Link>.</li>
                 <li><strong>Survey-specific methodologies</strong> describing sample design decisions for individual rounds.</li>
               </ul>
               <p>DIEM surveys use a common questionnaire within each generation, so data structures and domains stay consistent across countries and over time. That is what allows every survey in a generation to be combined into a single table from which specific country and round slices can be extracted.</p>

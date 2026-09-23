@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>DIEM community account created</title>
+  </head>
+  <body>
+    <!--
+      Where ArcGIS returns a reader who has just created a DIEM community
+      account. The account-creation link registers this exact address as its
+      redirect, and the previous site at this domain served the page: a static
+      file is kept here so the address keeps answering now that the Hub serves
+      the domain, rather than falling through to the Hub's 404 page.
+
+      The page deliberately completes nothing. The credential in the fragment
+      belongs to the account-creation application, not to the Hub's own OAuth
+      client, so the Hub cannot and must not adopt it; the reader signs in to
+      the Hub with the account they have just created. hub-redirect.js drops the
+      fragment so the credential does not linger in the address bar.
+    -->
+    <h1>Your DIEM community account is ready</h1>
+    <p>Sign in to the DIEM Hub with the account you have just created.</p>
+    <p><a href="/data/surveys">Continue to the DIEM Hub</a></p>
+    <script src="/torii-provider-arcgis/hub-redirect.js"></script>
+  </body>
+</html>
