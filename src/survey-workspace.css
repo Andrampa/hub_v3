@@ -126,6 +126,13 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .survey-empty { margin: 18px 0 4px; color: var(--ink-faint); font-size: 13px; }
 
 .microdata-survey-list { min-width: 0; margin: 12px 0 0; padding: 0; border: 0; }
+.microdata-loading-callout { display: flex; align-items: center; gap: 13px; margin: 20px 0; padding: 14px 16px; border-left: 3px solid var(--fao-blue); background: #e5ecf4; color: var(--deep-blue); }
+.microdata-loading-callout strong, .microdata-loading-callout small { display: block; }
+.microdata-loading-callout strong { font-size: 13px; }
+.microdata-loading-callout small { margin-top: 3px; font-size: var(--text-small); line-height: 1.5; }
+.microdata-loading-spinner { flex: none; width: 18px; height: 18px; border: 2px solid #bcd8ea; border-top-color: var(--fao-blue); border-radius: 50%; animation: microdata-loading-spin .8s linear infinite; }
+@keyframes microdata-loading-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .microdata-loading-spinner { animation: none; border-color: var(--fao-blue); } }
 .microdata-country { min-width: 0; border: 1px solid var(--line-faint); }
 .microdata-country + .microdata-country { margin-top: -1px; }
 .microdata-country > summary { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px 18px; padding: 13px 15px; color: var(--deep-blue); cursor: pointer; }

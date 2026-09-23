@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-23 - Plain-language source and access copy
+
+- Removed platform names from Hub-authored page copy, product actions, loading
+  and error messages, API guidance, and microdata invitation prompts. Product
+  identifiers and source links remain available where useful, but are labelled
+  in terms of what readers can do with them.
+- Removed the catalogue's platform-group shortcut. The required Esri basemap
+  attribution remains on maps that use that provider's tiles.
+
+## 2026-09-23 - Microdata survey loading feedback
+
+- The microdata tab now displays a prominent, accessible loading message while
+  the account's household datasets and survey-round statistics are checked.
+  It disappears when discovery completes and does not suggest an empty list
+  while the check is still running.
+
 ## 2026-09-23 - The Hub serves the production domain
 
 - `HUB_ORIGIN` is `https://data-in-emergencies.fao.org`. Every absolute Hub link

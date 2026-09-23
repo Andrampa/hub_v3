@@ -122,7 +122,7 @@ export default function CatalogProduct() {
       .catch((error: unknown) => {
         if (active) setState({
           status: 'error',
-          message: error instanceof Error ? error.message : 'The ArcGIS catalogue could not be reached.',
+          message: error instanceof Error ? error.message : 'The DIEM Hub catalogue could not be reached.',
         })
       })
     return () => { active = false }
@@ -258,7 +258,7 @@ export default function CatalogProduct() {
             <section className="catalog-product-status">
               <span className="kicker">Page not found</span>
               <h1>This product address is not a valid DIEM Hub link</h1>
-              <p>A product address ends in a 32-character ArcGIS item ID. This one does not, so it was never a product page — the link was probably shortened, wrapped or mistyped in transit.</p>
+              <p>This address does not contain a valid product identifier. The link may have been shortened, wrapped or mistyped.</p>
               <div><Link to="/catalog">Browse the current catalogue</Link><Link to="/contact">Contact DIEM</Link></div>
             </section>
           )}
@@ -266,7 +266,7 @@ export default function CatalogProduct() {
             <section className="catalog-product-status">
               <span className="kicker">Product unavailable</span>
               <h1>This product is no longer published in the DIEM Hub catalogue</h1>
-              <p>It may have been withdrawn, moved or had its sharing changed in ArcGIS Online.</p>
+              <p>It may have been withdrawn, moved or made unavailable to the public.</p>
               <div><Link to="/catalog">Browse the current catalogue</Link><Link to="/contact">Contact DIEM</Link></div>
             </section>
           )}
@@ -300,7 +300,7 @@ export default function CatalogProduct() {
                       )}
                       {action.fallbackHref && (
                         <a className="catalog-product-action-fallback" href={action.fallbackHref} target="_blank" rel="noreferrer">
-                          Download not working? Open the item page on ArcGIS
+                          Download not working? Open the original product page
                         </a>
                       )}
                     </>
@@ -336,7 +336,7 @@ export default function CatalogProduct() {
                   <div><dt>Added to catalogue</dt><dd><time dateTime={new Date(item.created).toISOString()}>{formatDate(item.created)}</time></dd></div>
                   <div><dt>Countries</dt><dd>{countries.length ? countries.map((country) => country.name).join(', ') : 'Not assigned'}</dd></div>
                   <div><dt>Evidence pathway</dt><dd>{item.evidencePathways.map(pathwayLabel).join(', ') || 'Not assigned'}</dd></div>
-                  <div><dt>ArcGIS item ID</dt><dd><code>{item.id}</code></dd></div>
+                  <div><dt>Product ID</dt><dd><code>{item.id}</code></dd></div>
                 </dl>
                 {categories.length > 0 && (
                   <div className="catalog-product-categories">

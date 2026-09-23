@@ -389,7 +389,7 @@ describe('what the dialog says about the access window', () => {
     expect(INVITATION_COPY.confirmed.action).toBe('Accept invitation and open data')
     // An unconfirmed group cannot be accepted here at any price, so its action
     // must not even suggest that the Hub could do it.
-    expect(INVITATION_COPY.unverified.action).toBe('Open ArcGIS notifications')
+    expect(INVITATION_COPY.unverified.action).toBe('Open account notifications')
     expect(INVITATION_COPY.unverified.action).not.toMatch(/accept/i)
   })
 })

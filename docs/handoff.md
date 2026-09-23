@@ -15,6 +15,9 @@ country-grouped microdata picker, account-scoped survey selection, V3 component
 choice, an authorization-aware record-count preflight, and a cancellable
 download action under a measured package budget. The full microdata licence is
 immediately before the download control.
+The microdata tab now also shows a loading-statistics callout above its routes
+while the survey list is being checked, so a large-access account does not
+appear to have no downloadable surveys during discovery.
 
 Authenticated checks on 2026-09-22 found no `opendata` field on either V1 or V2
 master item. Their creator confirmed on 2026-09-23 that both are ArcGIS views
@@ -56,13 +59,18 @@ the builder; the byte limit is checked during row download before any archive
 is offered. The signed-in browser passed the live picker and Nigeria V2 round
 8 count preflight, and the grouped layout was inspected at 375 px.
 
-Next: the signed-in session expired immediately after the final build, before
-the enabled download action could be accepted end-to-end. Sign in again and
-test a small package, cancellation, the V3 optional package and error states
+On 2026-09-23 a renewed signed-in session completed the Nigeria V2 round 8
+package flow end to end. Preflight confirmed 5,025 records in one file, and
+the browser reported `DIEM_microdata_2026-09-23.zip` downloaded with 5,025
+records. The user's original ten-survey selection was restored after the
+check. The new loading callout still needs a visual check during a slow
+discovery; the survey list was already ready when the microdata tab opened.
+
+Next: test cancellation, the V3 optional package and error states
 in `src/components/MicrodataPackagePicker.tsx`; also run browser checks with a
 temporary-grant account and an export-disabled grant account. Exact verification commands:
 `npx vitest run src/services/microdataBundle.test.ts src/services/microdataSurveyAccess.test.ts src/services/surveyAccess.test.ts`
-and `npm run build` (both pass; full suite 776 tests in 50 files passes).
+and `npm run build` (both pass; full suite 796 tests in 52 files passes).
 
 ## Active: UN boundaries on Hub maps
 

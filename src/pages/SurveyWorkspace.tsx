@@ -253,7 +253,7 @@ function AggregatedAccessCard({ result, onRetry }: {
         <h2>Aggregated survey data</h2>
         <p className="access-card-lede"><strong>Access is still being provisioned.</strong></p>
         <p className="access-card-state access-card-state--warn">
-          This is a valid DIEM community account, but ArcGIS has not authorized it to open the aggregated data sources yet. Access normally activates within 15 minutes of account creation. If this account is older, contact the DIEM Hub team.
+          This is a valid DIEM community account, but it cannot open the aggregated data sources yet. Access normally activates within 15 minutes of account creation. If this account is older, contact the DIEM Hub team.
           <button type="button" onClick={onRetry}>Check again</button>
         </p>
       </article>
@@ -365,6 +365,7 @@ export default function SurveyWorkspace() {
   const [hasActiveGrant, setHasActiveGrant] = useState(false)
   const [grantDiscovery, setGrantDiscovery] = useState<GrantDiscovery>()
   const [grantChecking, setGrantChecking] = useState(false)
+  const [microdataListLoading, setMicrodataListLoading] = useState(true)
   const onGrantDiscoveryChange = useCallback((discovery: GrantDiscovery | undefined, checking: boolean) => {
     setGrantDiscovery(discovery)
     setGrantChecking(checking)
@@ -1299,6 +1300,12 @@ export default function SurveyWorkspace() {
             <section className="workspace-step" aria-labelledby="step-microdata">
               <h2 id="step-microdata">Microdata access</h2>
               <p>Household-level records are fully anonymized, released in coded form, and held under a stricter licence than aggregated data. There are two routes to them.</p>
+              {(householdData || hasActiveGrant || grantChecking) && microdataListLoading && (
+                <div className="microdata-loading-callout" role="status" aria-live="polite">
+                  <span className="microdata-loading-spinner" aria-hidden="true"/>
+                  <span><strong>Loading microdata survey statistics</strong><small>Checking the datasets and survey rounds available to your account. Your download list will appear below.</small></span>
+                </div>
+              )}
               <div className="microdata-routes">
                 <article className="microdata-route microdata-route--primary">
                   <span className="microdata-route-step">Start here</span>
@@ -1328,8 +1335,9 @@ export default function SurveyWorkspace() {
                 The licence still stands on its own for everyone else: it is
                 published in full at tier 2, beside the request route. */}
             {householdData || hasActiveGrant ? (
-              <MicrodataPackagePicker grantDiscovery={grantDiscovery} grantChecking={grantChecking}
-                householdData={householdData} contributor={isContributor} testMode={testMode} licenceAccess={microdataAccess} />
+            <MicrodataPackagePicker grantDiscovery={grantDiscovery} grantChecking={grantChecking}
+              householdData={householdData} contributor={isContributor} testMode={testMode}
+              licenceAccess={microdataAccess} onLoadingChange={setMicrodataListLoading} />
             ) : (
               <MicrodataLicence access={microdataAccess} />
             )}
@@ -1403,7 +1411,7 @@ export default function SurveyWorkspace() {
                     {source.message && <span className="source-row-message">{source.message}</span>}
                     <span className="source-row-links">
                       <Link to={`/data/${source.resourceId}`}>Explore</Link>
-                      <a href={`${DATA_PORTAL}/home/item.html?id=${source.resourceId}`} target="_blank" rel="noreferrer">ArcGIS item<Icon name="external"/></a>
+                      <a href={`${DATA_PORTAL}/home/item.html?id=${source.resourceId}`} target="_blank" rel="noreferrer">Source details<Icon name="external"/></a>
                     </span>
                   </li>
                 ))}

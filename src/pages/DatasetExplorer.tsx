@@ -691,7 +691,7 @@ export default function DatasetExplorer() {
                       <ol>
                         <li><strong>Narrow the selection.</strong> Add a country and a survey round above. Most analyses need one country-round at a time, and that almost always lands under the limit.</li>
                         <li><strong>Run a bulk script.</strong> The Python and R scripts below already carry your current filters and page through the service in batches, so they handle results of any size.{isPublicRoute ? '' : ' They ask for your DIEM community sign-in when they run.'}</li>
-                        <li><strong>Query the service directly.</strong> The API links below work in ArcGIS Pro, QGIS or any HTTP client{isPublicRoute ? ', with no sign-in' : ', with the same authentication as this page'}.</li>
+                        <li><strong>Query the service directly.</strong> The API links below work in compatible GIS software or any HTTP client{isPublicRoute ? ', with no sign-in' : ', with the same authentication as this page'}.</li>
                       </ol>
                       <p className="download-alternatives-note">A DIEM-hosted large-export service, which will prepare very large files server-side and email a download link, is planned and will remove this limit.</p>
                     </div>

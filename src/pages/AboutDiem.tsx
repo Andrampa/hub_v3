@@ -45,7 +45,7 @@ export default function AboutDiem() {
           </div>
           <div className="about-introduction-copy">
             <p>FAO established DIEM to make timely, comparable evidence available where food crises and other shocks threaten rural livelihoods. Regular household surveys, hazard-impact assessments and geospatial monitoring help describe what has happened, who is affected and where support may be needed.</p>
-            <p>The Hub brings these products together without duplicating their source records. Public evidence remains connected to its authoritative ArcGIS item, while approved users can access household datasets and specialist tools through the appropriate permission pathways.</p>
+            <p>The Hub brings these products together without duplicating their source records. Public evidence stays connected to its original publication, while approved users can access household datasets and specialist tools through the appropriate permission pathways.</p>
           </div>
         </section>
 

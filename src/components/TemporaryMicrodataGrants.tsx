@@ -206,7 +206,7 @@ export function TemporaryMicrodataGrants({ onActiveGrantChange, onDiscoveryChang
           <h3 id="temporary-microdata-heading">Your temporary microdata access</h3>
           <p>
             Microdata views approved for your account for a limited period, restricted to the exact surveys in your
-            request. Access is granted and withdrawn in ArcGIS, so this list is checked again every time you open the
+            request. Access can change, so this list is checked again every time you open the
             page.
           </p>
         </div>

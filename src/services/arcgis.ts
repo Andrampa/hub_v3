@@ -165,9 +165,7 @@ export function itemResourceAction(item: ArcGISItem) {
   if (item.url) {
     return {
       href: item.url,
-      label: /^https?:\/\/(?:www\.)?arcgis\.com\//i.test(item.url)
-        ? 'Open ArcGIS application'
-        : 'Open resource',
+      label: 'Open resource',
     }
   }
   if (DIRECT_FILE_TYPES.has(item.type)) {
@@ -182,7 +180,7 @@ export function itemResourceAction(item: ArcGISItem) {
   }
   return {
     href: itemPortalPage(item.id),
-    label: 'View in ArcGIS',
+    label: 'View original product page',
   }
 }
 

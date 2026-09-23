@@ -55,9 +55,9 @@ export const INVITATION_COPY = {
   },
   unverified: {
     title: 'Action required: accept your data invitation',
-    message: 'A temporary microdata invitation is waiting for you in ArcGIS.',
+    message: 'A temporary microdata invitation is waiting for you in your DIEM community account.',
     warning: 'Your seven-day access period has already started.',
-    action: 'Open ArcGIS notifications',
+    action: 'Open account notifications',
   },
 } as const
 
@@ -218,7 +218,7 @@ export async function fetchPendingGrantInvitations(
   }
 }
 
-const ACCEPT_FAILED = 'The invitation could not be accepted. Open your ArcGIS notifications and accept it there.'
+const ACCEPT_FAILED = 'The invitation could not be accepted here. Open your account notifications and accept it there.'
 
 /**
  * Anything ArcGIS echoes back has to describe the invitation that was sent.

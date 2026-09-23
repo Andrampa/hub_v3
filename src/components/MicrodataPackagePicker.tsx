@@ -20,13 +20,14 @@ function storedKeys(account: string, scope: string): string[] {
 }
 
 /** The temporary-grant list owns grant discovery; this picker receives the same live result. */
-export function MicrodataPackagePicker({ grantDiscovery, grantChecking, householdData, contributor, testMode, licenceAccess }: {
+export function MicrodataPackagePicker({ grantDiscovery, grantChecking, householdData, contributor, testMode, licenceAccess, onLoadingChange }: {
   grantDiscovery?: GrantDiscovery
   grantChecking: boolean
   householdData: boolean
   contributor: boolean
   testMode: boolean
   licenceAccess: MicrodataAccess
+  onLoadingChange?: (loading: boolean) => void
 }) {
   const auth = useAuth()
   const account = auth.user?.username || ''
@@ -53,6 +54,10 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const [downloadCancelled, setDownloadCancelled] = useState(false)
   const preflightAbort = useRef<AbortController | undefined>(undefined)
   const downloadAbort = useRef<AbortController | undefined>(undefined)
+
+  useEffect(() => {
+    onLoadingChange?.(grantChecking || !grantDiscovery || checking || (!result && !error))
+  }, [checking, error, grantChecking, grantDiscovery, onLoadingChange, result])
 
   function remember(next: string[]) {
     if (!account) return

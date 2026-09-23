@@ -244,7 +244,7 @@ export default function HazardImpactAssessments() {
           <section className="impact-loading section-wrap" role="status">
             <span className="loader" />
             <strong>Building the hazard impact collection</strong>
-            <p>Reading current assessments and their group categories from ArcGIS.</p>
+            <p>Reading the latest published assessments and their categories.</p>
           </section>
         )}
 

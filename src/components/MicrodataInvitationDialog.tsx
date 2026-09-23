@@ -271,9 +271,9 @@ export function MicrodataInvitationDialog() {
 
             {state === 'confirmed' && (
               <p className="invitation-dialog-alternative">
-                Prefer to do this in ArcGIS?{' '}
+                Prefer to accept this through your account?{' '}
                 <a href={ARCGIS_NOTIFICATIONS_URL} target="_blank" rel="noreferrer" onClick={() => void refresh()}>
-                  Open ArcGIS notifications
+                  Open account notifications
                 </a>
               </p>
             )}

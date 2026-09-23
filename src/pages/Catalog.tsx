@@ -21,7 +21,7 @@ import {
   type FilterSpec,
   type UnsupportedFilter,
 } from '../lib/catalogFilters'
-import { CONTENT_GROUP_ID, buildDistinctThumbnailIndex } from '../services/arcgis'
+import { buildDistinctThumbnailIndex } from '../services/arcgis'
 import {
   CROSS_COUNTRY_CODE,
   EVIDENCE_PATHWAYS,
@@ -429,7 +429,7 @@ export default function Catalog() {
   // Counts, facet options and page total are all a floor until the last page
   // lands. Saying so is cheaper than freezing the controls, and it is the only
   // honest way to show a number that is about to change.
-  : <span className="results-read-at results-read-at--loading">Still reading the content group — counts will rise</span>)}<a href={`https://hqfao.maps.arcgis.com/home/group.html?id=${CONTENT_GROUP_ID}`} target="_blank" rel="noreferrer">View source group <span aria-hidden="true">↗</span></a></div></div>
+  : <span className="results-read-at results-read-at--loading">Still reading the catalogue — counts will rise</span>)}</div></div>
               <div className="card-grid">{visibleFamilies.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div>
               {!visibleFamilies.length && <div className="empty-state"><strong>No matching evidence found</strong><p>Try removing a filter or using a broader search term.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>}
               {pageCount > 1 && <nav className="pagination" aria-label="Catalog pages"><button disabled={safePage === 1} onClick={() => update('page', String(safePage - 1))}>Previous</button><span>Page <strong>{safePage}</strong> of {pageCount}</span><button disabled={safePage === pageCount} onClick={() => update('page', String(safePage + 1))}>Next</button></nav>}

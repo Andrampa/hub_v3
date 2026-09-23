@@ -66,5 +66,7 @@ describe('public item downloads', () => {
     expect(usesAnonymousDownload({ type: 'Web Mapping Application', access: 'public', url: 'https://x.org' })).toBe(false)
     expect(itemResourceAction({ id: 'x', type: 'StoryMap', url: 'https://storymaps.arcgis.com/x' } as ArcGISItem))
       .toEqual({ href: 'https://storymaps.arcgis.com/x', label: 'Open resource' })
+    expect(itemResourceAction({ id: 'x', type: 'Web Mapping Application', url: '' } as ArcGISItem))
+      .toEqual({ href: 'https://www.arcgis.com/home/item.html?id=x', label: 'View original product page' })
   })
 })

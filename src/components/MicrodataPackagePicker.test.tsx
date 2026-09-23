@@ -56,10 +56,14 @@ afterEach(async () => {
 })
 
 it('selects a live survey, preflights it, and offers a licensed package download', async () => {
+  const onLoadingChange = vi.fn()
   await act(async () => root.render(<MemoryRouter><MicrodataPackagePicker
     grantDiscovery={{ bundles: [], source: 'none' }} grantChecking={false}
     householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup"
+    onLoadingChange={onLoadingChange}
   /></MemoryRouter>))
+  expect(onLoadingChange).toHaveBeenCalledWith(true)
+  expect(onLoadingChange).toHaveBeenLastCalledWith(false)
   expect(host.textContent).toContain('Nigeria')
   const country = host.querySelector('details.microdata-country') as HTMLDetailsElement
   await act(async () => country.querySelector('summary')!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
