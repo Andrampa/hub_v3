@@ -89,6 +89,10 @@ Thumbs.db
   "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      { "regex": "^/([^.]*/)*[^.]*$", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
+      { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ],
     "rewrites": [
       { "source": "/api/microdata/invitations/validate", "function": { "functionId": "validateMicrodataInvitations", "region": "europe-west1" } },
       { "source": "**", "destination": "/index.html" }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-24 - Recover from stale route bundles after deployment
+
+- Refresh once when a previously open Hub tab cannot load a lazy route chunk after a new deployment. If loading still fails, show a retry control instead of a blank page.
+- Have Firebase revalidate HTML route responses, including SPA fallback routes, so a refresh picks up the current bundle while fingerprinted assets retain their normal caching.
+
 ## 2026-09-24 - Restore Hub traffic measurement
 
 - Added the existing DIEM Hub GA4 web-stream tag (`G-LPWNHSGJC5`) to the Vite entry page. The GA4 web stream should have enhanced measurement page views for browser history changes enabled to count in-app route navigation.

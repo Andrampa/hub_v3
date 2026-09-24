@@ -167,8 +167,13 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 
 Firebase Hosting serves the Vite `dist/` output and rewrites the exact
 invitation-validation API path to a second-generation Firebase Function in
-`europe-west1`; the remaining routes fall back to `index.html`. The function
-requires two Secret Manager values, `DIEM_ARCGIS_ADMIN_CLIENT_ID` and
+`europe-west1`; the remaining routes fall back to `index.html`.
+The deployment config revalidates extensionless SPA route responses and
+`index.html` so a reload receives the current bundle. If a tab opened before a
+deployment requests a deleted lazy chunk, Vite's preload-error handler reloads
+once; a route error boundary offers a manual reload if the failure persists.
+
+The function requires two Secret Manager values, `DIEM_ARCGIS_ADMIN_CLIENT_ID` and
 `DIEM_ARCGIS_ADMIN_CLIENT_SECRET`, for an ArcGIS application identity explicitly
 granted read access to the private registry item. No administrative credential
 is built into or returned to the SPA. Packaged downloads also require the

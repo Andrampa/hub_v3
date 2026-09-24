@@ -1,5 +1,8 @@
 .countries-main, .country-detail-main { background: #f6f7f4; }
 .route-loading { min-height: 100vh; display: grid; place-items: center; align-content: center; gap: 15px; color: var(--deep-blue); }
+.route-load-error { padding: 24px; text-align: center; }
+.route-load-error h1, .route-load-error p { margin: 0; max-width: 32rem; }
+.route-load-error button { padding: 10px 18px; border: 1px solid var(--fao-blue); background: var(--fao-blue); color: #fff; font-weight: 700; }
 
 .countries-hero { position: relative; z-index: 3; overflow: visible; min-height: 420px; background: var(--deep-blue); color: white; }
 .countries-hero::before { content: ''; position: absolute; inset: -40% -10% auto auto; width: 650px; height: 650px; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; box-shadow: 0 0 0 70px rgba(255,255,255,.018), 0 0 0 140px rgba(255,255,255,.018); }

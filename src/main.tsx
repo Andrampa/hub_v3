@@ -1,4 +1,4 @@
-import { lazy, StrictMode, Suspense } from 'react'
+import { Component, lazy, StrictMode, Suspense, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import App from './App'
@@ -51,6 +51,40 @@ function RouteLoading() {
   return <main className="route-loading" role="status"><span className="loader" /><strong>Opening DIEM Hub 3.0…</strong></main>
 }
 
+class RouteLoadError extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  render() {
+    if (this.state.failed) {
+      return <main className="route-loading route-load-error" role="alert">
+        <h1>This page could not load</h1>
+        <p>The Hub may have been updated while this tab was open. Reload to get the current version.</p>
+        <button type="button" onClick={() => window.location.reload()}>Reload page</button>
+      </main>
+    }
+    return this.props.children
+  }
+}
+
+// A deployment can remove chunks referenced by an already-open tab. Vite emits
+// this before the rejected lazy import reaches React. Refresh once, then let the
+// error boundary offer a manual retry if the failure continues.
+window.addEventListener('vite:preloadError', (event) => {
+  const key = 'diem-hub:chunk-reload-at'
+  try {
+    if (Date.now() - Number(sessionStorage.getItem(key)) < 60_000) return
+    sessionStorage.setItem(key, String(Date.now()))
+  } catch {
+    return
+  }
+  event.preventDefault()
+  window.location.reload()
+})
+
 /**
  * A route that has been renamed. The old address stays reachable for bookmarks,
  * shared links and promotion records outside this repository, and carries its
@@ -66,6 +100,7 @@ createRoot(document.getElementById('root')!).render(
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
+        <RouteLoadError>
         <Suspense fallback={<RouteLoading />}>
           <Routes>
             <Route path="/" element={<App />} />
@@ -103,6 +138,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
+        </RouteLoadError>
       </BrowserRouter>
     </AuthProvider>
   </StrictMode>,
