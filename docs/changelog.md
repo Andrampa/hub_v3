@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-24 - Clarified catalogue citation languages
+
+- Products linked from published monitoring survey rounds now show the three-language DIEM-Monitoring data citation from the guide alongside their publication citation. The publication citation retains its published title; its language controls appear only for living products. Both references can be copied separately.
+
 ## 2026-09-23 - Plain-language source and access copy
 
 - Removed platform names from Hub-authored page copy, product actions, loading

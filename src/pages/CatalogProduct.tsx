@@ -7,12 +7,13 @@ import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatDate, isPhotoGalleryWrapper } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
-import { CITATION_LANGUAGES, citationModel, citationRound, citationText, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
+import { CITATION_LANGUAGES, citationForm, citationModel, citationRound, citationText, collectionCitationModel, defaultCitationLanguage, type CitationLanguage } from '../lib/citation'
 import { CitationText } from '../components/CitationText'
 import { AnonymousDownloadLink } from '../components/AnonymousDownloadLink'
 import { fetchStoryMapFlickrAlbum, isExplorableProduct, itemResourceAction, itemThumbnail, publicItemDataUrl, usesAnonymousDownload } from '../services/arcgis'
 import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
 import { fetchPhotoGalleries, galleryForFlickrAlbum, galleryForLegacyItem, type PhotoGallery } from '../services/photoGalleries'
+import { fetchSurveyReleases } from '../services/monitoring'
 
 type ProductState =
   | { status: 'loading' }
@@ -68,8 +69,11 @@ export default function CatalogProduct() {
   /** Set when this address belongs to a gallery rather than to a product. */
   const [galleryPath, setGalleryPath] = useState('')
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const [dataCopyState, setDataCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const citationRef = useRef<HTMLParagraphElement>(null)
+  const dataCitationRef = useRef<HTMLParagraphElement>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [linkedMonitoringRound, setLinkedMonitoringRound] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -130,6 +134,17 @@ export default function CatalogProduct() {
 
   const item = state.status === 'available' ? state.item : undefined
 
+  useEffect(() => {
+    setLinkedMonitoringRound(false)
+    if (!item) return
+    const controller = new AbortController()
+    void fetchSurveyReleases(controller.signal)
+      .then((releases) => setLinkedMonitoringRound(releases.some((release) =>
+        release.products.some((product) => product.itemId?.toLowerCase() === item.id.toLowerCase()))))
+      .catch(() => { /* A schedule outage must not block the product page. */ })
+    return () => controller.abort()
+  }, [item])
+
   /**
    * The citation offers the three reference forms DIEM publishes, and opens on
    * the product's own language where that is one of them, so the common case is
@@ -184,6 +199,8 @@ export default function CatalogProduct() {
     ? citationModel(item, citationLanguage, { round: citationRound(item, citationSiblings) })
     : undefined
   const citation = citationParts ? citationText(citationParts) : undefined
+  const isMonitoringRound = linkedMonitoringRound
+  const dataCitationParts = isMonitoringRound ? collectionCitationModel(citationLanguage) : undefined
   const countries = item?.countries.map(countryDefinition) || []
   const categories = item ? publicCategories(item) : []
   const licence = item ? licenceFor(item) : undefined
@@ -215,6 +232,25 @@ export default function CatalogProduct() {
       setCopyState('failed')
     }
     window.setTimeout(() => setCopyState('idle'), 6000)
+  }
+
+  const copyDataCitation = async () => {
+    if (!dataCitationParts) return
+    try {
+      await navigator.clipboard.writeText(citationText(dataCitationParts))
+      setDataCopyState('copied')
+    } catch {
+      const node = dataCitationRef.current
+      if (node) {
+        const range = document.createRange()
+        range.selectNodeContents(node)
+        const selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      }
+      setDataCopyState('failed')
+    }
+    window.setTimeout(() => setDataCopyState('idle'), 6000)
   }
 
   const openPreview = () => {
@@ -371,21 +407,35 @@ export default function CatalogProduct() {
                 <section className="catalog-product-citation" aria-labelledby="citation-heading">
                   <div className="catalog-product-citation-head">
                     <h2 id="citation-heading">Citation</h2>
-                    <div className="catalog-product-citation-languages" role="group" aria-label="Citation language">
-                      {CITATION_LANGUAGES.map((language) => (
-                        <button
-                          type="button"
-                          key={language}
-                          aria-pressed={language === citationLanguage}
-                          onClick={() => setCitationLanguage(language)}
-                        >{language}</button>
-                      ))}
-                    </div>
+                    {(citationForm(item) === 'living' || isMonitoringRound) && (
+                      <div className="catalog-product-citation-languages" role="group" aria-label="Citation language">
+                        {CITATION_LANGUAGES.map((language) => (
+                          <button
+                            type="button"
+                            key={language}
+                            aria-pressed={language === citationLanguage}
+                            onClick={() => { setCitationLanguage(language); setCopyState('idle'); setDataCopyState('idle') }}
+                          >{language}</button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <p ref={citationRef}>{citationParts && <CitationText model={citationParts}/>}</p>
+                  <p ref={citationRef} lang={citationLanguage === 'Français' ? 'fr' : citationLanguage === 'Español' ? 'es' : 'en'}>{citationParts && <CitationText model={citationParts}/>}</p>
+                  {citationForm(item) === 'static' && <p className="catalog-product-citation-note">The publication citation keeps its published title.{family && family.languages.length > 1 ? ' To cite another language edition, open it under Available languages.' : ''}</p>}
                   <button type="button" className="catalog-product-citation-copy" onClick={() => void copyCitation()}>
-                    {copyState === 'copied' ? 'Citation copied' : copyState === 'failed' ? 'Copy blocked — press Ctrl+C' : 'Copy citation'}
+                    {copyState === 'copied' ? 'Citation copied' : copyState === 'failed' ? 'Copy blocked — press Ctrl+C' : isMonitoringRound ? 'Copy publication citation' : 'Copy citation'}
                   </button>
+                  {dataCitationParts && (
+                    <div className="catalog-product-data-citation">
+                      <h3>When using DIEM-Monitoring data</h3>
+                      <p>Use this data citation in products or publications that mention or include DIEM data. Replace the bracketed date with the date you accessed the data.</p>
+                      <p ref={dataCitationRef} lang={citationLanguage === 'Français' ? 'fr' : citationLanguage === 'Español' ? 'es' : 'en'}><CitationText model={dataCitationParts}/></p>
+                      <button type="button" className="catalog-product-citation-copy" onClick={() => void copyDataCitation()}>
+                        {dataCopyState === 'copied' ? 'Citation copied' : dataCopyState === 'failed' ? 'Copy blocked — press Ctrl+C' : 'Copy data citation'}
+                      </button>
+                      <p className="sr-only" role="status">{dataCopyState === 'copied' ? 'Data citation copied to the clipboard.' : dataCopyState === 'failed' ? 'This browser blocked the clipboard. The data citation is selected; press Control or Command and C to copy it.' : ''}</p>
+                    </div>
+                  )}
                   <p className="sr-only" role="status">
                     {copyState === 'copied' ? 'Citation copied to the clipboard.' : copyState === 'failed' ? 'This browser blocked the clipboard. The citation is selected; press Control or Command and C to copy it.' : ''}
                   </p>

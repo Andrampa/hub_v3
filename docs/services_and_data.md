@@ -236,6 +236,9 @@ Rules:
 - The generic DIEM-Monitoring collection citation on `/data` and `/data/guide`
   comes from the same model in the living form, with the localized
   `[Cited date]` placeholder the surrounding text asks readers to replace.
+- Product pages for items linked from a published monitoring survey round show
+  that collection citation in English, French and Spanish alongside the
+  product's own publication citation. The copy actions are separate.
 
 ## Caches
 

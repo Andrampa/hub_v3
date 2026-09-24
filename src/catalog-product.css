@@ -110,8 +110,11 @@
 .catalog-product-citation-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .catalog-product-citation h2 { margin: 0; }
 .catalog-product-citation p { max-width: 900px; margin: 16px 0 18px; overflow-wrap: anywhere; color: var(--ink-muted); font-size: var(--text-small); line-height: 1.65; }
+.catalog-product-citation .catalog-product-citation-note { margin-top: -8px; font-size: var(--text-micro); }
 .catalog-product-citation-languages { margin: 0; }
 .catalog-product-citation-copy { padding: 9px 13px; border: 1px solid var(--fao-blue); background: #fff; color: var(--fao-blue); font-weight: 700; }
+.catalog-product-data-citation { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line-soft); }
+.catalog-product-data-citation h3 { margin: 0; color: var(--deep-blue); font-size: var(--text-body); }
 
 @media (max-width: 720px) {
   .catalog-product-citation { padding: 22px 20px; }
