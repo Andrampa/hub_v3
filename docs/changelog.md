@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-24 - Restore Hub traffic measurement
+
+- Added the existing DIEM Hub GA4 web-stream tag (`G-LPWNHSGJC5`) to the Vite entry page. The GA4 web stream should have enhanced measurement page views for browser history changes enabled to count in-app route navigation.
+
 ## 2026-09-24 - Clarified catalogue citation languages
 
 - Products linked from published monitoring survey rounds now show the three-language DIEM-Monitoring data citation from the guide alongside their publication citation. The publication citation retains its published title; its language controls appear only for living products. Both references can be copied separately.
