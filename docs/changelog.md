@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-09-25 - Labelled microdata values
+
+- The microdata package picker offers coded values (default), labels, or both.
+  Labelled CSVs replace codes with coded-value domain labels in the same columns
+  and rows; unknown codes stay raw and are reported in `manifest.json`
+  (`package_schema_version` 2). Every survey folder gains `value_labels.csv`.
+- Labels are gated by a new read-only audit, `scripts/audit_microdata_domains.py`,
+  which compares domains with the V1/V2 codebooks and records per-field domain
+  digests in `src/data/auditedDomains.json`. Preflight refuses labels when the
+  live schema or a grant view no longer matches. The first audit found codebook
+  differences in V1/V2 and no domains in V3, so labels remain unavailable until
+  the domains are fixed and the audit is recorded.
+- The package budget now limits source tables (20) separately from the CSV
+  files written, and counts coded and labelled bytes together.
+
 ## 2026-09-24 - Recover from stale route bundles after deployment
 
 - Refresh once when a previously open Hub tab cannot load a lazy route chunk after a new deployment. If loading still fails, show a retry control instead of a blank page.

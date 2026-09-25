@@ -196,6 +196,57 @@ A V3 survey folder holds `..._household_mandatory.csv` and, when chosen,
   states the V3 join explicitly.
 - No account name in the archive.
 
+### 8a. Coded and labelled values (`package_schema_version: 2`)
+
+The picker offers **Coded values** (default), **Labels** or **Both**.
+
+- Labels replace codes in the same columns: `..._labelled.csv` has the same
+  field names, rows and row order as the coded file. Each page is fetched once
+  and encoded into every requested output, so "Both" costs no extra requests.
+- Labels come only from coded-value domains on the live layer schema. A null or
+  empty value stays empty; a code with no domain entry stays as the raw code and
+  is counted; a domain repeating a code with conflicting labels leaves that
+  field coded. Range domains and fields without a domain pass through.
+- **Gate.** `scripts/audit_microdata_domains.py` (read-only; ArcGIS Pro Python,
+  `GIS("home")`) checks each master against its codebook (V1/V2), the V3 tables
+  against each other, labels a spreadsheet could evaluate as formulas, and
+  every grant view against its master. With `--write` it records a per-field
+  SHA-256 domain digest for each passing component in
+  `src/data/auditedDomains.json`. Preflight recomputes digests from the
+  resolved schema: a master must be the audited item with every audited domain
+  unchanged; a grant view may expose a subset of its master's fields but no
+  changed or new domain. Any mismatch leaves labels unverified
+  (`not_audited`, `domain_changed`, `view_differs`, `unsafe_label`) and refuses
+  Labels/Both before any row is downloaded. Codes stay available. The picker
+  disables Labels/Both outright for a generation with no audited component.
+- **Mapping file.** Every survey folder has `value_labels.csv`
+  (`component,item_id,layer_id,variable,code,label`) in every mode, listing only
+  verified tables. An unverified table contributes no rows, so an unaudited
+  mapping cannot be mistaken for a codebook; the README names it and why.
+- **Manifest.** Top level: `values`, and `value_labels[]` with per-table
+  `status`, `reason`, `basis` and `audited_at`. Per file: `values`
+  (`coded`/`labelled`); labelled files add `label_source`, `labelled_fields`,
+  `fields_without_domain`, `ambiguous_domains` and
+  `unlabelled_codes: { field: { count, codes } }` (at most 20 sample codes).
+- **Limits.** `sourceTables` (20) limits tables read; the review shows tables
+  read and CSV files written separately. The 40 MB byte budget counts every CSV
+  written, coded and labelled together, as chunks are encoded.
+- **Digest parity.** `microdataLabels.test.ts` pins a SHA-256 test vector the
+  Python script reproduces; change both together.
+
+First audit, 2026-09-25 (nothing recorded; labels unavailable):
+
+- V1 (251 coded fields) and V2 (291) are blocked by codebook differences:
+  label wording (`fies_*_hhs`, `income_*`, `ls_*`, `crp_irrigation`), derived
+  indicators with no domain (`fcg`, `hhg`, `lcsi`, `rcsi_class`), codes not in
+  the codebook (`language`; V2 `fies_*_hhs` 888/999), `*_other` and
+  `resp_is*producer` domains the codebook does not define, and an empty V2
+  codebook label for `crp_storage` code 1.
+- V3 mandatory and optional have **no** coded-value domains, so there is
+  nothing to label from; the audit blocks tables with none.
+- Both current grant views (V2) match their master, but carry no component
+  tag or properties block, so the Hub does not list them.
+
 ## 9. Documentation in the package
 
 Version-matched **links**, per the decision. Same fail-closed rule the

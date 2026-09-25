@@ -1,5 +1,30 @@
 # Handoff
 
+## Active: labelled microdata values
+
+Status on 2026-09-25: implemented and tested on `main` (uncommitted), but no
+component is audited, so the picker offers coded values only. Contract:
+`docs/microdata_access_restructure.md` §8a. Remaining, in order:
+
+1. Resolve the audit findings recorded in §8a: align V1/V2 domain labels and
+   codes with the codebooks (or correct the codebooks), add domains for
+   `fcg`, `hhg`, `lcsi`, `rcsi_class`, decide on `*_other` /
+   `resp_is*producer` domains (fix, or pass `--accept-uncodebooked`), and add
+   coded-value domains to the V3 mandatory and optional tables (in scope, per
+   the user on 2026-09-25). V3 needs a label source first (its questionnaire
+   choice lists); when a V3 codebook is published, add it to `CODEBOOKS` in the
+   audit script so V3 moves from `consistency_only` to `codebook_matched`.
+2. Re-run with `--write` and commit `src/data/auditedDomains.json`:
+   `"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" scripts/audit_microdata_domains.py --report audit_report.json --write`
+3. Before relying on "Both" at the ten-survey ceiling, repeat the browser
+   memory probes (ten V2 surveys, V3 COD round 99 both tables) in Both mode and
+   lower the byte budget for Both if peak heap exceeds the original probes.
+4. Formula-injection guarding and the `csvCell` bare-`\r` fix are in a separate
+   task (worktree `.claude/worktrees/vibrant-jones-4adc5f`); labelled files pick
+   it up automatically once merged.
+
+Verification: `npx vitest run src/services/microdataLabels.test.ts src/services/microdataBundle.test.ts src/components/MicrodataPackagePicker.test.tsx` and `npm run build`.
+
 ## Active: survey-first microdata packages
 
 Status on 2026-09-23: the reviewed plan is in
