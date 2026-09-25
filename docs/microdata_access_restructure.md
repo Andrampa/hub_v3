@@ -50,7 +50,14 @@ The resource manifest declares those two views explicitly.
 - The grants section renders nothing at all when there is no grant. No empty
   state. An absence is not announced.
 - The full microdata licence is present wherever download is offered, at the
-  download point. No new acceptance checkbox unless policy owners ask for one.
+  download point. Since 2026-09-25 (requested by the product owner) the package
+  download sits in a final "Download" step directly under the review: the full
+  licence is in a collapsed disclosure, and the always-visible download button
+  stays disabled until the user checks "I have read the microdata licence and
+  accept its conditions" inside it. Acceptance lasts for the page visit and is
+  not stored; switching accounts clears it. After acceptance closes the
+  disclosure, keyboard focus moves to the download button when the access
+  check is complete. The button's hint describes checks in progress and errors.
 - No account name or token-bearing URL is written into an archive. Protected
   rows belong only in the authorized CSVs inside that archive; never put them
   in browser storage, logs, URLs or the manifest.

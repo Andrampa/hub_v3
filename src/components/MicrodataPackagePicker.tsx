@@ -46,6 +46,9 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const [selectedOnly, setSelectedOnly] = useState(false)
   const [includeOptional, setIncludeOptional] = useState(false)
   const [valuesChoice, setValuesChoice] = useState<MicrodataValues>('codes')
+  // Acknowledged once per visit; the terms are the same for every package.
+  const [licenceAccepted, setLicenceAccepted] = useState(false)
+  const [licenceOpen, setLicenceOpen] = useState(false)
   const [limitNotice, setLimitNotice] = useState<string>()
   const [preflight, setPreflight] = useState<{ fingerprint: string; records: number; tables: number; files: number }>()
   const [preflightError, setPreflightError] = useState<string>()
@@ -56,6 +59,13 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const [downloadCancelled, setDownloadCancelled] = useState(false)
   const preflightAbort = useRef<AbortController | undefined>(undefined)
   const downloadAbort = useRef<AbortController | undefined>(undefined)
+  const licenceSummary = useRef<HTMLElement | null>(null)
+  const downloadButton = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    setLicenceAccepted(false)
+    setLicenceOpen(false)
+  }, [account])
 
   useEffect(() => {
     onLoadingChange?.(grantChecking || !grantDiscovery || checking || (!result && !error))
@@ -136,8 +146,28 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
     sources: selected.flatMap((survey) => survey.components.map((part) => `${survey.key}:${part.itemId}:${part.grantId || ''}:${part.bulkExportEnabled}`)),
   })
 
+  const checked = preflight?.fingerprint === fingerprint
+  const optionalBlocked = Boolean(optionalUnusable.length && includeOptional)
+  const downloadReady = checked && licenceAccepted && !optionalBlocked && !downloadProgress && !preflightProgress
+  let downloadHint = 'Ready to download.'
+  if (!selected.length) downloadHint = 'Select at least one survey to build a package.'
+  else if (optionalBlocked) downloadHint = 'Resolve the optional-table issue above first.'
+  else if (downloadProgress) downloadHint = 'Building your package. You can cancel the download below.'
+  else if (preflightProgress) downloadHint = 'Checking access and counting records. Please wait.'
+  else if (preflightError) downloadHint = 'The access check failed. Read the message above, then check again.'
+  else if (!checked && !licenceAccepted) downloadHint = 'Check access above, then open and accept the microdata licence.'
+  else if (!checked) downloadHint = 'Check access and count records above to continue.'
+  else if (!licenceAccepted) downloadHint = 'Open the microdata licence above and accept it to download.'
+
   useEffect(() => () => preflightAbort.current?.abort(), [fingerprint])
   useEffect(() => () => downloadAbort.current?.abort(), [fingerprint])
+  useEffect(() => {
+    setPreflight(undefined)
+    setPreflightError(undefined)
+    setDownloadError(undefined)
+    setDownloadOutcome(undefined)
+    setDownloadCancelled(false)
+  }, [fingerprint])
 
   async function countSelected() {
     const controller = new AbortController()
@@ -182,7 +212,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
       anchor.download = bundle.fileName
       anchor.click()
       window.setTimeout(() => URL.revokeObjectURL(url), 0)
-      setDownloadOutcome(`${bundle.fileName} downloaded with ${formatNumber(bundle.recordCount)} records in ${formatNumber(bundle.fileCount)} data files.`)
+      setDownloadOutcome(`${bundle.fileName} downloaded with ${formatNumber(bundle.recordCount)} records in ${formatNumber(bundle.fileCount)} data file${bundle.fileCount === 1 ? '' : 's'}.`)
     } catch (failure) {
       if (controller.signal.aborted) setDownloadCancelled(true)
       else setDownloadError((failure as Error)?.message || 'The package could not be built.')
@@ -298,20 +328,52 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
           </div>
         </>
       )}
-      <p><Link to="/data/microdata-request">Need access to another survey? Request direct access.</Link></p>
-      <MicrodataLicence access={licenceAccess}/>
-      {selected.length > 0 && <div className="microdata-download-actions">
-        <div className="package-actions">
-          <button type="button" className="package-download" disabled={preflight?.fingerprint !== fingerprint || Boolean(optionalUnusable.length && includeOptional) || Boolean(downloadProgress || preflightProgress)} onClick={() => void downloadPackage()}>
-            {downloadProgress ? 'Building microdata package…' : 'Download microdata package'}
-          </button>
-          {downloadProgress && <button type="button" onClick={() => downloadAbort.current?.abort()}>Cancel download</button>}
+      {surveys.length > 0 ? (
+        <div className="microdata-download-actions" aria-labelledby="microdata-download-heading">
+          <h3 id="microdata-download-heading">Download</h3>
+          <ol className="download-checklist">
+            <li className={selected.length ? 'is-done' : undefined}><span className="download-checklist-number" aria-hidden="true">{selected.length ? '✓' : '1'}</span>Select surveys</li>
+            <li className={checked ? 'is-done' : undefined}><span className="download-checklist-number" aria-hidden="true">{checked ? '✓' : '2'}</span>Check access</li>
+            <li className={licenceAccepted ? 'is-done' : undefined}><span className="download-checklist-number" aria-hidden="true">{licenceAccepted ? '✓' : '3'}</span>Accept the licence</li>
+          </ol>
+          <details className="licence-disclosure" open={licenceOpen} onToggle={(event) => setLicenceOpen(event.currentTarget.open)}>
+            <summary ref={licenceSummary}>
+              <span className="licence-disclosure-mark" aria-hidden="true">{licenceAccepted ? '✓' : '§'}</span>
+              <span>
+                <strong>{licenceAccepted ? 'Microdata licence accepted' : 'Read and accept the microdata licence'}</strong>
+                <small>Confidentiality, research and statistical use only, no redistribution, citation.</small>
+              </span>
+              <span className="licence-disclosure-toggle">{licenceOpen ? 'Hide' : licenceAccepted ? 'Review' : 'Open'}</span>
+            </summary>
+            <MicrodataLicence access={licenceAccess}/>
+            <label className="licence-accept">
+              <input type="checkbox" checked={licenceAccepted} onChange={(event) => {
+                setLicenceAccepted(event.target.checked)
+                if (event.target.checked) {
+                  setLicenceOpen(false)
+                  requestAnimationFrame(() => {
+                    if (checked) downloadButton.current?.focus()
+                    else licenceSummary.current?.focus()
+                  })
+                }
+              }}/>
+              <span>I have read the microdata licence and accept its conditions for the data in this package.</span>
+            </label>
+          </details>
+          <div className="package-actions">
+            <button ref={downloadButton} type="button" className="package-download" disabled={!downloadReady} aria-describedby="microdata-download-hint" onClick={() => void downloadPackage()}>
+              {downloadProgress ? 'Building microdata package…' : 'Download microdata package'}
+            </button>
+            {downloadProgress && <button type="button" onClick={() => downloadAbort.current?.abort()}>Cancel download</button>}
+          </div>
+          <p id="microdata-download-hint" className="download-hint" aria-live="polite">{downloadHint}</p>
+          {downloadProgress && <p className="package-status" role="status">{downloadProgress.stage.replace('-', ' ')}{downloadProgress.label ? ` — ${downloadProgress.label}` : ''}{downloadProgress.total > 1 ? ` (${downloadProgress.completed} of ${downloadProgress.total})` : ''}</p>}
+          {downloadError && <p className="package-error" role="alert">The package was not created. {downloadError} Your selection has been kept.</p>}
+          {downloadCancelled && <p className="package-outcome" role="status">The package was cancelled. Nothing was downloaded, and your selection has been kept.</p>}
+          {downloadOutcome && <p className="package-outcome" role="status">{downloadOutcome}</p>}
         </div>
-        {downloadProgress && <p className="package-status" role="status">{downloadProgress.stage.replace('-', ' ')}{downloadProgress.label ? ` — ${downloadProgress.label}` : ''}{downloadProgress.total > 1 ? ` (${downloadProgress.completed} of ${downloadProgress.total})` : ''}</p>}
-        {downloadError && <p className="package-error" role="alert">The package was not created. {downloadError} Your selection has been kept.</p>}
-        {downloadCancelled && <p className="package-outcome" role="status">The package was cancelled. Nothing was downloaded, and your selection has been kept.</p>}
-        {downloadOutcome && <p className="package-outcome" role="status">{downloadOutcome}</p>}
-      </div>}
+      ) : <MicrodataLicence access={licenceAccess}/>}
+      <p><Link to="/data/microdata-request">Need access to another survey? Request direct access.</Link></p>
     </section>
   )
 }

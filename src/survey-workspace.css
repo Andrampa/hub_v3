@@ -213,6 +213,39 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .package-error { margin: 14px 0 0; padding: 12px 15px; background: #fdf0e3; border-left: 3px solid #b4560d; color: #7a4a1b; font-size: var(--text-small); line-height: 1.65; }
 .package-error strong { color: #8a4b12; }
 
+/* Final step: licence acknowledgement directly above the download button. */
+.microdata-download-actions { margin-top: 28px; padding: 22px 24px; border: 1px solid var(--line); border-top: 3px solid var(--fao-blue); background: var(--paper); }
+.microdata-download-actions h3 { margin: 0 0 12px; color: var(--deep-blue); font-size: 19px; }
+.download-checklist { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 16px; padding: 0; list-style: none; }
+.download-checklist li { display: flex; align-items: center; gap: 8px; color: var(--ink-faint); font-size: var(--text-small); }
+.download-checklist-number { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--line); border-radius: 50%; font-size: 11px; font-weight: 700; }
+.download-checklist li.is-done { color: #214d37; }
+.download-checklist li.is-done .download-checklist-number { border-color: #2f6a4c; background: #2f6a4c; color: white; }
+.licence-disclosure { border: 1px solid var(--line); background: var(--mist); }
+.licence-disclosure[open] { background: white; }
+.licence-disclosure > summary { display: flex; align-items: center; gap: 14px; padding: 13px 16px; cursor: pointer; list-style: none; }
+.licence-disclosure > summary::-webkit-details-marker { display: none; }
+.licence-disclosure > summary:hover .licence-disclosure-toggle { background: var(--deep-blue); }
+.licence-disclosure > summary:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 2px; }
+.licence-disclosure-mark { display: grid; flex: none; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--deep-blue); color: white; font-weight: 700; }
+.licence-disclosure > summary > span:nth-child(2) { display: grid; flex: 1; gap: 2px; }
+.licence-disclosure > summary strong { color: var(--deep-blue); font-size: 14px; }
+.licence-disclosure > summary small { color: var(--ink-faint); font-size: var(--text-small); }
+.licence-disclosure-toggle { flex: none; padding: 7px 14px; background: var(--fao-blue); color: white; font-size: 12px; font-weight: 700; }
+.licence-disclosure .microdata-licence { margin: 0; }
+.licence-accept { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 16px; border-top: 3px solid var(--orange); background: #fff8f1; color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.5; cursor: pointer; }
+.licence-accept input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--fao-blue); cursor: pointer; }
+.licence-disclosure:has(.licence-accept input:checked) .licence-disclosure-mark { background: #2f6a4c; }
+.microdata-download-actions .package-actions { margin-top: 16px; }
+.microdata-download-actions .package-download { padding: 14px 26px; font-size: 14px; }
+.microdata-download-actions .package-download:disabled { background: #c7d3d8; color: #4f636b; opacity: 1; cursor: not-allowed; }
+.download-hint { margin: 10px 0 0; color: var(--ink-faint); font-size: var(--text-small); }
+@media (max-width: 640px) {
+  .microdata-download-actions { padding: 18px 16px; }
+  .licence-disclosure > summary { display: grid; grid-template-columns: 30px minmax(0, 1fr); }
+  .licence-disclosure-toggle { grid-column: 2; justify-self: start; }
+}
+
 .technical-resources { margin: 26px 0 0; background: var(--paper); border: 1px solid var(--line-soft); }
 .technical-resources > summary { padding: 17px 24px; color: var(--deep-blue); font-size: 13px; font-weight: 700; cursor: pointer; }
 .technical-resources > summary:hover { color: var(--fao-blue); }

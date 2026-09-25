@@ -35,6 +35,7 @@ let host: HTMLDivElement
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  auth.user.username = 'alice'
   sessionStorage.clear()
   host = document.createElement('div')
   document.body.append(host)
@@ -82,12 +83,22 @@ it('selects a live survey, preflights it, and offers a licensed package download
     budget: expect.objectContaining({ records: 50_000, uncompressedBytes: 40_000_000 }),
   }))
   const download = Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Download microdata package') as HTMLButtonElement
+  expect(download.disabled).toBe(true)
+  expect(host.textContent).toContain('Open the microdata licence above and accept it to download.')
+  const disclosure = host.querySelector('details.licence-disclosure') as HTMLDetailsElement
+  expect(disclosure.open).toBe(false)
+  expect(disclosure.textContent).toContain('Your microdata licence')
+  await acceptLicence()
+  expect(disclosure.textContent).toContain('Microdata licence accepted')
   expect(download.disabled).toBe(false)
-  expect(host.textContent).toContain('Your microdata licence')
   await act(async () => download.click())
   expect(buildMicrodataBundle).toHaveBeenCalledOnce()
-  expect(host.textContent).toContain('DIEM_microdata_2026-09-23.zip downloaded')
+  expect(host.textContent).toContain('in 1 data file.')
 })
+
+async function acceptLicence() {
+  await act(async () => (host.querySelector('.licence-accept input') as HTMLInputElement).click())
+}
 
 async function renderWithSelection() {
   await act(async () => root.render(<MemoryRouter><MicrodataPackagePicker
@@ -122,6 +133,7 @@ it('counts output files for Both and invalidates the check when the values choic
   await act(async () => button('Check access and count records').click())
   expect(preflightMicrodataPackage).toHaveBeenCalledWith(expect.objectContaining({ values: 'both' }))
   expect(host.textContent).toContain('from 1 table, written as 2 CSV files')
+  await acceptLicence()
   expect(button('Download microdata package').disabled).toBe(false)
   await act(async () => valueRadio('Labels').click())
   expect(button('Download microdata package').disabled).toBe(true)
@@ -149,4 +161,32 @@ it('gates labels on each selected V3 table, not the generation', async () => {
   expect(valueRadio('Labels').disabled).toBe(true)
   expect(valueRadio('Coded values').checked).toBe(true)
   expect(host.textContent).toContain('not yet available for the V3 optional table: its value labels have not passed the label audit')
+})
+
+it('does not carry licence acceptance to another signed-in account', async () => {
+  await renderWithSelection()
+  await acceptLicence()
+  expect((host.querySelector('.licence-accept input') as HTMLInputElement).checked).toBe(true)
+  auth.user.username = 'bob'
+  await act(async () => root.render(<MemoryRouter><MicrodataPackagePicker
+    grantDiscovery={{ bundles: [], source: 'none' }} grantChecking={false}
+    householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup"
+  /></MemoryRouter>))
+  expect((host.querySelector('.licence-accept input') as HTMLInputElement).checked).toBe(false)
+})
+
+it('explains a failed access check beside the disabled download button', async () => {
+  preflightMicrodataPackage.mockRejectedValueOnce(new Error('The source could not be reached.'))
+  await renderWithSelection()
+  await act(async () => button('Check access and count records').click())
+  expect(host.textContent).toContain('The source could not be reached.')
+  expect(host.querySelector('#microdata-download-hint')?.textContent)
+    .toBe('The access check failed. Read the message above, then check again.')
+  expect(button('Download microdata package').disabled).toBe(true)
+  const survey = host.querySelector('details.microdata-country input[type="checkbox"]') as HTMLInputElement
+  await act(async () => survey.click())
+  await act(async () => survey.click())
+  expect(host.textContent).not.toContain('The source could not be reached.')
+  expect(host.querySelector('#microdata-download-hint')?.textContent)
+    .toBe('Check access above, then open and accept the microdata licence.')
 })

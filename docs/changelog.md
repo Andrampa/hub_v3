@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-25 - Microdata download step with licence acknowledgement
+
+- The microdata package download now follows the package review directly, in
+  a "Download" step with a three-item progress checklist (select, check
+  access, accept licence). The full licence is in a collapsible panel; the
+  download button is always visible but stays disabled, with a hint saying
+  what is missing, until access is checked and the licence is accepted.
+- The hint now explains checks in progress and failed checks. Acceptance clears
+  on an account switch, and closing the licence after acceptance moves keyboard
+  focus to the download button when it is ready. The phone-size licence row
+  gives its text room to wrap and places Review beneath it.
+
 ## 2026-09-25 - Labelled values enabled for V1 and V2 microdata
 
 - ArcGIS coded-value domains are now the authoritative microdata labels. The
