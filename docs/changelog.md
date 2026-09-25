@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-25 - Neutralise spreadsheet formulas in CSV exports
+
+- All CSV exports now prefix `'` to text values that start with `=`, `+`, `-`, `@`, tab or carriage return, so spreadsheets do not run them as formulas. Numeric values, including negative codes such as `-99`, are unchanged. Aggregated survey packages record the rule in README.txt and manifest.json; the household microdata package will record it once concurrent work on `microdataBundle.ts` lands.
+- CSV fields containing a bare carriage return are now quoted.
+
 ## 2026-09-24 - Recover from stale route bundles after deployment
 
 - Refresh once when a previously open Hub tab cannot load a lazy route chunk after a new deployment. If loading still fails, show a retry control instead of a blank page.

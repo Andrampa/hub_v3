@@ -1,6 +1,7 @@
 import { HUB_ORIGIN } from '../lib/hubOrigin'
 import {
   BROWSER_EXPORT_LIMIT,
+  CSV_TEXT_NEUTRALISATION,
   fetchLayerRows,
   rowsToCsv,
   usableFields,
@@ -687,6 +688,7 @@ async function assembleSurveyBundle(options: BundleOptions): Promise<BundleResul
      */
     hub: HUB_ORIGIN,
     licence: 'CC BY 4.0 with the FAO Statistical Database Terms of Use',
+    csv_text_neutralisation: CSV_TEXT_NEUTRALISATION,
     test_data: testData,
     surveys: surveyMetadata,
     files: manifestFiles,
@@ -721,6 +723,7 @@ type BundleManifest = {
   surveys: Array<{ country: string; round: number; generation: string; folder: string; themes: string[] }>
   files: ManifestFile[]
   not_included: Array<{ surveyKey: string; themeLabel: string; reason: string }>
+  csv_text_neutralisation?: string
 }
 
 /** The human counterpart of the manifest, including what is deliberately absent. */
@@ -775,6 +778,8 @@ export function readmeText(manifest: BundleManifest, recordCount: number) {
   lines.push(
     'Every file records its exact source service, layer and filter in',
     'manifest.json, so any table here can be reproduced or refreshed.',
+    '',
+    CSV_TEXT_NEUTRALISATION,
     '',
   )
 

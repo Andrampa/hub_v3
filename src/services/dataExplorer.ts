@@ -699,14 +699,31 @@ function fetchAllAttributes(
   return fetchLayerRows(definition.layerUrl, definition.layer, where, requester, expectedCount)
 }
 
+/** A whole plain decimal number, which spreadsheets read as a value, not a formula. */
+const DECIMAL_NUMBER = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/
+/** Leading characters Excel and LibreOffice may evaluate as a formula. */
+const FORMULA_START = /^[=+\-@\t\r]/
+
+/**
+ * Text neutralisation rule shared by every CSV export, stated in each package
+ * README and manifest because it changes the bytes of affected text values.
+ */
+export const CSV_TEXT_NEUTRALISATION = "Text values beginning with = + - @, tab or carriage return are prefixed with a single quote (') so spreadsheets do not run them as formulas; numeric values are unchanged."
+
+/**
+ * One CSV field. Formula-like text is prefixed with `'` (OWASP CSV injection
+ * guidance) before quoting; plain decimal numbers such as -99 or +5 are kept
+ * so they still open as numbers.
+ */
 export function csvCell(value: unknown) {
-  const text = value === null || value === undefined ? '' : String(value)
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
+  let text = value === null || value === undefined ? '' : String(value)
+  if (FORMULA_START.test(text) && !DECIMAL_NUMBER.test(text)) text = `'${text}`
+  return /[",\r\n]/.test(text) ?`"${text.replaceAll('"', '""')}"` : text
 }
 
 /** CSV text with the byte-order mark Excel needs for accented characters. */
 export function rowsToCsv(columns: string[], rows: Record<string, unknown>[]) {
-  const lines = [columns.join(','), ...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
+  const lines = [columns.map(csvCell).join(','),...rows.map((row) => columns.map((column) => csvCell(row[column])).join(','))]
   return `﻿${lines.join('\r\n')}`
 }
 

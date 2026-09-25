@@ -1,5 +1,16 @@
 # Handoff
 
+## Active: CSV formula-injection rule — microdata package notice
+
+Status on 2026-09-25 (branch `Andrea-s-agents/jolly-sanderson-dcfbcb`,
+uncommitted): `csvCell` now neutralises formula-like text and quotes bare CR;
+aggregated packages state the rule. Remaining: `src/services/microdataBundle.ts`
+must add `csv_text_neutralisation: CSV_TEXT_NEUTRALISATION` to its manifest and
+the constant as a README.txt line. Deferred because another session is editing
+that file in the main checkout; do it on top of that work, and ship both
+together so microdata files never change without the notice.
+Verify: `npx vitest run src/services && npm run build`.
+
 ## Active: survey-first microdata packages
 
 Status on 2026-09-23: the reviewed plan is in
