@@ -2,8 +2,23 @@
 
 ## 2026-09-25 - Neutralise spreadsheet formulas in CSV exports
 
-- All CSV exports now prefix `'` to text values that start with `=`, `+`, `-`, `@`, tab or carriage return, so spreadsheets do not run them as formulas. Numeric values, including negative codes such as `-99`, are unchanged. Aggregated survey packages record the rule in README.txt and manifest.json; the household microdata package will record it once concurrent work on `microdataBundle.ts` lands.
+- All CSV exports now prefix `'` to text values that start with `=`, `+`, `-`, `@`, tab or carriage return, so spreadsheets do not run them as formulas. Numeric values, including negative codes such as `-99`, are unchanged. Aggregated survey and household microdata packages record the rule in README.txt and manifest.json.
 - CSV fields containing a bare carriage return are now quoted.
+
+## 2026-09-25 - Labelled microdata values
+
+- The microdata package picker offers coded values (default), labels, or both.
+  Labelled CSVs replace codes with coded-value domain labels in the same columns
+  and rows; unknown codes stay raw and are reported in `manifest.json`
+  (`package_schema_version` 2). Every survey folder gains `value_labels.csv`.
+- Labels are gated by a new read-only audit, `scripts/audit_microdata_domains.py`,
+  which compares domains with the V1/V2 codebooks and records per-field domain
+  digests in `src/data/auditedDomains.json`. Preflight refuses labels when the
+  live schema or a grant view no longer matches. The first audit found codebook
+  differences in V1/V2 and no domains in V3, so labels remain unavailable until
+  the domains are fixed and the audit is recorded.
+- The package budget now limits source tables (20) separately from the CSV
+  files written, and counts coded and labelled bytes together.
 
 ## 2026-09-24 - Recover from stale route bundles after deployment
 

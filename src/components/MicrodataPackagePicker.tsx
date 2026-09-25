@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MicrodataLicence, type MicrodataAccess } from './MicrodataLicence'
 import { formatNumber } from '../lib/format'
-import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataBundle, preflightMicrodataPackage } from '../services/microdataBundle'
+import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataBundle, outputFilesPerTable, preflightMicrodataPackage } from '../services/microdataBundle'
+import { componentHasAudit, type MicrodataValues } from '../services/microdataLabels'
 import type { BundleProgress } from '../services/surveyBundle'
 import { type GrantDiscovery } from '../services/microdataGrants'
 import { discoverMicrodataAccess, type MicrodataAccessResult } from '../services/microdataSurveyAccess'
@@ -44,8 +45,9 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const [search, setSearch] = useState('')
   const [selectedOnly, setSelectedOnly] = useState(false)
   const [includeOptional, setIncludeOptional] = useState(false)
+  const [valuesChoice, setValuesChoice] = useState<MicrodataValues>('codes')
   const [limitNotice, setLimitNotice] = useState<string>()
-  const [preflight, setPreflight] = useState<{ fingerprint: string; records: number; files: number }>()
+  const [preflight, setPreflight] = useState<{ fingerprint: string; records: number; tables: number; files: number }>()
   const [preflightError, setPreflightError] = useState<string>()
   const [preflightProgress, setPreflightProgress] = useState<{ done: number; total: number }>()
   const [downloadProgress, setDownloadProgress] = useState<BundleProgress>()
@@ -119,9 +121,18 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
     return !mandatory || !optional || !optional.bulkExportEnabled || mandatory.source !== optional.source
       || (mandatory.source === 'grant' && mandatory.grantId !== optional.grantId)
   })
-  const dataFiles = selected.length + (includeOptional ? selected.filter((survey) => survey.generation === 'v3').length : 0)
+  const sourceTables = selected.length + (includeOptional ? selected.filter((survey) => survey.generation === 'v3').length : 0)
+  // The tables this package would read, deduplicated; labels need every one of them audited.
+  const unauditedTables = [...new Set(selected.flatMap((survey) => (
+    survey.generation === 'v3'
+      ? ['mandatory' as const, ...(includeOptional ? ['optional' as const] : [])]
+      : ['household' as const]
+  ).filter((component) => !componentHasAudit(survey.generation, component))
+    .map((component) => `${GENERATIONS[survey.generation].label} ${component === 'household' ? 'household' : component} table`)))]
+  const values: MicrodataValues = unauditedTables.length ? 'codes' : valuesChoice
+  const outputFiles = sourceTables * outputFilesPerTable(values)
   const fingerprint = JSON.stringify({
-    account, scope, includeOptional,
+    account, scope, includeOptional, values,
     sources: selected.flatMap((survey) => survey.components.map((part) => `${survey.key}:${part.itemId}:${part.grantId || ''}:${part.bulkExportEnabled}`)),
   })
 
@@ -133,14 +144,14 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
     preflightAbort.current = controller
     setPreflight(undefined)
     setPreflightError(undefined)
-    setPreflightProgress({ done: 0, total: dataFiles })
+    setPreflightProgress({ done: 0, total: sourceTables })
     try {
       const result = await preflightMicrodataPackage({
-        surveys: selected, includeV3Optional: includeOptional, contributor,
+        surveys: selected, includeV3Optional: includeOptional, contributor, values,
         requester: auth.requestProtected, budget: MICRODATA_PACKAGE_BUDGET, signal: controller.signal,
         onProgress: (progress) => setPreflightProgress({ done: progress.completed, total: progress.total }),
       })
-      if (!controller.signal.aborted) setPreflight({ fingerprint, records: result.recordCount, files: result.dataFileCount })
+      if (!controller.signal.aborted) setPreflight({ fingerprint, records: result.recordCount, tables: result.sourceTableCount, files: result.outputFileCount })
     } catch (failure) {
       if (!controller.signal.aborted) setPreflightError((failure as Error)?.message || 'The package could not be checked.')
     } finally {
@@ -157,10 +168,10 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
     setDownloadError(undefined)
     setDownloadOutcome(undefined)
     setDownloadCancelled(false)
-    setDownloadProgress({ stage: 'preparing', completed: 0, total: dataFiles })
+    setDownloadProgress({ stage: 'preparing', completed: 0, total: sourceTables })
     try {
       const bundle = await buildMicrodataBundle({
-        surveys: selected, includeV3Optional: includeOptional, contributor,
+        surveys: selected, includeV3Optional: includeOptional, contributor, values,
         requester: auth.requestProtected,
         budget: MICRODATA_PACKAGE_BUDGET, signal: controller.signal,
         onProgress: setDownloadProgress,
@@ -253,16 +264,35 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
                 </fieldset>
               )}
               {includeOptional && optionalUnusable.length > 0 && <p className="package-blocker" role="alert">Optional data is not available from the same authorized source for {optionalUnusable.map((survey) => `${survey.countryName} round ${survey.round}`).join(', ')}. Choose mandatory fields only or remove those surveys.</p>}
+              <fieldset className="package-layout-choice">
+                <legend>Values</legend>
+                <div className="package-layout-options">
+                  {([
+                    ['codes', 'Coded values', 'As stored, e.g. 1, 2, 3. Pair with the codebook or value_labels.csv.'],
+                    ['labels', 'Labels', 'Codes replaced by their labels in the same columns.'],
+                    ['both', 'Both', 'A coded and a labelled CSV per table, same rows and order. Roughly doubles the package size.'],
+                  ] as const).map(([option, title, hint]) => (
+                    <label key={option}>
+                      <input type="radio" name="microdata-values-choice" checked={values === option}
+                        disabled={Boolean(downloadProgress) || (option !== 'codes' && unauditedTables.length > 0)}
+                        onChange={() => setValuesChoice(option)}/>
+                      <span><strong>{title}</strong><small>{hint}</small></span>
+                    </label>
+                  ))}
+                </div>
+                {unauditedTables.length > 0 && <p className="survey-limit-note">Labelled values are not yet available for the {unauditedTables.join(', ')}: {unauditedTables.length === 1 ? 'its' : 'their'} value labels have not passed the label audit. This package uses coded values.</p>}
+              </fieldset>
               <dl className="package-summary">
                 <div><dt>Surveys</dt><dd>{formatNumber(selected.length)}</dd></div>
-                <div><dt>Data files</dt><dd>{formatNumber(dataFiles)}</dd></div>
+                <div><dt>Tables read</dt><dd>{formatNumber(sourceTables)} of {formatNumber(MICRODATA_PACKAGE_BUDGET.sourceTables)}</dd></div>
+                <div><dt>Data files</dt><dd>{formatNumber(outputFiles)} CSV{outputFiles === 1 ? '' : 's'}</dd></div>
                 <div><dt>Layout</dt><dd>One folder per survey</dd></div>
                 <div><dt>Documentation</dt><dd>Version-matched field descriptions and codebook links; V3 documents are not yet published</dd></div>
               </dl>
               <div className="package-actions"><button type="button" disabled={Boolean(preflightProgress || downloadProgress) || Boolean(optionalUnusable.length && includeOptional)} onClick={() => void countSelected()}>Check access and count records</button><button type="button" disabled={!preflightProgress} onClick={() => preflightAbort.current?.abort()}>Cancel check</button></div>
               {preflightProgress && <p className="package-status" role="status">Checking {formatNumber(preflightProgress.done)} of {formatNumber(preflightProgress.total)} tables…</p>}
               {preflightError && <p className="package-error" role="alert">{preflightError} Your selection has been kept.</p>}
-              {preflight?.fingerprint === fingerprint && <p className="package-ready" role="status">Access confirmed: {formatNumber(preflight.records)} records in {formatNumber(preflight.files)} data files.</p>}
+              {preflight?.fingerprint === fingerprint && <p className="package-ready" role="status">Access confirmed: {formatNumber(preflight.records)} records from {formatNumber(preflight.tables)} table{preflight.tables === 1 ? '' : 's'}, written as {formatNumber(preflight.files)} CSV file{preflight.files === 1 ? '' : 's'}.</p>}
               <p className="package-blocker">One package can hold up to {formatNumber(MICRODATA_PACKAGE_BUDGET.records)} records and {formatNumber(MICRODATA_PACKAGE_BUDGET.uncompressedBytes / 1_000_000)} MB of CSV data. The final byte limit is checked while building; if it is exceeded, no partial archive is downloaded.</p>
             </> : <p>Select a survey to review the package.</p>}
           </div>

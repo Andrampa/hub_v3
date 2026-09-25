@@ -3,8 +3,9 @@ import type { DatasetDefinition } from './dataExplorer'
 import type { ProtectedRequester } from './protectedData'
 import type { MicrodataSurvey, MicrodataSurveyComponent } from './microdataSurveyAccess'
 import { buildMicrodataBundle, type MicrodataPackageBudget } from './microdataBundle'
+import { canonicalDomain, domainDigest, type AuditedDomains } from './microdataLabels'
 
-const budget: MicrodataPackageBudget = { records: 20, uncompressedBytes: 100_000, dataFiles: 10 }
+const budget: MicrodataPackageBudget = { records: 20, uncompressedBytes: 100_000, sourceTables: 10 }
 
 function component(kind: MicrodataSurveyComponent['component'] = 'household'): MicrodataSurveyComponent {
   return {
@@ -35,13 +36,14 @@ function definition(part: MicrodataSurveyComponent, version: MicrodataSurvey['ge
         { name: 'OBJECTID', alias: 'ID', type: 'esriFieldTypeOID' },
         { name: 'adm0_iso3', alias: 'ISO3', type: 'esriFieldTypeString' },
         { name: 'round', alias: 'Round', type: 'esriFieldTypeInteger' },
-        { name: 'value', alias: 'Value', type: 'esriFieldTypeInteger' },
+        { name: 'value', alias: 'Value', type: 'esriFieldTypeInteger',
+          domain: { type: 'codedValue', codedValues: [{ code: 4, name: 'Four' }, { code: 5, name: 'Five, or more' }] } },
       ],
     },
   }
 }
 
-function setup(rows = [{ OBJECTID: 1, adm0_iso3: 'NGA', round: 8, value: 4 }]) {
+function setup(rows: Array<Record<string, unknown>> = [{ OBJECTID: 1, adm0_iso3: 'NGA', round: 8, value: 4 }]) {
   const requester = vi.fn(async (_url: string, params?: Record<string, unknown>) => (
     params?.returnCountOnly ? { count: rows.length } : { features: rows.map((attributes) => ({ attributes })) }
   )) as unknown as ProtectedRequester
@@ -195,5 +197,141 @@ describe('microdata bundle', () => {
       requester: fixture.requester, budget, zip: fixture.zip,
     })).rejects.toThrow('no accessible optional table')
     expect(fixture.zip).not.toHaveBeenCalled()
+  })
+})
+
+async function auditFor(entries: Array<[MicrodataSurvey['generation'], MicrodataSurveyComponent['component']]>): Promise<AuditedDomains> {
+  const components: AuditedDomains['components'] = []
+  for (const [generation, kind] of entries) {
+    const fields: Record<string, string> = {}
+    for (const field of definition(component(kind), generation).layer.fields) {
+      const domain = canonicalDomain(field)
+      if (domain) fields[field.name] = await domainDigest(domain)
+    }
+    components.push({ generation, component: kind, item_id: `${kind}-item`, layer_id: 0,
+      audited_at: '2026-09-25', basis: generation === 'v3' ? 'consistency_only' : 'codebook_matched', fields })
+  }
+  return { schema_version: 1, generated: '2026-09-25', components }
+}
+
+const NO_AUDIT: AuditedDomains = { schema_version: 1, generated: null, components: [] }
+
+describe('microdata bundle values', () => {
+  const rows = [
+    { OBJECTID: 1, adm0_iso3: 'NGA', round: 8, value: 4 },
+    { OBJECTID: 2, adm0_iso3: 'NGA', round: 8, value: 9 },
+    { OBJECTID: 3, adm0_iso3: 'NGA', round: 8, value: 5 },
+    { OBJECTID: 4, adm0_iso3: 'NGA', round: 8, value: null },
+  ]
+
+  it('writes coded values with a verified value_labels.csv by default', async () => {
+    const fixture = setup(rows)
+    const selected = survey()
+    await buildMicrodataBundle({
+      surveys: [selected], includeV3Optional: false, contributor: true,
+      requester: fixture.requester, budget, zip: fixture.zip, audit: await auditFor([['v2', 'household']]),
+      resolve: async (part) => definition(part, selected.generation),
+    })
+    const manifest = JSON.parse(fixture.read('manifest.json'))
+    expect(manifest.package_schema_version).toBe(2)
+    expect(manifest.values).toBe('codes')
+    expect(manifest.files).toHaveLength(1)
+    expect(manifest.files[0]).toMatchObject({ values: 'coded' })
+    expect(manifest.files[0].unlabelled_codes).toBeUndefined()
+    expect(manifest.value_labels).toEqual([expect.objectContaining({ component: 'household', status: 'verified', basis: 'codebook_matched' })])
+    expect(fixture.read('NGA_R08_v2/data/NGA_R08_v2_household.csv')).toContain('NGA,8,4')
+    const labels = fixture.read('NGA_R08_v2/value_labels.csv')
+    expect(labels).toContain('household,household-item,0,value,4,Four')
+    expect(labels).toContain('household,household-item,0,value,5,"Five, or more"')
+  })
+
+  it('writes a header-only mapping file and says why when labels are unverified', async () => {
+    const fixture = setup(rows)
+    const selected = survey()
+    await buildMicrodataBundle({
+      surveys: [selected], includeV3Optional: false, contributor: true,
+      requester: fixture.requester, budget, zip: fixture.zip, audit: NO_AUDIT,
+      resolve: async (part) => definition(part, selected.generation),
+    })
+    expect(fixture.read('NGA_R08_v2/value_labels.csv')).toBe('component,item_id,layer_id,variable,code,label\r\n')
+    expect(JSON.parse(fixture.read('manifest.json')).value_labels[0]).toMatchObject({ status: 'unverified', reason: 'not_audited' })
+    expect(fixture.read('README.txt')).toContain('value_labels.csv omits tables whose labels could not be verified: v2:NGA:8 household (not_audited)')
+  })
+
+  it('writes coded and labelled files with identical rows and order for Both', async () => {
+    const fixture = setup(rows)
+    const selected = survey()
+    const result = await buildMicrodataBundle({
+      surveys: [selected], includeV3Optional: false, contributor: true, values: 'both',
+      requester: fixture.requester, budget, zip: fixture.zip, audit: await auditFor([['v2', 'household']]),
+      resolve: async (part) => definition(part, selected.generation),
+    })
+    expect(result.fileCount).toBe(2)
+    const coded = fixture.read('NGA_R08_v2/data/NGA_R08_v2_household.csv').split('\r\n')
+    const labelled = fixture.read('NGA_R08_v2/data/NGA_R08_v2_household_labelled.csv').split('\r\n')
+    expect(labelled).toHaveLength(coded.length)
+    expect(labelled[0]).toBe(coded[0])
+    expect(labelled.slice(1)).toEqual(['NGA,8,Four', 'NGA,8,9', 'NGA,8,"Five, or more"', 'NGA,8,'])
+    expect(coded.slice(1)).toEqual(['NGA,8,4', 'NGA,8,9', 'NGA,8,5', 'NGA,8,'])
+    const manifest = JSON.parse(fixture.read('manifest.json'))
+    expect(manifest.files.map((file: { values: string }) => file.values)).toEqual(['coded', 'labelled'])
+    expect(manifest.files[1]).toMatchObject({
+      label_source: 'arcgis_domains', labelled_fields: ['value'],
+      fields_without_domain: ['adm0_iso3', 'round'], ambiguous_domains: [],
+      unlabelled_codes: { value: { count: 1, codes: ['9'] } }, record_count: 4,
+    })
+  })
+
+  it('refuses labels before downloading rows when a table is unverified', async () => {
+    const fixture = setup(rows)
+    const selected = survey()
+    await expect(buildMicrodataBundle({
+      surveys: [selected], includeV3Optional: false, contributor: true, values: 'labels',
+      requester: fixture.requester, budget, zip: fixture.zip, audit: NO_AUDIT,
+      resolve: async (part) => definition(part, selected.generation),
+    })).rejects.toThrow('Labels cannot be verified')
+    expect(fixture.requester).not.toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ outFields: '*' }), expect.anything())
+    expect(fixture.zip).not.toHaveBeenCalled()
+  })
+
+  it('counts both outputs against the byte budget', async () => {
+    const fixture = setup(rows)
+    const selected = survey()
+    const input = {
+      surveys: [selected], includeV3Optional: false, contributor: true,
+      requester: fixture.requester, zip: fixture.zip, audit: await auditFor([['v2', 'household']]),
+      resolve: async (part: MicrodataSurveyComponent) => definition(part, selected.generation),
+    }
+    const single = await buildMicrodataBundle({ ...input, budget })
+    await expect(buildMicrodataBundle({ ...input, values: 'both', budget: { ...budget, uncompressedBytes: single.uncompressedBytes + 10 } }))
+      .rejects.toThrow('instead of both')
+  })
+
+  it('labels each V3 table from its own domains and qualifies mapping rows by component', async () => {
+    const fixture = setup(rows)
+    const selected = survey('v3', [component('mandatory'), component('optional')])
+    await buildMicrodataBundle({
+      surveys: [selected], includeV3Optional: true, contributor: true, values: 'labels',
+      requester: fixture.requester, budget, zip: fixture.zip,
+      audit: await auditFor([['v3', 'mandatory'], ['v3', 'optional']]),
+      resolve: async (part) => definition(part, selected.generation),
+    })
+    const manifest = JSON.parse(fixture.read('manifest.json'))
+    expect(manifest.files.map((file: { path: string }) => file.path)).toEqual([
+      'TEST_DATA_NGA_R08_v3/data/TEST_DATA_NGA_R08_v3_household_mandatory_labelled.csv',
+      'TEST_DATA_NGA_R08_v3/data/TEST_DATA_NGA_R08_v3_household_optional_labelled.csv',
+    ])
+    const labels = fixture.read('TEST_DATA_NGA_R08_v3/value_labels.csv')
+    expect(labels).toContain('mandatory,mandatory-item,0,value,4,Four')
+    expect(labels).toContain('optional,optional-item,0,value,4,Four')
+  })
+
+  it('limits source tables separately from output files', async () => {
+    const fixture = setup(rows)
+    const selected = survey('v3', [component('mandatory'), component('optional')])
+    await expect(buildMicrodataBundle({
+      surveys: [selected], includeV3Optional: true, contributor: true, values: 'both',
+      requester: fixture.requester, budget: { ...budget, sourceTables: 1 }, zip: fixture.zip,
+    })).rejects.toThrow('reads 2 tables; one package can read 1')
   })
 })
