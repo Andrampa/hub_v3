@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-25 - Labelled values enabled for V1 and V2 microdata
+
+- ArcGIS coded-value domains are now the authoritative microdata labels. The
+  audit gained `--domains-authoritative`, which reports codebook differences as
+  warnings; V1 and V2 household tables passed and are recorded in
+  `src/data/auditedDomains.json`, so the picker offers Labels and Both for them.
+  V3 tables still have no domains and stay coded.
+
 ## 2026-09-25 - Neutralise spreadsheet formulas in CSV exports
 
 - All CSV exports now prefix `'` to text values that start with `=`, `+`, `-`, `@`, tab or carriage return, so spreadsheets do not run them as formulas. Numeric values, including negative codes such as `-99`, are unchanged. Aggregated survey and household microdata packages record the rule in README.txt and manifest.json.

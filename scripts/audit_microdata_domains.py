@@ -260,6 +260,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--codebook-v2", help="local V2 codebook workbook instead of downloading it")
     parser.add_argument("--accept-uncodebooked", default="",
                         help="comma-separated field names whose domains may be absent from the codebook")
+    parser.add_argument("--domains-authoritative", action="store_true",
+                        help="treat ArcGIS domains as the approved labels: codebook differences are reported as warnings, "
+                             "while unsafe labels and cross-table mismatches still block")
     parser.add_argument("--skip-grants", action="store_true", help="do not check grant views")
     parser.add_argument("--report", help="write the full findings as JSON to this path")
     parser.add_argument("--write", action="store_true", help=f"record passing components in {AUDIT_FILE.relative_to(REPO)}")
@@ -283,11 +286,19 @@ def main() -> int:
         schemas[(master["generation"], master["component"])] = fields
         found = domain_findings(fields)
         codebook_id = CODEBOOKS.get(master["generation"])
+        basis = "consistency_only"
         if codebook_id:
             path = getattr(args, f"codebook_{master['generation']}")
-            found += codebook_findings(fields, load_codebook(master["generation"], path), accepted)
+            compared = codebook_findings(fields, load_codebook(master["generation"], path), accepted)
+            if args.domains_authoritative:
+                # Differences stay in the report; the domain is the approved source.
+                compared = [{**entry, "level": WARNING} for entry in compared]
+                basis = "domains_authoritative"
+            else:
+                basis = "codebook_matched"
+            found += compared
         results.append({**master, "title": item.title, "layer_id": layer["id"], "codebook_item_id": codebook_id,
-                        "basis": "codebook_matched" if codebook_id else "consistency_only",
+                        "basis": basis,
                         "coded_fields": len(digests(fields)), "fields": fields, "findings": found})
 
     mandatory, optional = schemas.get(("v3", "mandatory"), []), schemas.get(("v3", "optional"), [])

@@ -20,8 +20,8 @@ export interface AuditedComponent {
   item_id: string
   layer_id: number
   audited_at: string
-  /** `codebook_matched` for V1/V2; `consistency_only` where no codebook is published. */
-  basis: 'codebook_matched' | 'consistency_only'
+  /** `codebook_matched`, or `domains_authoritative` when the domains were approved over a differing codebook; `consistency_only` without a codebook. */
+  basis: 'codebook_matched' | 'domains_authoritative' | 'consistency_only'
   codebook_item_id?: string | null
   fields: Record<string, string>
 }
@@ -55,7 +55,7 @@ export interface UnlabelledCodes {
 
 export const UNLABELLED_CODE_SAMPLE = 20
 
-export const AUDITED_DOMAINS = auditedDomainsFile as AuditedDomains
+export const AUDITED_DOMAINS = auditedDomainsFile as unknown as AuditedDomains
 
 const FORMULA_PREFIX = /^[=+\-@\t\r]/
 

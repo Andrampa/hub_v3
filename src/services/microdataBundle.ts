@@ -416,8 +416,9 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
     values === 'codes' ? 'Data files hold coded values.'
       : values === 'labels' ? 'Data files ending in _labelled.csv replace coded values with their labels.'
         : 'Each table is written twice: coded values, and a _labelled.csv copy with the same columns, rows and row order.',
-    'Labels come from the coded-value domains on the ArcGIS layers, and are used only where those domains match the',
-    'version audited against the official codebook. V3 has no published codebook; its domains are checked for consistency only.',
+    'Labels come from the coded-value domains on the ArcGIS layers, which DIEM maintains as the authoritative value labels.',
+    'They are used only where those domains match the audited version; manifest.json records the audit basis per table.',
+    'Where the published codebook wording differs, the labels in this package take precedence.',
     'In a labelled file, a code with no label is kept as the raw code, and empty values stay empty. manifest.json lists,',
     'per labelled file, the fields labelled, fields without a domain, and any unlabelled codes.',
     'Each survey folder has value_labels.csv (component, item_id, layer_id, variable, code, label) for verified tables.',

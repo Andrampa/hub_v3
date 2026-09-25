@@ -234,7 +234,16 @@ The picker offers **Coded values** (default), **Labels** or **Both**.
 - **Digest parity.** `microdataLabels.test.ts` pins a SHA-256 test vector the
   Python script reproduces; change both together.
 
-First audit, 2026-09-25 (nothing recorded; labels unavailable):
+**Decision, 2026-09-25:** the ArcGIS domains are the authoritative labels; where
+the V1/V2 codebooks differ, the codebook is out of date. The audit was re-run
+with `--domains-authoritative`, which keeps codebook differences in the report
+as warnings (basis `domains_authoritative`) while unsafe labels, conflicting
+V3 tables and tables without domains still block. V1 (251 coded fields) and V2
+(291) are recorded; V3 remains blocked with no domains. Fields without a domain
+(e.g. `fcg`, `hhg`, `lcsi`, `rcsi_class`) stay coded in labelled files and are
+listed under `fields_without_domain`.
+
+First audit, 2026-09-25, against the codebooks (nothing recorded):
 
 - V1 (251 coded fields) and V2 (291) are blocked by codebook differences:
   label wording (`fies_*_hhs`, `income_*`, `ls_*`, `crp_irrigation`), derived
