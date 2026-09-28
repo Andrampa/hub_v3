@@ -1,5 +1,31 @@
 # Handoff
 
+## Review ready: performance and UI/UX, 2026-09-28
+
+Status: review and proposal only; awaiting user approval before implementation.
+Worktree `C:\git\hub_v3`, branch `main`, reviewed HEAD `f81f58a`. No application
+changes, commits, pushes or deployments were made. The uncommitted review files
+are this handoff and `docs/performance_ux_review_2026-09-28.md`.
+Claude's source check was incorporated into the priority order: Q1/Q2/Q3,
+bounded and pausable slideshow (M4), verified narrow product-family lookup
+(M8), then in-memory TTL expiry (M2a). The product already renders after its
+narrow membership lookup; the full catalogue request is concurrent overhead.
+Broader refactors need an instrumented baseline. M2a deliberately leaves an
+already open listing stable while rechecking membership on the next load.
+
+Next file: `docs/performance_ux_review_2026-09-28.md`; select approved proposals
+before editing their listed source files. Production, older review deployment,
+and local build evidence are distinguished. Local `npm run build` passed.
+Verification command for an approved implementation: `npm run build`, followed
+by the proposal-specific browser checks in the report. Before editing, inspect
+`git status --short` to preserve concurrent work.
+
+Unfinished measurement: instrumentation-backed cold/warm/throttled metrics,
+full keyboard/contrast/error-state checks, and protected map/package download.
+The user signed in and reported accepting the licence, but successful download
+was not observed; the local session subsequently expired. Retain the successful
+Liberia round 3 preflight (1,746 records) as preflight evidence only.
+
 ## Active: labelled microdata values
 
 Status on 2026-09-25: on `main`. V1 and V2 are audited with the ArcGIS domains
