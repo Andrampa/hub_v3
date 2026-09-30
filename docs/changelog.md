@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-30 - Survey catalogue opens the Explorer landing page
+
+- Published survey rounds now link directly to `/monitoring` with country,
+  round and `landing=1`, bypassing the Hub's thematic-area chooser. The
+  Household Survey Explorer handles thematic-area selection for that survey.
+- Kept the Explore link styling and updated the discovery documentation.
+
 ## 2026-09-30 - Card titles lead; headings no longer light
 
 - Catalogue, homepage and country cards now put the title first, set in the

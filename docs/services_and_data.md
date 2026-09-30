@@ -146,7 +146,8 @@ existing reviewed exclusions remain filtered by `src/services/monitoring.ts`.
 rounds first by expected publication, then published rounds most recent first)
 as its default sort, and filters client-side. The status filter appears only
 while the layer holds upcoming rounds; zero upcoming rounds is a data state,
-not a failure.
+not a failure. Explore links directly to `/monitoring` with `iso`, `round`
+and `landing=1`; no Hub theme chooser or theme-availability request runs.
 
 `src/services/monitoringThemes.ts` resolves which thematic areas the Monitoring
 application can open for one survey, mirroring that application's own

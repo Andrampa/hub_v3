@@ -9,7 +9,7 @@ import {
   type SurveyRound,
   type SurveyRoundCatalog,
 } from '../services/monitoringProducts'
-import { SurveyThemePicker } from './SurveyThemePicker'
+import { monitoringCountryPath } from '../services/monitoringEmbed'
 import '../survey-catalogue.css'
 
 const PAGE_SIZE = 15
@@ -77,7 +77,6 @@ export function SurveyCatalogue() {
   const [error, setError] = useState<string>()
   const [attempt, setAttempt] = useState(0)
   const [visible, setVisible] = useState(PAGE_SIZE)
-  const [exploring, setExploring] = useState<SurveyRound>()
   const [params, setParams] = useSearchParams()
 
   const query = params.get('q') || ''
@@ -295,9 +294,9 @@ export function SurveyCatalogue() {
                         </td>
                         <td className="rounds-action">
                           {!upcoming && (
-                            <button type="button" onClick={() => setExploring(round)} aria-label={`Explore ${round.country} round ${round.roundValue}`}>
+                            <Link to={`${monitoringCountryPath(round.iso3, round.roundValue)}&landing=1`} aria-label={`Explore ${round.country} round ${round.roundValue}`}>
                               Explore <span aria-hidden="true">→</span>
-                            </button>
+                            </Link>
                           )}
                         </td>
                       </tr>
@@ -322,7 +321,6 @@ export function SurveyCatalogue() {
         </>
       )}
 
-      {exploring && <SurveyThemePicker release={exploring} onClose={() => setExploring(undefined)} />}
     </section>
   )
 }

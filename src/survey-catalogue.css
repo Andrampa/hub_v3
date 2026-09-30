@@ -105,7 +105,9 @@
 .rounds-none { color: var(--ink-faint); font-size: 13px; }
 
 .rounds-action { width: 1%; text-align: right; }
-.rounds-action button {
+.rounds-action a {
+  display: inline-block;
+  text-decoration: none;
   padding: 8px 14px;
   border: 1px solid var(--fao-blue);
   border-radius: 6px;
@@ -117,9 +119,9 @@
   cursor: pointer;
   transition: background .15s ease, color .15s ease;
 }
-.rounds-action button span { transition: margin .15s ease; }
-.rounds-action button:hover { background: var(--fao-blue); color: white; }
-.rounds-action button:hover span { margin-left: 3px; }
+.rounds-action a span { transition: margin .15s ease; }
+.rounds-action a:hover { background: var(--fao-blue); color: white; }
+.rounds-action a:hover span { margin-left: 3px; }
 
 .rounds-more { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 22px; color: var(--ink-faint); font-size: 13px; }
 .rounds-more button { padding: 11px 22px; border: 1px solid var(--deep-blue); border-radius: 6px; background: var(--paper); color: var(--deep-blue); font-weight: 700; cursor: pointer; }
@@ -137,7 +139,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rounds-skeleton span { animation: none; }
-  .rounds-table tbody tr, .round-chip, .rounds-action button, .rounds-action button span { transition: none; }
+  .rounds-table tbody tr, .round-chip, .rounds-action a, .rounds-action a span { transition: none; }
 }
 
 /* Narrow screens: each round becomes a card. */
@@ -169,5 +171,5 @@
   .rounds-products { grid-column: 1 / -1; margin-top: 6px; }
   .rounds-action { grid-column: 1 / -1; width: auto; }
   .rounds-action:empty { display: none; }
-  .rounds-action button { width: 100%; }
+  .rounds-action a { width: 100%; }
 }

@@ -24,8 +24,9 @@
    released below, where the visitor can switch between Arrivals, Departures
    and the full board, progressively reveal older rounds, open the whole board
    full screen, and open the brief, findings, questionnaire, report, or charts.
-   Explore survey asks which thematic area to open and then deep links that
-   country, round and area into `/monitoring`. The `/monitoring` route remains
+   Explore survey opens the Household Survey Explorer landing page directly
+   at `/monitoring?iso=…&round=…&landing=1`, with that country and round
+   preselected. The Explorer handles thematic-area selection. The `/monitoring` route remains
    the full-screen embedded application and synchronizes its state with the Hub
    URL.
 2. A visitor opens `/hazard-impact-assessments`, scans the latest assessments,
