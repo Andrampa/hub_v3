@@ -4,12 +4,14 @@ import {
   countryDefinition,
   fetchCountryCatalog,
   fetchCurrentCatalogProduct,
+  fetchProductFamily,
   isCatalogItemId,
   itemCountryCodes,
   itemHasMultiCountryScope,
   itemHubLink,
   resourcesForCountry,
   type CountryCatalog,
+  type CountryResource,
 } from './countries'
 import type { ArcGISItem } from '../types'
 
@@ -344,5 +346,67 @@ describe('fetchCurrentCatalogProduct', () => {
     groupAnswering([])
 
     expect(await fetchCurrentCatalogProduct(id(7))).toBeUndefined()
+  })
+})
+
+describe('fetchProductFamily', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  const family = id(1)
+  const tagged = (n: number, categories = [DISCOVERABLE]) => record(id(n), categories, { tags: [`DIEM-FAMILY:${family}`] })
+
+  function groupAnswering(results: ArcGISItem[]) {
+    const fetchMock = vi.fn(async (_url: string) => ({ ok: true, json: async () => ({ total: results.length, results }) }))
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('asks the group for one family, not the whole catalogue', async () => {
+    const fetchMock = groupAnswering([record(family, [DISCOVERABLE]), tagged(2)])
+
+    const items = await fetchProductFamily(tagged(2) as CountryResource)
+
+    expect(items.map((item) => item.id).sort()).toEqual([family, id(2)])
+    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('q')).toBe(`id:${family} OR tags:"diem-family:${family}"`)
+  })
+
+  it('finds the editions of an untagged primary through their tags', async () => {
+    groupAnswering([record(family, [DISCOVERABLE]), tagged(2), tagged(3)])
+
+    expect(await fetchProductFamily(record(family, [DISCOVERABLE]) as CountryResource)).toHaveLength(3)
+  })
+
+  it('reads later group-search pages when a family query is paginated', async () => {
+    const fetchMock = vi.fn(async (url: string) => ({
+      ok: true,
+      json: async () => new URL(url).searchParams.get('start') === '1'
+        ? { total: 101, nextStart: 101, results: [tagged(2)] }
+        : { total: 101, nextStart: -1, results: [tagged(3)] },
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const items = await fetchProductFamily(record(family, [DISCOVERABLE]) as CountryResource)
+
+    expect(items.map((item) => item.id)).toEqual([id(2), id(3), family])
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('offers no sibling the catalogue would hide, or that belongs to another family', async () => {
+    groupAnswering([
+      tagged(2, ['/Categories/Administrative Boundaries']),
+      record(id(3), [DISCOVERABLE], { tags: [`diem-family:${id(4)}`] }),
+      tagged(5),
+    ])
+
+    const items = await fetchProductFamily(record(family, [DISCOVERABLE]) as CountryResource)
+
+    expect(items.map((item) => item.id)).toEqual([id(5), family])
+  })
+
+  it('keeps an unlisted product as its own edition', async () => {
+    const unlisted = record(family, ['/Categories/Administrative Boundaries'])
+    groupAnswering([unlisted])
+
+    expect((await fetchProductFamily(unlisted as CountryResource)).map((item) => item.id)).toEqual([family])
   })
 })

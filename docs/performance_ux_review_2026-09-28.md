@@ -6,7 +6,8 @@ Q3, M4 and M2a; they are implemented locally and recorded in
 describe the original review state. Q3 needs a separate deployment to change
 live cache headers. The user subsequently removed M4's pause-button proposal;
 the implemented slideshow instead bounds images and preserves transition
-continuity. M8 remains an investigation proposal.
+continuity. M8 was validated against live ArcGIS data and implemented on
+30 September; see `docs/changelog.md`.
 
 Reviewed `C:\git\hub_v3`, branch `main`, commit `f81f58a`. The working tree was
 clean when the review began. This report is internal and must stay outside the

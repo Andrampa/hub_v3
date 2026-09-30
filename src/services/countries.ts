@@ -1,5 +1,5 @@
 import countryMetadata from '@d3-maps/atlas/metadata/countries'
-import { groupProductFamilies } from '../lib/productFamilies'
+import { familyId, groupProductFamilies } from '../lib/productFamilies'
 import type { ArcGISItem } from '../types'
 import { CONTENT_GROUP_ID, catalogueVisible, itemDestination, itemProductPath } from './arcgis'
 
@@ -301,8 +301,8 @@ function searchUrl(start: number, query?: string) {
   return `${REST_ROOT}/content/groups/${CONTENT_GROUP_ID}/search?${params}`
 }
 
-async function fetchPage(start: number, query?: string): Promise<GroupSearchResponse> {
-  const response = await fetch(searchUrl(start, query))
+async function fetchPage(start: number, query?: string, signal?: AbortSignal): Promise<GroupSearchResponse> {
+  const response = await fetch(searchUrl(start, query), { signal })
   if (!response.ok) throw new Error(`Country catalog request failed (${response.status})`)
   const data = await response.json() as GroupSearchResponse
   if (data.error) throw new Error(data.error.message)
@@ -336,6 +336,39 @@ export async function fetchCurrentCatalogProduct(id: string): Promise<CountryRes
   // still opens at its direct address, which is how packages and the data guide
   // link to it.
   return normalizeItem(exact).item
+}
+
+/**
+ * The language editions of one product, read from the live group rather than
+ * the whole catalogue.
+ *
+ * A family is the item whose id it carries plus every item tagged
+ * `diem-family:<that id>`, so a narrow search answers it: a few kilobytes instead of
+ * the ten-page, two-megabyte enumeration a product page opened from a shared
+ * link used to start just to list its other languages. Siblings pass the same
+ * visibility and `Discoverable product` gates as the catalogue, so an edition
+ * the catalogue hides is not offered here either. The product itself is always
+ * included, as it was when the family was built from the catalogue.
+ */
+export async function fetchProductFamily(item: CountryResource, signal?: AbortSignal): Promise<CountryResource[]> {
+  const family = familyId(item)
+  const query = `id:${family} OR tags:"diem-family:${family}"`
+  const results: ArcGISItem[] = []
+  let start = 1
+  while (start > 0) {
+    const response = await fetchPage(start, query, signal)
+    results.push(...response.results)
+    if (response.nextStart <= start || response.results.length === 0) break
+    start = response.nextStart
+  }
+  const siblings = results
+    .filter(catalogueVisible)
+    .map(normalizeItem)
+    .filter((entry) => entry.discoverable
+      && entry.item.id.toLowerCase() !== item.id.toLowerCase()
+      && familyId(entry.item) === family)
+    .map((entry) => entry.item)
+  return [...siblings, item]
 }
 
 function summarizeCountry(iso3: string, items: CountryResource[]): CountrySummary {

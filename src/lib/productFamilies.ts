@@ -17,7 +17,7 @@ export interface ProductFamily<T extends ArcGISItem = ArcGISItem> {
   latestCreated: number
 }
 
-function familyId(item: ArcGISItem) {
+export function familyId(item: ArcGISItem) {
   const value = item.tags
     ?.find((tag) => tag.trim().toLowerCase().startsWith(FAMILY_TAG_PREFIX))
     ?.trim()

@@ -253,10 +253,10 @@ function normalizeSurvey(
   }
 }
 
-async function fetchSurveyPage(offset: number, signal?: AbortSignal) {
+async function fetchSurveyPage(offset: number, signal?: AbortSignal, where = '1=1') {
   const params = new URLSearchParams({
     f: 'json',
-    where: '1=1',
+    where,
     outFields: [
       'ObjectId', 'admin0_isocode', 'admin0_name_en', 'round', 'round_validated',
       'coll_start_date', 'coll_end_date', 'staging_date', 'validation_date', 'survey_outdated',
@@ -278,11 +278,12 @@ async function fetchSurveyPage(offset: number, signal?: AbortSignal) {
 export async function fetchSurveyReleases(
   signal?: AbortSignal,
   options: { includeUpcomingProducts?: boolean } = {},
+  where?: string,
 ): Promise<SurveyRelease[]> {
   const rows: SurveyReleaseAttributes[] = []
   let offset = 0
   while (true) {
-    const page = await fetchSurveyPage(offset, signal)
+    const page = await fetchSurveyPage(offset, signal, where)
     const pageRows = (page.features || []).flatMap((feature) => feature.attributes ? [feature.attributes] : [])
     rows.push(...pageRows)
     if (!page.exceededTransferLimit || pageRows.length === 0) break
@@ -299,6 +300,25 @@ export async function fetchSurveyReleases(
       if (a.status === 'upcoming') return (a.expectedPublicationDate || Number.MAX_SAFE_INTEGER) - (b.expectedPublicationDate || Number.MAX_SAFE_INTEGER)
       return (b.publicationDate || 0) - (a.publicationDate || 0)
     })
+}
+
+const SURVEY_PRODUCT_LINK_FIELDS = ['country_brief_link', 'findings_present_link', 'questionn_link', 'report_link', 'charts_link'] as const
+
+/**
+ * Whether a published monitoring round lists this item among its products.
+ *
+ * The service narrows to the rows whose product links mention the id, a few
+ * hundred bytes instead of the whole schedule, and those rows then pass the
+ * same normalization as every other reader of it, so a round that is not
+ * published, or a link that only contains the id by accident, still does not
+ * count. The id is checked before it goes into the where clause.
+ */
+export async function isMonitoringRoundProduct(itemId: string, signal?: AbortSignal): Promise<boolean> {
+  const id = itemId.toLowerCase()
+  if (!/^[a-f0-9]{32}$/.test(id)) return false
+  const where = SURVEY_PRODUCT_LINK_FIELDS.map((field) => `LOWER(${field}) LIKE '%${id}%'`).join(' OR ')
+  const releases = await fetchSurveyReleases(signal, {}, where)
+  return releases.some((release) => release.products.some((product) => product.itemId === id))
 }
 
 function normalizedRoundValue(value: string) {

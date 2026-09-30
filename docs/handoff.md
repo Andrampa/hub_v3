@@ -2,8 +2,10 @@
 
 ## Performance and UI/UX review, 2026-09-30
 
-Status: user approved Q1, Q2, Q3, M4 and M2a; implemented locally on `main` in
-`C:\git\hub_v3`. No commit, push, web-repository sync or deployment was requested.
+Status: user approved Q1, Q2, Q3, M4 and M2a; implemented and committed on
+`main` in `C:\git\hub_v3`. The user subsequently requested commit and push of
+M8 to development and web. Check Git status and remotes for the latest push
+state; deployment still requires a separate Manual Deploy workflow run.
 The review is `docs/performance_ux_review_2026-09-28.md`; completed work is
 recorded in `docs/changelog.md`. The CSS changes are in `src/countries.css` and
 `src/catalog.css`; caching config is in `scripts/sync-web-repository.ps1`;
@@ -14,13 +16,11 @@ bounds images and keeps the transition smooth without that control.
 Focused tests are beside those modules. The template's one-year asset rule is
 not live until a separately authorized deployment.
 
-Next file if M8 is approved for investigation: `src/pages/CatalogProduct.tsx`.
-Validate an ArcGIS group-scoped language-family query and whether a cheap,
-reliable monitoring-round predicate exists before estimating implementation.
-Do not assume delaying today's full group request saves bytes. Verification
-command for this approved work: `npm run build` and `npm test`, then local
-browser checks at 375/768/1280/1920 CSS widths. Inspect `git status --short`
-before editing; the development changes remain uncommitted.
+M8 is implemented (see changelog, 2026-09-30), including family-query pagination.
+Next candidate: M1, the compact
+mobile catalogue pathway control. Verification for approved work: `npm run
+build` and `npm test`, then local browser checks at 375/768/1280/1920 CSS
+widths. Inspect `git status --short` before editing.
 
 Unfinished measurement: instrumentation-backed cold/warm/throttled metrics,
 full keyboard/contrast/error-state checks, and protected map/package download.

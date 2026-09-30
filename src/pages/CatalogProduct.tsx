@@ -3,7 +3,6 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { useCountryCatalog } from '../hooks/useCountryCatalog'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatDate, isPhotoGalleryWrapper } from '../lib/catalog'
 import { groupProductFamilies, itemLanguage } from '../lib/productFamilies'
@@ -11,9 +10,9 @@ import { CITATION_LANGUAGES, citationForm, citationModel, citationRound, citatio
 import { CitationText } from '../components/CitationText'
 import { AnonymousDownloadLink } from '../components/AnonymousDownloadLink'
 import { fetchStoryMapFlickrAlbum, isExplorableProduct, itemResourceAction, itemThumbnail, publicItemDataUrl, usesAnonymousDownload } from '../services/arcgis'
-import { countryDefinition, fetchCurrentCatalogProduct, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
+import { countryDefinition, fetchCurrentCatalogProduct, fetchProductFamily, isCatalogItemId, pathwayLabel, type CountryResource } from '../services/countries'
 import { fetchPhotoGalleries, galleryForFlickrAlbum, galleryForLegacyItem, type PhotoGallery } from '../services/photoGalleries'
-import { fetchSurveyReleases } from '../services/monitoring'
+import { isMonitoringRoundProduct } from '../services/monitoring'
 
 type ProductState =
   | { status: 'loading' }
@@ -64,7 +63,7 @@ function publicCategories(item: CountryResource) {
 
 export default function CatalogProduct() {
   const { itemId = '' } = useParams()
-  const { catalog } = useCountryCatalog()
+  const [familyItems, setFamilyItems] = useState<CountryResource[]>()
   const [state, setState] = useState<ProductState>({ status: 'loading' })
   /** Set when this address belongs to a gallery rather than to a product. */
   const [galleryPath, setGalleryPath] = useState('')
@@ -136,12 +135,17 @@ export default function CatalogProduct() {
 
   useEffect(() => {
     setLinkedMonitoringRound(false)
+    setFamilyItems(undefined)
     if (!item) return
     const controller = new AbortController()
-    void fetchSurveyReleases(controller.signal)
-      .then((releases) => setLinkedMonitoringRound(releases.some((release) =>
-        release.products.some((product) => product.itemId?.toLowerCase() === item.id.toLowerCase()))))
+    void isMonitoringRoundProduct(item.id, controller.signal)
+      .then(setLinkedMonitoringRound)
       .catch(() => { /* A schedule outage must not block the product page. */ })
+    // Without its siblings the page still reads correctly: one edition, and a
+    // citation built from the product's own title.
+    void fetchProductFamily(item, controller.signal)
+      .then(setFamilyItems)
+      .catch(() => undefined)
     return () => controller.abort()
   }, [item])
 
@@ -190,10 +194,10 @@ export default function CatalogProduct() {
   })
   const action = item ? itemResourceAction(item) : undefined
   const family = useMemo(() => {
-    if (!catalog || !item) return undefined
-    return groupProductFamilies([...catalog.items.filter((candidate) => candidate.id !== item.id), item])
+    if (!familyItems || !item) return undefined
+    return groupProductFamilies(familyItems)
       .find((candidate) => candidate.variants.some((variant) => variant.id === item.id))
-  }, [catalog, item])
+  }, [familyItems, item])
   const citationSiblings = family?.variants.filter((variant) => variant.id !== item?.id) || []
   const citationParts = item
     ? citationModel(item, citationLanguage, { round: citationRound(item, citationSiblings) })

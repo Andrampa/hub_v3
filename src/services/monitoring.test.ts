@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchSurveyCollectionPeriods } from './monitoring'
+import { fetchSurveyCollectionPeriods, isMonitoringRoundProduct } from './monitoring'
 
 type Row = { admin0_isocode: string; round: string; coll_start_date?: number; coll_end_date?: number }
 
@@ -113,6 +113,49 @@ describe('survey collection periods', () => {
     const periods = await fetchSurveyCollectionPeriods([{ adm0Iso3: "N'GA", round: 8 }])
 
     expect(periods.size).toBe(0)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('isMonitoringRoundProduct', () => {
+  const itemId = 'a'.repeat(32)
+  const published = {
+    ObjectId: 1, admin0_isocode: 'NER', admin0_name_en: 'Niger', round: 'Round 08',
+    round_validated: 'yes', validation_date: day('2025-10-01'),
+  }
+
+  function serving(rows: Array<Record<string, unknown>>) {
+    const fetchMock = vi.fn(async (_input: string) => new Response(JSON.stringify({ features: rows.map((attributes) => ({ attributes })) })))
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('asks only for rows whose product links mention the item', async () => {
+    const fetchMock = serving([{ ...published, report_link: `https://www.arcgis.com/home/item.html?id=${itemId}` }])
+
+    expect(await isMonitoringRoundProduct(itemId.toUpperCase())).toBe(true)
+    const where = new URL(fetchMock.mock.calls[0][0]).searchParams.get('where')
+    expect(where).toContain(`LOWER(report_link) LIKE '%${itemId}%'`)
+    expect(where).not.toBe('1=1')
+  })
+
+  it('does not count a round that is not published', async () => {
+    serving([{ ...published, round_validated: 'no', survey_outdated: 'yes', report_link: itemId }])
+
+    expect(await isMonitoringRoundProduct(itemId)).toBe(false)
+  })
+
+  it('does not count a row whose link names a different item', async () => {
+    // LIKE only narrows the rows; the parsed product id still decides.
+    serving([{ ...published, report_link: `https://www.arcgis.com/home/item.html?id=${'b'.repeat(32)}` }])
+
+    expect(await isMonitoringRoundProduct(itemId)).toBe(false)
+  })
+
+  it('makes no request for a value that is not an item id', async () => {
+    const fetchMock = serving([])
+
+    expect(await isMonitoringRoundProduct("x' OR '1'='1")).toBe(false)
     expect(fetchMock).not.toHaveBeenCalled()
   })
 })

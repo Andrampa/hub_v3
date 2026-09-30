@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-09-30 - Product pages read only their own family and monitoring link
+
+- A product page no longer loads the whole content group to list its language
+  editions. A narrow group search, `id:<family> OR tags:"diem-family:<family>"`,
+  returns the family, reading additional pages only if ArcGIS paginates it;
+  siblings pass the catalogue's visibility and
+  `Discoverable product` gates. Checked live against all 40 multi-edition
+  families and 40 single-edition products: identical results.
+- The monitoring-round check no longer reads the whole survey schedule. The
+  service returns only rows whose product links mention the item id, which then
+  pass the same normalization; agreed with the full scan on 40 linked items.
+- In the measured sample, a cold product visit drops from about 2.2 MB in 11
+  requests to under 10 kB in two, beside the unchanged live membership check.
+  Either lookup failing leaves
+  the page as one edition with the ordinary citation.
+
 ## 2026-09-30 - Approved performance and mobile UX fixes
 
 - Contain the country round table's screen-reader text within its own horizontal
