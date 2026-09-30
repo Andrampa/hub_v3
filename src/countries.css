@@ -346,7 +346,7 @@
    the page sideways, because a country with fourteen rounds is wider than the
    column at any viewport worth designing for. */
 .country-timeline { padding-block: 8px 46px; }
-.country-timeline-scroll { overflow-x: auto; border: 1px solid var(--line); background: #fff; }
+.country-timeline-scroll { position: relative; overflow-x: auto; border: 1px solid var(--line); background: #fff; }
 .country-timeline-grid { width: 100%; border-collapse: collapse; }
 .country-timeline-grid th, .country-timeline-grid td { border-bottom: 1px solid var(--line-faint); text-align: center; }
 .country-timeline-grid thead th { padding: 11px 6px; border-bottom: 1px solid var(--line); color: var(--ink-faint); font-size: var(--text-small); font-weight: 700; }

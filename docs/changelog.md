@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-09-30 - Approved performance and mobile UX fixes
+
+- Contain the country round table's screen-reader text within its own horizontal
+  scroller, removing Niger's document-wide overflow at narrow widths.
+- Let the mobile catalogue hero end near its content instead of inheriting the
+  later 440 px desktop minimum. The first card moves about 173 px higher at a
+  roughly 375 px CSS viewport; the pathway control is unchanged.
+- Give generated, hashed `/assets/**` files one-year immutable caching in the
+  Firebase configuration template. This takes effect only after a separately
+  authorized web-repository synchronization and deployment.
+- Bound homepage hero slides to active, outgoing and next images, and stop
+  rotation and preloading while the hero or tab is out of view. The outgoing
+  image keeps its pan position through the reveal, and stable DOM ordering
+  avoids a transition jump. The user chose to remove the pause button;
+  reduced-motion readers keep one still image.
+- Expire the in-memory country catalogue after its 15-minute TTL so the next
+  load rechecks ArcGIS group membership. Already-open pages retain their current
+  settled view. A failed refresh remains retryable.
+
 ## 2026-09-25 - Microdata download step with licence acknowledgement
 
 - The microdata package download now follows the package review directly, in

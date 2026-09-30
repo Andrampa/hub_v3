@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { HeroCredit } from './HeroCredit'
 import { HeroImage, type HeroName } from './HeroImage'
 
@@ -43,52 +43,78 @@ const SLIDE_MS = 6000
 const TRANSITION_MS = 1500
 
 export function HomeHeroSlideshow() {
-  const [active, setActive] = useState(0)
-  // The slide being covered, kept visible beneath the reveal.
-  const [previous, setPrevious] = useState(-1)
-  const [transitioning, setTransitioning] = useState(false)
+  const [{ active, previous, transitioning, leavingTransform }, setSlide] = useState({
+    active: 0, previous: -1, transitioning: false, leavingTransform: '',
+  })
+  const slidesRef = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(true)
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState === 'visible')
+  const [reducedMotion, setReducedMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   // The pan starts a frame after a slide becomes active. Setting both at once
   // left the first slide, active from its first paint, with no change for the
   // pan transition to run from.
   const [panning, setPanning] = useState(-1)
-  // Slides are mounted one ahead of the one showing, so each is ready before it
-  // appears. The second waits a moment, so its download and decode do not
-  // compete with the first paint and the first slide's drift.
-  const [mounted, setMounted] = useState(1)
+  // Preload just the next frame halfway through this slide's display time.
+  const [preloadNext, setPreloadNext] = useState(false)
+  const motionStopped = !visible || !pageVisible
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setMounted((count) => Math.max(count, 2)), SLIDE_MS / 2)
-    return () => window.clearTimeout(timer)
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const onChange = () => setReducedMotion(media.matches)
+    media.addEventListener('change', onChange)
+    return () => media.removeEventListener('change', onChange)
   }, [])
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!('IntersectionObserver' in window)) return
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
+    if (slidesRef.current) observer.observe(slidesRef.current)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const onChange = () => setPageVisible(document.visibilityState === 'visible')
+    document.addEventListener('visibilitychange', onChange)
+    return () => document.removeEventListener('visibilitychange', onChange)
+  }, [])
+
+  useEffect(() => {
+    if (motionStopped || reducedMotion) return
+    const timer = window.setTimeout(() => setPreloadNext(true), SLIDE_MS / 2)
+    return () => window.clearTimeout(timer)
+  }, [active, motionStopped, reducedMotion])
+
+  useEffect(() => {
+    if (motionStopped || reducedMotion) return
     const timer = window.setInterval(() => {
-      // A background tab keeps its place instead of cycling unseen.
-      if (document.visibilityState !== 'visible') return
-      setActive((index) => {
-        setPrevious(index)
-        return (index + 1) % SLIDES.length
-      })
+      const outgoing = slidesRef.current?.querySelector('.hero-slide.is-active')
+      const transform = outgoing ? getComputedStyle(outgoing).transform : ''
+      setPreloadNext(false)
+      // The outgoing and entering frames must be present in the same render.
+      setSlide(({ active: index }) => ({ active: (index + 1) % SLIDES.length, previous: index, transitioning: true, leavingTransform: transform }))
     }, SLIDE_MS)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [motionStopped, reducedMotion])
 
   useEffect(() => {
-    if (active > 0) setMounted((count) => Math.max(count, Math.min(SLIDES.length, active + 2)))
+    if (motionStopped || reducedMotion) return
     // Long enough for the starting position to be painted before the pan
     // begins. A timer rather than animation frames, which a browser withholds
     // from a page it considers hidden.
     const timer = window.setTimeout(() => setPanning(active), 80)
     return () => window.clearTimeout(timer)
-  }, [active])
+  }, [active, motionStopped, reducedMotion])
 
   useEffect(() => {
-    if (previous < 0) return
-    setTransitioning(true)
-    const timer = window.setTimeout(() => setTransitioning(false), TRANSITION_MS)
+    if (previous < 0 || motionStopped) return
+    const timer = window.setTimeout(() => {
+      setSlide((current) => current.active === active ? { ...current, previous: -1, transitioning: false, leavingTransform: '' } : current)
+    }, TRANSITION_MS)
     return () => window.clearTimeout(timer)
-  }, [active, previous])
+  }, [active, previous, motionStopped])
+
+  const next = (active + 1) % SLIDES.length
+  const mounted = [active, ...(previous >= 0 ? [previous] : []), ...(preloadNext && !motionStopped && !reducedMotion ? [next] : [])]
 
   const slideClass = (index: number) => [
     'hero-image hero-slide',
@@ -100,16 +126,19 @@ export function HomeHeroSlideshow() {
 
   return (
     <>
-      <div className="hero-slides" aria-hidden="true">
-        {SLIDES.slice(0, mounted).map((slide, index) => (
-          <HeroImage
-            key={slide.name}
-            name={slide.name}
-            className={slideClass(index)}
-            priority={index === 0}
-            style={{ '--hero-slide-y': slide.y } as CSSProperties}
-          />
-        ))}
+      <div className="hero-slides" aria-hidden="true" ref={slidesRef}>
+        {[...new Set(mounted)].sort((a, b) => a - b).map((index) => {
+          const slide = SLIDES[index]
+          return (
+            <HeroImage
+              key={slide.name}
+              name={slide.name}
+              className={slideClass(index)}
+              priority={index === 0 && active === 0}
+              style={{ '--hero-slide-y': slide.y, ...(index === previous && leavingTransform ? { transform: leavingTransform, transition: 'none' } : {}) } as CSSProperties}
+            />
+          )
+        })}
       </div>
       <HeroCredit name={SLIDES[active].name} />
     </>

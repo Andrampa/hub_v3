@@ -90,6 +90,7 @@ Thumbs.db
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
+      { "source": "/assets/**", "headers": [{ "key": "Cache-Control", "value": "public,max-age=31536000,immutable" }] },
       { "regex": "^/([^.]*/)*[^.]*$", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
       { "source": "/index.html", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
     ],

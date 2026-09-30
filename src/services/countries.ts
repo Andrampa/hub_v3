@@ -452,6 +452,8 @@ function assembleCatalog(
 }
 
 let catalogPromise: Promise<CountryCatalog> | undefined
+/** A request in flight has no expiry; a settled result expires at this time. */
+let catalogExpiresAt = 0
 /**
  * The most complete catalogue built so far by the in-flight request, so a
  * caller that subscribes after page three still starts from page three rather
@@ -478,14 +480,20 @@ export type CatalogProgress = (catalog: CountryCatalog) => void
  */
 export function fetchCountryCatalog(onProgress?: CatalogProgress): Promise<CountryCatalog> {
   if (catalogPromise) {
-    // A late subscriber to a request already in flight gets whatever has landed
-    // so far, rather than waiting for the rest in front of a skeleton.
-    if (onProgress && latestPartial) onProgress(latestPartial)
-    return catalogPromise
+    if (!catalogExpiresAt || Date.now() < catalogExpiresAt) {
+      // A late subscriber to a request already in flight gets whatever has landed
+      // so far, rather than waiting for the rest in front of a skeleton.
+      if (onProgress && latestPartial) onProgress(latestPartial)
+      return catalogPromise
+    }
+    // Keep existing page state stable, but make the next caller recheck ArcGIS.
+    catalogPromise = undefined
+    catalogExpiresAt = 0
   }
 
   const cached = readCache()
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    catalogExpiresAt = cached.fetchedAt + CACHE_TTL_MS
     catalogPromise = Promise.resolve(
       assembleCatalog(cached.items, cached.diagnostics, new Date(cached.fetchedAt)),
     )
@@ -503,11 +511,13 @@ export function fetchCountryCatalog(onProgress?: CatalogProgress): Promise<Count
   })
     .then((catalog) => {
       latestPartial = undefined
+      catalogExpiresAt = catalog.fetchedAt.getTime() + CACHE_TTL_MS
       writeCache(catalog)
       return catalog
     })
     .catch((error) => {
       catalogPromise = undefined
+      catalogExpiresAt = 0
       latestPartial = undefined
       throw error
     })

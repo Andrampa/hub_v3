@@ -113,6 +113,7 @@ describe('countryDefinition', () => {
  */
 describe('fetchCountryCatalog', () => {
   afterEach(() => {
+    vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.resetModules()
   })
@@ -252,6 +253,39 @@ describe('fetchCountryCatalog', () => {
     const { fetchCountryCatalog: fetchFresh } = await import('./countries')
 
     await expect(fetchFresh()).rejects.toThrow(/503/)
+  })
+
+  it('reuses a settled catalogue within 15 minutes and refetches on the next load after expiry', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-30T12:00:00Z'))
+    stubGroupSearch(1)
+    const { fetchCountryCatalog: fetchFresh } = await import('./countries')
+    const fetchMock = vi.mocked(fetch)
+
+    const first = await fetchFresh()
+    vi.setSystemTime(new Date('2026-09-30T12:14:59Z'))
+    expect(await fetchFresh()).toBe(first)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    vi.setSystemTime(new Date('2026-09-30T12:15:00Z'))
+    const refreshed = await fetchFresh()
+    expect(refreshed).not.toBe(first)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries ArcGIS after an expired catalogue refresh fails', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-30T12:00:00Z'))
+    stubGroupSearch(1)
+    const { fetchCountryCatalog: fetchFresh } = await import('./countries')
+    const fetchMock = vi.mocked(fetch)
+    await fetchFresh()
+
+    vi.setSystemTime(new Date('2026-09-30T12:15:00Z'))
+    fetchMock.mockResolvedValueOnce({ ok: false, status: 503 } as Response)
+    await expect(fetchFresh()).rejects.toThrow(/503/)
+    await expect(fetchFresh()).resolves.toMatchObject({ complete: true })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 })
 

@@ -1,24 +1,26 @@
 # Handoff
 
-## Review ready: performance and UI/UX, 2026-09-28
+## Performance and UI/UX review, 2026-09-30
 
-Status: review and proposal only; awaiting user approval before implementation.
-Worktree `C:\git\hub_v3`, branch `main`, reviewed HEAD `f81f58a`. No application
-changes, commits, pushes or deployments were made. The uncommitted review files
-are this handoff and `docs/performance_ux_review_2026-09-28.md`.
-Claude's source check was incorporated into the priority order: Q1/Q2/Q3,
-bounded and pausable slideshow (M4), verified narrow product-family lookup
-(M8), then in-memory TTL expiry (M2a). The product already renders after its
-narrow membership lookup; the full catalogue request is concurrent overhead.
-Broader refactors need an instrumented baseline. M2a deliberately leaves an
-already open listing stable while rechecking membership on the next load.
+Status: user approved Q1, Q2, Q3, M4 and M2a; implemented locally on `main` in
+`C:\git\hub_v3`. No commit, push, web-repository sync or deployment was requested.
+The review is `docs/performance_ux_review_2026-09-28.md`; completed work is
+recorded in `docs/changelog.md`. The CSS changes are in `src/countries.css` and
+`src/catalog.css`; caching config is in `scripts/sync-web-repository.ps1`;
+slideshow changes are in `src/components/HomeHeroSlideshow.tsx` and
+`src/fao-adaptation.css`; catalogue expiry is in `src/services/countries.ts`.
+The user removed the slideshow pause-button requirement after review; M4 now
+bounds images and keeps the transition smooth without that control.
+Focused tests are beside those modules. The template's one-year asset rule is
+not live until a separately authorized deployment.
 
-Next file: `docs/performance_ux_review_2026-09-28.md`; select approved proposals
-before editing their listed source files. Production, older review deployment,
-and local build evidence are distinguished. Local `npm run build` passed.
-Verification command for an approved implementation: `npm run build`, followed
-by the proposal-specific browser checks in the report. Before editing, inspect
-`git status --short` to preserve concurrent work.
+Next file if M8 is approved for investigation: `src/pages/CatalogProduct.tsx`.
+Validate an ArcGIS group-scoped language-family query and whether a cheap,
+reliable monitoring-round predicate exists before estimating implementation.
+Do not assume delaying today's full group request saves bytes. Verification
+command for this approved work: `npm run build` and `npm test`, then local
+browser checks at 375/768/1280/1920 CSS widths. Inspect `git status --short`
+before editing; the development changes remain uncommitted.
 
 Unfinished measurement: instrumentation-backed cold/warm/throttled metrics,
 full keyboard/contrast/error-state checks, and protected map/package download.
