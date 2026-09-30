@@ -9,7 +9,9 @@
 .catalog-product-status a + a { background: #fff; color: var(--fao-blue); }
 .catalog-product-hero { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(280px, .65fr); min-height: 390px; background: var(--deep-blue); color: #fff; }
 .catalog-product-hero > div { padding: clamp(38px, 6vw, 72px); }
-.catalog-product-hero h1 { max-width: 780px; margin: 17px 0; color: #fff; font-size: clamp(2.25rem, 4.6vw, 4rem); line-height: 1.08; letter-spacing: -.045em; }
+/* Sized and tracked for the semibold heading weight: the old 4rem at -.045em
+   was set for the theme's light 300 and crowds the letters once they are bold. */
+.catalog-product-hero h1 { max-width: 780px; margin: 17px 0; color: #fff; font-size: clamp(2.1rem, 3.8vw, 3.2rem); line-height: 1.12; letter-spacing: -.02em; }
 .catalog-product-hero > div > p { max-width: 680px; color: #d7e5ea; line-height: 1.7; }
 /* The default kicker is FAO blue, which is 1.7:1 on the deep blue hero: the
    product type was effectively invisible. This is the same light tint the

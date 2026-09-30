@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-30 - Card titles lead; headings no longer light
+
+- Catalogue, homepage and country cards now put the title first, set in the
+  semibold heading weight, followed by one sentence-case line such as
+  "PDF · Added 31 August 2026". The pathway tag and the "Available in" row stay,
+  quieter; a single edition is plain text rather than a chip.
+- A record with no product type no longer shows a "Type not recorded" badge on
+  its image.
+- `h1`-`h4` now default to weight 600 instead of the FAO theme's 300, which
+  left card and section titles fainter than the metadata about them. The
+  product-page title is smaller and less tightly tracked to suit the weight.
+
 ## 2026-09-30 - Product pages read only their own family and monitoring link
 
 - A product page no longer loads the whole content group to list its language

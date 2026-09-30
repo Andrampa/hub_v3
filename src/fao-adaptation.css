@@ -447,7 +447,7 @@ h1, h2, h3, h4, h5, h6,
 .card-image img, .country-highlight-image img { transition: none; }
 .content-card:hover img, .country-highlight-card:hover .country-highlight-image img { transform: none; }
 .type-badge { top: auto; bottom: 0; left: 0; border-radius: 0; background: var(--fao-navy); }
-.card-context span:first-child, .country-card-top span:first-child { color: var(--fao-blue); }
+.country-card-top span:first-child { color: var(--fao-blue); }
 .card-body h3 { color: var(--fao-navy); }
 .pagination button, .error-state button { border-color: var(--fao-blue); border-radius: 0; color: var(--fao-blue); }
 

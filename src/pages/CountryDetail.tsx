@@ -39,7 +39,6 @@ import {
   EVIDENCE_PATHWAYS,
   PRODUCT_TYPES,
   UNRECORDED_PRODUCT_TYPE,
-  UNRECORDED_PRODUCT_TYPE_LABEL,
   countryDefinition,
   pathwayLabel,
   resourcesForCountry,
@@ -64,7 +63,7 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
   // cannot separate one product in a series from the next.
   const edition = distinctThumbnail(item, thumbnailIndex) ? undefined : itemEdition(item)
   const soleLanguage = itemLanguage(item)
-  const product = item.productTypes.find((type) => type !== UNRECORDED_PRODUCT_TYPE) || UNRECORDED_PRODUCT_TYPE_LABEL
+  const product = item.productTypes.find((type) => type !== UNRECORDED_PRODUCT_TYPE)
   const countryCodes = [...new Set(family.variants.flatMap((variant) => variant.countries))]
     .filter((code) => code !== CROSS_COUNTRY_CODE)
   const assignedCountries = countryCodes
@@ -93,11 +92,13 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
           ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
           : <span className="card-image-plate">{edition}</span>}
         {thumbnail && edition && <span className="card-edition">{edition}</span>}
-        <span className="country-product-badge">{product}</span>
+        {/* No badge for an untyped record; see CatalogContentCard. */}
+        {product && <span className="country-product-badge">{product}</span>}
         <Link className="card-media-link" to={itemProductPath(item)} tabIndex={-1} aria-hidden="true" />
       </div>
       <div className="country-resource-body">
-        <div className="country-resource-meta"><span>{itemTypeLabel(item)}</span><time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time></div>
+        <h3><Link to={itemProductPath(item)}>{item.title.trim()}</Link></h3>
+        <div className="country-resource-meta"><span>{itemTypeLabel(item)}</span><span aria-hidden="true">·</span><time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time></div>
         {pathways.length > 0 && (
           <ul className="country-resource-pathways" aria-label="Evidence pathways">
             {pathways.map((pathway) => (
@@ -108,7 +109,6 @@ function ResourceCard({ family, thumbnailIndex }: { family: ProductFamily<Countr
             ))}
           </ul>
         )}
-        <h3><Link to={itemProductPath(item)}>{item.title.trim()}</Link></h3>
         {summary && <p>{summary}</p>}
         <div className="country-resource-footer">
           <span className="country-resource-country-flags" aria-hidden="true">

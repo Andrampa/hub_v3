@@ -17,12 +17,11 @@
 .catalog-page .content-card { display: flex; flex-direction: column; }
 .catalog-page .card-image { height: 138px; }
 .catalog-page .card-body { display: flex; flex: 1; flex-direction: column; padding: 17px 18px 18px; }
-.catalog-page .card-context { font-size: var(--text-micro); }
 .catalog-page .card-body h3 {
   display: -webkit-box;
   min-height: 2.8em;
   overflow: hidden;
-  margin: 9px 0 7px;
+  margin: 0 0 6px;
   font-size: .93rem;
   line-height: 1.4;
   -webkit-box-orient: vertical;
@@ -74,7 +73,6 @@
 .catalog-page .card-image--research-analysis { background: linear-gradient(135deg, #594774, #a699be); }
 .catalog-page .card-image--seasonal-calendar { background: linear-gradient(135deg, #355f3f, #88ad74); }
 .catalog-page .card-image--unclassified { background: linear-gradient(135deg, #405961, var(--ink-faint)); }
-.catalog-page .type-badge--unclassified { background: rgba(70, 88, 94, .82); font-style: italic; }
 
 .catalog-pathways { display: flex; flex-wrap: wrap; gap: 5px; margin: 9px 0 0; padding: 0; list-style: none; }
 .catalog-pathway { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; background: var(--line-faint); border-left: 3px solid var(--ink-faint); color: #405961; font-size: var(--text-micro); font-weight: 700; letter-spacing: .03em; }

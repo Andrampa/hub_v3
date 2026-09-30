@@ -7,7 +7,6 @@ import {
   EVIDENCE_PATHWAYS,
   UNRECORDED_PRODUCT_TYPE,
   pathwayLabel,
-  UNRECORDED_PRODUCT_TYPE_LABEL,
   countryDefinition,
   type CountryResource,
   type EvidencePathway,
@@ -96,10 +95,15 @@ export function CatalogContentCard({
           ? <img src={thumbnail} alt="" loading="lazy" width={800} height={500} />
           : <span className="card-image-plate">{edition}</span>}
         {thumbnail && edition && <span className="card-edition">{edition}</span>}
-        <span className={`type-badge${recordedType ? '' : ' type-badge--unclassified'}`}>{recordedType || UNRECORDED_PRODUCT_TYPE_LABEL}</span>
+        {/* An untyped record carries no badge: announcing the gap on the image
+            gives it more weight than the types of the products around it. */}
+        {recordedType && <span className="type-badge">{recordedType}</span>}
         <Link className="card-media-link" to={destination} tabIndex={-1} aria-hidden="true" />
       </div>
       <div className="card-body">
+        {/* The title leads, because it is what a reader scans for; format, date
+            and pathway describe it and so follow it. */}
+        <h3><Link to={destination}>{item.title.trim()}</Link></h3>
         {/* `created` is when the product entered the catalogue. `modified` is the
             last edit to the ArcGIS record, which bulk re-categorization rewrites,
             so it is never presented here as if it were a publication date. */}
@@ -122,7 +126,6 @@ export function CatalogContentCard({
             })}
           </ul>
         )}
-        <h3><Link to={destination}>{item.title.trim()}</Link></h3>
         {summary && <p>{summary}</p>}
         <div className="card-footer">
           <span className="catalog-country" title={countryLabel}>
