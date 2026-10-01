@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-01 - Product descriptions use source text only
+
+- Product pages omit the summary when ArcGIS has no snippet instead of adding
+  generic publication text. Search and social descriptions are also left empty
+  for these products, without substituting the site's general description.
+
 ## 2026-09-30 - Survey catalogue opens the Explorer landing page
 
 - Published survey rounds now link directly to `/monitoring` with country,

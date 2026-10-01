@@ -171,7 +171,7 @@ export default function CatalogProduct() {
     // is what keeps it out of the index. `follow` because its recovery links
     // are good.
     noindex: state.status === 'unavailable' || state.status === 'invalid' || state.status === 'error',
-    description: item?.snippet?.trim() || (item ? `A DIEM product published through the DIEM Hub content group in ${formatDate(item.created)}.` : undefined),
+    description: item ? item.snippet?.trim() || '' : undefined,
     structuredData: item
       ? {
           '@type': 'CreativeWork',
@@ -316,7 +316,7 @@ export default function CatalogProduct() {
                 <div>
                   <span className="kicker">{item.productTypes.join(' · ')}</span>
                   <h1>{item.title.trim()}</h1>
-                  <p>{item.snippet?.trim() || 'An authoritative product published through the DIEM Hub content group.'}</p>
+                  {item.snippet?.trim() && <p>{item.snippet.trim()}</p>}
                   {item.type === 'PDF' ? (
                     <div className="catalog-product-hero-actions">
                       <button className="catalog-product-action" type="button" onClick={openPreview}>Preview PDF <i className="bi bi-file-earmark-pdf" aria-hidden="true" /></button>

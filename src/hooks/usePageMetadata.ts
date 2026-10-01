@@ -34,6 +34,7 @@ const BASELINE_DESCRIPTION = typeof document === 'undefined'
 export interface PageMetadata {
   /** Undefined while a page is still resolving its subject. */
   title?: string
+  /** An empty string explicitly clears descriptions; undefined uses the site baseline. */
   description?: string
   /** JSON-LD describing the page's subject, emitted as structured data. */
   structuredData?: Record<string, unknown>
@@ -99,12 +100,10 @@ export function usePageMetadata({ title, description, structuredData, canonicalP
       return element
     }, (element) => element.setAttribute('href', canonical))
 
-    const effectiveDescription = description || BASELINE_DESCRIPTION
-    if (effectiveDescription) {
-      meta('description', effectiveDescription)
-      meta('og:description', effectiveDescription, 'property')
-      meta('twitter:description', effectiveDescription)
-    }
+    const effectiveDescription = description ?? BASELINE_DESCRIPTION
+    meta('description', effectiveDescription)
+    meta('og:description', effectiveDescription, 'property')
+    meta('twitter:description', effectiveDescription)
     // Removed rather than set to "index" when a page is indexable again, so a
     // client-side navigation off a withdrawn product does not leave the tag
     // behind on the next route.
