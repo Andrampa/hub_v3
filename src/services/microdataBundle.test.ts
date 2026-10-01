@@ -94,7 +94,7 @@ describe('microdata bundle', () => {
     expect(manifest.files.map((file: { component: string }) => file.component)).toEqual(['mandatory', 'optional'])
     expect(manifest.files.every((file: { path: string }) => file.path.startsWith('TEST_DATA_'))).toBe(true)
     expect(fixture.read('TEST_DATA_NGA_R08_v3/documentation_and_metadata.txt')).toContain('No field descriptions or codebook have been published for V3 yet.')
-    expect(fixture.read('TEST_DATA_NGA_R08_v3/documentation_and_metadata.txt')).toContain('survey_id + hh_id')
+    expect(fixture.read('TEST_DATA_NGA_R08_v3/documentation_and_metadata.txt')).toContain('adm0_iso3 + round + survey_id')
   })
 
   it('returns no partial archive when rows change after preflight', async () => {

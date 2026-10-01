@@ -2,7 +2,7 @@
 
 How the Hub presents user-specific, time-limited microdata access. The
 provisioning side is documented in
-`hh_survey_v3/management/data_sharing/HUB_USER_MICRODATA_HANDOFF.md`, which is
+`hh_survey_v3/management/data_sharing/README.md` (Contract section), which is
 the operational authority; this file covers only what the Hub does with the
 result.
 
@@ -11,7 +11,7 @@ result.
 | Concept | Source of truth | What the user sees |
 | --- | --- | --- |
 | Legacy privileged access | Community group `3f1e99b44e3e4107957de001a1242a70` | The generation-wide master microdata layers, exactly as before |
-| Temporary grants | FAO-owned filtered views, shared to a private single-recipient group | Their own approved surveys, and nothing else |
+| Temporary grants | Operator-owned filtered table copies (legacy grants use views), shared to a private single-recipient group | Their own approved surveys, and nothing else |
 | Request-access products | The static V1/V2/V3 product entries | Descriptions and the request form |
 
 These do not feed each other. A grant recipient is deliberately not added to the
@@ -112,14 +112,24 @@ approved grant is good news that happens to arrive on a clock.
 Two states, and the difference matters:
 
 - **Confirmed.** The invitation's group carries the exact
-  `DIEM restricted microdata grant` tag. The dialog names the grant and offers
+  tag in the embedded list response or the recipient's authenticated
+  `/community/users/<username>/invitations/<id>` detail response. The latter
+  supplies group metadata even when the private group's normal endpoint is
+  unreadable before acceptance. Detail identity, group and recipient must match
+  the pending invitation. Ordinary group reads and registry validation remain
+  fallbacks. No group ID or operator username is hardcoded.
+  The required tag is
+  `DIEM restricted microdata grant`. The dialog names the grant and offers
   **Accept invitation and open data**, through the documented per-user accept
   operation on the user's own token. On success it closes, shows a success
-  notice, and navigates to `/data#temporary-microdata`; the grants section
+  notice, and navigates to `/data/surveys#temporary-microdata`; the grants section
   scrolls itself into view once discovery has produced the bundle, so the button
   ends where it promises.
 - **Unverified.** The group cannot be read before joining it, so the dialog
-  offers **Open ArcGIS notifications** and no acceptance control of any kind. A
+  offers **Open ArcGIS group invitations**, opening the Community portal's
+  `/home/groups.html` page (Invitations after sign-in), and no acceptance
+  control of any kind. Notifications are a header popup; there is no standalone
+  `/home/notifications.html` page. A
   group title is not a fact about who created the group, and the Hub never
   infers a grant from one. Returning to the Hub re-reads invitations, membership
   and grants on window focus, so acceptance in ArcGIS lands here without a
@@ -237,7 +247,7 @@ Validation is strict, and every failure drops the item rather than guessing —
 showing the wrong generation or the wrong scope beside real microdata is worse
 than not listing it:
 
-- `schemaVersion` must be one this Hub reads (`1`). A later provisioning release
+- `schemaVersion` must be one this Hub reads (`1` for views, `2` for copies). A later provisioning release
   may change what the fields mean, and reading it as though it were this one
   could misstate the approved scope.
 - `grantId`, `component` and `questionnaireVersion` must all resolve.
@@ -261,7 +271,7 @@ One bundle per `(grantId, questionnaireVersion)`.
   so the component cannot separate them — the questionnaire version does. A
   request spanning V2 and V3 is two complete bundles, not one mixed list,
   because their field sets and codebooks are not interchangeable.
-- **V3** pairs `core` and `optional`, which join on `survey_id + hh_id`.
+- **V3** pairs `core` and `optional`, which join on `adm0_iso3 + round + survey_id`.
 
 Each bundle carries its own version's documentation from
 `DOCUMENTATION_RESOURCES`. V3 documentation is not yet published, so a V3 bundle

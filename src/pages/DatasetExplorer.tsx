@@ -641,7 +641,7 @@ export default function DatasetExplorer() {
                       {definition.grant.questionnaireVersion === 'v3' && (
                         <p>
                           This is the {definition.grant.component === 'core' ? 'mandatory (core)' : 'optional'} component. Its counterpart covers the same
-                          households over the same approved surveys and joins on <code>survey_id + hh_id</code>; no other key relates the two.
+                          households over the same approved surveys and joins on <code>adm0_iso3 + round + survey_id</code>; no other key relates the two.
                         </p>
                       )}
                     </div>

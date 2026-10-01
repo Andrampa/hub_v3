@@ -1299,13 +1299,15 @@ export default function SurveyWorkspace() {
           <div className="workspace-panel" id="panel-microdata" role="tabpanel" aria-labelledby="tab-microdata" hidden={mode !== 'microdata'}>
             <section className="workspace-step" aria-labelledby="step-microdata">
               <h2 id="step-microdata">Microdata access</h2>
-              <p>Household-level records are fully anonymized, released in coded form, and held under a stricter licence than aggregated data. There are two routes to them.</p>
+              <p>Choose from the household surveys approved for your account below. Each download includes documentation for its questionnaire version and is subject to the microdata licence.</p>
               {(householdData || hasActiveGrant || grantChecking) && microdataListLoading && (
                 <div className="microdata-loading-callout" role="status" aria-live="polite">
                   <span className="microdata-loading-spinner" aria-hidden="true"/>
                   <span><strong>Loading microdata survey statistics</strong><small>Checking the datasets and survey rounds available to your account. Your download list will appear below.</small></span>
                 </div>
               )}
+              <details className="microdata-help">
+                <summary>Need access to more surveys? Browse published collections or request access</summary>
               <div className="microdata-routes">
                 <article className="microdata-route microdata-route--primary">
                   <span className="microdata-route-step">Start here</span>
@@ -1320,6 +1322,7 @@ export default function SurveyWorkspace() {
                   <Link to="/data/microdata-request">Open the request form</Link>
                 </article>
               </div>
+              </details>
             </section>
 
             {/* Mounted even while this tab is hidden, so grant discovery has
@@ -1339,7 +1342,12 @@ export default function SurveyWorkspace() {
               householdData={householdData} contributor={isContributor} testMode={testMode}
               licenceAccess={microdataAccess} onLoadingChange={setMicrodataListLoading} />
             ) : (
-              <MicrodataLicence access={microdataAccess} />
+              <>
+                {!grantChecking && grantDiscovery && !grantDiscovery.error && (
+                  <p role="status">You currently have no access to microdata, or your access has expired.</p>
+                )}
+                <MicrodataLicence access={microdataAccess} />
+              </>
             )}
 
             {householdData && (

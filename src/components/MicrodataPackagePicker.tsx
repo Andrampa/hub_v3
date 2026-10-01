@@ -242,8 +242,9 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
 
   return (
     <section className="workspace-step" aria-labelledby="step-microdata-package">
-      <h2 id="step-microdata-package">Build a microdata package</h2>
-      <p>Select up to {MICRODATA_SURVEY_LIMIT} household surveys available to your account. Each survey remains in its own folder; microdata from different surveys is never merged.</p>
+      <h2 id="step-microdata-package">Download microdata</h2>
+      <p>Select household surveys available to your account. Each survey remains in its own folder; microdata from different surveys is never merged.</p>
+      <aside className="microdata-version-note"><strong>What does V2 mean?</strong> V1, V2 and V3 identify the DIEM questionnaire version and the structure of its data files. A V2 survey uses the V2 questionnaire, field descriptions and codebook. Your download includes the documentation links for the version you select.</aside>
       {testMode && <p className="survey-limit-note">TEST DATA: simulated records for infrastructure review, not survey results.</p>}
       {(checking || grantChecking || !grantDiscovery) && <p role="status">Checking the household surveys your account can access…</p>}
       {(error || grantDiscovery?.error) && <p className="package-error" role="alert">Access could not be fully checked. {error || grantDiscovery?.error} <button type="button" onClick={() => setRetry((value) => value + 1)}>Check again</button></p>}
@@ -254,16 +255,17 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
           )}
           {surveys.length ? (
             <>
+              <h3 className="microdata-step-title"><span aria-hidden="true">1</span> Choose surveys</h3>
               <div className="survey-filter-bar">
                 <label htmlFor="microdata-survey-search">Find a survey</label>
                 <input id="microdata-survey-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Country, code or round"/>
                 <label><input type="checkbox" checked={selectedOnly} onChange={(event) => setSelectedOnly(event.target.checked)}/> Selected only</label>
               </div>
-              <p className="survey-list-count">{formatNumber(selected.length)} of {MICRODATA_SURVEY_LIMIT} surveys selected · {formatNumber(visible.length)} shown</p>
+              <p className="survey-list-count">{formatNumber(selected.length)} survey{selected.length === 1 ? '' : 's'} selected · {formatNumber(visible.length)} shown</p>
               <fieldset className="microdata-survey-list">
                 <legend className="sr-only">Available household surveys</legend>
                 {countryGroups.map((group) => (
-                  <details className="microdata-country" key={group[0].adm0Iso3} open={Boolean(search.trim() || selectedOnly) || undefined}>
+                  <details className="microdata-country" key={group[0].adm0Iso3} open={Boolean(search.trim() || selectedOnly || countryGroups.length === 1) || undefined}>
                     <summary><strong>{group[0].countryName}</strong><span>{group[0].adm0Iso3} · {formatNumber(group.length)} round{group.length === 1 ? '' : 's'} · {formatNumber(group.filter((survey) => keys.includes(survey.key)).length)} selected</span></summary>
                     {group.map((survey) => (
                       <div className="microdata-survey-row" key={survey.key}>
@@ -280,16 +282,16 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
                 {!visible.length && <p className="survey-empty">No surveys match these filters.</p>}
               </fieldset>
             </>
-          ) : <p className="survey-empty">{complete ? 'No household surveys are currently available to this account. You can browse published collections in FAM or request access.' : 'No household surveys have been confirmed yet.'}</p>}
+          ) : <p className="survey-empty">{complete ? 'You currently have no access to microdata, or your access has expired.' : 'No household surveys have been confirmed yet.'}</p>}
           <div className="microdata-package-review">
-            <h3>Review your package</h3>
+            <h3 className="microdata-step-title"><span aria-hidden="true">2</span> Choose files and check access</h3>
             {selected.length ? <>
               {selected.some((survey) => survey.generation === 'v3') && (
                 <fieldset className="package-layout-choice">
                   <legend>V3 tables</legend>
                   <div className="package-layout-options">
                     <label><input type="radio" name="microdata-v3-choice" checked={!includeOptional} disabled={Boolean(downloadProgress)} onChange={() => setIncludeOptional(false)}/><span><strong>Mandatory fields only</strong><small>One V3 table per survey.</small></span></label>
-                    <label><input type="radio" name="microdata-v3-choice" checked={includeOptional} disabled={Boolean(downloadProgress)} onChange={() => setIncludeOptional(true)}/><span><strong>Mandatory and optional fields</strong><small>Two separate V3 tables per survey, joined by survey_id + hh_id.</small></span></label>
+                    <label><input type="radio" name="microdata-v3-choice" checked={includeOptional} disabled={Boolean(downloadProgress)} onChange={() => setIncludeOptional(true)}/><span><strong>Mandatory and optional fields</strong><small>Two separate V3 tables per survey, joined by adm0_iso3 + round + survey_id.</small></span></label>
                   </div>
                 </fieldset>
               )}
@@ -330,7 +332,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
       )}
       {surveys.length > 0 ? (
         <div className="microdata-download-actions" aria-labelledby="microdata-download-heading">
-          <h3 id="microdata-download-heading">Download</h3>
+          <h3 id="microdata-download-heading" className="microdata-step-title"><span aria-hidden="true">3</span> Accept the licence and download</h3>
           <ol className="download-checklist">
             <li className={selected.length ? 'is-done' : undefined}><span className="download-checklist-number" aria-hidden="true">{selected.length ? '✓' : '1'}</span>Select surveys</li>
             <li className={checked ? 'is-done' : undefined}><span className="download-checklist-number" aria-hidden="true">{checked ? '✓' : '2'}</span>Check access</li>
@@ -349,13 +351,6 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
             <label className="licence-accept">
               <input type="checkbox" checked={licenceAccepted} onChange={(event) => {
                 setLicenceAccepted(event.target.checked)
-                if (event.target.checked) {
-                  setLicenceOpen(false)
-                  requestAnimationFrame(() => {
-                    if (checked) downloadButton.current?.focus()
-                    else licenceSummary.current?.focus()
-                  })
-                }
               }}/>
               <span>I have read the microdata licence and accept its conditions for the data in this package.</span>
             </label>

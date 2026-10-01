@@ -21,6 +21,7 @@ interface RequestOptions { method?: 'GET' | 'POST' }
 function fakeRequester(options: {
   invitations?: unknown[]
   groups?: Record<string, { title?: string; tags?: string[] }>
+  invitationDetails?: Record<string, unknown>
   unreadableGroups?: string[]
   failInvitations?: boolean
   acceptResponse?: unknown
@@ -51,6 +52,12 @@ function fakeRequester(options: {
       // `in` rather than `??`, so a test can model a null or empty response.
       return 'acceptResponse' in options ? options.acceptResponse : { success: true }
     }
+    const detailMatch = url.match(/\/invitations\/([^/]+)$/)
+    if (detailMatch) {
+      const detail = options.invitationDetails?.[detailMatch[1]]
+      if (!detail) throw new Error('invitation details unavailable')
+      return detail
+    }
     if (url.endsWith('/community/self')) {
       if (options.failSelf) throw new Error('network down')
       const sequence = options.memberOfSequence
@@ -78,6 +85,42 @@ function fakeRequester(options: {
 }
 
 describe('pending grant invitations', () => {
+  it('accepts a private FAO grant using recipient invitation details without a registry backend', async () => {
+    const groupId = 'ed258952c9854afebd92bc2a24fcb407'
+    const requester = fakeRequester({
+      invitations: [{ id: 'inv-private', targetType: 'group', targetId: groupId,
+        username: USERNAME, type: 'user', fromUsername: { username: 'operator' } }],
+      unreadableGroups: [groupId],
+      invitationDetails: { 'inv-private': { id: 'inv-private', targetType: 'group',
+        targetId: groupId, username: USERNAME, type: 'user',
+        group: { id: groupId, title: 'DIEM restricted microdata grant test', tags: [GRANT_GROUP_TAG] } } },
+      memberOf: [groupId],
+    })
+    const validate = vi.fn()
+    const check = await fetchPendingGrantInvitations(USERNAME, requester, validate)
+    expect(check.unverified).toBe(0)
+    expect(check.invitations).toHaveLength(1)
+    expect(check.invitations[0].fromUsername).toBe('operator')
+    expect(validate).not.toHaveBeenCalled()
+    await expect(acceptGrantInvitation(check.invitations[0], USERNAME, requester)).resolves.toBeUndefined()
+  })
+
+  it.each(['group', 'user', 'invitation'])('does not trust invitation details naming a different %s', async (mismatch) => {
+    const requester = fakeRequester({
+      invitations: [{ id: 'inv-hidden', groupId: 'hidden', targetType: 'group' }],
+      unreadableGroups: ['hidden'],
+      invitationDetails: { 'inv-hidden': {
+        id: mismatch === 'invitation' ? 'another' : 'inv-hidden', targetType: 'group',
+        targetId: mismatch === 'group' ? 'another' : 'hidden',
+        username: mismatch === 'user' ? 'another' : USERNAME,
+        group: { id: mismatch === 'group' ? 'another' : 'hidden', tags: [GRANT_GROUP_TAG] },
+      } },
+    })
+    const check = await fetchPendingGrantInvitations(USERNAME, requester)
+    expect(check.invitations).toEqual([])
+    expect(check.unverified).toBe(1)
+  })
+
   it('lists an invitation to a group carrying the exact grant tag', async () => {
     const requester = fakeRequester({
       invitations: [{ id: 'inv-1', targetType: 'group', groupId: 'grant-group', fromUsername: 'Andrea.Amparore_hqfao', received: 1757000000000 }],
@@ -110,7 +153,7 @@ describe('pending grant invitations', () => {
     const check = await fetchPendingGrantInvitations(USERNAME, requester)
     expect(check.invitations).toEqual([])
     expect(check.unverified).toBe(1)
-    expect(ARCGIS_NOTIFICATIONS_URL).toBe('https://hqfao-hub.maps.arcgis.com/home/notifications.html')
+    expect(ARCGIS_NOTIFICATIONS_URL).toBe('https://hqfao-hub.maps.arcgis.com/home/groups.html')
   })
 
   it('promotes only unreadable groups confirmed by the server projection', async () => {
@@ -389,7 +432,7 @@ describe('what the dialog says about the access window', () => {
     expect(INVITATION_COPY.confirmed.action).toBe('Accept invitation and open data')
     // An unconfirmed group cannot be accepted here at any price, so its action
     // must not even suggest that the Hub could do it.
-    expect(INVITATION_COPY.unverified.action).toBe('Open account notifications')
+    expect(INVITATION_COPY.unverified.action).toBe('Open ArcGIS group invitations')
     expect(INVITATION_COPY.unverified.action).not.toMatch(/accept/i)
   })
 })

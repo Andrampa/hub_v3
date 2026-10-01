@@ -1,5 +1,43 @@
 # Handoff
 
+## 2026-10-01 - Microdata grant recipient regression
+
+UI follow-up complete: signed-in browser confirmed the AFG round-11 grant
+resolves for the test recipient. Access routes, grant documentation and technical
+source names expand on demand; the picker has numbered steps and a version
+callout, with a sole country expanded. Picker tests and production build pass.
+Live selection and access preflight confirmed 10,010 records in one CSV; the
+licence opens and download stays disabled pending acceptance. Responsive checks
+at 375, 390, 768, 1024 and 1440 px found no horizontal overflow, and the browser
+reported no warnings/errors. Acceptance and actual download were left to the
+user; licence persistence after acceptance is covered by the picker test.
+
+Follow-up: invitation discovery now reads the authenticated invitation-detail
+endpoint's embedded group tags first. This removes the private-group read
+obstacle to direct Hub acceptance without requiring registry credentials.
+45 invitation service/dialog tests pass. Live check remains outstanding for
+group `ed258952c9854afebd92bc2a24fcb407`; no invitation was accepted by Codex.
+
+Status: fixes prepared for the requested development `main` commit in
+`C:\git\hub_v3`; web deployment remains outstanding.
+The invitation fallback now opens ArcGIS Groups, and grant discovery accepts
+schema 2 copies alongside schema 1 views. V3 join instructions use
+`adm0_iso3 + round + survey_id`. Focused regression tests and the build pass.
+Changed code: `microdataGrantInvitations.ts`, `microdataGrants.ts`, their tests,
+`microdataBundle.ts` and its test, `MicrodataInvitationDialog.tsx`,
+`MicrodataPackagePicker.tsx`, `DatasetExplorer.tsx`; focused docs updated.
+
+Live invitation acceptance is outstanding; signed-in discovery and download
+preflight were verified separately. Exact next
+file: `src/services/microdataGrantInvitations.ts`; test with
+`andrea.amparore_faohub_testaccount`, accept the pending AFG round-11 invitation
+through the confirmed Hub action or ArcGIS Groups > Invitations, return to
+`/data/surveys#temporary-microdata`, and verify its approved scope appears in the
+picker without legacy household-group membership. Verify actual item schema,
+group discovery source, table access and absence of rows outside AFG round 11.
+Exact verification command: `npm run build` (then a signed-in browser pass).
+No deployment or ArcGIS sharing changes were made.
+
 ## Performance and UI/UX review, 2026-09-30
 
 Status: user approved Q1, Q2, Q3, M4 and M2a; implemented and committed on

@@ -111,7 +111,7 @@ function GrantBundleCard({ bundle }: { bundle: GrantBundle }) {
           <li key={view.itemId}>
             <div>
               <strong>{COMPONENT_LABELS[view.component]}</strong>
-              <span>{view.title}</span>
+              <details className="microdata-source-detail"><summary>ArcGIS source</summary><span>{view.title}</span></details>
             </div>
             <Link className="data-resource-action" to={`/data/grants/${view.itemId}`}>Explore data</Link>
           </li>
@@ -127,8 +127,8 @@ function GrantBundleCard({ bundle }: { bundle: GrantBundle }) {
 
       <p className="grant-note grant-note--policy">{describeExportPolicy(bundle)}</p>
 
-      <div className="grant-docs">
-        <h4>Documentation for {generation.label}</h4>
+      <details className="grant-docs microdata-help">
+        <summary>Questionnaire documentation for {generation.label}</summary>
         {bundle.documentation.length
           ? bundle.documentation.map((resource) => <SupportingDocument resource={resource} key={resource.id} />)
           : (
@@ -138,7 +138,7 @@ function GrantBundleCard({ bundle }: { bundle: GrantBundle }) {
               survey. Documentation for earlier generations does not describe this field set and is not a substitute.
             </p>
           )}
-      </div>
+      </details>
     </article>
   )
 }
@@ -205,9 +205,7 @@ export function TemporaryMicrodataGrants({ onActiveGrantChange, onDiscoveryChang
           <span className="kicker">Approved for your account</span>
           <h3 id="temporary-microdata-heading">Your temporary microdata access</h3>
           <p>
-            Microdata views approved for your account for a limited period, restricted to the exact surveys in your
-            request. Access can change, so this list is checked again every time you open the
-            page.
+            Your approved surveys are listed below. Explore a table here or select surveys in Download microdata to prepare your files.
           </p>
         </div>
         <button type="button" onClick={() => void check()} disabled={checking}>

@@ -33,6 +33,13 @@ The client ID is public application configuration. No client secret belongs in t
 
 ## Temporary invitation validation endpoint
 
+The browser first reads the recipient's own ArcGIS invitation details, whose
+embedded group metadata can confirm the grant tag without reading a private
+group as a non-member. Matching invitation/group/recipient identifiers are
+required. Confirmed invitations are accepted with the user's own token and
+membership is read back before refreshing microdata access. The server
+validation endpoint below is a fallback, not a prerequisite for this path.
+
 `POST /api/microdata/invitations/validate` is the sole server-side projection
 of the private microdata registry. The SPA sends a bounded list of group IDs and
 its short-lived ArcGIS access token in the `Authorization` header. The function

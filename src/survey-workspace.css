@@ -146,7 +146,16 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .microdata-survey-row strong, .microdata-survey-row small { display: block; }
 .microdata-survey-row strong { color: var(--deep-blue); }
 .microdata-survey-row small, .microdata-survey-row > span { color: var(--ink-faint); }
-.microdata-package-review { margin-top: 28px; }
+.microdata-package-review { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line-faint); }
+.microdata-version-note { margin: 20px 0 26px; padding: 16px 20px; background: #f1f7fb; border-left: 3px solid var(--fao-blue); color: var(--deep-blue); line-height: 1.7; font-size: var(--text-small); }
+.microdata-version-note strong { display: block; margin-bottom: 4px; }
+.microdata-step-title { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; color: var(--deep-blue); font-size: 18px; }
+.microdata-step-title > span { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px; height: 28px; border-radius: 50%; background: var(--fao-blue); color: white; font-size: 14px; }
+.microdata-help > summary { padding: 14px 0; color: var(--fao-blue); font-weight: 600; cursor: pointer; }
+.microdata-help > summary:focus-visible, .microdata-source-detail > summary:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 3px; }
+.microdata-help .microdata-routes { margin-top: 10px; }
+.microdata-source-detail { margin-top: 5px; font-size: var(--text-small); overflow-wrap: anywhere; }
+.microdata-source-detail > summary { color: var(--fao-blue); cursor: pointer; }
 .microdata-package-review h3 { color: var(--deep-blue); font-size: 16px; }
 .survey-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 20px 0 10px; font-size: var(--text-small); }
 .survey-filter-bar input[type="search"] { flex: 1 1 240px; min-width: 0; padding: 9px 11px; border: 1px solid var(--line); border-radius: 2px; font: inherit; }

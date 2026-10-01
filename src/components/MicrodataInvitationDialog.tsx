@@ -273,7 +273,7 @@ export function MicrodataInvitationDialog() {
               <p className="invitation-dialog-alternative">
                 Prefer to accept this through your account?{' '}
                 <a href={ARCGIS_NOTIFICATIONS_URL} target="_blank" rel="noreferrer" onClick={() => void refresh()}>
-                  Open account notifications
+                  Open ArcGIS group invitations
                 </a>
               </p>
             )}

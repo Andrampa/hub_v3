@@ -118,13 +118,15 @@ const KNOWN_VERSIONS: DataGeneration[] = ['v1', 'v2', 'v3']
  * beside real microdata, so an unrecognised version is dropped rather than
  * interpreted.
  */
-export const SUPPORTED_METADATA_SCHEMA_VERSIONS = [1]
+// Schema 2 uses operator-owned filtered copies; the scope/component contract
+// is unchanged. Keep schema 1 for grants provisioned as hosted views.
+export const SUPPORTED_METADATA_SCHEMA_VERSIONS = [1, 2]
 
 /**
  * Which components a questionnaire generation is allowed to produce.
  *
  * V1 and V2 are one filtered view over the legacy master; V3 is a matched
- * core/optional pair joined on `survey_id + hh_id`. An item claiming a
+ * core/optional pair joined on `adm0_iso3 + round + survey_id`. An item claiming a
  * combination the provisioning script never creates is not a grant this Hub
  * knows how to present.
  */
@@ -364,7 +366,7 @@ export function buildGrantBundles(views: ResolvedGrantView[]): GrantBundle[] {
         // Export is a per-grant approval, so a bundle offers it only when every
         // one of its views carries it.
         bulkExportEnabled: sorted.every((view) => view.bulkExportEnabled),
-        joinKeys: version === 'v3' ? ['survey_id', 'hh_id'] : [],
+        joinKeys: version === 'v3' ? ['adm0_iso3', 'round', 'survey_id'] : [],
       }
     })
     .sort((a, b) => a.grantId.localeCompare(b.grantId) || a.questionnaireVersion.localeCompare(b.questionnaireVersion))

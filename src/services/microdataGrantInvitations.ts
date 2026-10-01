@@ -24,7 +24,9 @@ import { GLOBAL_REST, GRANT_GROUP_TAG, isGrantGroup, notifyGrantAccessChanged } 
 import type { ProtectedRequester } from './protectedData'
 
 /** Where the user accepts an invitation the Hub cannot confirm or accept itself. */
-export const ARCGIS_NOTIFICATIONS_URL = `${COMMUNITY_PORTAL}/home/notifications.html`
+// Notifications are a header popup, not a standalone notifications.html page.
+// ArcGIS exposes pending invitations on the Groups page as well.
+export const ARCGIS_NOTIFICATIONS_URL = `${COMMUNITY_PORTAL}/home/groups.html`
 
 /**
  * Everything the invitation dialog says, in one tested place.
@@ -57,7 +59,7 @@ export const INVITATION_COPY = {
     title: 'Action required: accept your data invitation',
     message: 'A temporary microdata invitation is waiting for you in your DIEM community account.',
     warning: 'Your seven-day access period has already started.',
-    action: 'Open account notifications',
+    action: 'Open ArcGIS group invitations',
   },
 } as const
 
@@ -101,7 +103,11 @@ interface InvitationsResponse {
     id?: string
     targetType?: string
     groupId?: string
-    fromUsername?: string
+    targetId?: string
+    username?: string
+    accepted?: boolean
+    type?: string
+    fromUsername?: string | { username?: string }
     created?: number
     received?: number
     /** Some ArcGIS responses embed the group, which saves a second request. */
@@ -157,14 +163,39 @@ export async function fetchPendingGrantInvitations(
     return { invitations: [], unverified: 0, error: (error as Error)?.message || 'Invitations could not be checked.' }
   }
 
-  const groupInvitations = (response.userInvitations || []).filter(
-    (invitation) => invitation.id && invitation.groupId && (invitation.targetType || 'group') === 'group',
-  )
+  const groupInvitations = (response.userInvitations || [])
+    .map((invitation) => ({ ...invitation, groupId: invitation.groupId || invitation.targetId || invitation.group?.id }))
+    .filter((invitation) => invitation.id && invitation.groupId
+      && (invitation.targetType || 'group') === 'group'
+      && (!invitation.type || invitation.type === 'user')
+      && invitation.accepted !== true
+      && (!invitation.username || invitation.username.toLowerCase() === username.toLowerCase()))
 
   type CheckedInvitation = PendingGrantInvitation | { unverified: PendingGrantInvitation } | 'other'
 
   const checked: CheckedInvitation[] = await Promise.all(groupInvitations.map(async (invitation): Promise<CheckedInvitation> => {
     let group = invitation.group
+    // The invitation detail is readable by its recipient even when the private
+    // group's ordinary endpoint is not. Its documented response embeds tags.
+    if (!group?.tags) {
+      try {
+        const detail = await requester<NonNullable<InvitationsResponse['userInvitations']>[number]>(
+          `${GLOBAL_REST}/community/users/${encodeURIComponent(username)}/invitations/${encodeURIComponent(String(invitation.id))}`,
+        )
+        const detailGroupId = detail.groupId || detail.targetId || detail.group?.id
+        if (detail.id === invitation.id && detail.targetType === 'group'
+          && detailGroupId === invitation.groupId
+          && (!detail.group?.id || detail.group.id === invitation.groupId)
+          && (!detail.username || detail.username.toLowerCase() === username.toLowerCase())
+          && (!detail.type || detail.type === 'user') && detail.accepted !== true) {
+          group = detail.group
+        }
+      } catch {
+        // Older portal responses can still be confirmed by group or registry.
+      }
+    }
+    const fromUsername = typeof invitation.fromUsername === 'string'
+      ? invitation.fromUsername : invitation.fromUsername?.username
     if (!group?.tags) {
       try {
         group = await requester<GroupResponse>(`${GLOBAL_REST}/community/groups/${invitation.groupId}`)
@@ -177,7 +208,7 @@ export async function fetchPendingGrantInvitations(
             id: String(invitation.id),
             groupId: String(invitation.groupId),
             groupTitle: GRANT_GROUP_TAG,
-            fromUsername: invitation.fromUsername,
+            fromUsername,
             received: invitation.received ?? invitation.created,
           },
         }
@@ -188,7 +219,7 @@ export async function fetchPendingGrantInvitations(
       id: String(invitation.id),
       groupId: String(invitation.groupId),
       groupTitle: group.title || GRANT_GROUP_TAG,
-      fromUsername: invitation.fromUsername,
+      fromUsername,
       received: invitation.received ?? invitation.created,
     }
   }))
@@ -218,7 +249,7 @@ export async function fetchPendingGrantInvitations(
   }
 }
 
-const ACCEPT_FAILED = 'The invitation could not be accepted here. Open your account notifications and accept it there.'
+const ACCEPT_FAILED = 'The invitation could not be accepted here. Open ArcGIS Groups and accept it under Invitations.'
 
 /**
  * Anything ArcGIS echoes back has to describe the invitation that was sent.

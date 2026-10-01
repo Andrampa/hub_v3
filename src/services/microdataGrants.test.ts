@@ -211,7 +211,7 @@ describe('grant metadata', () => {
       properties: {
         diemRestrictedMicrodata: {
           ...(V3_CORE_ITEM.properties as { diemRestrictedMicrodata: Record<string, unknown> }).diemRestrictedMicrodata,
-          schemaVersion: 2,
+          schemaVersion: 3,
         },
       },
     }
@@ -280,7 +280,7 @@ describe('bundle construction', () => {
     ])
     expect(bundles).toHaveLength(1)
     expect(bundles[0].views.map((entry) => entry.component)).toEqual(['core', 'optional'])
-    expect(bundles[0].joinKeys).toEqual(['survey_id', 'hh_id'])
+    expect(bundles[0].joinKeys).toEqual(['adm0_iso3', 'round', 'survey_id'])
   })
 
   it('separates V1 and V2 even though both use the legacy component', () => {
@@ -322,6 +322,27 @@ describe('bundle construction', () => {
 })
 
 describe('discovery', () => {
+  it('discovers a schema-2 AFG round-11 copy without legacy membership or search indexing', async () => {
+    const copy: GrantArcGISItem = {
+      ...V2_LEGACY_ITEM,
+      owner: 'another-management-operator',
+      properties: { diemRestrictedMicrodata: {
+        schemaVersion: 2, artifact: 'copy', grantId: 'afg-r11-test',
+        questionnaireVersion: 'v2', component: 'legacy',
+        surveyScope: [{ adm0_iso3: 'AFG', round: 11 }],
+      } },
+    }
+    const discovery = await fetchCurrentUserMicrodataGrants(fakeRequester({
+      groups: [{ id: 'temporary-group', tags: [GRANT_GROUP_TAG] }],
+      groupContent: { 'temporary-group': [copy] }, items: [copy],
+      searchResults: [],
+    }))
+    expect(discovery.source).toBe('groups')
+    expect(discovery.bundles).toHaveLength(1)
+    expect(discovery.bundles[0].surveyScope).toEqual([{ adm0_iso3: 'AFG', round: 11 }])
+    expect(discovery.bundles[0].views[0].schemaVersion).toBe(2)
+  })
+
   it('discovers a grant through the externally owned group the user was invited to', async () => {
     const requester = fakeRequester({
       searchResults: [],

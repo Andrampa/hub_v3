@@ -75,7 +75,7 @@ it('selects a live survey, preflights it, and offers a licensed package download
   await act(async () => country.querySelector('summary')!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
   const survey = country.querySelector('input[type="checkbox"]') as HTMLInputElement
   await act(async () => survey.click())
-  expect(host.textContent).toContain('1 of 10 surveys selected')
+  expect(host.textContent).toContain('1 survey selected')
   expect((Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Download microdata package') as HTMLButtonElement).disabled).toBe(true)
   const count = Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Check access and count records') as HTMLButtonElement
   await act(async () => count.click())
@@ -88,7 +88,12 @@ it('selects a live survey, preflights it, and offers a licensed package download
   const disclosure = host.querySelector('details.licence-disclosure') as HTMLDetailsElement
   expect(disclosure.open).toBe(false)
   expect(disclosure.textContent).toContain('Your microdata licence')
+  await act(async () => {
+    disclosure.open = true
+    disclosure.dispatchEvent(new Event('toggle'))
+  })
   await acceptLicence()
+  expect(disclosure.open).toBe(true)
   expect(disclosure.textContent).toContain('Microdata licence accepted')
   expect(download.disabled).toBe(false)
   await act(async () => download.click())

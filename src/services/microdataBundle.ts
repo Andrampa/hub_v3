@@ -183,7 +183,7 @@ function documentationText(survey: MicrodataSurvey, included: MicrodataComponent
   }
   if (survey.generation === 'v3') {
     lines.push('', 'V3 mandatory and optional tables are separate. To combine them for analysis,',
-      'join on survey_id + hh_id. Optional questions were not asked in every survey;',
+      'join on adm0_iso3 + round + survey_id. Optional questions were not asked in every survey;',
       'an absent optional row is not the same as a household non-response.')
   }
   lines.push('', `Data access guide: ${HUB_ORIGIN}/data/guide`)
@@ -407,7 +407,7 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
     `Surveys: ${surveys.length}; data files: ${manifestFiles.length}; records: ${formatNumber(recordCount)}`,
     surveys[0].testData ? 'TEST DATA — simulated records for infrastructure review; do not cite as survey results.' : null,
     'Each survey has its own folder. Read its documentation_and_metadata.txt for version-matched field descriptions and codebook links.',
-    'V3 mandatory and optional CSVs are separate; join on survey_id + hh_id if needed.',
+    'V3 mandatory and optional CSVs are separate; join on adm0_iso3 + round + survey_id if needed.',
     'All requested surveys and components are included. No partial package is returned.',
     CSV_TEXT_NEUTRALISATION,
     '',

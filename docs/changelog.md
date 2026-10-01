@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-10-01 - Clearer microdata download instructions
+
+- Reduced the microdata page's initial reading load with expandable access
+  routes, questionnaire documentation and ArcGIS source names. Added numbered
+  selection, file review and licence/download steps and a questionnaire-version
+  callout. A single available country opens automatically.
+
+- Renamed the picker to Download microdata and explained questionnaire versions,
+  file structures and matching documentation. The ten-survey cap is mentioned
+  only when a user attempts to exceed it.
+- Show a no-access or expired-access sentence after a successful empty access
+  check. Accepting the microdata licence keeps its disclosure open.
+
+## 2026-10-01 - Temporary microdata invitations and copy grants
+
+- Private grant invitations now read the recipient's own invitation-detail
+  response before trying the group endpoint or registry backend. ArcGIS embeds
+  the group's tags there, allowing direct Hub acceptance before membership;
+  mismatched invitation, group or recipient responses are refused.
+
+- Corrected the ArcGIS invitation fallback to the Groups page; the old
+  notifications.html destination does not exist. In-Hub acceptance remains
+  available for confirmed grant invitations.
+- Read metadata schemas 1 (legacy views) and 2 (operator-owned filtered copies),
+  retaining per-item ArcGIS authorization and strict scope validation. Schema-2
+  copies were previously discarded after successful group acceptance.
+- Corrected V3 join instructions and bundle keys to
+  `adm0_iso3 + round + survey_id`; `hh_id` is a panel identifier.
+
+
 ## 2026-10-01 - Product descriptions use source text only
 
 - Product pages omit the summary when ArcGIS has no snippet instead of adding
