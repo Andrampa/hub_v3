@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { buildCatalogSearchIndex, extractItemIds, searchCatalog, searchCountries } from '../lib/catalogSearch'
+import { formatMonthYear } from '../lib/format'
 import type { ProductFamily } from '../lib/productFamilies'
 import { itemProductPath } from '../services/arcgis'
 import type { CountryResource, CountrySummary } from '../services/countries'
@@ -10,6 +11,7 @@ interface Suggestion {
   kind: 'country' | 'product' | 'all'
   label: string
   detail: string
+  addedDate?: string
   /** Internal route. */
   to?: string
   /** inline only: apply this country as a filter rather than navigating. */
@@ -90,6 +92,7 @@ export function CatalogSearchBox({
         kind: 'product' as const,
         label: family.primary.title.trim(),
         detail: family.primary.productTypes[0] || family.primary.type,
+        addedDate: formatMonthYear(family.primary.created),
         to: itemProductPath(family.primary),
       })),
     ]
@@ -201,7 +204,7 @@ export function CatalogSearchBox({
               onClick={() => choose(suggestion)}
             >
               <span className="hero-suggestion-label">{suggestion.label}</span>
-              {suggestion.detail && <span className="hero-suggestion-detail">{suggestion.detail}</span>}
+              {suggestion.detail && <span className="hero-suggestion-detail">{suggestion.detail}{suggestion.addedDate && <> · Added {suggestion.addedDate}</>}</span>}
             </li>
           ))}
         </ul>

@@ -15,6 +15,21 @@ export function formatDate(value: number | Date) {
   return DATE_FORMAT.format(value)
 }
 
+const MONTH_YEAR_FORMAT = new Intl.DateTimeFormat('en-GB', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** Empty when the catalogue has no usable upload timestamp. */
+export function formatMonthYear(value: number | Date | null | undefined) {
+  const timestamp = value instanceof Date ? value.getTime() : value
+  return typeof timestamp === 'number' && Number.isFinite(timestamp) && timestamp > 0
+    && !Number.isNaN(new Date(timestamp).getTime())
+    ? MONTH_YEAR_FORMAT.format(timestamp)
+    : ''
+}
+
 const NUMBER_FORMAT = new Intl.NumberFormat('en-GB', { maximumFractionDigits: 20 })
 
 export function formatNumber(value: number) {

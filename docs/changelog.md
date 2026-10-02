@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-02 - Upload dates in search suggestions
+
+- Homepage and catalogue search product suggestions now show “Added Month Year”
+  in English, using the linked primary item's ArcGIS `created` timestamp (the
+  upload-date proxy, not a verified publication date). Missing or invalid dates
+  are omitted. Product metadata sits below the title in narrow dropdowns.
+
 ## 2026-10-01 - Clearer microdata download instructions
 
 - Reduced the microdata page's initial reading load with expandable access
