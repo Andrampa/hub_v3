@@ -235,7 +235,8 @@ search result may carry tags alone:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "artifact": "copy",
   "grantId": "request-2026-001",
   "questionnaireVersion": "v3",
   "component": "core",
@@ -243,11 +244,16 @@ search result may carry tags alone:
 }
 ```
 
+Copies also carry `diem-microdata-artifact-copy` and exactly one
+`diem-microdata-source-<itemId>` tag. The source ID is currently recorded in
+tags, not in this properties block.
+
 Validation is strict, and every failure drops the item rather than guessing —
 showing the wrong generation or the wrong scope beside real microdata is worse
 than not listing it:
 
-- `schemaVersion` must be one this Hub reads (`1` for views, `2` for copies). A later provisioning release
+- `schemaVersion` must be one this Hub reads (`1` for views, `2` for copies;
+  release-filtered copy provenance also requires `artifact: "copy"`). A later provisioning release
   may change what the fields mean, and reading it as though it were this one
   could misstate the approved scope.
 - `grantId`, `component` and `questionnaireVersion` must all resolve.
@@ -263,11 +269,24 @@ item, which does, before anything is displayed.
 Recipient identity appears nowhere in item metadata. It lives in the private
 group membership and the private registry.
 
+Schema-2 copies inherit release-filtered status only when the managed properties
+declare `artifact: "copy"`, the item has `diem-microdata-artifact-copy`, and
+exactly one `diem-microdata-source-<itemId>` tag identifies a microdata manifest
+resource with `releaseFiltered: true` and the same infrastructure version.
+The approved sources are infrastructure V1 (`f1d017ac889f44ceae76d07977eb5bc1`,
+formerly Archived) and infrastructure V2 (`2d15e5b7768949b4905e452fcc5e0440`).
+Both source views already restrict rows to `opendata = 1` and hide the field.
+The Hub carries this provenance into the explorer, survey picker and package
+builder, re-reading it before export. A present `opendata` field still takes
+priority. Missing, duplicate, unknown or version-mismatched source tags do not
+provide an exemption; legacy-master copies and schema-1 views retain the
+existing field-based rule. ArcGIS sharing remains the authorization boundary.
+
 ## Bundles
 
 One bundle per `(grantId, questionnaireVersion)`.
 
-- **V1 and V2** each produce a single `legacy` view over the same legacy master,
+- **Infrastructure V1 and V2** each produce a single `legacy` household component,
   so the component cannot separate them — the questionnaire version does. A
   request spanning V2 and V3 is two complete bundles, not one mixed list,
   because their field sets and codebooks are not interchangeable.

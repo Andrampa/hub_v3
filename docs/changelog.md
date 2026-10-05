@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-05 - Release-filtered temporary microdata copies
+
+- Infrastructure V1 (formerly Archived) and V2 grant copies now inherit the
+  existing manifest's release-filtered status through strictly checked copy
+  provenance. This fixes the missing-`opendata` block in the explorer, survey
+  picker and package builder. Unknown provenance still fails closed, a present
+  release field retains priority, and export re-resolves the grant.
+- Regression tests cover both sources, malformed provenance, selection,
+  package preflight and removal of provenance before download. Production
+  verification requires deployment and a signed-in test-recipient pass.
+- Review cleanup: named provenance tag constants, defensively normalized tags,
+  clarified copy metadata documentation and excluded stale Claude worktree
+  suites from Vitest without removing its standard exclusions.
+
 ## 2026-10-02 - Upload dates in search suggestions
 
 - Homepage and catalogue search product suggestions now show “Added Month Year”

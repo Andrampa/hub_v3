@@ -17,7 +17,7 @@
  * Nothing here is cached beyond the caller's React state, and no grant metadata
  * is ever written to storage: a revoked grant must not survive a reload.
  */
-import { DOCUMENTATION_RESOURCES, resourcesForGeneration, type DataGeneration, type ProtectedDataResource, type ProtectedRequester } from './protectedData'
+import { DOCUMENTATION_RESOURCES, MICRODATA_RESOURCES, resourcesForGeneration, type DataGeneration, type ProtectedDataResource, type ProtectedRequester } from './protectedData'
 
 /**
  * Grants live in the FAO organization while the user signs in to the Community
@@ -34,6 +34,8 @@ export const GRANT_GROUP_TAG = 'DIEM restricted microdata grant'
 
 const COMPONENT_TAG_PREFIX = 'diem-microdata-component-'
 const GRANT_ID_TAG_PREFIX = 'diem-microdata-grant-'
+const SOURCE_TAG_PREFIX = 'diem-microdata-source-'
+const COPY_TAG = 'diem-microdata-artifact-copy'
 
 export type GrantComponent = 'legacy' | 'core' | 'optional'
 
@@ -48,6 +50,9 @@ export interface GrantItemMetadata {
   questionnaireVersion: DataGeneration
   component: GrantComponent
   surveyScope: SurveyScopeEntry[]
+  sourceItemId?: string
+  /** Confirmed copy of a manifest source already filtered to released rows. */
+  releaseFiltered?: boolean
 }
 
 export interface GrantArcGISItem {
@@ -125,7 +130,7 @@ export const SUPPORTED_METADATA_SCHEMA_VERSIONS = [1, 2]
 /**
  * Which components a questionnaire generation is allowed to produce.
  *
- * V1 and V2 are one filtered view over the legacy master; V3 is a matched
+ * Infrastructure V1 and V2 each provide a household component; V3 is a matched
  * core/optional pair joined on `adm0_iso3 + round + survey_id`. An item claiming a
  * combination the provisioning script never creates is not a grant this Hub
  * knows how to present.
@@ -137,7 +142,7 @@ const COMPONENTS_BY_VERSION: Record<DataGeneration, GrantComponent[]> = {
 }
 
 function tagValue(tags: string[] | undefined, prefix: string) {
-  const match = (tags || []).find((tag) => tag.toLowerCase().startsWith(prefix))
+  const match = (tags || []).map((tag) => String(tag).trim()).find((tag) => tag.toLowerCase().startsWith(prefix))
   return match ? match.slice(prefix.length) : undefined
 }
 
@@ -185,7 +190,7 @@ export function parseGrantMetadata(item: GrantArcGISItem): GrantItemMetadata | n
   const grantId = String(managed?.grantId ?? tagValue(item.tags, GRANT_ID_TAG_PREFIX) ?? '').trim()
   const rawComponent = String(managed?.component ?? tagValue(item.tags, COMPONENT_TAG_PREFIX) ?? '').trim().toLowerCase()
   const rawVersion = String(managed?.questionnaireVersion ?? '').trim().toLowerCase()
-    || (item.tags || []).map((tag) => tag.trim().toLowerCase()).find((tag) => /^diem v[123]$/.test(tag))?.slice(5)
+    || (item.tags || []).map((tag) => String(tag).trim().toLowerCase()).find((tag) => /^diem v[123]$/.test(tag))?.slice(5)
     || ''
 
   const component = KNOWN_COMPONENTS.find((known) => known === rawComponent)
@@ -201,7 +206,17 @@ export function parseGrantMetadata(item: GrantArcGISItem): GrantItemMetadata | n
   const surveyScope = readSurveyScope(managed?.surveyScope)
   if (managed && !surveyScope.length) return null
 
-  return { schemaVersion, grantId, questionnaireVersion, component, surveyScope }
+  const tags = (item.tags || []).map((tag) => String(tag).trim().toLowerCase())
+  const sourceTags = tags.filter((tag) => tag.startsWith(SOURCE_TAG_PREFIX))
+  const sourceItemId = sourceTags.length === 1
+    ? sourceTags[0].slice(SOURCE_TAG_PREFIX.length) : undefined
+  const releaseFiltered = schemaVersion === 2 && managed?.artifact === 'copy'
+    && tags.includes(COPY_TAG)
+    && MICRODATA_RESOURCES.some((resource) => resource.id === sourceItemId
+      && resource.version === questionnaireVersion && resource.releaseFiltered === true)
+
+  return { schemaVersion, grantId, questionnaireVersion, component, surveyScope,
+    ...(sourceItemId ? { sourceItemId } : {}), ...(releaseFiltered ? { releaseFiltered: true } : {}) }
 }
 
 interface SearchResponse {
@@ -326,7 +341,7 @@ const COMPONENT_ORDER: Record<GrantComponent, number> = { legacy: 0, core: 1, op
 /**
  * One bundle per (grant, questionnaire version).
  *
- * V1 and V2 both produce a single `legacy` view over the same legacy master, so
+ * Infrastructure V1 and V2 each produce a single `legacy` component, so
  * the component cannot separate them — the questionnaire version does. A
  * request approved across two generations is two complete bundles, each with
  * its own views and its own version's documentation, because their field sets

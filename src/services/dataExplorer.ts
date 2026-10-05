@@ -346,6 +346,7 @@ export async function fetchGrantDatasetDefinition(
     description: `Approved surveys: ${describeSurveyScope(view.surveyScope)}. Rows outside this scope are excluded by the service itself.`,
     kind: 'microdata',
     access: 'available',
+    releaseFiltered: view.releaseFiltered,
     item: {
       id: view.itemId,
       title: view.title,

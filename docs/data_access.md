@@ -216,11 +216,15 @@ visibility scope. Test-data mode is Contributor-only, because every test survey
 is `opendata = 0`; `?test=1` is ignored for anyone else.
 
 **This is presentation, not security.** An unrestricted feature service returns
-every row to anyone who queries it directly. The V1/V2 microdata items are
+every row to anyone who queries it directly. The infrastructure V1 and V2 microdata items are
 release-filtered ArcGIS views created with `opendata = 1` in the view definition;
 they intentionally omit that field from their schema. Only those two items are
 declared `releaseFiltered` in `src/services/protectedData.ts`. Undeclared
-unflagged microdata still fails closed. ArcGIS view sharing and its server-side
+unflagged microdata still fails closed. Schema-2 grant copies inherit this
+status only through matching manifest source/version, copy properties and
+unambiguous source/copy tags; see `temporary_microdata_grants.md`. A present
+`opendata` field still takes priority, and download revalidates provenance.
+ArcGIS view sharing and its server-side
 definition are the actual boundary; the broader rebuild topology is in
 `docs/data_access_restructure.md` section 15.
 

@@ -1,5 +1,33 @@
 # Handoff
 
+## 2026-10-05 - Infrastructure V1 and V2 grant-copy release filtering
+
+Status: implemented, uncommitted in `main`, worktree `C:\git\hub_v3`.
+Changed files: `src/services/microdataGrants.ts`, `src/services/dataExplorer.ts`,
+`src/services/microdataGrantProvenance.test.ts`, `docs/data_access.md`,
+`docs/temporary_microdata_grants.md`, `docs/changelog.md`, `vitest.config.ts`, and this handoff.
+The shared grant definition inherits release-filtered status only for schema-2
+copies with copy properties/tag and exactly one matching, same-version source
+in the existing manifest. A present release field retains priority.
+79 focused tests and `npm run build` pass; `git diff --check` passes.
+Review cleanups moved provenance under the metadata contract, named the tag
+constants, made tag reads defensive, and excluded `.claude/worktrees/**` from
+Vitest while preserving its default exclusions.
+
+Live production investigation found Yemen V1 rounds 3/4 and V2 round 5 active
+but withheld for the missing `opendata` field, while the older AFG V2 round-11
+grant remains selectable. No credentials, household rows or tokens were saved.
+No commit, push, deployment or ArcGIS sharing change was performed.
+
+Outstanding: authenticated acceptance of the fixed build; the production tab
+still runs the deployed version. Exact next file:
+`src/services/dataExplorer.ts`. After an authorized deployment or local sign-in,
+use `andrea.amparore_faohub_testaccount` to verify Yemen V1 rounds 3/4 and V2
+round 5 appear in the picker, explorer access works, counts match and a package
+downloads after the user accepts the licence. Verify revoked access still
+fails. Exact verification command: `npm run build`; focused tests:
+`npx vitest run --exclude ".claude/**" src/services/microdataGrantProvenance.test.ts src/services/microdataGrants.test.ts src/services/microdataSurveyAccess.test.ts src/services/microdataBundle.test.ts src/services/visibility.test.ts`.
+
 ## 2026-10-01 - Microdata grant recipient regression
 
 UI follow-up complete: signed-in browser confirmed the AFG round-11 grant
