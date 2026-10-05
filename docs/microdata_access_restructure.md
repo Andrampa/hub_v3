@@ -31,7 +31,7 @@ Recorded 2026-09-22, because each was contested during planning.
 | Does a private grant bypass `opendata = 1`? | **No.** Contributors bypass it, because they may also see non-validated data. Every other account - household-data group or temporary grant - gets validated data only. |
 | Bulk download from the master layers | **Yes**, per-survey extracts from the generation-wide layers, for accounts authorized to see them. |
 | V3 mandatory and optional | **Two CSVs**, never auto-joined. |
-| Survey cap | **Ten surveys per microdata package for every role, including Contributors.** Household volume and disclosure risk differ from aggregate packages, whose Contributor cap is unlimited. |
+| Survey cap | **Ten surveys per microdata selection for every role, including Contributors.** The selection can produce several whole-survey ZIP parts. Household volume and disclosure risk differ from aggregate packages, whose Contributor cap is unlimited. |
 | Missing selected V3 optional component | **Block the entire package.** Do not silently omit a table the user requested; offer mandatory-only or a smaller selection instead. |
 
 The grant decision does not change grant policy: Contributors bypass the row
@@ -123,7 +123,8 @@ Surveys are the unit, exactly as for aggregates. The row shows country, round,
 questionnaire generation, collection period where the register knows it, and
 which source authorizes it.
 
-- Up to **ten surveys in one package**. This is a usability guardrail, not a
+- Up to **ten surveys in one selection**, producing whole-survey ZIP parts as
+  necessary. This is a usability guardrail, not a
   control, and must be worded as one. It protects nothing: an authorized user
   can query the same views directly. Saying otherwise would misrepresent a
   limit on sensitive records as a safeguard.
@@ -237,7 +238,24 @@ The picker offers **Coded values** (default), **Labels** or **Both**.
   `unlabelled_codes: { field: { count, codes } }` (at most 20 sample codes).
 - **Limits.** `sourceTables` (20) limits tables read; the review shows tables
   read and CSV files written separately. The 40 MB byte budget counts every CSV
-  written, coded and labelled together, as chunks are encoded.
+  written, coded and labelled together, as chunks are encoded, per ZIP part.
+  The picker uses `buildMicrodataParts`; the single-package builder remains
+  transactional for callers that request one archive. Parts split greedily by
+  actual bytes, records and table counts. Survey folders (including both V3
+  tables) never split. Each completed part is published separately and survives
+  cancellation or a failure in a later part. A single oversized survey fails.
+  Access checking samples at most 30 rows per table with the real encoder and
+  a 20% margin; this estimate is informational, not a refusal or guarantee.
+  Rows are read in full only once during preparation. Compression errors are
+  surfaced with focus and a corrected hint. Each part needs its own user click
+  so browser restrictions on multiple automatic downloads do not hide delivery.
+  Completed ZIPs have a separate 40 MB retention limit and can be cleared.
+  When that limit stops preparation, the message lists all surveys not offered
+  in completed parts so users can select them again. When the entire selection
+  finishes in one part, its filename has no `_part1` suffix and the picker starts
+  one automatic download, retaining a fallback link. Multiple parts always use
+  separate clicks. README generation is shared with the single-archive builder,
+  including generation time, licence wording and label-audit caveats.
 - **Digest parity.** `microdataLabels.test.ts` pins a SHA-256 test vector the
   Python script reproduces; change both together.
 
@@ -393,8 +411,21 @@ a temporary-grant holder with export enabled, and one with export disabled.
   V3 COD round 99 with both tables at 15.1 MB CSV / 2.2 MB ZIP, and ten
   production surveys at 19.3 MB CSV / 2.5 MB ZIP. Reported peak JS heap was
   approximately 57, 69 and 69 MB respectively. The enabled builder uses a
-  conservative 50,000-record, 40 MB actual-CSV and 20-file ceiling; it aborts
-  before archive creation if any ceiling is exceeded. These probes do not
+  conservative 50,000-record, 40 MB actual-CSV and 20-source-table ceiling per
+  whole-survey part. It flushes the preceding part while the next survey's CSV
+  chunks would grow beyond remaining capacity (encoding one page can temporarily
+  add its chunk before this check). Assembling an incoming CSV can retain
+  both chunks and their contiguous copy. Completed ZIPs retain at most another
+  40 MB. These are buffer limits, not a 40 MB total JavaScript heap guarantee;
+  row objects, compression and metadata add overhead. On 2026-10-05, the four
+  granted surveys (18,737 source records), Both mode, produced two parts with
+  35.82 MB and 4.60 MB data CSV. A 50 ms `performance.memory` probe measured
+  14.41 MB baseline / 125.53 MB peak / 45.50 MB end heap; ZIPs totalled 3.42 MB.
+  All input buffers were transferred to workers (36.10 MB and 4.71 MB including
+  metadata). WebView OS sampling was also collected, but shared/reused browser
+  processes prevent precise attribution of native memory to this page. The
+  successful test is not a worst-case bound or low-memory certification; probes
+  on low-memory devices are still needed. These probes do not
   establish a maximum for future surveys or a low-memory device guarantee.
 - **V3 documentation does not exist.** Disclosed while V3 is test data; a
   prerequisite once it is not.

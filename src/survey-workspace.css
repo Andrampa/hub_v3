@@ -203,6 +203,9 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .package-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 20px; }
 .package-actions button { padding: 12px 20px; border: 0; background: var(--fao-blue); color: white; font-size: 13px; font-weight: 700; cursor: pointer; }
 .package-actions button:hover:not(:disabled) { background: var(--deep-blue); }
+.package-part-download { display: inline-block; padding: 12px 20px; background: var(--fao-blue); color: white; font-size: 13px; font-weight: 700; text-decoration: none; }
+.package-part-download:hover { background: var(--deep-blue); color: white; }
+.package-part-download:focus-visible { outline: 2px solid var(--deep-blue); outline-offset: 3px; }
 .package-actions button:disabled { opacity: .75; cursor: default; }
 .package-actions button:not(.package-download) { background: transparent; border: 1px solid var(--line); color: var(--ink-faint); }
 .package-actions button:not(.package-download):hover:not(:disabled) { border-color: var(--fao-blue); background: transparent; color: var(--fao-blue); }

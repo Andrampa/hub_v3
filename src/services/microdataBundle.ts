@@ -57,6 +57,12 @@ export interface MicrodataBundleOptions {
   resolve?: (component: MicrodataSurveyComponent, requester: ProtectedRequester) => Promise<DatasetDefinition>
   /** Injected for tests; production reads `src/data/auditedDomains.json`. */
   audit?: AuditedDomains
+  /** Release the previous complete part while a new survey's CSV grows. */
+  onEncodedBytes?: (bytes: number) => Promise<void>
+  /** Whole-survey parts enforce budgets individually, not on the selection total. */
+  splitParts?: boolean
+  /** Informational bounded sample; never a byte authorization gate. */
+  estimateSize?: boolean
 }
 
 interface DataFileManifest {
@@ -209,7 +215,7 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
   }
   const chosen = surveys.flatMap((survey) => chosenComponents(survey, options.includeV3Optional)
     .map((component) => ({ survey, component })))
-  if (options.budget && chosen.length > options.budget.sourceTables) {
+  if (options.budget && !options.splitParts && chosen.length > options.budget.sourceTables) {
     throw new Error(`This selection reads ${chosen.length} tables; one package can read ${options.budget.sourceTables}. Select fewer surveys.`)
   }
 
@@ -235,7 +241,7 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
     }, { signal })
     const count = countResponse.count || 0
     recordCount += count
-    if (options.budget && recordCount > options.budget.records) {
+    if (options.budget && !options.splitParts && recordCount > options.budget.records) {
       throw new Error(`This package would hold ${formatNumber(recordCount)} records, above its measured ${formatNumber(options.budget.records)}-record limit.`)
     }
     const labels = await labelStatus(survey.generation, component.component, component.source,
@@ -244,6 +250,15 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
     onProgress?.({ stage: 'counting', completed: index + 1, total: chosen.length })
   }
   const values = options.values || 'codes'
+  if (options.splitParts && options.budget) {
+    for (const survey of surveys) {
+      const entries = resolved.filter((entry) => entry.survey.key === survey.key)
+      if (entries.reduce((sum, entry) => sum + entry.count, 0) > options.budget.records
+        || entries.length > options.budget.sourceTables) {
+        throw new Error(`${survey.countryName} round ${survey.round} alone exceeds a part's record or table limit. No partial survey is offered.`)
+      }
+    }
+  }
   const unverified = resolved.filter((entry) => !entry.labels.verified)
   if (values !== 'codes' && unverified.length) {
     const detail = unverified.map(({ survey, component, labels }) => (
@@ -251,15 +266,40 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
     )).join('; ')
     throw new Error(`Labels cannot be verified for this selection (${detail}). Choose coded values, or remove these surveys.`)
   }
+  let estimatedBytes: number | undefined
+  if (options.estimateSize) {
+    estimatedBytes = 0
+    for (const entry of resolved) {
+      assertLive(signal)
+      const columns = usableFields(entry.definition.layer.fields).map((field) => field.name)
+      const plan = labelPlan(entry.definition.layer.fields, columns)
+      const sample = await requester<{ features?: Array<{ attributes: Record<string, unknown> }> }>(`${entry.definition.layerUrl}/query`, {
+        where: entry.where, outFields: '*', returnGeometry: 'false', resultRecordCount: '30',
+        orderByFields: entry.definition.layer.objectIdField ? `${entry.definition.layer.objectIdField} ASC` : undefined,
+      }, { signal }).catch(() => { assertLive(signal); return undefined })
+      if (!sample || (entry.count > 0 && !sample.features?.length)) { estimatedBytes = undefined; break }
+      const rows = sample.features || []
+      const encode = new TextEncoder()
+      for (const mode of values === 'both' ? ['codes', 'labels'] : [values]) {
+        const sampleBytes = rows.reduce((bytes, { attributes }) => {
+          const row = mode === 'labels' ? labelRow(attributes, plan, {}) : attributes
+          return bytes + encode.encode(`\r\n${columns.map((column) => csvCell(row[column])).join(',')}`).byteLength
+        }, 0)
+        estimatedBytes += encode.encode(`\uFEFF${columns.join(',')}`).byteLength
+          + (rows.length ? sampleBytes / rows.length * entry.count * 1.2 : 0)
+      }
+    }
+  }
   return {
     resolved, recordCount, sourceTableCount: chosen.length,
     outputFileCount: chosen.length * outputFilesPerTable(values),
+    estimatedBytes,
   }
 }
 
 type RowTransform = (attributes: Record<string, unknown>) => Record<string, unknown>
 
-const MEMORY_BUDGET_ERROR = 'This package exceeds its measured browser-memory budget. Select fewer surveys, or choose coded or labelled values instead of both.'
+const MEMORY_BUDGET_ERROR = 'This package exceeds its CSV byte limit (browser-memory budget). Choose coded or labelled values instead of both, or narrow the survey selection.'
 
 /**
  * Encode bounded pages so a full household table is never materialized as one
@@ -270,6 +310,7 @@ async function fetchBoundedCsv(
   definition: DatasetDefinition, where: string, columns: string[], expectedCount: number,
   requester: ProtectedRequester, remainingBytes: number, signal: AbortSignal | undefined,
   transforms: Array<RowTransform | undefined>,
+  onEncodedBytes?: (bytes: number) => Promise<void>,
 ) {
   const encoder = new TextEncoder()
   const outputs = transforms.map((transform) => ({ transform, chunks: [encoder.encode(`\uFEFF${columns.join(',')}`)] }))
@@ -296,6 +337,7 @@ async function fetchBoundedCsv(
       }).join('\r\n')}`)
       bytes += chunk.byteLength
       if (bytes > remainingBytes) throw new Error(MEMORY_BUDGET_ERROR)
+      await onEncodedBytes?.(bytes)
       output.chunks.push(chunk)
     }
     offset += rows.length
@@ -307,6 +349,142 @@ async function fetchBoundedCsv(
     return csv
   })
   return { csvs, rowCount: offset }
+}
+
+function readmeText({ now, surveyCount, fileCount, recordCount, testData, values, valueLabels, partNumber }: {
+  now: Date; surveyCount: number; fileCount: number; recordCount: number
+  testData: boolean; values: MicrodataValues; valueLabels: ValueLabelManifest[]; partNumber?: number
+}) {
+  const unverifiedLabels = valueLabels.filter((entry) => entry.status === 'unverified')
+  return [
+    `DIEM household microdata${partNumber ? ` - part ${partNumber}` : ''}`,
+    '========================',
+    `Generated: ${now.toISOString()}`,
+    `Surveys: ${surveyCount}; data files: ${fileCount}; records: ${formatNumber(recordCount)}`,
+    testData ? 'TEST DATA — simulated records for infrastructure review; do not cite as survey results.' : null,
+    'Each survey has its own folder. Read its documentation_and_metadata.txt for version-matched field descriptions and codebook links.',
+    'V3 mandatory and optional CSVs are separate; join on adm0_iso3 + round + survey_id if needed.',
+    partNumber ? 'This part contains only the complete surveys listed in manifest.json. Other selected surveys may be in other parts.' : 'All requested surveys and components are included. No partial package is returned.',
+    'Use is subject to LICENCE.txt: confidentiality, research and statistical purposes only, no redistribution, and citation.',
+    CSV_TEXT_NEUTRALISATION,
+    '',
+    'Values and labels',
+    '-----------------',
+    values === 'codes' ? 'Data files hold coded values.'
+      : values === 'labels' ? 'Data files ending in _labelled.csv replace coded values with their labels.'
+        : 'Each table is written twice: coded values, and a _labelled.csv copy with the same columns, rows and row order.',
+    'Labels come from the coded-value domains on the ArcGIS layers, which DIEM maintains as the authoritative value labels.',
+    'They are used only where those domains match the audited version; manifest.json records the audit basis per table.',
+    'Where the published codebook wording differs, the labels in this package take precedence.',
+    'In a labelled file, a code with no label is kept as the raw code, and empty values stay empty. manifest.json lists,',
+    'per labelled file, the fields labelled, fields without a domain, and any unlabelled codes.',
+    'Each survey folder has value_labels.csv (component, item_id, layer_id, variable, code, label) for verified tables.',
+    unverifiedLabels.length
+      ? `value_labels.csv omits tables whose labels could not be verified: ${unverifiedLabels.map((entry) => `${entry.survey_key} ${entry.component} (${entry.reason})`).join('; ')}. It is not a codebook for them.`
+      : null,
+    '',
+  ].filter((line) => line !== null).join('\n')
+}
+
+export interface MicrodataPart {
+  partNumber: number
+  fileName: string
+  blob: Blob
+  recordCount: number
+  fileCount: number
+  uncompressedBytes: number
+  surveyKeys: string[]
+}
+
+/** Completed ZIPs also consume memory. This is separate from the CSV part budget. */
+export const MICRODATA_RETAINED_ZIP_LIMIT = 40_000_000
+
+/** Read each survey once; publish only complete whole-survey parts. */
+export async function buildMicrodataParts(options: MicrodataBundleOptions & {
+  onPart: (part: MicrodataPart) => void
+  retainedZipLimit?: number
+}) {
+  const preflight = await preflightMicrodataPackage({ ...options, splitParts: true, estimateSize: false })
+  const now = options.now?.() || new Date()
+  let pending: Record<string, Uint8Array> = {}
+  let manifests: Array<{ surveys: Array<{ key: string; folder: string }>; files: DataFileManifest[]; value_labels: ValueLabelManifest[] }> = []
+  let bytes = 0
+  let records = 0
+  let tables = 0
+  let retained = 0
+  let partNumber = 0
+  const encode = (text: string) => new TextEncoder().encode(text)
+
+  const completedKeys = new Set<string>()
+
+  async function flush(final = false) {
+    if (!manifests.length) return
+    assertLive(options.signal)
+    const singlePackage = final && partNumber === 0
+    const merged = { ...JSON.parse(new TextDecoder().decode(pending['manifest.json'])),
+      part_number: partNumber + 1,
+      surveys: manifests.flatMap((entry) => entry.surveys),
+      files: manifests.flatMap((entry) => entry.files),
+      value_labels: manifests.flatMap((entry) => entry.value_labels),
+    }
+    pending['manifest.json'] = encode(`${JSON.stringify(merged, null, 2)}\n`)
+    pending['README.txt'] = encode(readmeText({ now, surveyCount: merged.surveys.length, fileCount: merged.files.length, recordCount: records, testData: options.surveys[0].testData, values: options.values || 'codes', valueLabels: merged.value_labels, partNumber: singlePackage ? undefined : partNumber + 1 }))
+    options.onProgress?.({ stage: 'compressing', completed: partNumber, total: 1, label: `Part ${partNumber + 1}` })
+    const archive = await (options.zip || compressInWorker)(pending, options.signal)
+    assertLive(options.signal)
+    if (retained + archive.byteLength > (options.retainedZipLimit ?? MICRODATA_RETAINED_ZIP_LIMIT)) {
+      const remaining = options.surveys.filter((survey) => !completedKeys.has(survey.key))
+        .map((survey) => `${survey.countryName} round ${survey.round} (${GENERATIONS[survey.generation].label})`).join('; ')
+      throw new Error(`Prepared ZIPs reached the memory limit. Not prepared: ${remaining}. Download the completed parts, clear them, then select these surveys again.`)
+    }
+    retained += archive.byteLength
+    partNumber += 1
+    options.onPart({ partNumber,
+      fileName: `${options.surveys[0].testData ? 'TEST_DATA_' : ''}DIEM_microdata_${isoDate(now)}${singlePackage ? '' : `_part${partNumber}`}.zip`,
+      blob: new Blob([archive as BlobPart], { type: 'application/zip' }),
+      recordCount: records, fileCount: merged.files.length, uncompressedBytes: bytes,
+      surveyKeys: merged.surveys.map((survey: { key: string }) => survey.key),
+    })
+    merged.surveys.forEach((survey: { key: string }) => completedKeys.add(survey.key))
+    pending = {}; manifests = []; bytes = 0; records = 0; tables = 0
+  }
+
+  for (const [index, survey] of options.surveys.entries()) {
+    assertLive(options.signal)
+    const entries = preflight.resolved.filter((entry) => entry.survey.key === survey.key)
+    const count = entries.reduce((sum, entry) => sum + entry.count, 0)
+    if (count > options.budget.records || entries.length > options.budget.sourceTables) {
+      throw new Error(`${survey.countryName} round ${survey.round} alone exceeds a part's record or table limit. No partial survey is offered.`)
+    }
+    if (records + count > options.budget.records || tables + entries.length > options.budget.sourceTables) await flush()
+    let surveyFiles: Record<string, Uint8Array> = {}
+    try {
+      await buildMicrodataBundle({ ...options, surveys: [survey], splitParts: false, estimateSize: false,
+        now: () => now,
+        // Flush before accumulating a survey beyond remaining CSV capacity. The
+        // current survey's bounded chunks stay live and its rows are never reread.
+        onEncodedBytes: async (surveyBytes) => { if (bytes + surveyBytes > options.budget.uncompressedBytes) await flush() },
+        onProgress: (progress) => options.onProgress?.({ ...progress, completed: index, total: options.surveys.length,
+          label: `${survey.countryName} round ${survey.round}` }),
+        zip: async (files) => { surveyFiles = files; return new Uint8Array() },
+      })
+    } catch (error) {
+      throw new Error(`${survey.countryName} round ${survey.round}: ${error instanceof Error ? error.message : 'Preparation failed.'}`)
+    }
+    const manifest = JSON.parse(new TextDecoder().decode(surveyFiles['manifest.json']))
+    const surveyBytes = (manifest.files as DataFileManifest[]).reduce((sum, file) => sum + surveyFiles[file.path].byteLength, 0)
+    const surveyRecords = manifest.files.filter((file: DataFileManifest) => file.values !== 'labelled' || options.values === 'labels')
+      .reduce((sum: number, file: DataFileManifest) => sum + file.record_count, 0)
+    if (surveyRecords !== count) throw new Error(`${survey.countryName} round ${survey.round} changed since the selection check. Prepare the selection again.`)
+    if (bytes + surveyBytes > options.budget.uncompressedBytes || records + surveyRecords > options.budget.records) await flush()
+    Object.assign(pending, surveyFiles)
+    manifests.push(manifest)
+    bytes += surveyBytes
+    records += surveyRecords
+    tables += entries.length
+  }
+  await flush(true)
+  return { partCount: partNumber, recordCount: preflight.recordCount }
 }
 
 /** Revalidates, counts, downloads and compresses atomically. No partial package is returned. */
@@ -332,7 +510,8 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
     const outputs: Array<'coded' | 'labelled'> = values === 'codes' ? ['coded'] : values === 'labels' ? ['labelled'] : ['coded', 'labelled']
     const { csvs, rowCount } = await fetchBoundedCsv(definition, where, columns, count,
       requester, budget.uncompressedBytes - uncompressedBytes, signal,
-      outputs.map((kind) => (kind === 'labelled' ? labelTransform : undefined)))
+      outputs.map((kind) => (kind === 'labelled' ? labelTransform : undefined)),
+      options.onEncodedBytes ? (bytes) => options.onEncodedBytes!(uncompressedBytes + bytes) : undefined)
     const finalCount = await requester<{ count?: number }>(`${definition.layerUrl}/query`, {
       where, returnCountOnly: 'true', returnGeometry: 'false',
     }, { signal })
@@ -387,7 +566,6 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
     files[`${folder}/documentation_and_metadata.txt`] = encode(documentationText(survey, included))
     files[`${folder}/value_labels.csv`] = encode(valueLabelsCsv(labelSources.get(survey.key) || []))
   }
-  const unverifiedLabels = valueLabels.filter((entry) => entry.status === 'unverified')
   const manifest = {
     package_schema_version: 2, kind: 'household-microdata', generated: now.toISOString(),
     hub: HUB_ORIGIN, test_data: surveys[0].testData, values,
@@ -400,33 +578,7 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
   }
   files['manifest.json'] = encode(`${JSON.stringify(manifest, null, 2)}\n`)
   files['LICENCE.txt'] = encode(microdataLicenceText())
-  files['README.txt'] = encode([
-    'DIEM household microdata',
-    '========================',
-    `Generated: ${now.toISOString()}`,
-    `Surveys: ${surveys.length}; data files: ${manifestFiles.length}; records: ${formatNumber(recordCount)}`,
-    surveys[0].testData ? 'TEST DATA — simulated records for infrastructure review; do not cite as survey results.' : null,
-    'Each survey has its own folder. Read its documentation_and_metadata.txt for version-matched field descriptions and codebook links.',
-    'V3 mandatory and optional CSVs are separate; join on adm0_iso3 + round + survey_id if needed.',
-    'All requested surveys and components are included. No partial package is returned.',
-    CSV_TEXT_NEUTRALISATION,
-    '',
-    'Values and labels',
-    '-----------------',
-    values === 'codes' ? 'Data files hold coded values.'
-      : values === 'labels' ? 'Data files ending in _labelled.csv replace coded values with their labels.'
-        : 'Each table is written twice: coded values, and a _labelled.csv copy with the same columns, rows and row order.',
-    'Labels come from the coded-value domains on the ArcGIS layers, which DIEM maintains as the authoritative value labels.',
-    'They are used only where those domains match the audited version; manifest.json records the audit basis per table.',
-    'Where the published codebook wording differs, the labels in this package take precedence.',
-    'In a labelled file, a code with no label is kept as the raw code, and empty values stay empty. manifest.json lists,',
-    'per labelled file, the fields labelled, fields without a domain, and any unlabelled codes.',
-    'Each survey folder has value_labels.csv (component, item_id, layer_id, variable, code, label) for verified tables.',
-    unverifiedLabels.length
-      ? `value_labels.csv omits tables whose labels could not be verified: ${unverifiedLabels.map((entry) => `${entry.survey_key} ${entry.component} (${entry.reason})`).join('; ')}. It is not a codebook for them.`
-      : null,
-    '',
-  ].filter((line) => line !== null).join('\n'))
+  files['README.txt'] = encode(readmeText({ now, surveyCount: surveys.length, fileCount: manifestFiles.length, recordCount, testData: surveys[0].testData, values, valueLabels }))
 
   assertLive(signal)
   onProgress?.({ stage: 'compressing', completed: 0, total: 1 })

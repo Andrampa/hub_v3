@@ -11,7 +11,7 @@ const auth = {
 }
 const discoverMicrodataAccess = vi.fn()
 const preflightMicrodataPackage = vi.fn()
-const buildMicrodataBundle = vi.fn()
+const buildMicrodataParts = vi.fn()
 const componentHasAudit = vi.fn((_generation: string, _component: string) => false)
 
 vi.mock('../auth/AuthContext', () => ({ useAuth: () => auth }))
@@ -21,7 +21,7 @@ vi.mock('../services/microdataSurveyAccess', async () => {
 })
 vi.mock('../services/microdataBundle', async () => {
   const actual = await vi.importActual<typeof import('../services/microdataBundle')>('../services/microdataBundle')
-  return { ...actual, preflightMicrodataPackage, buildMicrodataBundle }
+  return { ...actual, preflightMicrodataPackage, buildMicrodataParts }
 })
 vi.mock('../services/microdataLabels', async () => {
   const actual = await vi.importActual<typeof import('../services/microdataLabels')>('../services/microdataLabels')
@@ -48,8 +48,11 @@ beforeEach(() => {
     grantCheckFailed: false, grantIssues: [],
   })
   preflightMicrodataPackage.mockResolvedValue({ recordCount: 5025, sourceTableCount: 1, outputFileCount: 1, resolved: [] })
-  buildMicrodataBundle.mockResolvedValue({ fileName: 'DIEM_microdata_2026-09-23.zip',
-    blob: new Blob(['zip']), recordCount: 5025, fileCount: 1 })
+  buildMicrodataParts.mockImplementation(async ({ onPart }) => {
+    onPart({ partNumber: 1, fileName: 'DIEM_microdata_part1.zip', blob: new Blob(['zip']),
+      recordCount: 5025, fileCount: 1, uncompressedBytes: 10, surveyKeys: ['v2:NGA:8'] })
+    return { partCount: 1, recordCount: 5025 }
+  })
   vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() })
   vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
 })
@@ -76,13 +79,13 @@ it('selects a live survey, preflights it, and offers a licensed package download
   const survey = country.querySelector('input[type="checkbox"]') as HTMLInputElement
   await act(async () => survey.click())
   expect(host.textContent).toContain('1 survey selected')
-  expect((Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Download microdata package') as HTMLButtonElement).disabled).toBe(true)
+  expect((Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Prepare microdata downloads') as HTMLButtonElement).disabled).toBe(true)
   const count = Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Check access and count records') as HTMLButtonElement
   await act(async () => count.click())
   expect(preflightMicrodataPackage).toHaveBeenCalledWith(expect.objectContaining({
     budget: expect.objectContaining({ records: 50_000, uncompressedBytes: 40_000_000 }),
   }))
-  const download = Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Download microdata package') as HTMLButtonElement
+  const download = Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Prepare microdata downloads') as HTMLButtonElement
   expect(download.disabled).toBe(true)
   expect(host.textContent).toContain('Open the microdata licence above and accept it to download.')
   const disclosure = host.querySelector('details.licence-disclosure') as HTMLDetailsElement
@@ -97,8 +100,63 @@ it('selects a live survey, preflights it, and offers a licensed package download
   expect(disclosure.textContent).toContain('Microdata licence accepted')
   expect(download.disabled).toBe(false)
   await act(async () => download.click())
-  expect(buildMicrodataBundle).toHaveBeenCalledOnce()
-  expect(host.textContent).toContain('in 1 data file.')
+  expect(buildMicrodataParts).toHaveBeenCalledOnce()
+  expect(host.textContent).toContain('Download part 1')
+  expect(HTMLAnchorElement.prototype.click).toHaveBeenCalledOnce()
+  expect(host.textContent).toContain('the link below is a fallback')
+})
+
+it('focuses a build failure, changes the hint and keeps earlier complete parts available', async () => {
+  await renderWithSelection()
+  await act(async () => button('Check access and count records').click())
+  await acceptLicence()
+  buildMicrodataParts.mockImplementationOnce(async ({ onPart }) => {
+    onPart({ partNumber: 1, fileName: 'part1.zip', blob: new Blob(['zip']), recordCount: 20,
+      fileCount: 1, uncompressedBytes: 10, surveyKeys: ['v2:NGA:8'] })
+    throw new Error('Compression worker failed.')
+  })
+  await act(async () => button('Prepare microdata downloads').click())
+  expect(host.textContent).toContain('Compression worker failed.')
+  expect(document.activeElement).toBe(host.querySelector('[role="alert"]'))
+  expect(host.querySelector('#microdata-download-hint')?.textContent).toContain('Preparation failed')
+  expect(host.textContent).toContain('Download part 1')
+  const link = host.querySelector('a[download="part1.zip"]')!
+  link.addEventListener('click', (event) => event.preventDefault())
+  await act(async () => link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))
+  expect(host.textContent).toContain('Download requested — check your browser')
+  await act(async () => button('Clear prepared parts').click())
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test')
+  expect(host.textContent).not.toContain('Download part 1')
+})
+
+it('does not automatically start downloads when the selection produces several parts', async () => {
+  await renderWithSelection()
+  await act(async () => button('Check access and count records').click())
+  await acceptLicence()
+  buildMicrodataParts.mockImplementationOnce(async ({ onPart }) => {
+    for (const partNumber of [1, 2]) onPart({ partNumber, fileName: `part${partNumber}.zip`,
+      blob: new Blob(['zip']), recordCount: 20, fileCount: 1, uncompressedBytes: 10, surveyKeys: [] })
+    return { partCount: 2, recordCount: 40 }
+  })
+  await act(async () => button('Prepare microdata downloads').click())
+  expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled()
+  expect(host.querySelectorAll('a[download]')).toHaveLength(2)
+  expect(host.textContent).toContain('2 parts ready with 40 records')
+})
+
+it('shows estimates as information and clears prepared archives on selection changes', async () => {
+  await renderWithSelection()
+  preflightMicrodataPackage.mockResolvedValueOnce({ recordCount: 5025, sourceTableCount: 1,
+    outputFileCount: 1, estimatedBytes: 50_000_000, resolved: [] })
+  await act(async () => button('Check access and count records').click())
+  expect(host.textContent).toContain('about 50 MB')
+  await acceptLicence()
+  expect(button('Prepare microdata downloads').disabled).toBe(false)
+  await act(async () => button('Prepare microdata downloads').click())
+  const choice = host.querySelector('details.microdata-country input[type="checkbox"]') as HTMLInputElement
+  await act(async () => choice.click())
+  expect(host.textContent).not.toContain('Download part 1')
+  expect(URL.revokeObjectURL).toHaveBeenCalled()
 })
 
 async function acceptLicence() {
@@ -139,9 +197,9 @@ it('counts output files for Both and invalidates the check when the values choic
   expect(preflightMicrodataPackage).toHaveBeenCalledWith(expect.objectContaining({ values: 'both' }))
   expect(host.textContent).toContain('from 1 table, written as 2 CSV files')
   await acceptLicence()
-  expect(button('Download microdata package').disabled).toBe(false)
+  expect(button('Prepare microdata downloads').disabled).toBe(false)
   await act(async () => valueRadio('Labels').click())
-  expect(button('Download microdata package').disabled).toBe(true)
+  expect(button('Prepare microdata downloads').disabled).toBe(true)
 })
 
 it('gates labels on each selected V3 table, not the generation', async () => {
@@ -187,7 +245,7 @@ it('explains a failed access check beside the disabled download button', async (
   expect(host.textContent).toContain('The source could not be reached.')
   expect(host.querySelector('#microdata-download-hint')?.textContent)
     .toBe('The access check failed. Read the message above, then check again.')
-  expect(button('Download microdata package').disabled).toBe(true)
+  expect(button('Prepare microdata downloads').disabled).toBe(true)
   const survey = host.querySelector('details.microdata-country input[type="checkbox"]') as HTMLInputElement
   await act(async () => survey.click())
   await act(async () => survey.click())

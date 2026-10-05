@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MicrodataLicence, type MicrodataAccess } from './MicrodataLicence'
 import { formatNumber } from '../lib/format'
-import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataBundle, outputFilesPerTable, preflightMicrodataPackage } from '../services/microdataBundle'
+import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataParts, type MicrodataPart, outputFilesPerTable, preflightMicrodataPackage } from '../services/microdataBundle'
 import { componentHasAudit, type MicrodataValues } from '../services/microdataLabels'
 import type { BundleProgress } from '../services/surveyBundle'
 import { type GrantDiscovery } from '../services/microdataGrants'
@@ -50,13 +50,16 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const [licenceAccepted, setLicenceAccepted] = useState(false)
   const [licenceOpen, setLicenceOpen] = useState(false)
   const [limitNotice, setLimitNotice] = useState<string>()
-  const [preflight, setPreflight] = useState<{ fingerprint: string; records: number; tables: number; files: number }>()
+  const [preflight, setPreflight] = useState<{ fingerprint: string; records: number; tables: number; files: number; estimatedBytes?: number }>()
   const [preflightError, setPreflightError] = useState<string>()
   const [preflightProgress, setPreflightProgress] = useState<{ done: number; total: number }>()
   const [downloadProgress, setDownloadProgress] = useState<BundleProgress>()
   const [downloadError, setDownloadError] = useState<string>()
   const [downloadOutcome, setDownloadOutcome] = useState<string>()
   const [downloadCancelled, setDownloadCancelled] = useState(false)
+  const [parts, setParts] = useState<Array<MicrodataPart & { url: string; requested: boolean }>>([])
+  const partUrls = useRef<string[]>([])
+  const failureMessage = useRef<HTMLParagraphElement | null>(null)
   const preflightAbort = useRef<AbortController | undefined>(undefined)
   const downloadAbort = useRef<AbortController | undefined>(undefined)
   const licenceSummary = useRef<HTMLElement | null>(null)
@@ -149,15 +152,17 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const checked = preflight?.fingerprint === fingerprint
   const optionalBlocked = Boolean(optionalUnusable.length && includeOptional)
   const downloadReady = checked && licenceAccepted && !optionalBlocked && !downloadProgress && !preflightProgress
-  let downloadHint = 'Ready to download.'
+  let downloadHint = 'Ready to prepare download parts.'
   if (!selected.length) downloadHint = 'Select at least one survey to build a package.'
   else if (optionalBlocked) downloadHint = 'Resolve the optional-table issue above first.'
-  else if (downloadProgress) downloadHint = 'Building your package. You can cancel the download below.'
+  else if (downloadProgress) downloadHint = 'Preparing your files. You can cancel preparation below.'
   else if (preflightProgress) downloadHint = 'Checking access and counting records. Please wait.'
   else if (preflightError) downloadHint = 'The access check failed. Read the message above, then check again.'
+  else if (downloadError) downloadHint = 'Preparation failed. Read the error below; completed parts remain available.'
   else if (!checked && !licenceAccepted) downloadHint = 'Check access above, then open and accept the microdata licence.'
   else if (!checked) downloadHint = 'Check access and count records above to continue.'
   else if (!licenceAccepted) downloadHint = 'Open the microdata licence above and accept it to download.'
+  else if (parts.length) downloadHint = 'Download the prepared parts below. Preparing again replaces them.'
 
   useEffect(() => () => preflightAbort.current?.abort(), [fingerprint])
   useEffect(() => () => downloadAbort.current?.abort(), [fingerprint])
@@ -167,7 +172,20 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
     setDownloadError(undefined)
     setDownloadOutcome(undefined)
     setDownloadCancelled(false)
+    clearParts()
   }, [fingerprint])
+  function clearParts() {
+    partUrls.current.forEach((url) => URL.revokeObjectURL(url))
+    partUrls.current = []
+    setParts([])
+  }
+  useEffect(() => () => partUrls.current.forEach((url) => URL.revokeObjectURL(url)), [])
+  useEffect(() => {
+    if (downloadError || preflightError) {
+      failureMessage.current?.focus()
+      failureMessage.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+    }
+  }, [downloadError, preflightError])
 
   async function countSelected() {
     const controller = new AbortController()
@@ -179,9 +197,10 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
       const result = await preflightMicrodataPackage({
         surveys: selected, includeV3Optional: includeOptional, contributor, values,
         requester: auth.requestProtected, budget: MICRODATA_PACKAGE_BUDGET, signal: controller.signal,
+        splitParts: true, estimateSize: true,
         onProgress: (progress) => setPreflightProgress({ done: progress.completed, total: progress.total }),
       })
-      if (!controller.signal.aborted) setPreflight({ fingerprint, records: result.recordCount, tables: result.sourceTableCount, files: result.outputFileCount })
+      if (!controller.signal.aborted) setPreflight({ fingerprint, records: result.recordCount, tables: result.sourceTableCount, files: result.outputFileCount, estimatedBytes: result.estimatedBytes })
     } catch (failure) {
       if (!controller.signal.aborted) setPreflightError((failure as Error)?.message || 'The package could not be checked.')
     } finally {
@@ -193,26 +212,41 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   }
 
   async function downloadPackage() {
+    clearParts()
     const controller = new AbortController()
     downloadAbort.current = controller
     setDownloadError(undefined)
     setDownloadOutcome(undefined)
     setDownloadCancelled(false)
     setDownloadProgress({ stage: 'preparing', completed: 0, total: sourceTables })
+    const prepared: Array<MicrodataPart & { url: string; requested: boolean }> = []
     try {
-      const bundle = await buildMicrodataBundle({
+      const outcome = await buildMicrodataParts({
         surveys: selected, includeV3Optional: includeOptional, contributor, values,
         requester: auth.requestProtected,
         budget: MICRODATA_PACKAGE_BUDGET, signal: controller.signal,
         onProgress: setDownloadProgress,
+        onPart: (part) => {
+          if (controller.signal.aborted) return
+          const url = URL.createObjectURL(part.blob)
+          partUrls.current.push(url)
+          prepared.push({ ...part, url, requested: false })
+          setParts((existing) => [...existing, { ...part, url, requested: false }])
+        },
       })
-      const url = URL.createObjectURL(bundle.blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = bundle.fileName
-      anchor.click()
-      window.setTimeout(() => URL.revokeObjectURL(url), 0)
-      setDownloadOutcome(`${bundle.fileName} downloaded with ${formatNumber(bundle.recordCount)} records in ${formatNumber(bundle.fileCount)} data file${bundle.fileCount === 1 ? '' : 's'}.`)
+      if (outcome.partCount === 1 && !controller.signal.aborted) {
+        const anchor = document.createElement('a')
+        anchor.href = prepared[0].url
+        anchor.download = prepared[0].fileName
+        anchor.hidden = true
+        document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+        setParts((existing) => existing.map((part) => ({ ...part, requested: true })))
+      }
+      setDownloadOutcome(outcome.partCount === 1
+        ? `Download requested with ${formatNumber(outcome.recordCount)} records. Check your browser; the link below is a fallback.`
+        : `${outcome.partCount} parts ready with ${formatNumber(outcome.recordCount)} records. Download each part below.`)
     } catch (failure) {
       if (controller.signal.aborted) setDownloadCancelled(true)
       else setDownloadError((failure as Error)?.message || 'The package could not be built.')
@@ -323,9 +357,10 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
               </dl>
               <div className="package-actions"><button type="button" disabled={Boolean(preflightProgress || downloadProgress) || Boolean(optionalUnusable.length && includeOptional)} onClick={() => void countSelected()}>Check access and count records</button><button type="button" disabled={!preflightProgress} onClick={() => preflightAbort.current?.abort()}>Cancel check</button></div>
               {preflightProgress && <p className="package-status" role="status">Checking {formatNumber(preflightProgress.done)} of {formatNumber(preflightProgress.total)} tables…</p>}
-              {preflightError && <p className="package-error" role="alert">{preflightError} Your selection has been kept.</p>}
+              {preflightError && <p ref={failureMessage} tabIndex={-1} className="package-error" role="alert">{preflightError} Your selection has been kept.</p>}
               {preflight?.fingerprint === fingerprint && <p className="package-ready" role="status">Access confirmed: {formatNumber(preflight.records)} records from {formatNumber(preflight.tables)} table{preflight.tables === 1 ? '' : 's'}, written as {formatNumber(preflight.files)} CSV file{preflight.files === 1 ? '' : 's'}.</p>}
-              <p className="package-blocker">One package can hold up to {formatNumber(MICRODATA_PACKAGE_BUDGET.records)} records and {formatNumber(MICRODATA_PACKAGE_BUDGET.uncompressedBytes / 1_000_000)} MB of CSV data. The final byte limit is checked while building; if it is exceeded, no partial archive is downloaded.</p>
+              {checked && preflight?.estimatedBytes !== undefined && <p role="status">Estimated CSV size: about {formatNumber(Math.ceil(preflight.estimatedBytes / 1_000_000))} MB. This sample-based estimate includes a 20% margin; actual sizes determine the parts.</p>}
+              <p className="package-blocker">Each part holds up to {formatNumber(MICRODATA_PACKAGE_BUDGET.records)} records and {formatNumber(MICRODATA_PACKAGE_BUDGET.uncompressedBytes / 1_000_000)} MB of CSV data. Larger selections split into parts containing whole surveys. A single survey must fit within these limits.</p>
             </> : <p>Select a survey to review the package.</p>}
           </div>
         </>
@@ -357,15 +392,23 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
           </details>
           <div className="package-actions">
             <button ref={downloadButton} type="button" className="package-download" disabled={!downloadReady} aria-describedby="microdata-download-hint" onClick={() => void downloadPackage()}>
-              {downloadProgress ? 'Building microdata package…' : 'Download microdata package'}
+              {downloadProgress ? 'Preparing microdata parts…' : 'Prepare microdata downloads'}
             </button>
-            {downloadProgress && <button type="button" onClick={() => downloadAbort.current?.abort()}>Cancel download</button>}
+            {downloadProgress && <button type="button" onClick={() => downloadAbort.current?.abort()}>Cancel preparation</button>}
           </div>
           <p id="microdata-download-hint" className="download-hint" aria-live="polite">{downloadHint}</p>
           {downloadProgress && <p className="package-status" role="status">{downloadProgress.stage.replace('-', ' ')}{downloadProgress.label ? ` — ${downloadProgress.label}` : ''}{downloadProgress.total > 1 ? ` (${downloadProgress.completed} of ${downloadProgress.total})` : ''}</p>}
-          {downloadError && <p className="package-error" role="alert">The package was not created. {downloadError} Your selection has been kept.</p>}
-          {downloadCancelled && <p className="package-outcome" role="status">The package was cancelled. Nothing was downloaded, and your selection has been kept.</p>}
+          {downloadError && <p ref={failureMessage} tabIndex={-1} className="package-error" role="alert">Preparation stopped. {downloadError} Your selection has been kept. Any completed parts remain available below.</p>}
+          {downloadCancelled && <p className="package-outcome" role="status">Preparation was cancelled. Any completed parts remain available below; no partial survey is offered.</p>}
           {downloadOutcome && <p className="package-outcome" role="status">{downloadOutcome}</p>}
+          {parts.length > 0 && <div aria-label="Prepared microdata parts">
+            {parts.map((part) => <div className="package-actions" key={part.partNumber}>
+              <a className="package-part-download" href={part.url} download={part.fileName}
+                onClick={() => setParts((existing) => existing.map((entry) => entry.partNumber === part.partNumber ? { ...entry, requested: true } : entry))}>Download part {part.partNumber}</a>
+              {' '}{formatNumber(part.recordCount)} records in {part.fileCount} data files · {part.requested ? 'Download requested — check your browser' : 'Ready'}
+            </div>)}
+            <div className="package-actions"><button type="button" disabled={Boolean(downloadProgress)} onClick={clearParts}>Clear prepared parts</button></div>
+          </div>}
         </div>
       ) : <MicrodataLicence access={licenceAccess}/>}
       <p><Link to="/data/microdata-request">Need access to another survey? Request direct access.</Link></p>

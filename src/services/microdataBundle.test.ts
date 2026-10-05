@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { DatasetDefinition } from './dataExplorer'
 import type { ProtectedRequester } from './protectedData'
 import type { MicrodataSurvey, MicrodataSurveyComponent } from './microdataSurveyAccess'
-import { buildMicrodataBundle, type MicrodataPackageBudget } from './microdataBundle'
+import { buildMicrodataBundle, preflightMicrodataPackage, type MicrodataPackageBudget } from './microdataBundle'
 import { canonicalDomain, domainDigest, type AuditedDomains } from './microdataLabels'
 
 const budget: MicrodataPackageBudget = { records: 20, uncompressedBytes: 100_000, sourceTables: 10 }
@@ -217,6 +217,19 @@ async function auditFor(entries: Array<[MicrodataSurvey['generation'], Microdata
 const NO_AUDIT: AuditedDomains = { schema_version: 1, generated: null, components: [] }
 
 describe('microdata bundle values', () => {
+  it('estimates label expansion using the real encoder and keeps the estimate informational', async () => {
+    const fixture = setup([{ OBJECTID: 1, adm0_iso3: 'NGA', round: 8, value: 5 }])
+    const selected = survey()
+    const input = { surveys: [selected], includeV3Optional: false, contributor: true,
+      requester: fixture.requester, budget: { ...budget, uncompressedBytes: 1 },
+      estimateSize: true, splitParts: true, audit: await auditFor([['v2', 'household']]),
+      resolve: async (part: MicrodataSurveyComponent) => definition(part, selected.generation) }
+    const codes = await preflightMicrodataPackage(input)
+    const labels = await preflightMicrodataPackage({ ...input, values: 'labels' })
+    const both = await preflightMicrodataPackage({ ...input, values: 'both' })
+    expect(labels.estimatedBytes).toBeGreaterThan(codes.estimatedBytes!)
+    expect(both.estimatedBytes).toBe(codes.estimatedBytes! + labels.estimatedBytes!)
+  })
   const rows = [
     { OBJECTID: 1, adm0_iso3: 'NGA', round: 8, value: 4 },
     { OBJECTID: 2, adm0_iso3: 'NGA', round: 8, value: 9 },

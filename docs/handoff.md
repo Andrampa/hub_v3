@@ -1,6 +1,102 @@
 # Handoff
 
+## 2026-10-05 - Whole-survey multipart microdata preparation
+
+Status: implemented, uncommitted on `main` in `C:\git\hub_v3`.
+Review follow-up: ordinary one-ZIP filenames and automatic download restored,
+with fallback link; multiple parts remain manual. Retention failures name all
+surveys not offered. A shared README helper preserves generation time, licence
+wording and label caveats. Cancel/progress wording says preparing; indentation
+is corrected. `npm run build` and 51 focused tests pass. The four-survey Both
+memory probe completed with all four surveys in Both: 18,737 records/eight CSVs,
+two complete parts and no errors. Sampled `performance.memory` heap baseline
+14,406,869 bytes, peak 125,534,279, end 45,504,498 (1,496 samples at 50 ms).
+Worker input/transfer bytes match exactly: 36,101,827 and 4,711,065 including
+documentation; ZIPs total 3,424,939 bytes. OS process memory was sampled 540
+times at 100 ms across all WebView processes; shared/reused processes prevent
+attribution of total native memory to this page. This is a measured successful
+case, not lower-memory device certification or a 40 MB total-heap guarantee.
+No household rows or tokens were recorded. Metrics are outside the repository.
+Evidence: `microdata-memory-four-surveys.json` beside the external probe script.
+The ordinary single-survey Both flow also completed (Yemen round 5, 2,588 rows):
+the picker requested one automatic save, retained its fallback link and used
+`DIEM_microdata_2026-10-05.zip` without a part suffix. Native browser save remains
+unverified. The temporary probe server was stopped and normal preview restored.
+The first probe attempt missed the React click transition and produced no
+samples; the corrected capture-phase listener recorded the successful run.
+Probe script: `C:\Users\Amparore\.codex\visualizations\2026\10\05\01a10bfa-9f66-70b1-b7b2-f2bbd468beef\qa_memory_server.py`.
+The compressor already transfers ArrayBuffers, rather than copying them into
+the worker (`src/services/surveyBundle.ts`). CSV assembly, temporary encoder
+allocations and native ZIP/Blob memory need headroom beyond the CSV byte cap.
+Changed files: `src/services/microdataBundle.ts`, its bundle/parts tests,
+`src/components/MicrodataPackagePicker.tsx` and its tests, `src/survey-workspace.css`, and focused access,
+grant, restructure, changelog and handoff docs. Preserve the earlier acceptance
+check below. No commit or deployment requested for this follow-up.
+
+Exact-size greedy splitting keeps survey folders whole and reads full rows once.
+Every part includes licence, README, manifest and survey documentation. Each
+part has a user-clicked download link. Finished parts survive later failure or
+cancellation. The preflight sample estimate is informational. A single survey
+must fit the record/byte/table limits, and retained ZIPs have a separate 40 MB cap.
+Errors receive focus/scroll and replace the ready hint. URLs are revoked on
+selection change, cleanup or unmount. The CSV cap remains 40 MB; no higher heap
+ceiling is claimed or inferred from the old probes.
+
+Verification: `npm run build` and 49 focused tests pass (parts, bundle, picker,
+grant provenance and survey access). Live final-build preflight with all four
+test-recipient surveys and Both returns 18,737 records/eight CSVs and about
+46 MB with sampling margin. Final multipart preparation completed: part 1
+contains three surveys/16,149 source records/six CSVs/35,815,544 CSV bytes;
+part 2 contains one survey/2,588 source records/two CSVs/4,601,836 CSV bytes.
+ZIP sizes are 2,950,220 and 474,099 bytes. Both ZIPs pass CRC checks, contain
+self-contained documentation/licence/manifest, and every data CSV is byte-for-byte
+identical to the previously row-verified coded/labelled exports described below.
+Capture used a temporary loopback-only QA server outside the repo, intercepting
+the individual download links; no source or built asset was instrumented.
+The QA server was stopped and normal preview restored after inspection.
+Responsive checks at 375, 768, 1024 and 1440 px found no horizontal overflow; empty search results
+retain the selection, and each link marks only its own download request.
+Low-memory/worst-case, production-origin and native browser save checks remain outstanding;
+the in-app browser cannot expose the actual save path/event. Generated ZIP
+contents and user-clicked links are verified, not native file delivery.
+Exact next file: `src/components/MicrodataPackagePicker.tsx`.
+Exact verification command: `npx vitest run src/services/microdataParts.test.ts src/services/microdataBundle.test.ts src/components/MicrodataPackagePicker.test.tsx src/services/microdataGrantProvenance.test.ts src/services/microdataSurveyAccess.test.ts`, then `npm run build`.
+
 ## 2026-10-05 - Infrastructure V1 and V2 grant-copy release filtering
+
+### Signed-in acceptance check, 2026-10-05
+
+The user reports the change committed and deployed. Local `main` is clean at
+`c58f2e6` before this verification note. The production build on
+`http://127.0.0.1:4174` was tested with the signed-in test recipient.
+All four available surveys selected and passed preflight: AFG V2 round 11 =
+10,010; YEM V1 round 3 = 3,687; YEM V1 round 4 = 2,452; YEM V2 round 5 = 2,588.
+Total = 18,737. The V1 explorer returned 6,139 rows across its two rounds;
+the V2 Yemen explorer returned 2,588. The user accepted the licence.
+
+Coded-only and labelled-only packages both completed. The in-app browser did
+not expose their download events or save paths, so a temporary loopback-only
+capture server saved the exact generated ZIP blobs outside the repository.
+The capture was inserted only into ignored local build output; it was removed
+after inspection. No household rows or credentials were copied into the repo.
+ZIP CRC checks, all CSV row counts, scope, matching columns, row order and
+every coded-to-label conversion passed against the packaged dictionaries:
+2,603,165 changed cells, zero mismatches, zero reported unknown codes. Each
+survey includes survey metadata, documentation links and value-label CSV;
+root README, licence and manifest are included.
+
+Coded CSVs total 12,982,651 bytes; labelled CSVs total 27,434,729 bytes.
+Both together exceed the 40,000,000-byte limit by 417,380 bytes, so the combined
+package correctly aborts without offering a partial archive. The UI describes
+this as a browser-memory budget; it is the encoded CSV byte-budget check.
+ZIP sizes are 1,467,812 bytes (coded) and 1,991,503 bytes (labelled).
+
+Remaining verification: native browser file delivery (the in-app browser's
+save event/path could not be confirmed), production-origin acceptance and
+revoked access. The generated archive contents are verified. Exact next file:
+`src/components/MicrodataPackagePicker.tsx`; verification command:
+`npm run build`, then repeat download in a normal browser with this recipient.
+The historical implementation status below predates the user's commit.
 
 Status: implemented, uncommitted in `main`, worktree `C:\git\hub_v3`.
 Changed files: `src/services/microdataGrants.ts`, `src/services/dataExplorer.ts`,

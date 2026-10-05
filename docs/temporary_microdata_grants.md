@@ -29,9 +29,12 @@ result; it does not run a second grant search. It confirms visible rows within
 each approved country/round scope before showing a survey. An active view with
 bulk export disabled remains explore-only and cannot be selected for a package.
 Immediately before packaging, the Hub re-resolves each item and grant scope,
-rechecks the export switch and visible row count, and aborts the entire package
+rechecks the export switch and visible row count, and aborts the current part
 if any authorization or source changed. Stored selection contains only stable
 survey keys under the signed-in account, never grant metadata or household rows.
+Completed whole-survey parts remain available after cancellation or a later
+failure; the failing survey is never offered partially. Every part includes
+its own licence, manifest and version-matched documentation links.
 
 ## Authentication stays Community-only
 

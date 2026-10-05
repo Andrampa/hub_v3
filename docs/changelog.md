@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-10-05 - Whole-survey microdata download parts
+
+- Review follow-up: when the complete selection fits one ZIP, restore automatic
+  download with its ordinary filename and retain a fallback link. Multiple parts
+  still require individual clicks. ZIP-retention failures name every survey not
+  offered, and both builders share README generation including timestamp and
+  licence wording. Cancel and progress text consistently say preparation.
+- The four-survey Both-mode memory probe completed successfully. Sampled heap
+  peaked at 125.53 MB; the 40 MB CSV cap is not a total-memory guarantee. Worker
+  buffers are transferred, and the generated ZIPs totalled 3.42 MB. Low-memory
+  device and worst-case coverage remain open.
+
+- Prepare selected surveys once, splitting by actual encoded CSV bytes,
+  records and source-table limits into whole-survey ZIP parts. Each part has
+  its own licence, README, manifest and survey documentation. A single survey
+  that exceeds a part limit still fails explicitly.
+- Offer a separate download link for each finished part instead of starting
+  multiple automatic downloads. Cancellation or later failure preserves finished
+  parts. Errors receive focus and replace the misleading ready hint.
+- Access checking shows an informational size estimate from a small sample
+  encoded with the selected coded/labelled mode. It does not reject selections.
+  Prepared ZIP retention is capped separately at 40 MB, with explicit cleanup.
+
 ## 2026-10-05 - Release-filtered temporary microdata copies
 
 - Infrastructure V1 (formerly Archived) and V2 grant copies now inherit the
