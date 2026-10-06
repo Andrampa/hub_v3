@@ -316,3 +316,12 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
   .test-mode-banner button { margin-left: 0; }
   .workspace-tabs button { flex: 1 1 auto; padding: 12px 10px; }
 }
+
+.microdata-access-summary { margin-bottom: 1rem; color: #545454; }
+.microdata-access-list { padding-left: 1.25rem; }
+.microdata-access-list li { margin: 1rem 0; }
+.microdata-access-list p { margin: .25rem 0; }
+.microdata-access-list a { display: inline-block; margin-right: 1rem; }
+.microdata-documentation { margin: 1rem 0; }
+.microdata-documentation details { margin: 0; }
+.microdata-reference { margin-top: 1.5rem; }

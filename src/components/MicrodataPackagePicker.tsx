@@ -1,5 +1,6 @@
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { MicrodataDocumentation } from './MicrodataDocumentation'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { MicrodataLicence, type MicrodataAccess } from './MicrodataLicence'
 import { formatNumber } from '../lib/format'
@@ -7,7 +8,7 @@ import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataParts, 
 import { componentHasAudit, type MicrodataValues } from '../services/microdataLabels'
 import type { BundleProgress } from '../services/surveyBundle'
 import { type GrantDiscovery } from '../services/microdataGrants'
-import { discoverMicrodataAccess, type MicrodataAccessResult } from '../services/microdataSurveyAccess'
+import { discoverMicrodataAccess, microdataSourceFingerprint, type MicrodataAccessResult } from '../services/microdataSurveyAccess'
 import { GENERATIONS } from '../services/protectedData'
 
 const STORAGE_PREFIX = 'diem.microdata-selection.v1'
@@ -20,23 +21,32 @@ function storedKeys(account: string, scope: string): string[] {
   } catch { return [] }
 }
 
-/** The temporary-grant list owns grant discovery; this picker receives the same live result. */
-export function MicrodataPackagePicker({ grantDiscovery, grantChecking, householdData, contributor, testMode, licenceAccess, onLoadingChange }: {
+/** The workspace owns grant discovery; its promise lets independent inventory checks start early. */
+export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChecking, householdData, contributor, testMode, licenceAccess, collectionDates, onLoadingChange, onBusyChange, onRecheck }: {
+  grantPending?: Promise<GrantDiscovery>
   grantDiscovery?: GrantDiscovery
   grantChecking: boolean
   householdData: boolean
   contributor: boolean
   testMode: boolean
+  collectionDates?: Map<string, string>
   licenceAccess: MicrodataAccess
+  onBusyChange?: (busy: boolean) => void
+  onRecheck?: () => void
   onLoadingChange?: (loading: boolean) => void
 }) {
   const auth = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const inventory = useRef<HTMLElement>(null)
   const account = auth.user?.username || ''
   const scope = testMode ? 'test' : 'production'
   const [result, setResult] = useState<MicrodataAccessResult>()
   const [checking, setChecking] = useState(false)
   const [error, setError] = useState<string>()
   const [retry, setRetry] = useState(0)
+  const [deferredResult, setDeferredResult] = useState<MicrodataAccessResult>()
+  const workBusy = useRef(false)
   const [selection, setSelection] = useState<{ account: string; scope: string; keys: string[] }>(() => ({
     account, scope, keys: storedKeys(account, scope),
   }))
@@ -70,6 +80,19 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
     setLicenceOpen(false)
   }, [account])
 
+  workBusy.current = Boolean(preflightProgress || downloadProgress)
+  useEffect(() => {
+    onBusyChange?.(checking || Boolean(preflightProgress || downloadProgress))
+  }, [checking, preflightProgress, downloadProgress, onBusyChange])
+  useEffect(() => {
+    if (deferredResult && !workBusy.current) { setResult(deferredResult); setDeferredResult(undefined) }
+  }, [deferredResult, preflightProgress, downloadProgress])
+  useEffect(() => () => onBusyChange?.(false), [onBusyChange])
+  function recheck() {
+    if (onRecheck) onRecheck()
+    else setRetry((value) => value + 1)
+  }
+  const discoveryInput = grantPending || grantDiscovery
   useEffect(() => {
     onLoadingChange?.(grantChecking || !grantDiscovery || checking || (!result && !error))
   }, [checking, error, grantChecking, grantDiscovery, onLoadingChange, result])
@@ -80,26 +103,40 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   }
 
   useEffect(() => {
-    if (auth.status !== 'authenticated' || !grantDiscovery || grantChecking) {
-      setResult(undefined)
-      return
-    }
+    if (auth.status !== 'authenticated') { setResult(undefined); return }
+    if (!grantPending && !grantDiscovery) return
     const controller = new AbortController()
     setChecking(true)
     setError(undefined)
-    setResult(undefined)
-    void discoverMicrodataAccess(auth.requestProtected, grantDiscovery.bundles, {
-      contributor, householdData, includeTestData: testMode, signal: controller.signal,
-    }).then(setResult).catch((failure: unknown) => {
+    void discoverMicrodataAccess(auth.requestProtected, grantPending ? grantPending.then((value) => value.bundles) : grantDiscovery!.bundles, {
+      contributor, householdData, includeTestData: testMode, signal: controller.signal, reuseDiscoveryDefinitions: Boolean(grantPending) && retry === 0,
+    }).then((value) => {
+      if (controller.signal.aborted) return
+      if (import.meta.env.DEV && (value.grantCheckFailed || value.master.unavailableSourceCount > 0)) {
+        const reasons = value.grantIssues.reduce<Record<string, number>>((counts, issue) => {
+          counts[issue.reason] = (counts[issue.reason] || 0) + 1
+          return counts
+        }, {})
+        console.info('Microdata inventory check:', JSON.stringify({ grantIssueReasons: reasons, unavailableSourceCount: value.master.unavailableSourceCount || 0, pendingSourceCount: value.master.pendingSourceCount || 0 }))
+      }
+      if (workBusy.current) setDeferredResult(value)
+      else setResult(value)
+    }).catch((failure: unknown) => {
       if (!controller.signal.aborted) setError((failure as Error)?.message || 'Microdata access could not be checked.')
     }).finally(() => { if (!controller.signal.aborted) setChecking(false) })
     return () => controller.abort()
-  }, [auth.requestProtected, auth.status, contributor, grantChecking, grantDiscovery, householdData, retry, testMode])
+  }, [auth.requestProtected, auth.status, contributor, discoveryInput, householdData, retry, testMode])
 
   const surveys = useMemo(() => (result?.surveys || []).filter((survey) => survey.testData === testMode), [result, testMode])
   const exportEnabled = (survey: (typeof surveys)[number]) => survey.components.some((part) => (
     part.component === (survey.generation === 'v3' ? 'mandatory' : 'household') && part.bulkExportEnabled
   ))
+  useEffect(() => { setResult(undefined); setDeferredResult(undefined) }, [account, auth.requestProtected, testMode])
+  useEffect(() => {
+    if (!result || !['#step-microdata-package', '#temporary-microdata', '#step-microdata'].includes(location.hash)) return
+    inventory.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })
+    navigate(location.pathname + location.search, { replace: true })
+  }, [result, location.hash, location.pathname, location.search, navigate])
   const available = useMemo(() => new Set(surveys.filter(exportEnabled).map((survey) => survey.key)), [surveys])
   const selected = useMemo(() => surveys.filter((survey) => keys.includes(survey.key)), [keys, surveys])
   const pending = result?.master.pendingSourceCount || 0
@@ -146,9 +183,10 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   const outputFiles = sourceTables * outputFilesPerTable(values)
   const fingerprint = JSON.stringify({
     account, scope, includeOptional, values,
-    sources: selected.flatMap((survey) => survey.components.map((part) => `${survey.key}:${part.itemId}:${part.grantId || ''}:${part.bulkExportEnabled}`)),
+    sources: microdataSourceFingerprint(selected),
   })
 
+  const selectionFingerprint = JSON.stringify({ account, status: auth.status, scope, includeOptional, values, keys: [...keys].sort() })
   const checked = preflight?.fingerprint === fingerprint
   const optionalBlocked = Boolean(optionalUnusable.length && includeOptional)
   const downloadReady = checked && licenceAccepted && !optionalBlocked && !downloadProgress && !preflightProgress
@@ -169,11 +207,13 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   useEffect(() => {
     setPreflight(undefined)
     setPreflightError(undefined)
+  }, [fingerprint])
+  useEffect(() => {
     setDownloadError(undefined)
     setDownloadOutcome(undefined)
     setDownloadCancelled(false)
     clearParts()
-  }, [fingerprint])
+  }, [selectionFingerprint])
   function clearParts() {
     partUrls.current.forEach((url) => URL.revokeObjectURL(url))
     partUrls.current = []
@@ -275,17 +315,18 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
   }
 
   return (
-    <section className="workspace-step" aria-labelledby="step-microdata-package">
-      <h2 id="step-microdata-package">Download microdata</h2>
+    <section ref={inventory} id="step-microdata-package" className="workspace-step" aria-labelledby="microdata-package-heading">
+      <h2 id="microdata-package-heading">Download household microdata</h2>
       <p>Select household surveys available to your account. Each survey remains in its own folder; microdata from different surveys is never merged.</p>
-      <aside className="microdata-version-note"><strong>What does V2 mean?</strong> V1, V2 and V3 identify the DIEM questionnaire version and the structure of its data files. A V2 survey uses the V2 questionnaire, field descriptions and codebook. Your download includes the documentation links for the version you select.</aside>
+
+      <MicrodataDocumentation versions={surveys.map((survey) => survey.generation)} />
       {testMode && <p className="survey-limit-note">TEST DATA: simulated records for infrastructure review, not survey results.</p>}
-      {(checking || grantChecking || !grantDiscovery) && <p role="status">Checking the household surveys your account can access…</p>}
-      {(error || grantDiscovery?.error) && <p className="package-error" role="alert">Access could not be fully checked. {error || grantDiscovery?.error} <button type="button" onClick={() => setRetry((value) => value + 1)}>Check again</button></p>}
-      {result && !checking && (
+      {(checking || grantChecking || !grantDiscovery) && <p role="status">{result ? 'Re-checking access… The current list may change.' : 'Checking the household surveys your account can access…'}</p>}
+      {(error || grantDiscovery?.error) && <p className="package-error" role="alert">Access could not be fully checked. {error || grantDiscovery?.error} <button type="button" onClick={recheck}>Check again</button></p>}
+      {result && (
         <>
           {(pending > 0 || result.grantCheckFailed || result.master.unavailableSourceCount > 0) && (
-            <p className="package-blocker" role="status">Some household sources could not be checked. The list may be incomplete; saved choices have been kept. <button type="button" onClick={() => setRetry((value) => value + 1)}>Check again</button></p>
+            <p className="package-blocker" role="status">Some household sources could not be checked. The list may be incomplete; saved choices have been kept. <button type="button" onClick={recheck}>Check again</button></p>
           )}
           {surveys.length ? (
             <>
@@ -305,7 +346,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
                       <div className="microdata-survey-row" key={survey.key}>
                         <label>
                           <input type="checkbox" checked={keys.includes(survey.key)} disabled={!exportEnabled(survey) || Boolean(downloadProgress)} aria-disabled={!keys.includes(survey.key) && keys.length >= MICRODATA_SURVEY_LIMIT || undefined} onChange={() => toggle(survey.key)}/>
-                          <span><strong>Round {survey.round}</strong><small>{GENERATIONS[survey.generation].label}{survey.testData ? ' · Test data' : ''}</small></span>
+                          <span><strong>Round {survey.round}</strong><small>{GENERATIONS[survey.generation].label}{survey.testData ? ' · Test data' : ''}{collectionDates?.get(`${survey.adm0Iso3}:${survey.round}`) ? ' · ' + collectionDates.get(`${survey.adm0Iso3}:${survey.round}`) : ''}</small></span>
                         </label>
                         <span>{!exportEnabled(survey) ? 'Explore only — bulk export not approved' : survey.generation === 'v3' ? 'Mandatory table' + (survey.components.some((part) => part.component === 'optional' && part.bulkExportEnabled) ? ' + optional available' : '') : 'Household table'}</span>
                         {limitNotice === survey.key && <p className="survey-row-limit" role="alert">One package holds at most {MICRODATA_SURVEY_LIMIT} surveys. Remove one to select this round.</p>}
@@ -348,6 +389,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantChecking, househol
                 </div>
                 {unauditedTables.length > 0 && <p className="survey-limit-note">Labelled values are not yet available for the {unauditedTables.join(', ')}: {unauditedTables.length === 1 ? 'its' : 'their'} value labels have not passed the label audit. This package uses coded values.</p>}
               </fieldset>
+              <MicrodataDocumentation versions={selected.map((survey) => survey.generation)} />
               <dl className="package-summary">
                 <div><dt>Surveys</dt><dd>{formatNumber(selected.length)}</dd></div>
                 <div><dt>Tables read</dt><dd>{formatNumber(sourceTables)} of {formatNumber(MICRODATA_PACKAGE_BUDGET.sourceTables)}</dd></div>

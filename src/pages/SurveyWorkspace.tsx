@@ -7,8 +7,8 @@ import { MicrodataLicence, type MicrodataAccess } from '../components/MicrodataL
 import { MicrodataPackagePicker } from '../components/MicrodataPackagePicker'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { TemporaryMicrodataGrants } from '../components/TemporaryMicrodataGrants'
-import type { GrantDiscovery } from '../services/microdataGrants'
+import { useMicrodataGrants } from '../hooks/useMicrodataGrants'
+import { MicrodataAccessSummary } from '../components/MicrodataAccessSummary'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatNumber } from '../lib/format'
 import { hubPath } from '../lib/hubOrigin'
@@ -346,7 +346,7 @@ export default function SurveyWorkspace() {
   const scope: SelectionScope = testMode ? 'test' : 'production'
 
   const location = useLocation()
-  const arrivingForGrants = location.hash === `#${GRANTS_SECTION_ID}`
+  const arrivingForGrants = [`#${GRANTS_SECTION_ID}`, '#temporary-microdata', '#step-microdata', '#step-household'].includes(location.hash)
   /*
    * The invitation dialog sends an accepted recipient here with the grants hash.
    * The grants live in the microdata tab, and a hidden panel cannot be scrolled
@@ -358,18 +358,17 @@ export default function SurveyWorkspace() {
     if (arrivingForGrants) setMode('microdata')
   }, [arrivingForGrants])
 
+  useEffect(() => {
+    if (mode === 'microdata' && location.hash === '#step-household') {
+      document.getElementById('step-household')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+    }
+  }, [mode, location.hash])
+
   const householdData = Boolean(auth.user?.capabilities?.householdData)
   const [microdataResources, setMicrodataResources] = useState<ResolvedDataResource[]>()
-  // Reported by the grants list itself, so the licence frames the same grants
-  // the user can see rather than a second discovery that might disagree.
-  const [hasActiveGrant, setHasActiveGrant] = useState(false)
-  const [grantDiscovery, setGrantDiscovery] = useState<GrantDiscovery>()
-  const [grantChecking, setGrantChecking] = useState(false)
-  const [microdataListLoading, setMicrodataListLoading] = useState(true)
-  const onGrantDiscoveryChange = useCallback((discovery: GrantDiscovery | undefined, checking: boolean) => {
-    setGrantDiscovery(discovery)
-    setGrantChecking(checking)
-  }, [])
+  const [microdataBusy, setMicrodataBusy] = useState(false)
+  const { discovery: grantDiscovery, checking: grantChecking, check: recheckGrants, pending: grantPending } = useMicrodataGrants({ busy: microdataBusy })
+  const hasActiveGrant = Boolean(grantDiscovery?.bundles.some((bundle) => bundle.status === 'active'))
   // Each path held gets named; both at once is its own state rather than one
   // path standing in for the other.
   const microdataAccess: MicrodataAccess = hasActiveGrant
@@ -405,6 +404,7 @@ export default function SurveyWorkspace() {
   const [limitNotice, setLimitNotice] = useState<string>()
   /** Collection dates from the survey register, keyed `ISO3:round`. */
   const [collectionPeriods, setCollectionPeriods] = useState<Map<string, SurveyCollectionPeriod>>()
+  const microdataCollectionDates = useMemo(() => collectionPeriods && new Map([...collectionPeriods].map(([key, period]) => [key, collectionPeriodLabel(period)])), [collectionPeriods])
   const [themeChoice, setThemeChoice] = useState<'all' | 'custom'>('all')
   const [chosenThemes, setChosenThemes] = useState<string[]>([])
   const [counts, setCounts] = useState<SurveySliceCount[]>()
@@ -1297,59 +1297,16 @@ export default function SurveyWorkspace() {
           </div>
 
           <div className="workspace-panel" id="panel-microdata" role="tabpanel" aria-labelledby="tab-microdata" hidden={mode !== 'microdata'}>
-            <section className="workspace-step" aria-labelledby="step-microdata">
-              <h2 id="step-microdata">Microdata access</h2>
-              <p>Choose from the household surveys approved for your account below. Each download includes documentation for its questionnaire version and is subject to the microdata licence.</p>
-              {(householdData || hasActiveGrant || grantChecking) && microdataListLoading && (
-                <div className="microdata-loading-callout" role="status" aria-live="polite">
-                  <span className="microdata-loading-spinner" aria-hidden="true"/>
-                  <span><strong>Loading microdata survey statistics</strong><small>Checking the datasets and survey rounds available to your account. Your download list will appear below.</small></span>
-                </div>
-              )}
-              <details className="microdata-help">
-                <summary>Need access to more surveys? Browse published collections or request access</summary>
-              <div className="microdata-routes">
-                <article className="microdata-route microdata-route--primary">
-                  <span className="microdata-route-step">Start here</span>
-                  <h3>FAO Microdata Catalogue (FAM)</h3>
-                  <p>Anonymized DIEM microdata is published in FAM within about six months of the aggregated data being released, once final editing and additional disclosure control are complete.</p>
-                  <a href={FAM_URL} target="_blank" rel="noreferrer">Browse DIEM collections in FAM <Icon name="external"/></a>
-                </article>
-                <article className="microdata-route">
-                  <span className="microdata-route-step">If you need it sooner</span>
-                  <h3>Request direct access</h3>
-                  <p>For a survey that has not reached FAM yet. Requests are evaluated within about two working days. Access is granted in justified cases to institutional email addresses, is valid for a week from when the invitation is issued, and can be extended.</p>
-                  <Link to="/data/microdata-request">Open the request form</Link>
-                </article>
-              </div>
-              </details>
-            </section>
-
-            {/* Mounted even while this tab is hidden, so grant discovery has
-                already run by the time someone opens it. It renders nothing for
-                an account with no grant. */}
-            <TemporaryMicrodataGrants onActiveGrantChange={setHasActiveGrant} onDiscoveryChange={onGrantDiscoveryChange} />
-
-            {/* Offered only to an account that holds one of the two microdata
-                paths. Most community members hold neither, and a picker that
-                opens with "no surveys are available to this account" announces
-                an absence where there was no expectation - the same reason the
-                grants section above renders nothing at all without a grant.
-                The licence still stands on its own for everyone else: it is
-                published in full at tier 2, beside the request route. */}
-            {householdData || hasActiveGrant ? (
-            <MicrodataPackagePicker grantDiscovery={grantDiscovery} grantChecking={grantChecking}
+            {(householdData || hasActiveGrant || grantChecking || grantDiscovery?.error) && <MicrodataAccessSummary discovery={grantDiscovery} checking={grantChecking} householdData={householdData} recheck={() => void recheckGrants()} />}
+            {householdData || hasActiveGrant ? <MicrodataPackagePicker grantDiscovery={grantDiscovery} grantPending={grantPending} grantChecking={grantChecking}
               householdData={householdData} contributor={isContributor} testMode={testMode}
-              licenceAccess={microdataAccess} onLoadingChange={setMicrodataListLoading} />
-            ) : (
-              <>
-                {!grantChecking && grantDiscovery && !grantDiscovery.error && (
-                  <p role="status">You currently have no access to microdata, or your access has expired.</p>
-                )}
-                <MicrodataLicence access={microdataAccess} />
-              </>
-            )}
-
+              licenceAccess={microdataAccess} collectionDates={microdataCollectionDates} onBusyChange={setMicrodataBusy} onRecheck={() => void recheckGrants()} /> : <section className="workspace-step" id="step-microdata-package">
+              <h2>Request access to household microdata</h2>
+              <p>{grantChecking ? 'Checking your approved surveys…' : 'Browse published collections or request access to the household surveys you need.'}</p>
+              <Link to="/data/microdata-request">Request microdata access</Link>
+              <details className="microdata-help"><summary>Microdata licence</summary><MicrodataLicence access={microdataAccess} /></details>
+            </section>}
+            <details className="microdata-help microdata-reference" open={location.hash === '#step-household' || undefined}><summary>Documentation and reference data</summary>
             {householdData && (
               <section className="workspace-step" aria-labelledby="step-household">
                 <h2 id="step-household">Household microdata collections</h2>
@@ -1401,6 +1358,25 @@ export default function SurveyWorkspace() {
                 ))}
               </ul>
             </section>
+
+            </details>
+              <details className="microdata-help">
+                <summary>Need access to more surveys? Browse published collections or request access</summary>
+              <div className="microdata-routes">
+                <article className="microdata-route microdata-route--primary">
+                  <span className="microdata-route-step">Start here</span>
+                  <h3>FAO Microdata Catalogue (FAM)</h3>
+                  <p>Anonymized DIEM microdata is published in FAM within about six months of the aggregated data being released, once final editing and additional disclosure control are complete.</p>
+                  <a href={FAM_URL} target="_blank" rel="noreferrer">Browse DIEM collections in FAM <Icon name="external"/></a>
+                </article>
+                <article className="microdata-route">
+                  <span className="microdata-route-step">If you need it sooner</span>
+                  <h3>Request direct access</h3>
+                  <p>For a survey that has not reached FAM yet. Requests are evaluated within about two working days. Access is granted in justified cases to institutional email addresses, is valid for a week from when the invitation is issued, and can be extended.</p>
+                  <Link to="/data/microdata-request">Open the request form</Link>
+                </article>
+              </div>
+              </details>
 
           </div>
 

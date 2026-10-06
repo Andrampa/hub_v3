@@ -339,6 +339,12 @@ export async function fetchGrantDatasetDefinition(
   if (!view) throw new Error('This microdata grant is no longer available to your account.')
   if (!view.serviceUrl) throw new Error('This grant view does not expose a queryable data service.')
 
+  return definitionForGrantView(view, requester)
+}
+
+/** Reuses a view only within the current inventory check; downloads resolve afresh. */
+export async function definitionForGrantView(view: ResolvedGrantView, requester: ProtectedRequester): Promise<DatasetDefinition> {
+  if (!view.serviceUrl) throw new Error('This grant has no data service.')
   const resource: ResolvedDataResource = {
     id: view.itemId,
     version: view.questionnaireVersion,
@@ -359,7 +365,7 @@ export async function fetchGrantDatasetDefinition(
   }
 
   const serviceUrl = normalizedServiceUrl(view.serviceUrl)
-  const service = await requester<FeatureServiceInfo>(serviceUrl)
+  const service = view.serviceDefinition || await requester<FeatureServiceInfo>(serviceUrl)
   const layerReference = service.layers?.[0] || service.tables?.[0]
   if (!layerReference) throw new Error('This grant view does not expose a feature layer or table for exploration.')
 

@@ -1,5 +1,13 @@
 # Handoff
 
+## 2026-10-06 - Microdata inventory simplification
+
+Status: implemented, uncommitted and not deployed in C:\git\hub_v3. The download list replaces TemporaryMicrodataGrants cards; discovery moved to src/hooks/useMicrodataGrants.ts. New compact components: MicrodataAccessSummary.tsx and MicrodataDocumentation.tsx. Service work is in microdataSurveyAccess.ts, microdataGrants.ts and dataExplorer.ts; invitation anchor, picker, workspace and CSS updated.
+
+Verification: npm run build passes (existing large-chunk warning). Nine focused suites / 125 tests pass, including bounded concurrency, current-definition reuse, parallel scheduling, overlapping grant source choice, picker refresh retention and existing download regressions. Live signed-in local preview confirms 208 microdata surveys, retained inventory during re-check, saved V1/V2 selections after reload, collection dates, Both preflight (6,275 rows / four CSVs), and version-specific documentation links. Desktop 1440 and mobile 375 widths checked without horizontal overflow. Existing incomplete-source warning remains. No new archive download, low-access live account cycle, or controlled before/after timing comparison has been performed.
+
+Next file: src/services/microdataSurveyAccess.ts if investigating the remaining incomplete-source warning; otherwise review the diff before any commit. Verification command: npx vitest run src/services/microdataDiscoveryScheduling.test.ts src/services/microdataSurveyAccess.test.ts src/services/microdataGrantProvenance.test.ts src/components/MicrodataPackagePicker.test.tsx src/services/microdataGrants.test.ts src/components/MicrodataInvitationDialog.test.tsx src/services/microdataParts.test.ts src/services/microdataBundle.test.ts src/services/surveyAccess.test.ts, then npm run build. Live preview command: npm run preview -- --mode http-test --host 127.0.0.1 --port 4174 --strictPort. Still useful: live grant-only / explore-only accounts, revocation and invitation acceptance, return to tab during preparation, and matched production/local latency measurements. These need suitable account state; do not manufacture grants or revoke access merely to test this layout.
+
 ## 2026-10-06 - Country map hover names
 
 Status: implemented, uncommitted on `main` in `C:\git\hub_v3`.
@@ -914,3 +922,13 @@ Hub shows active versus unavailable only, derived from ArcGIS rather than a
 clock. There is no administration UI and none should be added; registering,
 approving, provisioning, suspending and expiring grants are FAO Management tasks
 run from the Python scripts in `hh_survey_v3/management/data_sharing`.
+
+## 2026-10-06 - Follow-up to Claude inventory review
+
+Status: B1/B2 and S1-S4 implemented locally, uncommitted on main in C:\git\hub_v3. Sources and fingerprints are deterministic; V3 prefers a complete compatible pair; source-result changes wait for checking/preparation; completed parts survive source refresh. Focus refresh is throttled/queued, manual retry resolves grants afresh, and grants run concurrently under the global six-request limit. No-access members see the request route and licence, rather than an empty picker. Documentation/anchor/status/date cleanups are included.
+
+Tests: ten affected suites / 135 tests pass, including the new hook suite and preparation-with-parts refresh test. Build passes with the existing large-chunk warning. Final verification command: npx vitest run src/hooks/useMicrodataGrants.test.tsx src/services/microdataSurveyAccess.test.ts src/components/MicrodataPackagePicker.test.tsx src/services/microdataDiscoveryScheduling.test.ts src/services/microdataGrantProvenance.test.ts src/services/microdataGrants.test.ts src/components/MicrodataInvitationDialog.test.tsx src/services/microdataParts.test.ts src/services/microdataBundle.test.ts src/services/surveyAccess.test.ts, then npm run build.
+
+Live local account: 208 confirmed surveys retained during Check again; grouped documentation links and household-reference anchor verified. Aggregate development diagnostics found 10 unreadable grant definitions, zero query-failed reasons, zero pending/unavailable master sources. Original production already displayed an incomplete-source warning before this work; identical underlying failure counts have not been established. Next file if investigating that warning: src/services/microdataSurveyAccess.ts (definition resolution). Do not drop failed sources merely to claim complete discovery. Otherwise send the diff back for review. Still unverified live: revoked/expired/no-access accounts, invitation acceptance during preparation, real file preparation through a focus refresh, and matched latency measurements. Automated tests cover the lifecycle cases without new grant provisioning or revocation.
+
+N1 follow-up: failed refresh retains prior bundles in both discovery and pending results. Successful removal and sign-out still clear access. User authorized committing/pushing main and web and deploying review and production on 2026-10-06. The ten unreadable definitions remain open.

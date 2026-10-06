@@ -125,8 +125,8 @@ Two states, and the difference matters:
   `DIEM restricted microdata grant`. The dialog names the grant and offers
   **Accept invitation and open data**, through the documented per-user accept
   operation on the user's own token. On success it closes, shows a success
-  notice, and navigates to `/data/surveys#temporary-microdata`; the grants section
-  scrolls itself into view once discovery has produced the bundle, so the button
+  notice, and navigates to `/data/surveys#step-microdata-package`; the download inventory
+  scrolls into view on arrival when an inventory is already available, or after the first discovery otherwise. Access refresh remains visible, so the button
   ends where it promises.
 - **Unverified.** The group cannot be read before joining it, so the dialog
   offers **Open ArcGIS group invitations**, opening the Community portal's

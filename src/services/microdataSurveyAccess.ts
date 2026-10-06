@@ -1,5 +1,5 @@
 import { countryDefinition } from './countries'
-import { deepLinkFields, fetchGrantDatasetDefinition } from './dataExplorer'
+import { deepLinkFields, definitionForGrantView, fetchGrantDatasetDefinition } from './dataExplorer'
 import { fetchValidatedSurveyKeys } from './monitoring'
 import { type GrantBundle, type ResolvedGrantView } from './microdataGrants'
 import { MICRODATA_RESOURCES, type ProtectedRequester } from './protectedData'
@@ -57,37 +57,51 @@ function componentForGrant(view: ResolvedGrantView): MicrodataComponent {
 export async function confirmGrantSurveyComponents(
   bundles: GrantBundle[],
   requester: ProtectedRequester,
-  options: { contributor: boolean; includeTestData: boolean; validatedSurveys?: Set<string> | null; signal?: AbortSignal },
+  options: { contributor: boolean; includeTestData: boolean; validatedSurveys?: Set<string> | null; signal?: AbortSignal; reuseDiscoveryDefinitions?: boolean },
   loadDefinition = fetchGrantDatasetDefinition,
 ): Promise<{ surveys: MicrodataSurvey[]; failed: boolean; issues: GrantDiscoveryIssue[] }> {
   const results = new Map<string, MicrodataSurvey>()
   const issues: GrantDiscoveryIssue[] = []
   const validated = options.contributor ? undefined : options.validatedSurveys
-  const request: ProtectedRequester = (url, params, requestOptions) => requester(url, params, {
-    ...requestOptions, signal: options.signal || requestOptions?.signal,
-  })
+  // Bound all layer and row checks across the discovery run.
+  let active = 0
+  const waiting: Array<() => void> = []
+  const request: ProtectedRequester = async (url, params, requestOptions) => {
+    if (active >= 6) await new Promise<void>((resolve) => waiting.push(resolve))
+    else active += 1
+    try {
+      options.signal?.throwIfAborted()
+      return await requester(url, params, { ...requestOptions, signal: options.signal || requestOptions?.signal })
+    } finally {
+      const next = waiting.shift()
+      if (next) next()
+      else active -= 1
+    }
+  }
 
-  for (const bundle of bundles) {
+  await Promise.all(bundles.map(async (bundle) => {
     options.signal?.throwIfAborted()
-    if (bundle.status !== 'active') continue
+    if (bundle.status !== 'active') return
     const testData = MICRODATA_RESOURCES.some((resource) => (
       resource.version === bundle.questionnaireVersion && resource.preview
     ))
-    if (testData && (!options.contributor || !options.includeTestData)) continue
+    if (testData && (!options.contributor || !options.includeTestData)) return
     if (!options.contributor && validated === null) {
       for (const view of bundle.views) issues.push({ itemId: view.itemId, reason: 'register-unavailable' })
-      continue
+      return
     }
 
-    for (const view of bundle.views) {
+    await Promise.all(bundle.views.map(async (view) => {
       options.signal?.throwIfAborted()
       let definition: Awaited<ReturnType<typeof fetchGrantDatasetDefinition>>
       try {
-        definition = await loadDefinition(view.itemId, request)
+        definition = options.reuseDiscoveryDefinitions && view.serviceDefinition
+          ? await definitionForGrantView(view, request)
+          : await loadDefinition(view.itemId, request)
       } catch {
         options.signal?.throwIfAborted()
         issues.push({ itemId: view.itemId, reason: 'unreadable' })
-        continue
+        return
       }
       // Discovery can outlive a grant change. Never use its old scope after a
       // re-resolution has returned different metadata or removed export rights.
@@ -95,28 +109,31 @@ export async function confirmGrantSurveyComponents(
         || definition.grant.questionnaireVersion !== bundle.questionnaireVersion
         || definition.grant.component !== view.component) {
         issues.push({ itemId: view.itemId, reason: 'changed' })
-        continue
+        return
       }
       const fields = deepLinkFields(definition.layer.fields)
       if (!fields.country || !/iso3/i.test(fields.country.name) || !fields.round) {
         issues.push({ itemId: view.itemId, reason: 'missing-fields' })
-        continue
+        return
       }
       const visibilityWhere = visibilityClause(definition.layer, options.contributor, 'microdata', definition.resource.releaseFiltered)
-      if (isWithheld(visibilityWhere)) continue
+      if (isWithheld(visibilityWhere)) return
 
-      for (const scope of definition.grant.surveyScope) {
+      const grant = definition.grant
+      const countryField = fields.country.name
+      const roundField = fields.round.name
+      await Promise.all(grant.surveyScope.map(async (scope) => {
         options.signal?.throwIfAborted()
-        if (validated && !validated.has(`${scope.adm0_iso3}:${scope.round}`)) continue
+        if (validated && !validated.has(`${scope.adm0_iso3}:${scope.round}`)) return
         const where = withVisibility(
-          `${fields.country.name} = '${scope.adm0_iso3.replaceAll("'", "''")}' AND ${fields.round.name} = ${scope.round}`,
+          `${countryField} = '${scope.adm0_iso3.replaceAll("'", "''")}' AND ${roundField} = ${scope.round}`,
           visibilityWhere,
         )
         try {
           const response = await request<{ features?: unknown[] }>(`${definition.layerUrl}/query`, {
-            where, outFields: fields.country.name, resultRecordCount: '1', returnGeometry: 'false',
+            where, outFields: countryField, resultRecordCount: '1', returnGeometry: 'false',
           })
-          if (!response.features?.length) continue
+          if (!response.features?.length) return
           const key = surveyKey(bundle.questionnaireVersion, scope.adm0_iso3, scope.round)
           let survey = results.get(key)
           if (!survey) {
@@ -129,10 +146,10 @@ export async function confirmGrantSurveyComponents(
           }
           survey.components.push({
             component: componentForGrant(view), source: 'grant', itemId: view.itemId,
-            grantId: definition.grant.grantId,
-            layerUrl: definition.layerUrl, countryField: fields.country.name,
-            roundField: fields.round.name, visibilityWhere,
-            bulkExportEnabled: definition.grant.bulkExportEnabled,
+            grantId: grant.grantId,
+            layerUrl: definition.layerUrl, countryField: countryField,
+            roundField: roundField, visibilityWhere,
+            bulkExportEnabled: grant.bulkExportEnabled,
           })
         } catch {
           options.signal?.throwIfAborted()
@@ -140,14 +157,33 @@ export async function confirmGrantSurveyComponents(
             surveyKey: surveyKey(bundle.questionnaireVersion, scope.adm0_iso3, scope.round),
             reason: 'query-failed' })
         }
-      }
-    }
-  }
+      }))
+    }))
+  }))
 
   return { surveys: [...results.values()], failed: issues.length > 0, issues }
 }
 
-/** Prefer an export-enabled grant component; otherwise use an independently accessible master component. */
+const COMPONENT_ORDER: Record<MicrodataComponent, number> = { household: 0, mandatory: 1, optional: 2 }
+
+function compareComponents(a: MicrodataSurveyComponent, b: MicrodataSurveyComponent) {
+  return Number(b.bulkExportEnabled) - Number(a.bulkExportEnabled)
+    || Number(b.source === 'grant') - Number(a.source === 'grant')
+    || (a.grantId || '').localeCompare(b.grantId || '') || a.itemId.localeCompare(b.itemId)
+}
+function sameSource(a: MicrodataSurveyComponent, b: MicrodataSurveyComponent) {
+  return a.source === b.source && (a.source === 'master' || Boolean(a.grantId && a.grantId === b.grantId))
+}
+
+/** Stable across response and component order; includes the full selected-source contract. */
+export function microdataSourceFingerprint(surveys: MicrodataSurvey[]) {
+  return JSON.stringify(surveys.flatMap((survey) => survey.components.map((part) => JSON.stringify([
+    survey.key, part.component, part.source, part.grantId || '', part.itemId, part.layerUrl,
+    part.countryField, part.roundField, part.visibilityWhere || '', part.bulkExportEnabled,
+  ]))).sort())
+}
+
+/** Prefer exportable grants by stable IDs, and keep V3 mandatory/optional sources compatible. */
 export function mergeMicrodataSurveys(master: SurveyDiscoveryResult, grants: MicrodataSurvey[]): MicrodataSurvey[] {
   const merged = new Map<string, MicrodataSurvey>()
   for (const survey of master.surveys) {
@@ -155,35 +191,40 @@ export function mergeMicrodataSurveys(master: SurveyDiscoveryResult, grants: Mic
       key: survey.key, generation: survey.generation, adm0Iso3: survey.adm0Iso3,
       countryName: survey.countryName, round: survey.round, testData: survey.testData,
       components: survey.themes.map((theme) => ({
-        component: componentForMaster(theme.resourceId, survey.generation),
-        source: 'master', itemId: theme.resourceId, layerUrl: theme.layerUrl,
-        countryField: theme.countryField, roundField: theme.roundField,
-        visibilityWhere: theme.visibilityWhere, bulkExportEnabled: true,
+        component: componentForMaster(theme.resourceId, survey.generation), source: 'master',
+        itemId: theme.resourceId, layerUrl: theme.layerUrl, countryField: theme.countryField,
+        roundField: theme.roundField, visibilityWhere: theme.visibilityWhere, bulkExportEnabled: true,
       })),
     })
   }
-  for (const grantSurvey of grants) {
-    const current = merged.get(grantSurvey.key)
-    if (!current) {
-      merged.set(grantSurvey.key, grantSurvey)
-      continue
-    }
-    for (const component of grantSurvey.components) {
-      const index = current.components.findIndex((entry) => entry.component === component.component)
-      if (index < 0) current.components.push(component)
-      else if (component.bulkExportEnabled) current.components[index] = component
-    }
+  for (const survey of grants) {
+    const existing = merged.get(survey.key)
+    if (existing) existing.components.push(...survey.components)
+    else merged.set(survey.key, { ...survey, components: [...survey.components] })
   }
-  return [...merged.values()].filter((survey) => survey.components.some((component) => (
-    component.component === 'household' || component.component === 'mandatory'
-  ))).sort((a, b) => a.countryName.localeCompare(b.countryName)
-    || a.round - b.round || a.generation.localeCompare(b.generation))
+  for (const survey of merged.values()) {
+    const candidates = [...survey.components].sort(compareComponents)
+    if (survey.generation === 'v3') {
+      const mandatory = candidates.filter((part) => part.component === 'mandatory')
+      const optional = candidates.filter((part) => part.component === 'optional')
+      const paired = mandatory.find((core) => core.bulkExportEnabled && optional.some((part) => part.bulkExportEnabled && sameSource(core, part)))
+      const core = paired || mandatory[0]
+      const extra = core && optional.find((part) => sameSource(core, part))
+      survey.components = core ? [core, ...(extra ? [extra] : [])] : []
+    } else {
+      const household = candidates.find((part) => part.component === 'household')
+      survey.components = household ? [household] : []
+    }
+    survey.components.sort((a, b) => COMPONENT_ORDER[a.component] - COMPONENT_ORDER[b.component])
+  }
+  return [...merged.values()].filter((survey) => survey.components.length > 0)
+    .sort((a, b) => a.countryName.localeCompare(b.countryName) || a.round - b.round || a.generation.localeCompare(b.generation))
 }
 
 export async function discoverMicrodataAccess(
   requester: ProtectedRequester,
-  bundles: GrantBundle[],
-  options: { contributor: boolean; householdData: boolean; includeTestData: boolean; signal?: AbortSignal },
+  bundles: GrantBundle[] | Promise<GrantBundle[]>,
+  options: { contributor: boolean; householdData: boolean; includeTestData: boolean; signal?: AbortSignal; reuseDiscoveryDefinitions?: boolean },
 ): Promise<MicrodataAccessResult> {
   const request: ProtectedRequester = <T,>(url: string, params?: Record<string, unknown>, requestOptions?: Parameters<ProtectedRequester>[2]) => (
     requester<T>(url, params, { ...requestOptions, signal: options.signal || requestOptions?.signal })
@@ -191,18 +232,18 @@ export async function discoverMicrodataAccess(
   const validated = options.contributor ? undefined : await fetchValidatedSurveyKeys().catch(() => null)
   options.signal?.throwIfAborted()
   const master = options.householdData
-    ? await discoverMicrodataMasterSurveys(request, { ...options, validatedSurveys: validated })
+    ? discoverMicrodataMasterSurveys(request, { ...options, validatedSurveys: validated })
     : { status: 'unavailable', surveys: [], sources: [], pendingSourceCount: 0,
       warningSourceCount: 0, unavailableSourceCount: 0, checkedAt: Date.now() } as SurveyDiscoveryResult
-  options.signal?.throwIfAborted()
-  const grantResult = await confirmGrantSurveyComponents(bundles, request, {
+  const grantResult = Promise.resolve(bundles).then((resolved) => confirmGrantSurveyComponents(resolved, request, {
     contributor: options.contributor, includeTestData: options.includeTestData,
-    validatedSurveys: validated, signal: options.signal,
-  })
+    validatedSurveys: validated, signal: options.signal, reuseDiscoveryDefinitions: options.reuseDiscoveryDefinitions,
+  }))
+  const [resolvedMaster, resolvedGrants] = await Promise.all([master, grantResult])
   options.signal?.throwIfAborted()
   return {
-    surveys: mergeMicrodataSurveys(master, grantResult.surveys), master,
-    grantCheckFailed: grantResult.failed,
-    grantIssues: grantResult.issues,
+    surveys: mergeMicrodataSurveys(resolvedMaster, resolvedGrants.surveys), master: resolvedMaster,
+    grantCheckFailed: resolvedGrants.failed,
+    grantIssues: resolvedGrants.issues,
   }
 }

@@ -294,3 +294,23 @@ Use real non-administrator test accounts for:
 - expired community session.
 
 Confirm that aggregated datasets and language guides have the intended ArcGIS audience. If they should be available to every community member, their items or containing group must be shared accordingly.
+
+## Microdata inventory presentation (2026-10-06)
+
+The protected microdata tab leads with a single country/round inventory and coded, labelled or Both file options. Grant metadata appears once in a collapsed access-details disclosure; export policy is reported per grant, never as a blanket permission. Documentation links are grouped by infrastructure version, with selected-version links beside file options. Collections and boundaries sit in a collapsed reference section. Dates reuse survey-register periods already loaded by the workspace.
+
+Grant discovery is owned by useMicrodataGrants in SurveyWorkspace. Its current promise lets register/master discovery overlap grant enumeration; master and grant confirmation run concurrently once the register is ready. Layer and survey confirmation requests are bounded to six within a grant check. Item and service definitions from that discovery run are reused only for the inventory. Package preflight, file preparation and explorer navigation retain fresh ArcGIS resolution. No protected metadata is persisted.
+
+During refresh the inventory and saved choices stay visible, labelled as re-checking and subject to change. A completed result replaces the list; selections are pruned only after complete discovery. Sign-out, account/requester changes and production/test changes clear the displayed result. Failed checks remain explicit and never assert a complete empty inventory. Invitations now target #step-microdata-package; legacy #temporary-microdata and #step-microdata links still open the microdata tab.
+
+### Refresh and source selection review fixes
+
+Grant checks share a six-request limiter across all grants. Export sources are chosen deterministically by export eligibility, grant/master preference and stable grant/item IDs. V3 prefers a source with both exportable mandatory and optional components when one is available; fingerprints sort the full source contract.
+
+Focus refreshes are limited to once per 60 seconds and queued during inventory discovery, preflight or preparation. Manual retries and accepted invitations queue a fresh grant discovery when work is active. The picker defers newly resolved inventories during preflight/preparation. Completed ZIP URLs are retained across inventory/source refreshes; explicit selection or output-mode changes, clearing parts, session loss and unmount still release them. Actual source changes invalidate preflight. Fresh ArcGIS checks in preparation remain authoritative even when UI refresh is deferred.
+
+Members without either access path see a request-access introduction and licence, rather than an empty download picker. Aggregate-only SDMX documentation is intentionally excluded from household documentation. Version links are grouped in one disclosure with an accessible group name; the unpublished-documentation message is derived from the manifest. The legacy household-collection anchor opens and scrolls the reference disclosure.
+
+Development diagnostics report only aggregated grant-failure categories and source counts, never rows, item IDs or tokens. The signed-in review check reported ten unreadable grant definitions and no row-query failures, with 208 confirmed surveys; the warning remains unresolved. This is not a controlled before/after speed measurement.
+
+A failed grant refresh retains the previous bundles and attaches the error; only successful discovery can remove grants. Completed ZIPs already prepared in the browser remain available after incomplete discovery or later revocation. New preparations always re-check ArcGIS authorization; retained files confer no new access.

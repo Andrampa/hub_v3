@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-06 - Microdata inventory loading and layout
+
+- Make the download inventory the primary microdata view. Replace repeated grant cards with one access summary and a collapsed scope/export/explorer disclosure; show version-specific documentation in the inventory and for selected surveys. Keep collections and boundaries collapsed below the picker.
+- Move grant discovery into a workspace hook, preserve the inventory during re-checks, start register/master work while grant discovery runs, confirm survey rows with at most six concurrent requests, and reuse item/service definitions within the current inventory run. Download preflight and preparation continue to re-resolve access.
+- Deduplicate overlapping grant components even without master access, preferring an export-enabled source. Preserve invitation and legacy microdata anchors. Display existing survey-register collection dates when available.
+- Verification: 125 relevant tests and production build pass. Live signed-in preview lists 208 surveys, retains the inventory during re-check, and confirms 6,275 records / four CSVs for Yemen V1 round 3 and V2 round 5 in Both mode. Desktop/mobile layouts checked. The existing incomplete-source warning persists; no before/after latency comparison or new full archive test is claimed.
+
 ## 2026-10-06 - Country map hover names
 
 - Replace the map-wide “Countries covered by DIEM” hover title with each
@@ -2901,3 +2908,13 @@ The About hero is back to the Zambia drought photograph, and both it and the
 flood hero no longer carry an on-image credit link. Both photographs are
 CC BY 4.0 (Icem4k and Frameofashik, Wikimedia Commons), which requires
 attribution somewhere reasonable; the site currently gives none for them.
+
+## 2026-10-06 - Microdata inventory review fixes
+
+- Stabilize overlapping grant source selection and sorted source fingerprints; select compatible V3 mandatory/optional sources together. Preserve completed parts across inventory refreshes and defer source-result replacement during checking/preparation.
+- Throttle focus refreshes to 60 seconds, queue refreshes during active work, route every retry through fresh grant discovery, and check grants concurrently under the shared six-request limit.
+- Restore a request-access introduction for members without microdata access; memoize collection dates, repair the collapsed reference anchor, and simplify accessible documentation disclosures. Aggregate-only SDMX metadata is intentionally omitted from microdata documentation.
+- Add lifecycle regressions for preparation and parts during refresh, account/sign-out/test-mode transitions, throttling/deferred focus and retry, and compatible stable V3 source selection.
+
+### 2026-10-06 — Failed grant refresh retention
+Retain previous grant bundles when discovery fails, including the pending result, so grant-only users keep their inventory and prepared ZIPs. Successful discovery and session changes still remove obsolete access.

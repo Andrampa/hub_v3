@@ -35,6 +35,7 @@ let host: HTMLDivElement
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  auth.status = 'authenticated'
   auth.user.username = 'alice'
   sessionStorage.clear()
   host = document.createElement('div')
@@ -252,4 +253,67 @@ it('explains a failed access check beside the disabled download button', async (
   expect(host.textContent).not.toContain('The source could not be reached.')
   expect(host.querySelector('#microdata-download-hint')?.textContent)
     .toBe('Check access above, then open and accept the microdata licence.')
+})
+
+it('keeps the inventory and selections visible while a refresh is pending', async () => {
+  const discovery = { bundles: [], source: 'none' as const }
+  const render = (checking: boolean, pending?: Promise<typeof discovery>) => <MemoryRouter><MicrodataPackagePicker grantDiscovery={discovery} grantPending={pending} grantChecking={checking} householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup" /></MemoryRouter>
+  await act(async () => root.render(render(false)))
+  const checkbox = host.querySelector('.microdata-country input') as HTMLInputElement
+  await act(async () => checkbox.click())
+  let finish!: (value: typeof discovery) => void
+  const pending = new Promise<typeof discovery>((resolve) => { finish = resolve })
+  discoverMicrodataAccess.mockImplementationOnce(() => pending.then(() => ({ surveys: [], master: { pendingSourceCount: 0 }, grantCheckFailed: false, grantIssues: [] })))
+  await act(async () => root.render(render(true, pending)))
+  expect(host.textContent).toContain('Nigeria')
+  expect(host.textContent).toContain('Re-checking access')
+  expect((host.querySelector('.microdata-country input') as HTMLInputElement).checked).toBe(true)
+  await act(async () => { finish(discovery) })
+  expect(host.textContent).not.toContain('Nigeria')
+})
+
+it('keeps finished parts and an active preparation through refresh, applying changed sources afterwards', async () => {
+  const discovery = { bundles: [], source: 'none' as const }
+  const render = (pending?: Promise<typeof discovery>) => <MemoryRouter><MicrodataPackagePicker grantDiscovery={discovery} grantPending={pending} grantChecking={false} householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup" /></MemoryRouter>
+  await act(async () => root.render(render()))
+  await act(async () => (host.querySelector('.microdata-country input') as HTMLInputElement).click())
+  await act(async () => button('Check access and count records').click())
+  await acceptLicence()
+  let finish!: () => void
+  let signal!: AbortSignal
+  buildMicrodataParts.mockImplementationOnce(({ onPart, signal: current }) => {
+    signal = current
+    onPart({ partNumber: 1, fileName: 'finished.zip', blob: new Blob(['zip']), recordCount: 20, fileCount: 1, uncompressedBytes: 10, surveyKeys: ['v2:NGA:8'] })
+    return new Promise((resolve) => { finish = () => resolve({ partCount: 1, recordCount: 20 }) })
+  })
+  await act(async () => button('Prepare microdata downloads').click())
+  const original = await discoverMicrodataAccess.mock.results.at(-1)!.value
+  discoverMicrodataAccess.mockResolvedValueOnce({ ...original, surveys: original.surveys.map((survey: any) => ({ ...survey, components: survey.components.map((part: any) => ({ ...part, itemId: 'changed-source' })) })) })
+  await act(async () => root.render(render(Promise.resolve(discovery))))
+  expect(signal.aborted).toBe(false)
+  expect(host.querySelector('a[download="finished.zip"]')).not.toBeNull()
+  await act(async () => finish())
+  expect(host.querySelector('a[download="finished.zip"]')).not.toBeNull()
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+  expect(button('Prepare microdata downloads').disabled).toBe(true) // changed source needs a fresh check
+})
+
+it('routes Check again to fresh grant discovery', async () => {
+  discoverMicrodataAccess.mockResolvedValueOnce({ surveys: [], master: { pendingSourceCount: 1 }, grantCheckFailed: true, grantIssues: [] })
+  const onRecheck = vi.fn()
+  await act(async () => root.render(<MemoryRouter><MicrodataPackagePicker grantDiscovery={{ bundles: [], source: 'none' }} grantChecking={false} householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup" onRecheck={onRecheck} /></MemoryRouter>))
+  await act(async () => button('Check again').click())
+  expect(onRecheck).toHaveBeenCalledTimes(1)
+})
+
+it.each(['account', 'sign-out', 'test-mode'])('clears the old displayed inventory after %s changes', async (change) => {
+  const discovery = { bundles: [], source: 'none' as const }
+  const render = (testMode = false) => <MemoryRouter><MicrodataPackagePicker grantDiscovery={discovery} grantChecking={false} householdData={true} contributor={true} testMode={testMode} licenceAccess="householdGroup" /></MemoryRouter>
+  await act(async () => root.render(render()))
+  expect(host.textContent).toContain('Nigeria')
+  discoverMicrodataAccess.mockImplementationOnce(() => new Promise(() => {}))
+  if (change === 'account') auth.user.username = 'bob'
+  if (change === 'sign-out') auth.status = 'anonymous'
+  await act(async () => root.render(render(change === 'test-mode')))
+  expect(host.textContent).not.toContain('Nigeria')
 })

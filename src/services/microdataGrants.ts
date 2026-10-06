@@ -17,6 +17,7 @@
  * Nothing here is cached beyond the caller's React state, and no grant metadata
  * is ever written to storage: a revoked grant must not survive a reload.
  */
+import type { FeatureServiceInfo } from './dataExplorer'
 import { DOCUMENTATION_RESOURCES, MICRODATA_RESOURCES, resourcesForGeneration, type DataGeneration, type ProtectedDataResource, type ProtectedRequester } from './protectedData'
 
 /**
@@ -71,6 +72,7 @@ export interface ResolvedGrantView extends GrantItemMetadata {
   itemId: string
   title: string
   serviceUrl?: string
+  serviceDefinition?: FeatureServiceInfo
   /**
    * True only when ArcGIS reports the `Extract` capability on the view. This is
    * the bulk-export switch the provisioning script sets from `--allow-export`;
@@ -289,9 +291,6 @@ async function enumerateGrantItems(requester: ProtectedRequester): Promise<Grant
   return pages.flat().filter((item) => hasRestrictedMicrodataTag(item.tags))
 }
 
-interface ServiceDefinition {
-  capabilities?: string
-}
 
 /**
  * Re-resolve one item against ArcGIS immediately before it is shown or used.
@@ -318,9 +317,11 @@ export async function resolveGrantView(
   // `Extract` is the ArcGIS capability the provisioning script adds for
   // `--allow-export`. Absent, or unreadable, means bulk export is off.
   let bulkExportEnabled = false
+  let serviceDefinition: FeatureServiceInfo | undefined
   if (item.url) {
     try {
-      const definition = await requester<ServiceDefinition>(item.url, {})
+      const definition = await requester<FeatureServiceInfo>(item.url, {})
+      serviceDefinition = definition
       bulkExportEnabled = /extract/i.test(String(definition.capabilities || ''))
     } catch {
       bulkExportEnabled = false
@@ -332,6 +333,7 @@ export async function resolveGrantView(
     itemId: item.id,
     title: item.title,
     serviceUrl: item.url,
+    serviceDefinition,
     bulkExportEnabled,
   }
 }
