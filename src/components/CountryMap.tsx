@@ -66,7 +66,6 @@ export function CountryMap({
           aria-label={`World map of DIEM countries: ${mappedCount} of ${countries.length} highlighted`}
           aria-describedby="country-map-description"
         >
-        <title>Countries covered by DIEM</title>
         <desc id="country-map-description">Covered countries with geometry at this map scale are highlighted. Use the complete country directory below for keyboard navigation and small island states.</desc>
         <g transform={zoom.transform}>
         {areas.map(({ iso3, kind, d }) => {
@@ -84,7 +83,9 @@ export function CountryMap({
               onFocus={() => setHoveredIso(iso3)}
               onBlur={() => setHoveredIso(undefined)}
             >
-              <path className={`map-country map-country--covered${isVisible ? '' : ' map-country--dimmed'}`} d={d} />
+              <path className={`map-country map-country--covered${isVisible ? '' : ' map-country--dimmed'}`} d={d}>
+                <title>{summary.name}</title>
+              </path>
             </Link>
           )
         })}

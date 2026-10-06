@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-10-06 - Country map hover names
+
+- Replace the map-wide “Countries covered by DIEM” hover title with each
+  highlighted country's name. Preserve the map's accessible label, country-link
+  labels and hover/focus information panel.
+
 ## 2026-10-05 - Whole-survey microdata download parts
 
 - Review follow-up: when the complete selection fits one ZIP, restore automatic

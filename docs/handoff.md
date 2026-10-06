@@ -1,5 +1,19 @@
 # Handoff
 
+## 2026-10-06 - Country map hover names
+
+Status: implemented, uncommitted on `main` in `C:\git\hub_v3`.
+Changed files: `src/components/CountryMap.tsx`, `docs/country_explorer.md`,
+`docs/changelog.md`, and this handoff. Highlighted paths now have country-name
+titles; the generic SVG title was removed while accessible labels remain.
+`npm run build` and `git diff --check` pass. Browser acceptance is outstanding:
+the in-app browser rejected the local HTTPS preview with
+`net::ERR_CERT_AUTHORITY_INVALID`. No certificate warning was bypassed.
+Next file: `src/components/CountryMap.tsx`. Verification command:
+`npm run dev -- --host 127.0.0.1`, then check `/countries` in a trusted local
+browser: country-name tooltips, hover/focus panel, country links, zoom/drag,
+filters and mobile layout.
+
 ## 2026-10-05 - Whole-survey multipart microdata preparation
 
 Status: implemented, uncommitted on `main` in `C:\git\hub_v3`.

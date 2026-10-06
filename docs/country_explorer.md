@@ -55,6 +55,11 @@ but do not appear as independent country products.
 
 ## Map Behavior
 
+Highlighted countries show their country name in a native hover tooltip. The
+map keeps its accessible container label and description; country links retain
+their name and product count, and hover or keyboard focus updates the information
+panel below the map. Uncovered and neutral areas have no country-link tooltip.
+
 The `/countries` and `/hazard-impact-assessments` maps and the country-profile outline draw UN Geodata simplified (UN Geospatial), the UN's generalized world dataset, so disputed boundaries follow UN practice as FAO publications require. `src/assets/geo/un-world.topo.json` is built by `npm run build:boundaries` from the official service and is committed; nothing is requested at runtime.
 
 - Country areas and boundary lines are one shared topology, simplified together, so a boundary is the same arc as the edge of both fills it separates.
