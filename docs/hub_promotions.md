@@ -34,7 +34,9 @@ The popup appears only after:
 It then fades in over 1.4 seconds with a short upward rise.
 
 Dismissal is stored by publication channel and stable campaign ID. The default
-is seven days; editors can change `dismiss_days`. The popup does not steal
+is three days; editors can change `dismiss_days`. Existing dismissal timestamps
+use the current duration, so this also shortens earlier default dismissals.
+The popup does not steal
 keyboard focus and motion is removed when the visitor requests reduced motion.
 
 The latest-evidence strip uses exact, case-insensitive matches for the

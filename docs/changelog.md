@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-09 - Shorter popup dismissal
+
+- Reduced the Featured update default dismissal period from seven to three days,
+  including the legacy campaign fallback and newly provisioned campaign schema.
+- Existing dismissal timestamps use the shorter default without clearing browser
+  storage; explicit editor-configured `dismiss_days` values remain authoritative.
+- Updated promotion and popup management documentation. Deployment is pending.
+
 ## 2026-10-06 - Microdata inventory loading and layout
 
 - Make the download inventory the primary microdata view. Replace repeated grant cards with one access summary and a collapsed scope/export/explorer disclosure; show version-specific documentation in the inventory and for selected surveys. Keep collections and boundaries collapsed below the picker.

@@ -220,7 +220,7 @@ function mapCampaign(row: Record<string, unknown>, index: number): HubCampaign |
     imageUrl: safeHttpUrl(value(row, 'image_url', 'imageUrl')),
     destination,
     ctaLabel: text(row, 'cta_label') || 'Open',
-    dismissDays: Math.max(0, numberValue(row, 7, 'dismiss_days')),
+    dismissDays: Math.max(0, numberValue(row, 3, 'dismiss_days')),
   }
 }
 

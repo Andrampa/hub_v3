@@ -152,7 +152,7 @@ TABLE_DEFINITIONS = [
             string_field("image_url", "Public image URL", 2048),
             string_field("cta_label", "Link label", 100),
             string_field("destination", "Internal path or public URL", 2048, nullable=False),
-            integer_field("dismiss_days", "Days before showing again", default=7),
+            integer_field("dismiss_days", "Days before showing again", default=3),
             *COMMON_PUBLICATION_FIELDS,
             *TRACKING_FIELDS,
         ],
