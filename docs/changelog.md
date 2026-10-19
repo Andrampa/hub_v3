@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-19 - Clickable card titles
+
+- Card titles now open the card's destination on hazard impact assessment
+  dossiers, country highlight cards and photo gallery cards, matching catalog
+  and country resource cards. The title links share a `card-title-link` style
+  and stay out of the tab order, so each card keeps a single keyboard stop.
+
 ## 2026-10-09 - Shorter popup dismissal
 
 - Reduced the Featured update default dismissal period from seven to three days,

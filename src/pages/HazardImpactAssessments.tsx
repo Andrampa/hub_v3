@@ -74,7 +74,15 @@ function DossierCard({ item, compact = false }: { item: ImpactAssessmentResource
           <span>{countryLabel(item)}</span>
           <time dateTime={`${item.assessmentYear}`}>{item.assessmentYear}</time>
         </div>
-        <h3>{item.title.trim()}</h3>
+        {/* The title opens the assessment too, as a pointer target only: out of
+            the tab order like the image, so the card keeps one tab stop. */}
+        <h3>
+          {link.kind === 'product' ? (
+            <Link className="card-title-link" to={link.to} tabIndex={-1}>{item.title.trim()}</Link>
+          ) : (
+            <a className="card-title-link" href={link.href} target="_blank" rel="noreferrer" tabIndex={-1}>{item.title.trim()}</a>
+          )}
+        </h3>
         {!compact && <p>{summary || 'Open the assessment to view its complete evidence and methodology.'}</p>}
         {!compact && (
           <dl className="impact-dossier-details">

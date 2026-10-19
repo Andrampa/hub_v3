@@ -49,7 +49,11 @@ export function PhotoGalleryCard({ gallery, headingLevel = 'h2', showCountry = t
           {showCountry && <span>{gallery.countryName || gallery.countryIso3 || 'Regional'}</span>}
           <time dateTime={gallery.date.toISOString()}>{formatGalleryDate(gallery.date)}</time>
         </div>
-        <Heading>{displayTitle(gallery, showCountry)}</Heading>
+        {/* The title opens the gallery too, as a pointer target only; the image
+            link stays the card's one tab stop. */}
+        <Heading>
+          <a className="card-title-link" href={gallery.flickrUrl} target="_blank" rel="noreferrer" tabIndex={-1}>{displayTitle(gallery, showCountry)}</a>
+        </Heading>
         {gallery.summary && <p>{gallery.summary}</p>}
         <div className="gallery-card-footer">
           {gallery.eventOrRound && <span>{gallery.eventOrRound}</span>}

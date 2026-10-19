@@ -425,6 +425,12 @@ footer a:hover { color: white; }
    accessibility tree because they sit outside it. */
 .card-media-link { position: absolute; inset: 0; display: block; }
 
+/* A card title that opens the same destination as the card's own link, as a
+   pointer target only: it stays out of the tab order so the card keeps the
+   single stop it already has. */
+.card-title-link { color: inherit; text-decoration: none; }
+.card-title-link:hover { color: var(--fao-blue); text-decoration: underline; text-underline-offset: 3px; }
+
 /* The hero <picture> is a delivery wrapper, not a box: the image inside keeps
    positioning itself against the hero section exactly as it did. */
 .hero-picture { display: contents; }

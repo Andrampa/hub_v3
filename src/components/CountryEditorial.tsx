@@ -103,7 +103,7 @@ export function CountryEditorial({ countryName, content }: CountryEditorialProps
                           <span>{item.productTypes[0] || item.type}</span>
                           <time dateTime={new Date(item.modified).toISOString()}>{formatDate(item.modified)}</time>
                         </div>
-                        <h3>{headline}</h3>
+                        <h3><Link className="card-title-link" to={itemProductPath(item)} tabIndex={-1}>{headline}</Link></h3>
                         {description && (
                           <RichText
                             value={description}
