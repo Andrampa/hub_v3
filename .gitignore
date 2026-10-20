@@ -15,3 +15,5 @@ vite.config.js
 vite.config.d.ts
 hub_catalog_category_review*.csv
 .ipynb_checkpoints/
+.local-reports/
+__pycache__/

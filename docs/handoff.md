@@ -1,5 +1,34 @@
 # Handoff
 
+## 2026-10-20 - Community last-login report and skill
+
+Implemented on branch `main` in `C:\git\hub_v3`; no account changes.
+Files: `scripts/report_community_logins.py`, `scripts/community_login_report.ipynb`,
+`scripts/test_report_community_logins.py`, `docs/community_login_report.md`,
+`.gitignore`, `docs/context_index.md`, `docs/changelog.md`, and this entry.
+Preserve pre-existing documentation changes and `docs/popup_management_handoff.md`.
+Next file: `scripts/report_community_logins.py`. User clarified Pro uses the FAO
+account; authentication now prompts for Community username/password instead.
+The user's live run authenticated and enumerated 2,565 members, then failed
+at `datetime.now` because `datetime` resolved to the module. Distinct date import
+names fix that collision; the complete mocked report regression reproduces it.
+The user subsequently completed the report for 2,565 members, with 17 accounts
+having no recorded login and one unknown date. Initial external Pro Python could
+not initialize its product licence. Exact live verification command in a notebook:
+`%run C:/git/hub_v3/scripts/report_community_logins.py`.
+Offline verification: Pro Python `-m unittest discover -s scripts -p test_report_community_logins.py`,
+then `npm run build`. All eleven offline tests and the build pass (existing
+large-chunk warning). Inspect git status and branch before continuing.
+
+Skill follow-up: fresh AGOL retrieval is now the default. Run the report with
+`--setup-credentials` locally once (masked prompt; validated Community account
+saved in Windows Credential Manager), then the skill uses `--stored-credentials`
+without prompting. Vault backend import is verified; no real credentials were
+stored or read during implementation. The user confirmed secure setup completed
+on 2026-10-20; noninteractive vault retrieval still needs its first live skill run.
+Reusable skill sources are versioned under `skills/diem-access-stats/`. Keep the
+installed personal skill and bundled report copy in sync with this script.
+
 ## 2026-10-06 - Microdata inventory simplification
 
 Status: implemented, uncommitted and not deployed in C:\git\hub_v3. The download list replaces TemporaryMicrodataGrants cards; discovery moved to src/hooks/useMicrodataGrants.ts. New compact components: MicrodataAccessSummary.tsx and MicrodataDocumentation.tsx. Service work is in microdataSurveyAccess.ts, microdataGrants.ts and dataExplorer.ts; invitation anchor, picker, workspace and CSS updated.

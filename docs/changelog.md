@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-20 - Community login report
+
+- Add validated one-time Windows Credential Manager setup and noninteractive
+  stored-credential login for fresh skill reports, without passwords in chat,
+  command-line arguments or plaintext files.
+
+- Add an internal read-only Python report for Community organization
+  members, with optional legacy-group scope, cumulative login windows and
+  exclusive inactivity bands. Export summary and per-user CSVs; keep unknown
+  dates separate and never modify accounts.
+- Add a launchable Jupyter notebook and masked username/password authentication
+  against the Community portal, independent of Pro's FAO sign-in. Document
+  execution and interpretation. The user verified the live report against
+  2,565 members and completed secure credential setup.
+- Fix a notebook `datetime` name collision after authentication with distinct
+  date imports. Add a complete mocked report regression and show the local
+  failing function/line in unexpected-error diagnostics.
+
 ## 2026-10-19 - Clickable card titles
 
 - Card titles now open the card's destination on hazard impact assessment

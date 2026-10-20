@@ -1,0 +1,4 @@
+interface:
+  display_name: "DIEM access statistics"
+  short_description: "Fetch current DIEM Community sign-in statistics"
+  default_prompt: "Use $diem-access-stats to show DIEM Community sign-ins over the last 6, 12, 18 and 24 months."

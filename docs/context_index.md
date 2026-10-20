@@ -20,6 +20,7 @@
 | `docs/editor_guide.md` | Human-facing instructions for all country, popup, carousel, banner, and catalog curation |
 | `docs/editor_guide_current.md` | Shareable editor guide limited to workflows available now, with direct ArcGIS links, HTML rules, and existing examples |
 | `docs/catalog_categorization.md` | Whole-catalog category audit, Excel review, additive application and verification |
+| `docs/community_login_report.md` | Read-only Community account last-login report and notebook using masked password authentication |
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/temporary_microdata_grants.md` | User-specific temporary microdata grants: cross-org discovery, bundles, export policy, catalogue exclusion |
 | `docs/data_access_strategy.md` | Proposed `/data` restructure: questionnaire generations, publication-tier decision, microdata routing, phasing |
