@@ -1,5 +1,10 @@
 # Architecture
 
+Conceptual overview diagram of the four access paths and where the Hub meets the household
+monitoring system: `docs/diagrams/diem_hub_architecture.html` (companion:
+`hh_survey_v3/docs/diagrams/diem_data_architecture.html`). This file stays the authority; update the
+diagram when the runtime flow it shows changes.
+
 ## System Overview
 
 ```text

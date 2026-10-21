@@ -1,0 +1,317 @@
+<title>DIEM Hub Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide drawing; columns run source → Hub code → Hub pages → outside, rows are the four access paths, foundations band below; notes underneath. Same tokens as the monitoring-system diagram so the pair reads as one set. */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --lane: #eef2f7;
+  --fg: #17202b;
+  --muted: #586777;
+  --line: #c3cdd8;
+  --accent: #1d6bb0;
+  --accent-soft: #e6f0fa;
+  --gate: #b26b12;
+  --gate-soft: #fbf1e3;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+    --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+  --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; max-width: 72ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.dek { color: var(--muted); font-size: 16px; }
+code { font-family: var(--mono); font-size: .9em; }
+
+figure { margin: 0; display: grid; gap: 12px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.scroll svg { display: block; width: 100%; min-width: 1040px; height: auto; }
+figcaption { color: var(--muted); font-size: 14px; max-width: 80ch; }
+
+/* SVG styling through page tokens */
+.lane { fill: var(--lane); }
+.band { fill: none; stroke: var(--line); stroke-dasharray: 5 4; }
+.lh { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; fill: var(--fg); font-weight: 500; }
+.ls { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.box.key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+.box.gate { fill: var(--gate-soft); stroke: var(--gate); stroke-width: 1.6; }
+.box.opt { stroke-dasharray: 4 3; }
+.box.hand { stroke: var(--accent); stroke-dasharray: 5 3; stroke-width: 1.4; }
+.box.srv { stroke: var(--fg); stroke-width: 1.8; }
+.rowlane { fill: var(--lane); }
+.bt { font-family: var(--body); font-weight: 600; font-size: 13.5px; fill: var(--fg); }
+.bt.m { font-family: var(--mono); font-weight: 500; font-size: 13px; }
+.bs { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.flow { fill: none; stroke: var(--accent); stroke-width: 1.7; }
+.meta { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.mk-flow { fill: var(--accent); }
+.mk-meta { fill: var(--muted); }
+.lbl { font-family: var(--body); font-size: 11px; fill: var(--accent); font-weight: 500; }
+.lbl.g { fill: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 30px; height: 0; border-top: 2px solid var(--accent); }
+.sw.d { border-top: 2px dashed var(--muted); }
+.sw.g { width: 18px; height: 12px; border: 1.6px solid var(--gate); background: var(--gate-soft); border-radius: 3px; }
+.sw.h { width: 18px; height: 12px; border: 1.6px dashed var(--accent); border-radius: 3px; }
+.sw.s { width: 18px; height: 12px; border: 2px solid var(--fg); border-radius: 3px; }
+.sw.k { width: 18px; height: 12px; border: 1.6px solid var(--accent); background: var(--accent-soft); border-radius: 3px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 32px; }
+.notes section { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.notes p { color: var(--fg); font-size: 14.5px; max-width: 62ch; }
+
+.cmp { display: grid; gap: 12px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tbody th { font-weight: 600; width: 22%; }
+.foot { color: var(--muted); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">DIEM Hub 3.0 · continues the household data architecture</div>
+    <h1>How the Hub turns ArcGIS Online into a public front door</h1>
+    <p class="dek">The Hub keeps no catalogue and no database of its own. It reads ArcGIS Online live, in the visitor's browser, along four paths: the public catalogue, household surveys, protected data and temporary microdata grants.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="0 0 1280 816" role="img" aria-label="DIEM Hub architecture. Columns run from ArcGIS Online, through Hub code in the browser, to Hub pages and to applications outside the Hub. Four rows are the access paths. Public: the Hub content group and editorial tables feed the catalogue, country, hazard and flood pages, which open authoritative resources and link to EVE and VISTA. Surveys: the survey config view and homepage statistics from the monitoring system feed the survey rounds table, and the monitoring app is embedded through an origin-checked bridge that passes URL state and the sign-in token. Protected: every protected item is re-resolved with the user's own token before the workspace or dataset explorer shows it. Grants: the Hub discovers grant copies through the user's own group membership, and a Firebase function checks pending invitations against the private registry. ArcGIS sharing is the only authorization.">
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-flow" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-meta" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <text class="lh" x="170" y="26">ARCGIS ONLINE</text>
+        <text class="ls" x="170" y="42">the only source of truth</text>
+        <text class="lh" x="450" y="26">HUB CODE</text>
+        <text class="ls" x="450" y="42">runs in the browser</text>
+        <text class="lh" x="740" y="26">HUB PAGES</text>
+        <text class="ls" x="740" y="42">what people open</text>
+        <text class="lh" x="1010" y="26">OUTSIDE THE HUB</text>
+        <text class="ls" x="1010" y="42">opened, embedded or called</text>
+        <rect class="rowlane" x="10" y="56" width="1260" height="160" rx="8"/>
+        <rect class="rowlane" x="10" y="228" width="1260" height="150" rx="8"/>
+        <rect class="rowlane" x="10" y="390" width="1260" height="150" rx="8"/>
+        <rect class="rowlane" x="10" y="552" width="1260" height="140" rx="8"/>
+        <rect class="band" x="10" y="704" width="1260" height="100" rx="8"/>
+        <text class="lh" x="28" y="82">PUBLIC</text>
+        <text class="ls" x="28" y="99">anyone,</text>
+        <text class="ls" x="28" y="114">no sign-in</text>
+        <text class="lh" x="28" y="82"></text>
+        <rect class="box key" x="170" y="70" width="230" height="76" rx="6"/>
+        <text class="bt" x="182" y="90">Hub content group</text>
+        <text class="bs" x="182" y="107">products + group categories:</text>
+        <text class="bs" x="182" y="122">country, product type,</text>
+        <text class="bs" x="182" y="137">role, geographic scope</text>
+        <rect class="box " x="170" y="156" width="230" height="48" rx="6"/>
+        <text class="bt" x="182" y="176">Editorial tables</text>
+        <text class="bs" x="182" y="193">country pages, promos, galleries</text>
+        <rect class="box " x="450" y="70" width="240" height="76" rx="6"/>
+        <text class="bt" x="462" y="90">catalogue services</text>
+        <text class="bs" x="462" y="107">page through 100 at a time</text>
+        <text class="bs" x="462" y="122">drop items outside the group</text>
+        <text class="bs" x="462" y="137">merge language variants</text>
+        <rect class="box " x="450" y="156" width="240" height="48" rx="6"/>
+        <text class="bt" x="462" y="176">editorial services</text>
+        <text class="bs" x="462" y="193">only published, valid rows</text>
+        <rect class="box " x="740" y="70" width="220" height="62" rx="6"/>
+        <text class="bt" x="752" y="90">Home · Products</text>
+        <text class="bs" x="752" y="107">search, filters, highlights</text>
+        <rect class="box " x="740" y="142" width="220" height="62" rx="6"/>
+        <text class="bt" x="752" y="162">Countries · Hazards · Floods</text>
+        <text class="bs" x="752" y="179">pages built from categories</text>
+        <rect class="box " x="1010" y="70" width="250" height="62" rx="6"/>
+        <text class="bt" x="1022" y="90">Authoritative resource</text>
+        <text class="bs" x="1022" y="107">file, StoryMap or app opens</text>
+        <text class="bs" x="1022" y="122">at its ArcGIS source</text>
+        <rect class="box " x="1010" y="142" width="250" height="62" rx="6"/>
+        <text class="bt" x="1022" y="162">EVE · VISTA</text>
+        <text class="bs" x="1022" y="179">specialist apps, linked out,</text>
+        <text class="bs" x="1022" y="194">never rebuilt in the Hub</text>
+        <path class="flow" d="M400 108 H448" marker-end="url(#af)"/>
+        <text class="lbl" x="425.0" y="102" text-anchor="middle">search</text>
+        <path class="flow" d="M400 180 H448" marker-end="url(#af)"/>
+        <text class="lbl" x="425.0" y="174" text-anchor="middle">query</text>
+        <path class="flow" d="M690 101 H738" marker-end="url(#af)"/>
+        <text class="lbl" x="715.0" y="95" text-anchor="middle">cards</text>
+        <path class="flow" d="M690 180 H738" marker-end="url(#af)"/>
+        <text class="lbl" x="715.0" y="174" text-anchor="middle">copy</text>
+        <path class="flow" d="M960 101 H1008" marker-end="url(#af)"/>
+        <text class="lbl" x="985.0" y="95" text-anchor="middle">opens</text>
+        <path class="flow" d="M960 173 H1008" marker-end="url(#af)"/>
+        <text class="lbl" x="985.0" y="167" text-anchor="middle">links</text>
+        <text class="lh" x="28" y="254">SURVEYS</text>
+        <text class="ls" x="28" y="271">household rounds;</text>
+        <text class="ls" x="28" y="286">sign-in is</text>
+        <text class="ls" x="28" y="301">passed on</text>
+        <rect class="box hand" x="170" y="242" width="230" height="58" rx="6"/>
+        <text class="bt" x="182" y="262">Survey config view</text>
+        <text class="bs" x="182" y="279">one row per country × round</text>
+        <text class="bs" x="182" y="294">from the monitoring system</text>
+        <rect class="box hand" x="170" y="310" width="230" height="58" rx="6"/>
+        <text class="bt" x="182" y="330">Homepage statistics</text>
+        <text class="bs" x="182" y="347">households, surveys, latest</text>
+        <text class="bs" x="182" y="362">from the monitoring system</text>
+        <rect class="box " x="450" y="242" width="240" height="58" rx="6"/>
+        <text class="bt" x="462" y="262">monitoring services</text>
+        <text class="bs" x="462" y="279">rounds, figures, product links</text>
+        <text class="bs" x="462" y="294">joined to catalogue items</text>
+        <rect class="box " x="450" y="310" width="240" height="58" rx="6"/>
+        <text class="bt" x="462" y="330">embed bridge</text>
+        <text class="bs" x="462" y="347">URL state + token,</text>
+        <text class="bs" x="462" y="362">origin-checked postMessage</text>
+        <rect class="box " x="740" y="242" width="220" height="58" rx="6"/>
+        <text class="bt m" x="752" y="262">/monitoring-system</text>
+        <text class="bs" x="752" y="279">survey rounds table</text>
+        <text class="bs" x="752" y="294">figures also shown on Home</text>
+        <rect class="box " x="740" y="310" width="220" height="58" rx="6"/>
+        <text class="bt m" x="752" y="330">/monitoring</text>
+        <text class="bs" x="752" y="347">full-screen embedded app</text>
+        <rect class="box hand" x="1010" y="310" width="250" height="58" rx="6"/>
+        <text class="bt" x="1022" y="330">Monitoring app</text>
+        <text class="bs" x="1022" y="347">reads the public views itself</text>
+        <text class="bs" x="1022" y="362">from the monitoring system</text>
+        <path class="flow" d="M400 266 H448" marker-end="url(#af)"/>
+        <text class="lbl" x="425.0" y="260" text-anchor="middle">query</text>
+        <path class="flow" d="M400 339 H422 V286 H448" marker-end="url(#af)"/>
+        <path class="flow" d="M690 271 H738" marker-end="url(#af)"/>
+        <text class="lbl" x="715.0" y="265" text-anchor="middle">rows</text>
+        <path class="flow" d="M690 339 H738" marker-end="url(#af)" marker-start="url(#af)"/>
+        <text class="lbl" x="715.0" y="333" text-anchor="middle">state</text>
+        <path class="flow" d="M960 339 H1008" marker-end="url(#af)" marker-start="url(#af)"/>
+        <text class="lbl" x="985.0" y="333" text-anchor="middle">iframe</text>
+        <text class="lh" x="28" y="416">PROTECTED</text>
+        <text class="ls" x="28" y="433">Community members;</text>
+        <text class="ls" x="28" y="448">microdata only for</text>
+        <text class="ls" x="28" y="463">the household group</text>
+        <rect class="box " x="170" y="404" width="230" height="78" rx="6"/>
+        <text class="bt" x="182" y="424">Protected items</text>
+        <text class="bs" x="182" y="441">aggregates, master microdata,</text>
+        <text class="bs" x="182" y="456">boundaries, codebooks (V1–V3)</text>
+        <text class="bs" x="182" y="471">V3 from the monitoring system</text>
+        <rect class="box " x="450" y="404" width="240" height="62" rx="6"/>
+        <text class="bt m" x="462" y="424">requestProtected</text>
+        <text class="bs" x="462" y="441">re-resolves every item with</text>
+        <text class="bs" x="462" y="456">the user&#x27;s own token</text>
+        <rect class="box " x="450" y="476" width="240" height="52" rx="6"/>
+        <text class="bt" x="462" y="496">explorer + package builder</text>
+        <text class="bs" x="462" y="513">filter, preview, export, zip</text>
+        <rect class="box " x="740" y="404" width="220" height="58" rx="6"/>
+        <text class="bt m" x="752" y="424">/data/surveys</text>
+        <text class="bs" x="752" y="441">survey-first workspace</text>
+        <rect class="box " x="740" y="476" width="220" height="52" rx="6"/>
+        <text class="bt m" x="752" y="496">/data/:datasetId</text>
+        <text class="bs" x="752" y="513">map, table, export, API</text>
+        <rect class="box " x="1010" y="476" width="250" height="52" rx="6"/>
+        <text class="bt" x="1022" y="496">ArcGIS Hub downloads</text>
+        <text class="bs" x="1022" y="513">packaged formats, transitional</text>
+        <path class="flow" d="M400 435 H448" marker-end="url(#af)" marker-start="url(#af)"/>
+        <text class="lbl" x="425.0" y="429" text-anchor="middle">token</text>
+        <path class="flow" d="M690 433 H738" marker-end="url(#af)"/>
+        <text class="lbl" x="715.0" y="427" text-anchor="middle">items</text>
+        <path class="flow" d="M690 502 H738" marker-end="url(#af)" marker-start="url(#af)"/>
+        <text class="lbl" x="715.0" y="496" text-anchor="middle">rows</text>
+        <path class="flow" d="M960 502 H1008" marker-end="url(#af)"/>
+        <text class="lbl" x="985.0" y="496" text-anchor="middle">export</text>
+        <text class="lh" x="28" y="578">GRANTS</text>
+        <text class="ls" x="28" y="595">one named</text>
+        <text class="ls" x="28" y="610">recipient, 168 h</text>
+        <rect class="box hand" x="170" y="566" width="230" height="52" rx="6"/>
+        <text class="bt" x="182" y="586">Grant copies</text>
+        <text class="bs" x="182" y="603">private group, one recipient</text>
+        <rect class="box hand" x="170" y="628" width="230" height="52" rx="6"/>
+        <text class="bt" x="182" y="648">Grant registry</text>
+        <text class="bs" x="182" y="665">private table, FAO org</text>
+        <rect class="box " x="450" y="566" width="240" height="52" rx="6"/>
+        <text class="bt" x="462" y="586">grant discovery</text>
+        <text class="bs" x="462" y="603">own groups with the grant tag</text>
+        <rect class="box srv" x="450" y="628" width="240" height="52" rx="6"/>
+        <text class="bt" x="462" y="648">Firebase function</text>
+        <text class="bs" x="462" y="665">checks pending invitations</text>
+        <rect class="box " x="740" y="566" width="220" height="70" rx="6"/>
+        <text class="bt" x="752" y="586">Grants + microdata picker</text>
+        <text class="bs" x="752" y="603">shown only with a grant</text>
+        <text class="bs" x="752" y="618">bounded package download</text>
+        <rect class="box hand" x="1010" y="566" width="250" height="52" rx="6"/>
+        <text class="bt" x="1022" y="586">Daily expiry job</text>
+        <text class="bs" x="1022" y="603">deletes copies when time is up</text>
+        <path class="flow" d="M400 592 H448" marker-end="url(#af)"/>
+        <text class="lbl" x="425.0" y="586" text-anchor="middle">groups</text>
+        <path class="flow" d="M400 654 H448" marker-end="url(#af)"/>
+        <text class="lbl" x="425.0" y="648" text-anchor="middle">reads</text>
+        <path class="flow" d="M690 592 H738" marker-end="url(#af)"/>
+        <text class="lbl" x="715.0" y="586" text-anchor="middle">items</text>
+        <path class="flow" d="M690 654 H712 V618 H738" marker-end="url(#af)"/>
+        <text class="lbl" x="718" y="668">pending</text>
+        <path class="meta" d="M1010 592 H962" marker-end="url(#am)"/>
+        <text class="lbl g" x="985.0" y="586" text-anchor="middle">removes</text>
+        <text class="lh" x="28" y="750">FOUNDATIONS</text>
+        <rect class="box srv" x="170" y="728" width="230" height="52" rx="6"/>
+        <text class="bt" x="182" y="748">Firebase Hosting</text>
+        <text class="bs" x="182" y="765">static app + one function</text>
+        <rect class="box " x="450" y="728" width="240" height="52" rx="6"/>
+        <text class="bt" x="462" y="748">Sign-in</text>
+        <text class="bs" x="462" y="765">OAuth PKCE, Community org only</text>
+        <rect class="box key" x="740" y="728" width="220" height="52" rx="6"/>
+        <text class="bt" x="752" y="748">Authorization</text>
+        <text class="bs" x="752" y="765">ArcGIS sharing, item by item</text>
+        <rect class="box " x="1010" y="728" width="250" height="52" rx="6"/>
+        <text class="bt" x="1022" y="748">Tokens</text>
+        <text class="bs" x="1022" y="765">memory only, never in URLs</text>
+      </svg>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw"></i>data moves (two heads: both ways)</span>
+      <span><i class="sw h"></i>comes from the monitoring-system diagram</span>
+      <span><i class="sw s"></i>runs on a server</span>
+      <span><i class="sw k"></i>the boundaries the design turns on</span>
+      <span><i class="sw d"></i>control, no data</span>
+    </div>
+    <figcaption>What the code on <code>main</code> does today. Everything to the left of the Hub code lives in ArcGIS Online; the Hub only reads it, with the visitor's own identity, and holds results in memory.</figcaption>
+  </figure>
+
+  <div class="notes">
+    <section>
+      <h2>One catalogue, read live</h2>
+      <p>Publishers edit items, sharing and group categories in ArcGIS Online. The Hub pages through the content group 100 items at a time, groups language variants into one product, and builds country, hazard and flood pages from categories, never from titles. Item IDs are the keys; titles and counts can change.</p>
+    </section>
+    <section>
+      <h2>Membership is the public boundary</h2>
+      <p>An item outside the DIEM Hub content group never appears on a public page, even if it is public in ArcGIS. Editorial flags such as "Published" control display only; confidentiality is set by ArcGIS sharing.</p>
+    </section>
+    <section>
+      <h2>Sign-in opens, sharing authorizes</h2>
+      <p>Signing in with a Community account opens the data workspace, but every protected item is fetched again with the user's own token, and ArcGIS decides. A typed URL grants nothing. The one server function answers only whether a pending invitation is real; it never returns data.</p>
+    </section>
+    <section>
+      <h2>Where it meets the monitoring system</h2>
+      <p>The two systems share ArcGIS Online and nothing else. The monitoring pipeline writes the survey config view, homepage statistics, V3 services and grant copies; the Hub reads them. The monitoring app is a separate site that the Hub frames and hands a short-lived sign-in token. See <code>hh_survey_v3/docs/diagrams/diem_data_architecture.html</code>.</p>
+    </section>
+  </div>
+
+  <p class="foot">Source: hub_v3 repository documentation (architecture, data access, temporary microdata grants, service manifest) and source on main, 21 October 2026.</p>
+</div>

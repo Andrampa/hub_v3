@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-21 - Architecture diagram
+
+- Add a conceptual Hub architecture diagram, `docs/diagrams/diem_hub_architecture.html`, that continues
+  the monitoring-system diagram in `hh_survey_v3`; linked from `docs/architecture.md`.
+
 ## 2026-10-21 - Survey catalogue cache freshness
 
 - Add a shared five-minute `catalogWindow` URL parameter to every monitoring
