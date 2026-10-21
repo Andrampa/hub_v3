@@ -12,6 +12,8 @@
   diagrams from their repositories with commit, date and hash provenance.
 - Fix the cross-diagram footers in all four source repositories (EVE linked
   `architecture.md` instead of the Hub diagram), committed there and re-synced.
+- Deployed to review and production on 2026-10-21 from deployment commit
+  `7449aed` (Manual Deploy runs 39666266138 and 39666705563).
 
 ## 2026-10-21 - Architecture diagram
 
