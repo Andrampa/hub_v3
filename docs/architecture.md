@@ -64,7 +64,10 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/CountryEveOverview.tsx`: optional country-specific EVE
   regular-monitoring action.
 - `src/services/eve.ts`: dynamic ADM0-table resolution, cached EVE country
-  eligibility and validated Overview deep links.
+  eligibility and validated Overview deep links. The EVE side of this
+  handoff, from the daily VIIRS run to the `eve_mastertable_adm0` table read
+  here, is drawn in the
+  [EVE data architecture diagram](https://github.com/Andrampa/eve/blob/main/docs/diagrams/eve_architecture.html).
 - `src/pages/HazardImpactAssessments.tsx`: hybrid Living Shock Atlas, latest-assessment row, dossier library and evidence timeline.
 - `src/services/impactAssessments.ts`: exact-tag eligibility, group-category normalization and assessment summaries.
 - `src/components/ImpactAtlasMap.tsx`: category-driven map selection for the hazard-impact catalog.
