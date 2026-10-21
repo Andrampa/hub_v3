@@ -122,6 +122,11 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/services/surveyAccess.ts`: authenticated, generation-aware survey discovery, per-theme availability and requester-scoped in-memory caching for the planned survey-first workspace.
 - `src/services/surveyBundle.ts`: the survey package archive — one zip with either per-survey folders or compatible surveys combined by source and questionnaire generation, plus documentation, README and manifest, built transactionally with a lazily loaded compressor.
 - `src/data-access.css`: data workspace visual and responsive behavior.
+- `src/pages/Architecture.tsx`: Contributor-only `/architecture` page - hero,
+  manifest-driven system map (`components/ArchitectureSystemMap.tsx`), tabs and
+  sandboxed diagram viewer. `services/architectureDiagrams.ts` validates the
+  manifest and lazily loads diagram copies; `lib/diagramDocument.ts` sanitizes
+  them into inert iframe documents. See `docs/architecture_diagrams.md`.
 - `src/services/arcgis.ts`: portal constants, pagination, fetch validation,
   resource URLs, and the Flickr album a legacy photo-gallery StoryMap links to.
 - `src/catalog-product.css`: responsive public product-detail presentation and

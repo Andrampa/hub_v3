@@ -21,6 +21,7 @@
 | `docs/editor_guide_current.md` | Shareable editor guide limited to workflows available now, with direct ArcGIS links, HTML rules, and existing examples |
 | `docs/catalog_categorization.md` | Whole-catalog category audit, Excel review, additive application and verification |
 | `docs/community_login_report.md` | Read-only Community account last-login report and notebook using masked password authentication |
+| `docs/architecture_diagrams.md` | Contributor-only `/architecture` page: UI-gate access model, diagram sync, manifest schema, sandboxed rendering |
 | `docs/data_access.md` | Protected data route, resource manifest, permissions, and download behavior |
 | `docs/temporary_microdata_grants.md` | User-specific temporary microdata grants: cross-org discovery, bundles, export policy, catalogue exclusion |
 | `docs/data_access_strategy.md` | Proposed `/data` restructure: questionnaire generations, publication-tier decision, microdata routing, phasing |
@@ -48,6 +49,7 @@
 - Cross-product launch, dissemination or training campaign: `launch_strategy/README.md`, then `launch_strategy/communication_strategy.md`.
 - Content-editor question or training: start with `editor_guide.md`.
 - Whole-catalog category migration: `catalog_categorization.md`, then `country_explorer.md`.
+- System architecture diagrams or `/architecture`: `architecture_diagrams.md`, then `authentication.md`.
 - Setup, scripts, or verification: `development_workflow.md`.
 - Resume work: `handoff.md`, then the file named there.
 

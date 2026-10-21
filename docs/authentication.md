@@ -89,6 +89,11 @@ capabilities used by the Monitoring application:
 These capabilities govern navigation visibility only. The destination dataset
 still has to accept the active identity through its ArcGIS sharing settings.
 
+Contributor capability also gates the `/architecture` diagrams page. That gate
+is presentation only by design: the diagram files ship in the public bundle,
+and the page simply never shows, links or loads them for other visitors (see
+`docs/architecture_diagrams.md`).
+
 On `/monitoring-system`, Contributor capability expands only the products
 shown in the survey rounds table. Anonymous visitors and authenticated
 non-Contributors see products linked to validated/published survey rows;

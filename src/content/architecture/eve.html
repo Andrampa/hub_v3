@@ -1,0 +1,393 @@
+<title>EVE Data Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide engineering drawing in six lanes (source → consumers), framed by a configuration band above and a control band below; notes underneath. */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --lane: #eef2f7;
+  --fg: #17202b;
+  --muted: #586777;
+  --line: #c3cdd8;
+  --accent: #1d6bb0;
+  --accent-soft: #e6f0fa;
+  --gate: #b26b12;
+  --gate-soft: #fbf1e3;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+    --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+  --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; max-width: 72ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.dek { color: var(--muted); font-size: 16px; }
+code { font-family: var(--mono); font-size: .9em; }
+
+figure { margin: 0; display: grid; gap: 12px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.scroll svg { display: block; width: 100%; min-width: 1040px; height: auto; }
+figcaption { color: var(--muted); font-size: 14px; max-width: 80ch; }
+
+/* SVG styling through page tokens */
+.lane { fill: var(--lane); }
+.band { fill: none; stroke: var(--line); stroke-dasharray: 5 4; }
+.lh { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; fill: var(--fg); font-weight: 500; }
+.ls { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.box.key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+.box.gate { fill: var(--gate-soft); stroke: var(--gate); stroke-width: 1.6; }
+.box.opt { stroke-dasharray: 4 3; }
+.box.srv { stroke: var(--muted); stroke-width: 2.2; }
+.box.hand { fill: var(--surface); stroke: var(--accent); stroke-width: 1.6; stroke-dasharray: 6 4; }
+.bt { font-family: var(--body); font-weight: 600; font-size: 13.5px; fill: var(--fg); }
+.bt.m { font-family: var(--mono); font-weight: 500; font-size: 13px; }
+.bs { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.flow { fill: none; stroke: var(--accent); stroke-width: 1.7; }
+.meta { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.mk-flow { fill: var(--accent); }
+.mk-meta { fill: var(--muted); }
+.lbl { font-family: var(--body); font-size: 11px; fill: var(--accent); font-weight: 500; }
+.lbl.g { fill: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 30px; height: 0; border-top: 2px solid var(--accent); }
+.sw.d { border-top: 2px dashed var(--muted); }
+.sw.g { width: 18px; height: 12px; border: 1.6px solid var(--gate); background: var(--gate-soft); border-radius: 3px; }
+.sw.s { width: 18px; height: 12px; border: 2.2px solid var(--muted); background: var(--surface); border-radius: 3px; }
+.sw.h { width: 18px; height: 12px; border: 1.6px dashed var(--accent); background: var(--surface); border-radius: 3px; }
+.sw.k { width: 18px; height: 12px; border: 1.6px solid var(--accent); background: var(--accent-soft); border-radius: 3px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 32px; }
+.notes section { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.notes p { color: var(--fg); font-size: 14.5px; max-width: 62ch; }
+
+.cmp { display: grid; gap: 12px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tbody th { font-weight: 600; width: 22%; }
+.foot { color: var(--muted); font-size: 13px; }
+.foot a { color: var(--accent); }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">DIEM EVE flood monitoring · operational</div>
+    <h1>How a daily satellite image becomes a dekadal flood table</h1>
+    <p class="dek">A daily job turns each NOAA VIIRS composite into an Earth Engine asset. Once per dekad, EVE combines them into one flood raster, counts what was flooded in every district and appends the result to ArcGIS Online, where the EVE web app and the DIEM Hub read it.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="0 0 1280 822" role="img" aria-label="Data architecture of EVE flood monitoring. Every morning a scheduled job on a Windows server downloads the NOAA VIIRS five-day flood composite from AWS, mosaics and reclassifies it, archives it in Google Cloud Storage and ingests it as a daily Earth Engine asset. Once per dekad the EVE pipeline combines two or three daily assets into a dekadal flood raster, computes ADM2 exposure statistics, derives ADM1 and ADM0 percentages and appends them to ArcGIS Online tables, then marks the dekad as published in eve_app_config. The EVE web app reads only those public tables; the DIEM Hub reads the ADM0 table to decide which countries link to EVE. Hourly retries from 07:00 to 12:00 absorb late data; operators recover missed days and a person releases each web app version.">
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-flow" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-meta" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- ===== Configuration band ===== -->
+        <rect class="band" x="8" y="6" width="1264" height="128" rx="10"/>
+        <text class="lh" x="20" y="24">CONFIGURATION · FILES AND REFERENCES SET BY HAND, READ ON EVERY RUN</text>
+        <text class="ls" x="20" y="60">Changing a run means</text>
+        <text class="ls" x="20" y="75">editing these, not the</text>
+        <text class="ls" x="20" y="90">stages below them.</text>
+        <rect class="box" x="220" y="34" width="154" height="84" rx="6"/>
+        <text class="bt" x="232" y="54">Run mode</text>
+        <text class="bs" x="232" y="71">viirs_config.txt:</text>
+        <text class="bs" x="232" y="86">nrt, reprocess, month,</text>
+        <text class="bs" x="232" y="101">data root, bucket</text>
+        <path class="meta" d="M297 118 V158" marker-end="url(#am)"/>
+        <text class="lbl g" x="305" y="144">mode, dates</text>
+        <rect class="box" x="430" y="34" width="159" height="84" rx="6"/>
+        <text class="bt" x="442" y="54">Reference rasters</text>
+        <text class="bs" x="442" y="71">VISTA flood frequency,</text>
+        <text class="bs" x="442" y="86">WorldCover, WorldPop,</text>
+        <text class="bs" x="442" y="101">GLW4 livestock</text>
+        <path class="meta" d="M509 118 V158" marker-end="url(#am)"/>
+        <text class="lbl g" x="517" y="144">stored in EE</text>
+        <rect class="box" x="645" y="34" width="179" height="84" rx="6"/>
+        <text class="bt" x="657" y="54">Pipeline config</text>
+        <text class="bs" x="657" y="71">default.yaml: stages,</text>
+        <text class="bs" x="657" y="86">ISO3 list, table URLs;</text>
+        <text class="bs" x="657" y="101">dekad CSV, denominators</text>
+        <path class="meta" d="M734 118 V158" marker-end="url(#am)"/>
+        <text class="lbl g" x="742" y="144">stages, keys</text>
+        <rect class="box" x="880" y="34" width="169" height="84" rx="6"/>
+        <text class="bt" x="892" y="54">GAUL 2024 units</text>
+        <text class="bs" x="892" y="71">ADM0–2 codes and names,</text>
+        <text class="bs" x="892" y="86">the key of every table</text>
+        <path class="meta" d="M964 118 V158" marker-end="url(#am)"/>
+        <text class="lbl g" x="972" y="144">join keys</text>
+        <rect class="box" x="1105" y="34" width="149" height="84" rx="6"/>
+        <text class="bt" x="1117" y="54">App config</text>
+        <text class="bs" x="1117" y="71">js/core/config.js:</text>
+        <text class="bs" x="1117" y="86">service URLs, modes</text>
+        <path class="meta" d="M1179 118 V158" marker-end="url(#am)"/>
+        <text class="lbl g" x="1187" y="144">service URLs</text>
+        <!-- ===== Lanes ===== -->
+        <rect class="lane" x="12" y="160" width="160" height="520" rx="8"/>
+        <rect class="lane" x="212" y="160" width="170" height="520" rx="8"/>
+        <rect class="lane" x="422" y="160" width="175" height="520" rx="8"/>
+        <rect class="lane" x="637" y="160" width="195" height="520" rx="8"/>
+        <rect class="lane" x="872" y="160" width="185" height="520" rx="8"/>
+        <rect class="lane" x="1097" y="160" width="165" height="520" rx="8"/>
+        <text class="lh" x="20" y="184">SOURCE</text>
+        <text class="ls" x="20" y="201">outside FAO</text>
+        <text class="lh" x="220" y="184">DAILY · VIIRS_PROCESS</text>
+        <text class="ls" x="220" y="201">one 5-day composite a day</text>
+        <text class="lh" x="430" y="184">EARTH ENGINE · GCS</text>
+        <text class="ls" x="430" y="201">rasters and exports</text>
+        <text class="lh" x="645" y="184">DEKADAL · EVE PIPELINE</text>
+        <text class="ls" x="645" y="201">eve repo, once per dekad</text>
+        <text class="lh" x="880" y="184">ARCGIS ONLINE</text>
+        <text class="ls" x="880" y="201">hosted tables, public</text>
+        <text class="lh" x="1105" y="184">CONSUMERS</text>
+        <text class="ls" x="1105" y="201">who reads the data</text>
+        <rect class="box key" x="20" y="220" width="144" height="78" rx="6"/>
+        <text class="bt" x="32" y="240">NOAA VIIRS</text>
+        <text class="bs" x="32" y="257">5-day flood product,</text>
+        <text class="bs" x="32" y="272">global tiles on AWS,</text>
+        <text class="bs" x="32" y="287">new window each day</text>
+        <rect class="box opt" x="20" y="330" width="144" height="92" rx="6"/>
+        <text class="bt" x="32" y="350">Late release</text>
+        <text class="bs" x="32" y="367">D−5 tiles missing:</text>
+        <text class="bs" x="32" y="382">the run fails and the</text>
+        <text class="bs" x="32" y="397">next hourly trigger</text>
+        <text class="bs" x="32" y="412">tries again</text>
+        <rect class="box srv" x="220" y="220" width="154" height="46" rx="6"/>
+        <text class="bt" x="232" y="240">Download</text>
+        <text class="bs" x="232" y="257">AWS CLI, D−5 tiles</text>
+        <rect class="box srv" x="220" y="284" width="154" height="46" rx="6"/>
+        <text class="bt" x="232" y="304">Mosaic</text>
+        <text class="bs" x="232" y="321">rasterio → RAW GeoTIFF</text>
+        <rect class="box srv" x="220" y="348" width="154" height="46" rx="6"/>
+        <text class="bt" x="232" y="368">Reclassify</text>
+        <text class="bs" x="232" y="385">water % → classes 0–11</text>
+        <rect class="box srv" x="220" y="412" width="154" height="62" rx="6"/>
+        <text class="bt" x="232" y="432">Upload</text>
+        <text class="bs" x="232" y="449">GCS, then EE ingest;</text>
+        <text class="bs" x="232" y="464">skips what exists</text>
+        <path class="flow" d="M297 266 V282" marker-end="url(#af)"/>
+        <path class="flow" d="M297 330 V346" marker-end="url(#af)"/>
+        <path class="flow" d="M297 394 V410" marker-end="url(#af)"/>
+        <rect class="box opt" x="220" y="494" width="154" height="62" rx="6"/>
+        <text class="bt" x="232" y="514">Purge</text>
+        <text class="bs" x="232" y="531">local TIFFs older</text>
+        <text class="bs" x="232" y="546">than 7 days</text>
+        <path class="meta" d="M297 474 V492" marker-end="url(#am)"/>
+        <path class="flow" d="M164 243 H218" marker-end="url(#af)"/>
+        <text class="lbl" x="192" y="236" text-anchor="middle">copies</text>
+        <rect class="box" x="430" y="220" width="159" height="46" rx="6"/>
+        <text class="bt" x="442" y="240">GCS daily archive</text>
+        <text class="bs" x="442" y="257">fao-oer-viirs bucket</text>
+        <rect class="box key" x="430" y="284" width="159" height="62" rx="6"/>
+        <text class="bt" x="442" y="304">Daily VIIRS assets</text>
+        <text class="bs" x="442" y="321">Floods{YYYY}/NOAA_…</text>
+        <text class="bs" x="442" y="336">named by run day</text>
+        <rect class="box key" x="430" y="356" width="159" height="62" rx="6"/>
+        <text class="bt" x="442" y="376">Dekadal raster</text>
+        <text class="bs" x="442" y="393">viirs_dekads/EVE_floods</text>
+        <text class="bs" x="442" y="408">public read</text>
+        <rect class="box" x="430" y="440" width="159" height="46" rx="6"/>
+        <text class="bt" x="442" y="460">Zonal-stats CSVs</text>
+        <text class="bs" x="442" y="477">eve-outputs bucket</text>
+        <path class="flow" d="M509 266 V282" marker-end="url(#af)"/>
+        <text class="lbl" x="517" y="278">EE ingest</text>
+        <path class="flow" d="M374 435 H402 V243 H428" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(396 340) rotate(-90)" text-anchor="middle">archives TIFF</text>
+        <rect class="box srv" x="645" y="220" width="179" height="46" rx="6"/>
+        <text class="bt" x="657" y="240">Skip check</text>
+        <text class="bs" x="657" y="257">stop if dekad is published</text>
+        <rect class="box srv" x="645" y="296" width="179" height="74" rx="6"/>
+        <text class="bt" x="657" y="316">Stage A · raster</text>
+        <text class="bs" x="657" y="333">priority composite of 2–3</text>
+        <text class="bs" x="657" y="348">daily assets; +20 where</text>
+        <text class="bs" x="657" y="363">VISTA says seasonal</text>
+        <rect class="box srv" x="645" y="392" width="179" height="60" rx="6"/>
+        <text class="bt" x="657" y="412">Stage C · zonal stats</text>
+        <text class="bs" x="657" y="429">ADM2 for the configured</text>
+        <text class="bs" x="657" y="444">ISO3 list</text>
+        <rect class="box srv" x="645" y="470" width="179" height="46" rx="6"/>
+        <text class="bt" x="657" y="490">Stage D · percentages</text>
+        <text class="bs" x="657" y="507">ADM2 → ADM1 → ADM0</text>
+        <rect class="box srv" x="645" y="534" width="179" height="46" rx="6"/>
+        <text class="bt" x="657" y="554">Stage E · publish</text>
+        <text class="bs" x="657" y="571">append if dekad absent</text>
+        <rect class="box opt" x="645" y="598" width="179" height="62" rx="6"/>
+        <text class="bt" x="657" y="618">Stages B, F, G</text>
+        <text class="bs" x="657" y="635">imagery, AEZ cropland,</text>
+        <text class="bs" x="657" y="650">MOZ land cover</text>
+        <path class="flow" d="M734 266 V294" marker-end="url(#af)"/>
+        <path class="flow" d="M734 370 V390" marker-end="url(#af)"/>
+        <path class="flow" d="M734 452 V468" marker-end="url(#af)"/>
+        <path class="flow" d="M734 516 V532" marker-end="url(#af)"/>
+        <path class="flow" d="M734 580 V596" marker-end="url(#af)"/>
+        <path class="flow" d="M591 323 H643" marker-end="url(#af)"/>
+        <text class="lbl" x="617" y="316" text-anchor="middle">reads</text>
+        <path class="flow" d="M645 363 H593" marker-end="url(#af)"/>
+        <text class="lbl" x="617" y="356" text-anchor="middle">exports</text>
+        <path class="flow" d="M591 407 H643" marker-end="url(#af)"/>
+        <text class="lbl" x="617" y="400" text-anchor="middle">reads</text>
+        <path class="flow" d="M645 446 H593" marker-end="url(#af)"/>
+        <text class="lbl" x="617" y="439" text-anchor="middle">exports</text>
+        <path class="flow" d="M591 478 H643" marker-end="url(#af)"/>
+        <text class="lbl" x="617" y="471" text-anchor="middle">fetches</text>
+        <rect class="box key" x="880" y="220" width="169" height="62" rx="6"/>
+        <text class="bt m" x="892" y="240">eve_app_config</text>
+        <text class="bs" x="892" y="257">dekad catalogue,</text>
+        <text class="bs" x="892" y="272">the publish marker</text>
+        <rect class="box key" x="880" y="300" width="169" height="92" rx="6"/>
+        <text class="bt m" x="892" y="320">eve_mastertable_*</text>
+        <text class="bs" x="892" y="337">adm0 · adm1 · adm2</text>
+        <text class="bs" x="892" y="352">one row per unit and</text>
+        <text class="bs" x="892" y="367">dekad, GAUL codes</text>
+        <text class="bs" x="892" y="382">+ ISO3, append only</text>
+        <rect class="box opt" x="880" y="410" width="169" height="62" rx="6"/>
+        <text class="bt" x="892" y="430">Historical tables</text>
+        <text class="bs" x="892" y="447">eve_hist_config, _stats</text>
+        <text class="bs" x="892" y="462">own historical runner</text>
+        <rect class="box" x="880" y="490" width="169" height="62" rx="6"/>
+        <text class="bt" x="892" y="510">Reference layers</text>
+        <text class="bs" x="892" y="527">GAUL ADM1–2, AEZ,</text>
+        <text class="bs" x="892" y="542">crop calendar</text>
+        <rect class="box opt" x="880" y="598" width="169" height="62" rx="6"/>
+        <text class="bt" x="892" y="618">Optional outputs</text>
+        <text class="bs" x="892" y="635">AEZ, MOZ localisation,</text>
+        <text class="bs" x="892" y="650">imagery layer</text>
+        <path class="flow" d="M824 557 H852 V268 H878" marker-end="url(#af)"/>
+        <path class="flow" d="M852 346 H878" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(846 450) rotate(-90)" text-anchor="middle">Stage E appends</text>
+        <path class="meta" d="M878 236 H826" marker-end="url(#am)"/>
+        <text class="lbl g" x="852" y="229" text-anchor="middle">checks</text>
+        <path class="flow" d="M824 629 H878" marker-end="url(#af)"/>
+        <text class="lbl" x="852" y="622" text-anchor="middle">appends</text>
+        <rect class="box key" x="1105" y="220" width="149" height="168" rx="6"/>
+        <text class="bt" x="1117" y="240">EVE web app</text>
+        <text class="bs" x="1117" y="257">diem-eve.apps.fao.org</text>
+        <text class="bs" x="1117" y="272">static, on Firebase</text>
+        <text class="bs" x="1117" y="287">Overview · Mapping</text>
+        <text class="bs" x="1117" y="302">Time Analysis</text>
+        <text class="bs" x="1117" y="317">Crop Calendar</text>
+        <text class="bs" x="1117" y="332">Localisation · Report</text>
+        <text class="bs" x="1117" y="347">public, no sign-in</text>
+        <text class="bs" x="1117" y="362">(Field Data: sign-in)</text>
+        <rect class="box hand" x="1105" y="430" width="149" height="92" rx="6"/>
+        <text class="bt" x="1117" y="450">DIEM Hub</text>
+        <text class="bs" x="1117" y="467">reads distinct ISO3</text>
+        <text class="bs" x="1117" y="482">from the ADM0 table;</text>
+        <text class="bs" x="1117" y="497">links those countries</text>
+        <text class="bs" x="1117" y="512">to EVE Overview</text>
+        <rect class="box" x="1105" y="566" width="149" height="62" rx="6"/>
+        <text class="bt" x="1117" y="586">Analysts</text>
+        <text class="bs" x="1117" y="603">browse, map, chart,</text>
+        <text class="bs" x="1117" y="618">export reports</text>
+        <path class="flow" d="M1049 251 H1077"/>
+        <path class="flow" d="M1049 346 H1077"/>
+        <path class="flow" d="M1049 441 H1077"/>
+        <path class="flow" d="M1049 521 H1077"/>
+        <path class="flow" d="M1049 629 H1077"/>
+        <path class="flow" d="M1077 629 V251"/>
+        <path class="flow" d="M1077 300 H1103" marker-end="url(#af)"/>
+        <path class="flow" d="M1077 476 H1103" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(1071 560) rotate(-90)" text-anchor="middle">public queries</text>
+        <path class="meta" d="M1179 430 V390" marker-end="url(#am)"/>
+        <text class="lbl g" x="1187" y="414">links to</text>
+        <path class="meta" d="M1179 566 V524" marker-end="url(#am)"/>
+        <text class="lbl g" x="1187" y="549">country pages</text>
+        <!-- ===== Control band ===== -->
+        <rect class="band" x="8" y="690" width="1264" height="124" rx="10"/>
+        <text class="lh" x="20" y="804">CONTROL · SCHEDULER, OPERATOR AND RELEASE, NEVER THE DATA</text>
+        <rect class="box srv" x="20" y="714" width="804" height="62" rx="6"/>
+        <text class="bt" x="32" y="734">Windows server · Task Scheduler</text>
+        <text class="bs" x="32" y="751">hourly triggers 07:00–12:00 for VIIRS_process and for EVE, so late NOAA data is picked up</text>
+        <text class="bs" x="32" y="766">each run logs to disk (EVE: runs/&lt;id&gt; JSON per stage); reruns skip days and dekads already done</text>
+        <rect class="box gate" x="880" y="714" width="169" height="62" rx="6"/>
+        <text class="bt" x="892" y="734">Operator recovery</text>
+        <text class="bs" x="892" y="751">reads logs, reprocesses</text>
+        <text class="bs" x="892" y="766">a day or month, reruns</text>
+        <rect class="box gate" x="1105" y="714" width="149" height="62" rx="6"/>
+        <text class="bt" x="1117" y="734">Manual Deploy</text>
+        <text class="bs" x="1117" y="751">person picks a branch</text>
+        <text class="bs" x="1117" y="766">and review or prod</text>
+        <path class="meta" d="M297 714 V682" marker-end="url(#am)"/>
+        <text class="lbl g" x="305" y="700">triggers</text>
+        <path class="meta" d="M734 714 V682" marker-end="url(#am)"/>
+        <text class="lbl g" x="742" y="700">triggers</text>
+        <path class="meta" d="M880 745 H826" marker-end="url(#am)"/>
+        <text class="lbl g" x="852" y="738" text-anchor="middle">reruns</text>
+        <path class="meta" d="M1179 714 V682" marker-end="url(#am)"/>
+        <text class="lbl g" x="1187" y="700">deploys</text>
+      </svg>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw"></i>data moves</span>
+      <span><i class="sw d"></i>defines, triggers or checks (no data)</span>
+      <span><i class="sw s"></i>runs on the server scheduler</span>
+      <span><i class="sw g"></i>a person must act</span>
+      <span><i class="sw k"></i>the stores the design turns on</span>
+      <span><i class="sw h"></i>also in the Hub architecture</span>
+    </div>
+    <figcaption>Operational flow as of October 2026. Data only moves left to right, and only Stage E writes the tables the public reads. Dashed boxes are optional or switched off in the current configuration.</figcaption>
+  </figure>
+
+  <div class="notes">
+    <section>
+      <h2>Daily input, dekadal product</h2>
+      <p>NOAA releases a new five-day composite every day. VIIRS_process names each asset by the day it ran, not by the last day of its window. EVE runs on the same triggers but only acts when a dekad has closed and is not yet published. Stage A picks the two or three composites for that dekad from a fixed calendar CSV and keeps, per pixel, the class with the highest priority.</p>
+    </section>
+    <section>
+      <h2>Late or missing days</h2>
+      <p>Both jobs are triggered every hour from 07:00 to 12:00. Every step skips output that already exists, so a retry only does the missing work. A day that never arrives makes Stage A fail on the missing asset. An operator then reprocesses that day or month with VIIRS_process and reruns EVE. Nothing alerts automatically: the logs on the server are the evidence.</p>
+    </section>
+    <section>
+      <h2>One row marks a dekad published</h2>
+      <p>Stage E appends the ADM2, ADM1 and ADM0 rows only if the dekad is absent, then writes the dekad into <code>eve_app_config</code>. The next run reads that row and stops. The web app takes its list of periods from the same table, so a dekad appears in the app only once all its rows exist. ADM1 and ADM0 percentages are recomputed from summed counts, not averaged.</p>
+    </section>
+    <section>
+      <h2>Handoff to the Hub</h2>
+      <p>The DIEM Hub reads the distinct <code>iso3_code</code> values in <code>eve_mastertable_adm0</code>. A country with at least one row gets an EVE link on its country page, opening <code>diem-eve.apps.fao.org</code> in Overview mode. The Flood services page links to the same app. Which countries appear is therefore set by the Stage C ISO3 list in <code>default.yaml</code>.</p>
+    </section>
+  </div>
+
+  <section class="cmp">
+    <h2>Review site and production</h2>
+    <p class="dek">Both are static Firebase Hosting sites built from the same repository. Neither updates on push.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">Review</th><th scope="col">Production</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Address</th><td><code>diem-eve-review.web.app</code></td><td><code>diem-eve.apps.fao.org</code></td></tr>
+          <tr><th scope="row">GitHub environment</th><td><code>fao-oer-review</code></td><td><code>fao-oer</code></td></tr>
+          <tr><th scope="row">Release</th><td colspan="2">Manual Deploy workflow: a person picks a branch or tag and the target site</td></tr>
+          <tr><th scope="row">Historical catalogue</th><td>Integration releases, for checking before release</td><td>Published releases only</td></tr>
+          <tr><th scope="row">Operational data</th><td colspan="2">Same public ArcGIS Online tables; the app has no back end</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Source: eve, VIIRS_process and fao-oer-eve-webapp repositories (README, codex_context, production runbook, service manifest, configs and entry points) and hub_v3 <code>src/services/eve.ts</code>, state as of 21 October 2026. Run times from the operator.</p>
+  <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hh_survey_v3/blob/main/docs/diagrams/diem_data_architecture.html">DIEM household monitoring</a> · <a href="https://github.com/Andrampa/hub_v3/blob/main/docs/diagrams/diem_hub_architecture.html">DIEM Hub</a> · <a href="https://github.com/Andrampa/vista-water-atlas/blob/main/docs/diagrams/vista_architecture.html">VISTA water atlas</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/eve">data-in-emergencies.fao.org/architecture</a>.</p>
+  <p class="foot">The VISTA monthly flood-frequency reference that EVE reads is produced as drawn in the VISTA diagram: NOAA composites, the Earth Engine dekadal archive and the Phase 5 monthly statistics.</p>
+</div>

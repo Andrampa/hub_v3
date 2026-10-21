@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-21 - Contributor architecture page
+
+- Add `/architecture`, `/architecture/:key` and `/architecture/:key/full`: a
+  Contributor-only page with a "How DIEM works" hero, a manifest-driven system
+  map, tabs, and the four architecture diagrams in sandboxed, sanitized iframes
+  with expand, full-page and download actions. The link appears only in
+  Contributor navigation. Diagram files are public by decision; the gate controls
+  what the Hub shows and loads.
+- Add `scripts/sync_architecture_diagrams.mjs` and its config to copy the
+  diagrams from their repositories with commit, date and hash provenance.
+- Fix the cross-diagram footers in all four source repositories (EVE linked
+  `architecture.md` instead of the Hub diagram), committed there and re-synced.
+
 ## 2026-10-21 - Architecture diagram
 
 - Add a conceptual Hub architecture diagram, `docs/diagrams/diem_hub_architecture.html`, that continues

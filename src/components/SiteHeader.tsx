@@ -22,7 +22,7 @@ function activeSection(pathname: string): NavSection | undefined {
   if (section === 'monitoring' || section === 'monitoring-system') return 'monitoring'
   if (section === 'hazard-impact-assessments') return 'impact'
   if (section === 'flood-analysis') return 'flood'
-  if (section === 'about' || section === 'contact' || section === 'photo-galleries') return 'about'
+  if (section === 'about' || section === 'contact' || section === 'photo-galleries' || section === 'architecture') return 'about'
   return undefined
 }
 
@@ -31,6 +31,8 @@ export function SiteHeader() {
   const { pathname } = useLocation()
   const active = activeSection(pathname)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  // Navigation visibility only; the page applies the same check itself.
+  const isContributor = auth.status === 'authenticated' && Boolean(auth.user?.capabilities?.contributor)
   const memberInitial = auth.user?.fullName?.trim().charAt(0).toUpperCase() || 'D'
 
   /**
@@ -102,6 +104,12 @@ export function SiteHeader() {
                 <strong>Contact us</strong>
                 <small>Questions, support and collaboration</small>
               </Link>
+              {isContributor && (
+                <Link to="/architecture" aria-current={pathname.startsWith('/architecture') ? 'page' : undefined}>
+                  <strong>System architecture</strong>
+                  <small>How the DIEM systems connect (Contributors)</small>
+                </Link>
+              )}
           </NavDropdown>
         </div>
         <button
@@ -165,6 +173,9 @@ export function SiteHeader() {
         <Link className={active === 'about' ? 'active' : ''} to="/about" onClick={() => setMobileMenuOpen(false)}>What is DIEM?</Link>
         <Link className={active === 'about' ? 'active' : ''} to="/photo-galleries" onClick={() => setMobileMenuOpen(false)}>Photo galleries</Link>
         <Link className={active === 'about' ? 'active' : ''} to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact us</Link>
+        {isContributor && (
+          <Link className={pathname.startsWith('/architecture') ? 'active' : ''} aria-current={pathname.startsWith('/architecture') ? 'page' : undefined} to="/architecture" onClick={() => setMobileMenuOpen(false)}>System architecture</Link>
+        )}
       </nav>
       <MicrodataInvitationDialog />
       {auth.error && (

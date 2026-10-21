@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "syncedAt": "2026-10-21T19:54:07.072Z",
+  "diagrams": [
+    {
+      "key": "monitoring",
+      "title": "Household monitoring",
+      "system": "DIEM household monitoring",
+      "summary": "How a household survey travels from the provider export through privacy clearance, standardisation, cleaning and human review into the permanent global table, and out to private ArcGIS Online services that the public reaches only through filtered views.",
+      "repository": "Andrampa/hh_survey_v3",
+      "repositoryVisibility": "private",
+      "path": "docs/diagrams/diem_data_architecture.html",
+      "commit": "ba34d021022b2824de9b9121ad6721e7bb6f2c04",
+      "sourceChangedAt": "2026-10-21T19:53:33.000Z",
+      "uncommittedChanges": false,
+      "sha256": "7d7bcab438fbd650e4200577843f22bba0413bd6fbead76a2c22c9f8d1c4d92f",
+      "sortOrder": 1
+    },
+    {
+      "key": "hub",
+      "title": "DIEM Hub",
+      "system": "DIEM Hub",
+      "summary": "How the Hub reads the ArcGIS catalogue live, embeds the monitoring app, re-resolves every protected item with the reader's own token, and checks temporary microdata grants. ArcGIS sharing is the only authorization.",
+      "repository": "Andrampa/hub_v3",
+      "repositoryVisibility": "public",
+      "path": "docs/diagrams/diem_hub_architecture.html",
+      "commit": "b574069fb2906f368018f6d21a913f5ede90e2a5",
+      "sourceChangedAt": "2026-10-21T19:54:03.000Z",
+      "uncommittedChanges": false,
+      "sha256": "489fec13eb4973a7680c9eea89e0bd1b1e96e3f281191b8a8d57f098435ea97d",
+      "sortOrder": 2
+    },
+    {
+      "key": "eve",
+      "title": "EVE flood monitoring",
+      "system": "EVE flood monitoring",
+      "summary": "The daily VIIRS run and the dekadal EVE pipeline: flood composites become Earth Engine assets, then ADM2, ADM1 and ADM0 exposure tables in ArcGIS Online that the EVE app and the Hub read.",
+      "repository": "Andrampa/eve",
+      "repositoryVisibility": "private",
+      "path": "docs/diagrams/eve_architecture.html",
+      "commit": "a81751154305c3c52be343b802ae690ce05de935",
+      "sourceChangedAt": "2026-10-21T19:53:37.000Z",
+      "uncommittedChanges": false,
+      "sha256": "f9054babb50aea19620ca19365ff554deca4ee511e9c95cc122b121b786c19ac",
+      "sortOrder": 3
+    },
+    {
+      "key": "vista",
+      "title": "VISTA water atlas",
+      "system": "VISTA water atlas",
+      "summary": "The operator-run pipeline behind the VIIRS Surface Water Temporal Atlas: dekadal and monthly flood products built in Earth Engine and Cloud Storage, and the public doors to them.",
+      "repository": "Andrampa/vista-water-atlas",
+      "repositoryVisibility": "private",
+      "path": "docs/diagrams/vista_architecture.html",
+      "commit": "d9f39efba5738db6012db3d40970f1111bc750a0",
+      "sourceChangedAt": "2026-10-21T19:53:47.000Z",
+      "uncommittedChanges": false,
+      "sha256": "837bc8e9fd0ba9f1cc270bd79c7884b8c2ce56271c8145a9636785e7a860f285",
+      "sortOrder": 4
+    }
+  ],
+  "relationships": [
+    {
+      "from": "monitoring",
+      "to": "hub",
+      "kinds": [
+        "data",
+        "embedded"
+      ],
+      "label": "Survey data and embedded explorer",
+      "detail": "The Hub reads the survey configuration view and homepage statistics, and embeds the monitoring app through an origin-checked bridge that passes URL state and the sign-in token."
+    },
+    {
+      "from": "eve",
+      "to": "hub",
+      "kinds": [
+        "data",
+        "link"
+      ],
+      "label": "Country eligibility and app links",
+      "detail": "The Hub reads eve_mastertable_adm0 to decide which country pages link to EVE, and links to the EVE app."
+    },
+    {
+      "from": "vista",
+      "to": "eve",
+      "kinds": [
+        "data"
+      ],
+      "label": "Monthly flood frequency",
+      "detail": "EVE reads VISTA's monthly flood-frequency assets in Earth Engine to separate seasonal from exceptional flooding."
+    },
+    {
+      "from": "vista",
+      "to": "hub",
+      "kinds": [
+        "link"
+      ],
+      "label": "Reference links",
+      "detail": "The Flood analysis page links to the VISTA explorer, bucket browser and user guide. No data moves between them."
+    }
+  ]
+}

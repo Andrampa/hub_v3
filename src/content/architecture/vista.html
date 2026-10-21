@@ -1,0 +1,369 @@
+<title>VISTA Data Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide drawing in six lanes (sources → consumers), a configuration band above and an operations band below; notes underneath. Same tokens as the monitoring-system and Hub diagrams so the set reads as one. */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --lane: #eef2f7;
+  --fg: #17202b;
+  --muted: #586777;
+  --line: #c3cdd8;
+  --accent: #1d6bb0;
+  --accent-soft: #e6f0fa;
+  --gate: #b26b12;
+  --gate-soft: #fbf1e3;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+    --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+  --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; max-width: 72ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.dek { color: var(--muted); font-size: 16px; }
+code { font-family: var(--mono); font-size: .9em; }
+
+figure { margin: 0; display: grid; gap: 12px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.scroll svg { display: block; width: 100%; min-width: 1040px; height: auto; }
+figcaption { color: var(--muted); font-size: 14px; max-width: 80ch; }
+
+/* SVG styling through page tokens */
+.lane { fill: var(--lane); }
+.band { fill: none; stroke: var(--line); stroke-dasharray: 5 4; }
+.lh { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; fill: var(--fg); font-weight: 500; }
+.ls { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.box.key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+.box.gate { fill: var(--gate-soft); stroke: var(--gate); stroke-width: 1.6; }
+.box.opt { stroke-dasharray: 4 3; }
+.box.hand { stroke: var(--accent); stroke-dasharray: 5 3; stroke-width: 1.4; }
+.box.srv { stroke: var(--fg); stroke-width: 1.8; }
+.rowlane { fill: var(--lane); }
+.bt { font-family: var(--body); font-weight: 600; font-size: 13.5px; fill: var(--fg); }
+.bt.m { font-family: var(--mono); font-weight: 500; font-size: 13px; }
+.bs { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.flow { fill: none; stroke: var(--accent); stroke-width: 1.7; }
+.meta { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.mk-flow { fill: var(--accent); }
+.mk-meta { fill: var(--muted); }
+.lbl { font-family: var(--body); font-size: 11px; fill: var(--accent); font-weight: 500; }
+.lbl.g { fill: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 30px; height: 0; border-top: 2px solid var(--accent); }
+.sw.d { border-top: 2px dashed var(--muted); }
+.sw.g { width: 18px; height: 12px; border: 1.6px solid var(--gate); background: var(--gate-soft); border-radius: 3px; }
+.sw.h { width: 18px; height: 12px; border: 1.6px dashed var(--accent); border-radius: 3px; }
+.sw.s { width: 18px; height: 12px; border: 2px solid var(--fg); border-radius: 3px; }
+.sw.k { width: 18px; height: 12px; border: 1.6px solid var(--accent); background: var(--accent-soft); border-radius: 3px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 32px; }
+.notes section { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.notes p { color: var(--fg); font-size: 14.5px; max-width: 62ch; }
+
+.cmp { display: grid; gap: 12px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tbody th { font-weight: 600; width: 22%; }
+.foot { color: var(--muted); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">DIEM flood services · VISTA, VIIRS Surface Water Temporal Atlas</div>
+    <h1>How NOAA flood composites become a global flood reference</h1>
+    <p class="dek">An operator builds dekadal rasters on a workstation and uploads them to Google Cloud. Earth Engine computes the multi-year statistics. The public reads one bucket and one Earth Engine project, and EVE uses the monthly flood frequency to tell seasonal from exceptional flooding.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="0 0 1280 880" role="img" aria-label="Architecture of VISTA, the VIIRS Surface Water Temporal Atlas. An operator downloads NOAA VIIRS five-day flood composites from public S3, classifies and merges them into dekadal rasters on a workstation, and recovers logged gaps from the GMU archive. Phase 2 uploads each dekad to Cloud Storage and ingests it into the Earth Engine dekadal archive. Earth Engine tasks compute dekadal statistics, a rolling monthly archive and monthly statistics, and export tiles back to Cloud Storage, where dekadal products are mosaicked into one COG each. The public reads the bucket through the VISTA website and ArcGIS Online, and the assets through Earth Engine apps. EVE reads the monthly flood frequency to separate seasonal from exceptional flooding, and the DIEM Hub links to both. A person starts every run; nothing is scheduled.">
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-flow" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-meta" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+        <rect class="band" x="8" y="6" width="1264" height="112" rx="10"/>
+        <text class="lh" x="20" y="24">CONFIGURATION · READ AT EVERY RUN (config/, data/calendars/, pipeline code)</text>
+        <rect class="box" x="20" y="34" width="156" height="72" rx="6"/>
+        <text class="bt" x="32" y="55">Dekad calendar</text>
+        <text class="bs" x="32" y="73">2010–2040, CSV + JSON</text>
+        <text class="bs" x="32" y="88">5-day dates per dekad</text>
+        <path class="meta" d="M98 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="106" y="134">composite dates</text>
+        <rect class="box" x="222" y="34" width="184" height="72" rx="6"/>
+        <text class="bt" x="234" y="55">Class rules (code)</text>
+        <text class="bs" x="234" y="73">NOAA codes → 10 classes</text>
+        <text class="bs" x="234" y="88">flood wins when merging</text>
+        <path class="meta" d="M314 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="322" y="134">classify, merge</text>
+        <rect class="box" x="438" y="34" width="198" height="72" rx="6"/>
+        <text class="bt m" x="450" y="55">config.yaml</text>
+        <text class="bs" x="450" y="73">dekads, tiles, data_root,</text>
+        <text class="bs" x="450" y="88">bucket, asset roots, dry run</text>
+        <path class="meta" d="M537 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="545" y="134">targets, flags</text>
+        <rect class="box" x="668" y="34" width="186" height="72" rx="6"/>
+        <text class="bt m" x="680" y="55">quality_control.yaml</text>
+        <text class="bs" x="680" y="73">rejects dekad 202407d1</text>
+        <text class="bs" x="680" y="88">applied in Phases 2 to 5</text>
+        <path class="meta" d="M761 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="769" y="134">exclusions</text>
+        <rect class="box" x="898" y="34" width="362" height="72" rx="6"/>
+        <text class="bt" x="910" y="55">fao-vista-app repository</text>
+        <text class="bs" x="910" y="73">static HTML, no build step, no sign-in</text>
+        <text class="bs" x="910" y="88">seasonal GIFs and map images exported with VISTA tools</text>
+        <path class="meta" d="M983 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="991" y="134">static pages</text>
+        <rect class="lane" x="12" y="150" width="172" height="588" rx="8"/>
+        <text class="lh" x="20" y="174">SOURCES</text>
+        <text class="ls" x="20" y="191">public, read anonymously</text>
+        <rect class="lane" x="200" y="150" width="214" height="588" rx="8"/>
+        <text class="lh" x="208" y="174">WORKSTATION</text>
+        <text class="ls" x="208" y="191">operator PC, conda env</text>
+        <rect class="lane" x="430" y="150" width="214" height="588" rx="8"/>
+        <text class="lh" x="438" y="174">CLOUD STORAGE</text>
+        <text class="ls" x="438" y="191">gs://vista_project, public</text>
+        <rect class="lane" x="660" y="150" width="214" height="588" rx="8"/>
+        <text class="lh" x="668" y="174">EARTH ENGINE</text>
+        <text class="ls" x="668" y="191">projects/fao-oer/assets</text>
+        <rect class="lane" x="890" y="150" width="186" height="588" rx="8"/>
+        <text class="lh" x="898" y="174">ACCESS</text>
+        <text class="ls" x="898" y="191">how people reach the data</text>
+        <rect class="lane" x="1092" y="150" width="176" height="588" rx="8"/>
+        <text class="lh" x="1100" y="174">CONSUMERS</text>
+        <text class="ls" x="1100" y="191">who reads it</text>
+        <rect class="box" x="20" y="214" width="156" height="76" rx="6"/>
+        <text class="bt" x="32" y="235">NOAA VFM 5-day</text>
+        <text class="bs" x="32" y="253">public S3, AWS CLI</text>
+        <text class="bs" x="32" y="268">136 GeoTIFF tiles</text>
+        <text class="bs" x="32" y="283">pulled on demand</text>
+        <rect class="box opt" x="20" y="300" width="156" height="46" rx="6"/>
+        <text class="bt" x="32" y="321">Daily VIIRS</text>
+        <text class="bs" x="32" y="339">planned fallback only</text>
+        <rect class="box" x="20" y="560" width="156" height="62" rx="6"/>
+        <text class="bt" x="32" y="581">GMU/JPSS archive</text>
+        <text class="bs" x="32" y="599">jpssflood.gmu.edu</text>
+        <text class="bs" x="32" y="614">HTTP, 5-day zip files</text>
+        <rect class="box" x="222" y="214" width="184" height="54" rx="6"/>
+        <text class="bt" x="234" y="235">Phase 1 · classify</text>
+        <text class="bs" x="234" y="253">tile by tile, then mosaic</text>
+        <rect class="box" x="222" y="286" width="184" height="62" rx="6"/>
+        <text class="bt" x="234" y="307">Phase 1 · dekad</text>
+        <text class="bs" x="234" y="325">merges 2–3 composites</text>
+        <text class="bs" x="234" y="340">one missing: no dekad</text>
+        <rect class="box key" x="222" y="372" width="184" height="78" rx="6"/>
+        <text class="bt m" x="234" y="393">data_root (local)</text>
+        <text class="bs" x="234" y="411">dekadal rasters, kept</text>
+        <text class="bs" x="234" y="426">availability issues log</text>
+        <text class="bs" x="234" y="441">execution logs</text>
+        <rect class="box" x="222" y="474" width="184" height="62" rx="6"/>
+        <text class="bt" x="234" y="495">Phase 2 · upload</text>
+        <text class="bs" x="234" y="513">GCS first, then EE ingest</text>
+        <text class="bs" x="234" y="528">skips existing, excluded</text>
+        <rect class="box opt" x="222" y="560" width="184" height="62" rx="6"/>
+        <text class="bt" x="234" y="581">Pipeline B · recovery</text>
+        <text class="bs" x="234" y="599">only logged missing dekads</text>
+        <text class="bs" x="234" y="614">writes _pipeB rasters</text>
+        <path class="flow" d="M314 268 V284" marker-end="url(#af)"/>
+        <text class="lbl" x="322" y="280">5-day rasters</text>
+        <path class="flow" d="M314 348 V370" marker-end="url(#af)"/>
+        <text class="lbl" x="322" y="363">writes dekad</text>
+        <path class="flow" d="M314 450 V472" marker-end="url(#af)"/>
+        <text class="lbl" x="322" y="465">reads</text>
+        <path class="flow" d="M176 241 H220" marker-end="url(#af)"/>
+        <path class="meta" d="M176 323 H220" marker-end="url(#am)"/>
+        <path class="flow" d="M176 600 H220" marker-end="url(#af)"/>
+        <path class="flow" d="M222 574 H211 V426 H220" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(207 500) rotate(-90)" text-anchor="middle">writes</text>
+        <path class="flow" d="M406 496 H422 V240 H436" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(417 368) rotate(-90)" text-anchor="middle">uploads</text>
+        <rect class="box" x="438" y="214" width="198" height="62" rx="6"/>
+        <text class="bt m" x="450" y="235">vista_dekadal_archive/</text>
+        <text class="bs" x="450" y="253">dekadal GeoTIFFs</text>
+        <text class="bs" x="450" y="268">staging for EE ingestion</text>
+        <rect class="box" x="438" y="300" width="198" height="234" rx="6"/>
+        <text class="bt m" x="450" y="321">export tiles/</text>
+        <text class="bs" x="450" y="339">GeoTIFF shards written by</text>
+        <text class="bs" x="450" y="354">Earth Engine export tasks:</text>
+        <text class="bs" x="450" y="369">· dekadal statistics</text>
+        <text class="bs" x="450" y="384">· rolling monthly archive</text>
+        <text class="bs" x="450" y="399">· monthly statistics</text>
+        <text class="bs" x="450" y="414"></text>
+        <text class="bs" x="450" y="429">monthly products stay as</text>
+        <text class="bs" x="450" y="444">tiles; no whole-file URLs</text>
+        <rect class="box key" x="438" y="572" width="198" height="62" rx="6"/>
+        <text class="bt" x="450" y="593">Final COGs</text>
+        <text class="bs" x="450" y="611">one per dekadal product</text>
+        <text class="bs" x="450" y="626">count, frequency, dominant</text>
+        <path class="flow" d="M537 534 V570" marker-end="url(#af)"/>
+        <text class="lbl" x="545" y="549">Phase 3B, GDAL mosaic</text>
+        <text class="lbl" x="545" y="563">run on the workstation</text>
+        <rect class="box key" x="668" y="214" width="186" height="62" rx="6"/>
+        <text class="bt m" x="680" y="235">vista_dekadal_archive</text>
+        <text class="bs" x="680" y="253">uint8, one image per dekad</text>
+        <text class="bs" x="680" y="268">500 of 514 dekads, 2012–26</text>
+        <rect class="box srv" x="668" y="300" width="186" height="62" rx="6"/>
+        <text class="bt" x="680" y="321">Dekadal statistics</text>
+        <text class="bs" x="680" y="339">Phase 3, 36 dekad keys</text>
+        <text class="bs" x="680" y="354">count, frequency, dominant</text>
+        <rect class="box srv" x="668" y="386" width="186" height="62" rx="6"/>
+        <text class="bt m" x="680" y="407">vista_monthly_archive</text>
+        <text class="bs" x="680" y="425">Phase 4, centred 3 dekads</text>
+        <text class="bs" x="680" y="440">needs 2 of 3 valid inputs</text>
+        <rect class="box hand" x="668" y="472" width="186" height="62" rx="6"/>
+        <text class="bt" x="680" y="493">Monthly statistics</text>
+        <text class="bs" x="680" y="511">Phase 5, 36 centre keys</text>
+        <text class="bs" x="680" y="526">count, frequency, dominant</text>
+        <path class="flow" d="M636 245 H666" marker-end="url(#af)"/>
+        <path class="flow" d="M761 276 V298" marker-end="url(#af)"/>
+        <text class="lbl" x="769" y="291">stacks by key</text>
+        <path class="flow" d="M854 262 H864 V417 H856" marker-end="url(#af)"/>
+        <path class="flow" d="M761 448 V470" marker-end="url(#af)"/>
+        <text class="lbl" x="769" y="463">stacks by key</text>
+        <path class="flow" d="M668 331 H638" marker-end="url(#af)"/>
+        <path class="flow" d="M668 417 H638" marker-end="url(#af)"/>
+        <path class="flow" d="M668 503 H638" marker-end="url(#af)"/>
+        <rect class="box" x="898" y="214" width="170" height="76" rx="6"/>
+        <text class="bt" x="910" y="235">Earth Engine apps</text>
+        <text class="bs" x="910" y="253">comparison explorer,</text>
+        <text class="bs" x="910" y="268">asset preview</text>
+        <text class="bs" x="910" y="283">public, no account</text>
+        <rect class="box opt" x="898" y="318" width="170" height="46" rx="6"/>
+        <text class="bt" x="910" y="339">FAO STAC collection</text>
+        <text class="bs" x="910" y="357">planned, not published</text>
+        <rect class="box gate" x="898" y="544" width="170" height="62" rx="6"/>
+        <text class="bt" x="910" y="565">ArcGIS Online</text>
+        <text class="bs" x="910" y="583">clipped frequency bands</text>
+        <text class="bs" x="910" y="598">private until shared</text>
+        <rect class="box key" x="898" y="622" width="170" height="100" rx="6"/>
+        <text class="bt" x="910" y="643">VISTA website</text>
+        <text class="bs" x="910" y="661">diem.fao.org/vista</text>
+        <text class="bs" x="910" y="676">bucket browser, guide</text>
+        <text class="bs" x="910" y="691">Firebase Hosting</text>
+        <text class="bs" x="910" y="706">credit prompt per file</text>
+        <path class="flow" d="M854 245 H896" marker-end="url(#af)"/>
+        <text class="lbl" x="870" y="237">reads</text>
+        <path class="flow" d="M636 603 H882"/>
+        <path class="flow" d="M882 575 V660"/>
+        <path class="flow" d="M882 575 H896" marker-end="url(#af)"/>
+        <path class="flow" d="M882 660 H896" marker-end="url(#af)"/>
+        <text class="lbl" x="668" y="595">public COG downloads</text>
+        <rect class="box hand" x="1100" y="214" width="160" height="76" rx="6"/>
+        <text class="bt" x="1112" y="235">DIEM Hub</text>
+        <text class="bs" x="1112" y="253">Flood services page</text>
+        <text class="bs" x="1112" y="268">links to VISTA pages</text>
+        <text class="bs" x="1112" y="283">and to EVE</text>
+        <rect class="box hand" x="1100" y="466" width="160" height="76" rx="6"/>
+        <text class="bt" x="1112" y="487">EVE</text>
+        <text class="bs" x="1112" y="505">diem-eve.apps.fao.org</text>
+        <text class="bs" x="1112" y="520">seasonal if monthly</text>
+        <text class="bs" x="1112" y="535">freq_flood_any ≥ 0.25</text>
+        <rect class="box" x="1100" y="622" width="160" height="100" rx="6"/>
+        <text class="bt" x="1112" y="643">Public users</text>
+        <text class="bs" x="1112" y="661">download and cite</text>
+        <text class="bs" x="1112" y="676">script in Earth Engine</text>
+        <text class="bs" x="1112" y="691">open AGOL layers</text>
+        <text class="bs" x="1112" y="706">no sign-in needed</text>
+        <path class="meta" d="M1100 252 H1070" marker-end="url(#am)"/>
+        <path class="meta" d="M1180 290 V464" marker-end="url(#am)"/>
+        <text class="lbl g" x="1188" y="380">links to EVE</text>
+        <path class="flow" d="M854 503 H1098" marker-end="url(#af)"/>
+        <text class="lbl" x="905" y="495">reads monthly frequency</text>
+        <path class="flow" d="M1068 575 H1084 V648 H1098" marker-end="url(#af)"/>
+        <path class="flow" d="M1068 690 H1098" marker-end="url(#af)"/>
+        <rect class="band" x="8" y="750" width="1264" height="122" rx="10"/>
+        <text class="lh" x="20" y="862">OPERATIONS · A PERSON STARTS EVERY RUN; NOTHING IS SCHEDULED</text>
+        <rect class="box gate" x="20" y="774" width="386" height="62" rx="6"/>
+        <text class="bt" x="32" y="795">Operator runbook · dry run first</text>
+        <text class="bs" x="32" y="813">operational_workflow.md fixes the phase order and the</text>
+        <text class="bs" x="32" y="828">waits for EE tasks; operators split work by dekad</text>
+        <rect class="box gate" x="438" y="774" width="416" height="62" rx="6"/>
+        <text class="bt" x="450" y="795">Publication switch · maintenance/</text>
+        <text class="bs" x="450" y="813">make_gcs_objects_public, make_ee_assets_public</text>
+        <text class="bs" x="450" y="828">an operator opens new objects and assets to all users</text>
+        <rect class="box gate" x="898" y="774" width="362" height="62" rx="6"/>
+        <text class="bt" x="910" y="795">Manual deploy · GitHub Actions</text>
+        <text class="bs" x="910" y="813">workflow_dispatch: Firebase review site first,</text>
+        <text class="bs" x="910" y="828">then the fao-oer production site</text>
+        <path class="meta" d="M314 774 V740" marker-end="url(#am)"/>
+        <text class="lbl g" x="322" y="765">starts each phase</text>
+        <path class="meta" d="M537 774 V740" marker-end="url(#am)"/>
+        <text class="lbl g" x="545" y="765">public read</text>
+        <path class="meta" d="M761 774 V740" marker-end="url(#am)"/>
+        <text class="lbl g" x="769" y="765">public read</text>
+        <path class="meta" d="M983 774 V740" marker-end="url(#am)"/>
+        <text class="lbl g" x="991" y="765">deploys</text>
+      </svg>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw"></i>data moves</span>
+      <span><i class="sw d"></i>configures, links or controls (no data)</span>
+      <span><i class="sw g"></i>a person must approve</span>
+      <span><i class="sw k"></i>the stores the design turns on</span>
+      <span><i class="sw s"></i>runs on a server (Earth Engine batch tasks)</span>
+      <span><i class="sw h"></i>also in another DIEM diagram</span>
+    </div>
+    <figcaption>What the code on <code>main</code> does today, 21 October 2026. Grey dashed boxes run only on a condition or are planned. Every output is a global raster on one EPSG:4326 grid of about 375 m, keyed by dekad (<code>YYYYMMdD</code>) or by one of 36 recurring keys (<code>MMdD</code>). No administrative units are stored; FAO GAUL boundaries are added only when maps, GIFs and example scripts are drawn.</figcaption>
+  </figure>
+
+  <div class="notes">
+    <section>
+      <h2>Gaps stay visible</h2>
+      <p>A dekad is built only when every scheduled 5-day composite exists. A missing composite stops that dekad and is appended to <code>availability_issues_log.csv</code>, which also records missing tiles and unequal coverage. Pipeline B reads that log and rebuilds only the logged dekads from the GMU archive, with a <code>_pipeB</code> suffix. Rejected dekads in <code>quality_control.yaml</code> are kept out of Phases 2 to 5.</p>
+    </section>
+    <section>
+      <h2>Earth Engine does the statistics</h2>
+      <p>Phase 3 stacks every year of the dekadal archive by recurring dekad and counts each class. Frequency and dominant class are derived from those counts, so count must finish first. Phase 4 builds a centred three-dekad monthly archive, and Phase 5 repeats the statistics on it. Existing assets are always skipped; regenerating one means deleting it by hand first.</p>
+    </section>
+    <section>
+      <h2>One bucket, several doors</h2>
+      <p>The same objects reach users four ways: the website's bucket browser, Earth Engine apps and scripts, ArcGIS Online layers, and later a FAO STAC collection. The website is static and has no sign-in. It asks for a credit acknowledgement before each download. ArcGIS Online items are created private and shared by hand.</p>
+    </section>
+    <section>
+      <h2>Run by hand, in order</h2>
+      <p>No phase runs on a schedule. The operator edits <code>config.yaml</code>, runs a dry run, then executes, and waits for Earth Engine export tasks before the next phase or the Phase 3B mosaic. Several operators can work at once only on non-overlapping dekads, because every output name is deterministic.</p>
+    </section>
+  </div>
+
+  <section class="cmp">
+    <h2>Where each product lives</h2>
+    <p class="dek">Earth Engine paths are under <code>projects/fao-oer/assets/</code>; Cloud Storage paths are under <code>gs://vista_project/</code>.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Product</th><th scope="col">Earth Engine</th><th scope="col">Cloud Storage</th><th scope="col">Built by</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Dekadal archive</th><td><code>vista_dekadal_archive/vista_dekad_YYYYMMdD</code></td><td><code>vista_dekadal_archive/</code>, one GeoTIFF per dekad</td><td>Phases 1 and 2, workstation</td></tr>
+          <tr><th scope="row">Dekadal statistics</th><td><code>vista_products/dekadal/{count, frequency, dominant_class}/</code></td><td>export <code>tiles/</code> plus one COG per dekad key</td><td>Phase 3 in Earth Engine, Phase 3B mosaic</td></tr>
+          <tr><th scope="row">Rolling monthly archive</th><td><code>vista_monthly_archive/vista_monthly_YYYYMMdD</code></td><td><code>vista_monthly_archive/tiles/</code></td><td>Phase 4 in Earth Engine</td></tr>
+          <tr><th scope="row">Monthly statistics</th><td><code>vista_products/monthly/{count, frequency, dominant_class}/</code></td><td>export <code>tiles/</code> only</td><td>Phase 5 in Earth Engine</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Source: vista-water-atlas README, operational workflow, codex context and configuration; fao-vista-app README and deploy workflow; EVE configuration and data manual; hub_v3 architecture. State as of 21 October 2026.</p>
+  <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hh_survey_v3/blob/main/docs/diagrams/diem_data_architecture.html">DIEM household monitoring</a> · <a href="https://github.com/Andrampa/hub_v3/blob/main/docs/diagrams/diem_hub_architecture.html">DIEM Hub</a> · <a href="https://github.com/Andrampa/eve/blob/main/docs/diagrams/eve_architecture.html">EVE flood monitoring</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/vista">data-in-emergencies.fao.org/architecture</a>.</p>
+</div>

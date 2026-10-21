@@ -1,0 +1,211 @@
+/* /architecture: Contributor-only DIEM system diagrams. */
+
+.architecture-page { background: #f6f7f4; padding-bottom: 72px; }
+
+/* Gate, loading and no-access states */
+.architecture-gate { max-width: 760px; min-height: 480px; padding: 110px 24px; text-align: center; }
+.architecture-gate h1 { margin: 10px 0 15px; color: var(--deep-blue); font-size: clamp(32px, 5vw, 50px); letter-spacing: -.04em; }
+.architecture-gate p { max-width: 600px; margin: 0 auto 24px; color: var(--ink-faint); font-size: 14px; line-height: 1.6; }
+.architecture-gate .loader { margin-bottom: 14px; }
+.architecture-gate > a:not(.architecture-gate-action) { display: block; margin-top: 18px; color: var(--fao-blue); font-size: 13px; font-weight: 700; }
+.architecture-gate-action {
+  display: inline-flex; align-items: center; gap: 10px; padding: 13px 18px; border: 0;
+  background: var(--deep-blue); color: #fff; font-weight: 700; cursor: pointer;
+}
+.architecture-gate-action:hover { background: var(--fao-blue); }
+
+/* Hero */
+.architecture-hero {
+  position: relative;
+  border-bottom: 1px solid var(--line-soft);
+  background:
+    radial-gradient(circle at 1px 1px, rgba(17, 106, 171, .12) 1px, transparent 0) 0 0 / 22px 22px,
+    linear-gradient(180deg, #ffffff 0%, var(--mist) 100%);
+}
+.architecture-hero-inner { display: grid; gap: 30px; padding-block: 52px 44px; }
+/* Copy and facts share one row; the map gets the full width below so its
+   labels render at or above the Hub's 11 px floor. */
+.architecture-hero-copy { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 48px; align-items: end; }
+.architecture-hero-copy .kicker, .architecture-hero-copy h1 { grid-column: 1 / -1; }
+.architecture-hero h1 {
+  margin: 10px 0 14px; color: var(--deep-blue); font-size: clamp(38px, 5.4vw, 62px); line-height: 1.02; letter-spacing: -.045em;
+}
+.architecture-hero .kicker { color: var(--fao-blue); }
+.architecture-lede { max-width: 62ch; margin: 0; color: var(--ink); font-size: 17px; line-height: 1.6; }
+.architecture-hero-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 0; }
+.architecture-hero-facts div { display: grid; gap: 2px; }
+.architecture-hero-facts dt { color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.architecture-hero-facts dd { margin: 0; color: var(--deep-blue); font-size: 20px; font-weight: 700; }
+
+/* System map */
+.architecture-map { margin: 0; padding: 14px 14px 10px; border: 1px solid var(--line-soft); border-radius: 14px; background: rgba(255, 255, 255, .92); box-shadow: 0 18px 40px -28px rgba(5, 70, 108, .45); }
+/* Never drawn smaller than 1:1 (900 px), so map text stays at or above 11 px;
+   narrower screens scroll the map sideways, as the diagrams do. */
+.architecture-map { overflow-x: auto; }
+.architecture-map-svg { display: block; width: 100%; min-width: 900px; max-width: 1000px; height: auto; margin-inline: auto; overflow: visible; font-family: inherit; }
+.architecture-map-line { fill: none; stroke: var(--fao-blue); stroke-width: 2; transition: stroke .2s ease, stroke-width .2s ease, opacity .2s ease; }
+.architecture-map-edge.is-link .architecture-map-line { stroke: var(--ink-faint); stroke-dasharray: 5 5; }
+.architecture-map-hit { fill: none; stroke: transparent; stroke-width: 18; }
+.architecture-map-arrow { fill: var(--fao-blue); }
+.architecture-map-arrow.is-link { fill: var(--ink-faint); }
+.architecture-map-edge { cursor: default; outline: none; }
+.architecture-map-label rect { fill: #fff; stroke: var(--line); stroke-width: 1; transition: stroke .2s ease, fill .2s ease; }
+.architecture-map-label text { fill: var(--ink); font-size: 12px; font-weight: 600; }
+.architecture-map-label .architecture-map-kinds { fill: var(--ink-faint); font-size: 11px; font-weight: 400; letter-spacing: .02em; }
+.architecture-map-edge.is-active .architecture-map-line { stroke-width: 3; }
+.architecture-map-edge.is-active .architecture-map-label rect { fill: #eef5fb; stroke: var(--fao-blue); stroke-width: 1.5; }
+.architecture-map-edge:focus-visible .architecture-map-label rect { stroke: var(--deep-blue); stroke-width: 2.5; }
+.architecture-map.has-focus .architecture-map-edge:not(.is-active) { opacity: .28; }
+.architecture-map-edge { transition: opacity .2s ease; }
+
+.architecture-map-node { cursor: pointer; outline: none; }
+.architecture-map-node rect { fill: #fff; stroke: var(--deep-blue); stroke-width: 1.5; transition: fill .2s ease, stroke-width .2s ease; }
+.architecture-map-title { fill: var(--deep-blue); font-size: 14px; font-weight: 700; }
+.architecture-map-open { fill: var(--fao-blue); font-size: 11.5px; font-weight: 600; }
+.architecture-map-node:hover rect, .architecture-map-node.is-active rect { fill: #eef5fb; stroke-width: 2.5; }
+.architecture-map-node:focus-visible rect { stroke: var(--orange); stroke-width: 3; }
+.architecture-map-node.is-selected rect { fill: var(--deep-blue); }
+.architecture-map-node.is-selected .architecture-map-title { fill: #fff; }
+.architecture-map-node.is-selected .architecture-map-open { fill: #cfe3f3; }
+
+.architecture-map-caption {
+  display: grid; gap: 3px; min-height: 58px; margin-top: 6px; padding: 10px 12px; border-top: 1px solid var(--line-faint);
+  color: var(--ink-muted); font-size: 13px; line-height: 1.5;
+}
+.architecture-map-caption strong { color: var(--deep-blue); }
+
+/* Tabs */
+.architecture-body { display: grid; gap: 28px; padding-top: 34px; }
+.architecture-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.architecture-tabs a {
+  display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  color: var(--deep-blue); transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.architecture-tabs a strong { font-size: 15px; }
+.architecture-tabs a small { color: var(--ink-faint); font-family: ui-monospace, Consolas, monospace; font-size: var(--text-small); }
+.architecture-tabs a:hover { border-color: var(--fao-blue); box-shadow: 0 6px 18px -12px rgba(5, 70, 108, .5); }
+.architecture-tabs a.is-selected { border-color: var(--deep-blue); background: var(--deep-blue); color: #fff; }
+.architecture-tabs a.is-selected small { color: #cfe3f3; }
+.architecture-tabs a:focus-visible, .architecture-actions a:focus-visible, .architecture-page button:focus-visible,
+.architecture-details a:focus-visible, .architecture-fullpage a:focus-visible, .architecture-fullpage button:focus-visible {
+  outline: 3px solid var(--orange); outline-offset: 2px;
+}
+
+/* Viewer */
+.architecture-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.architecture-viewer { display: grid; gap: 14px; min-width: 0; }
+.architecture-viewer-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 20px; }
+.architecture-viewer-head h2 { margin: 4px 0 0; color: var(--deep-blue); font-size: clamp(26px, 3vw, 34px); letter-spacing: -.03em; }
+.architecture-summary { max-width: 80ch; margin: 0; color: var(--ink-muted); font-size: 15px; line-height: 1.6; }
+.architecture-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.architecture-actions a, .architecture-download, .architecture-frame-tools button {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--deep-blue); border-radius: 8px;
+  background: #fff; color: var(--deep-blue); font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.architecture-actions a:hover, .architecture-download:hover, .architecture-frame-tools button:hover { background: var(--deep-blue); color: #fff; }
+
+.architecture-frame { display: grid; border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; }
+.architecture-frame-tools {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid var(--line-faint); color: var(--ink-faint); font-size: var(--text-small);
+}
+.architecture-frame-tools button { padding: 6px 11px; font-size: 12px; }
+.architecture-frame-stage { position: relative; height: clamp(440px, 74vh, 920px); background: #f8fafc; }
+.architecture-iframe { display: block; width: 100%; height: 100%; border: 0; background: #f8fafc; }
+.architecture-frame-status {
+  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 24px;
+  color: var(--ink-muted); font-size: 14px; text-align: center;
+}
+.architecture-frame-status.is-error strong { color: var(--deep-blue); font-size: 17px; }
+.architecture-frame-status button { padding: 9px 14px; border: 0; border-radius: 8px; background: var(--deep-blue); color: #fff; font-weight: 700; cursor: pointer; }
+
+.architecture-frame.is-expanded { position: fixed; inset: 12px; z-index: 1000; border-radius: 12px; box-shadow: 0 0 0 100vmax rgba(5, 28, 44, .62); grid-template-rows: auto 1fr; }
+.architecture-frame.is-expanded .architecture-frame-stage { height: auto; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .architecture-iframe { animation: architecture-enter .32s ease-out both; }
+  .architecture-frame.is-expanded { animation: architecture-expand .22s ease-out both; }
+}
+@keyframes architecture-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes architecture-expand { from { opacity: .4; transform: scale(.985); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .architecture-map-line, .architecture-map-edge, .architecture-map-node rect, .architecture-map-label rect, .architecture-tabs a { transition: none; }
+}
+
+/* Details */
+.architecture-details { display: grid; gap: 12px; padding: 20px; border: 1px solid var(--line-soft); border-radius: 12px; background: #fff; }
+.architecture-details h3 { margin: 0; color: var(--deep-blue); font-size: var(--text-micro); letter-spacing: .14em; text-transform: uppercase; }
+.architecture-details h3:not(:first-child) { margin-top: 8px; }
+.architecture-details dl { display: grid; gap: 12px; margin: 0; }
+.architecture-details dt { color: var(--ink-faint); font-size: var(--text-small); }
+.architecture-details dd { display: grid; gap: 2px; margin: 2px 0 0; color: var(--ink); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.architecture-details dd small { color: var(--ink-faint); font-size: var(--text-small); font-weight: 400; }
+.architecture-details a { color: var(--fao-blue); text-decoration: underline; text-underline-offset: 2px; }
+.architecture-warning { margin: 0; padding: 10px 12px; border-left: 3px solid var(--orange); background: #fff6ee; color: var(--ink); font-size: 13px; line-height: 1.5; }
+.architecture-related { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.architecture-related li { display: grid; gap: 3px; font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
+.architecture-related a { font-weight: 700; }
+.architecture-related-direction { color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.architecture-note { margin: 4px 0 0; padding-top: 12px; border-top: 1px solid var(--line-faint); color: var(--ink-faint); font-size: var(--text-small); line-height: 1.5; }
+
+.architecture-unknown { padding: 32px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.architecture-unknown h2 { margin: 0 0 8px; color: var(--deep-blue); }
+.architecture-unknown p { color: var(--ink-muted); }
+.architecture-unknown a { color: var(--fao-blue); font-weight: 700; }
+
+/* Shared reading guide */
+.architecture-guide { display: grid; gap: 10px; padding: 24px; border: 1px solid var(--line-soft); border-radius: 12px; background: #fff; }
+.architecture-guide h2 { margin: 0; color: var(--deep-blue); font-size: 20px; }
+.architecture-guide p { margin: 0; color: var(--ink-muted); font-size: 14px; line-height: 1.6; }
+.architecture-guide-list { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 4px 0; padding: 0; list-style: none; color: var(--ink); font-size: 14px; }
+.architecture-guide-list li { display: inline-flex; align-items: center; gap: 10px; }
+.architecture-guide-list strong { color: var(--deep-blue); margin-right: 4px; }
+.architecture-swatch { display: inline-block; flex: none; }
+.architecture-swatch.is-flow { width: 30px; border-top: 2px solid #1d6bb0; }
+.architecture-swatch.is-control { width: 30px; border-top: 2px dashed #586777; }
+.architecture-swatch.is-key { width: 18px; height: 12px; border: 1.6px solid #1d6bb0; border-radius: 3px; background: #e6f0fa; }
+.architecture-guide-exceptions { font-size: 13px !important; }
+
+/* Full page */
+.architecture-fullpage { display: grid; grid-template-rows: auto 1fr; height: 100vh; background: #f8fafc; }
+.architecture-fullpage-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 10px 18px;
+  border-bottom: 1px solid var(--line); background: #fff; color: var(--deep-blue);
+}
+.architecture-fullpage-bar a { color: var(--fao-blue); font-size: 13px; font-weight: 700; }
+.architecture-fullpage-bar strong { flex: 1; font-size: 16px; }
+.architecture-fullpage .architecture-frame { border: 0; border-radius: 0; }
+.architecture-fullpage .architecture-frame-stage { height: 100%; }
+.architecture-fullpage .architecture-unknown { margin: 24px; }
+
+@media (max-width: 1020px) {
+  .architecture-hero-inner { padding-block: 40px 32px; }
+  .architecture-hero-copy { grid-template-columns: 1fr; }
+  .architecture-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .architecture-hero h1 { font-size: 38px; }
+  .architecture-lede { font-size: 15px; }
+  .architecture-map { padding: 8px 6px 4px; }
+  .architecture-frame-stage { height: 70vh; }
+  .architecture-frame-tools span { display: none; }
+  .architecture-frame-tools { justify-content: flex-end; }
+  .architecture-guide, .architecture-details { padding: 16px; }
+}
+
+/* Map fallback list for narrow screens */
+.architecture-map-list { display: none; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.architecture-map-list li { display: grid; gap: 3px; padding: 10px 12px; border-left: 3px solid var(--fao-blue); background: #fff; }
+.architecture-map-list li.is-link { border-left-style: dashed; border-left-color: var(--ink-faint); }
+.architecture-map-list-route { display: flex; flex-wrap: wrap; gap: 4px 8px; color: var(--ink-faint); font-size: 13px; }
+.architecture-map-list-route a { color: var(--deep-blue); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+.architecture-map-list strong { color: var(--ink); font-size: 14px; }
+.architecture-map-list small { color: var(--ink-faint); font-size: var(--text-small); }
+
+@media (max-width: 700px) {
+  .architecture-map { padding: 12px; background: transparent; border: 0; box-shadow: none; }
+  .architecture-map-svg, .architecture-map-caption { display: none; }
+  .architecture-map-list { display: grid; }
+  .architecture-tabs { grid-auto-flow: column; grid-auto-columns: minmax(160px, 1fr); grid-template-columns: none; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+  .architecture-tabs a { scroll-snap-align: start; }
+}

@@ -1,0 +1,78 @@
+{
+  "diagrams": [
+    {
+      "key": "monitoring",
+      "title": "Household monitoring",
+      "system": "DIEM household monitoring",
+      "summary": "How a household survey travels from the provider export through privacy clearance, standardisation, cleaning and human review into the permanent global table, and out to private ArcGIS Online services that the public reaches only through filtered views.",
+      "repository": "Andrampa/hh_survey_v3",
+      "repositoryVisibility": "private",
+      "localRepository": "../hh_survey_v3",
+      "path": "docs/diagrams/diem_data_architecture.html",
+      "sortOrder": 1
+    },
+    {
+      "key": "hub",
+      "title": "DIEM Hub",
+      "system": "DIEM Hub",
+      "summary": "How the Hub reads the ArcGIS catalogue live, embeds the monitoring app, re-resolves every protected item with the reader's own token, and checks temporary microdata grants. ArcGIS sharing is the only authorization.",
+      "repository": "Andrampa/hub_v3",
+      "repositoryVisibility": "public",
+      "localRepository": ".",
+      "path": "docs/diagrams/diem_hub_architecture.html",
+      "sortOrder": 2
+    },
+    {
+      "key": "eve",
+      "title": "EVE flood monitoring",
+      "system": "EVE flood monitoring",
+      "summary": "The daily VIIRS run and the dekadal EVE pipeline: flood composites become Earth Engine assets, then ADM2, ADM1 and ADM0 exposure tables in ArcGIS Online that the EVE app and the Hub read.",
+      "repository": "Andrampa/eve",
+      "repositoryVisibility": "private",
+      "localRepository": "../eve",
+      "path": "docs/diagrams/eve_architecture.html",
+      "sortOrder": 3
+    },
+    {
+      "key": "vista",
+      "title": "VISTA water atlas",
+      "system": "VISTA water atlas",
+      "summary": "The operator-run pipeline behind the VIIRS Surface Water Temporal Atlas: dekadal and monthly flood products built in Earth Engine and Cloud Storage, and the public doors to them.",
+      "repository": "Andrampa/vista-water-atlas",
+      "repositoryVisibility": "private",
+      "localRepository": "../vista-water-atlas",
+      "path": "docs/diagrams/vista_architecture.html",
+      "sortOrder": 4
+    }
+  ],
+  "relationships": [
+    {
+      "from": "monitoring",
+      "to": "hub",
+      "kinds": ["data", "embedded"],
+      "label": "Survey data and embedded explorer",
+      "detail": "The Hub reads the survey configuration view and homepage statistics, and embeds the monitoring app through an origin-checked bridge that passes URL state and the sign-in token."
+    },
+    {
+      "from": "eve",
+      "to": "hub",
+      "kinds": ["data", "link"],
+      "label": "Country eligibility and app links",
+      "detail": "The Hub reads eve_mastertable_adm0 to decide which country pages link to EVE, and links to the EVE app."
+    },
+    {
+      "from": "vista",
+      "to": "eve",
+      "kinds": ["data"],
+      "label": "Monthly flood frequency",
+      "detail": "EVE reads VISTA's monthly flood-frequency assets in Earth Engine to separate seasonal from exceptional flooding."
+    },
+    {
+      "from": "vista",
+      "to": "hub",
+      "kinds": ["link"],
+      "label": "Reference links",
+      "detail": "The Flood analysis page links to the VISTA explorer, bucket browser and user guide. No data moves between them."
+    }
+  ]
+}

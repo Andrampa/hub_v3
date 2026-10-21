@@ -1,0 +1,406 @@
+<title>DIEM Household Data Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one wide engineering drawing in five lanes (sources → consumers), framed by a design-time band above and a control band below; notes underneath. */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --lane: #eef2f7;
+  --fg: #17202b;
+  --muted: #586777;
+  --line: #c3cdd8;
+  --accent: #1d6bb0;
+  --accent-soft: #e6f0fa;
+  --gate: #b26b12;
+  --gate-soft: #fbf1e3;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+    --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1217; --surface: #131a22; --lane: #19222c; --fg: #e3e9ef; --muted: #98a6b4;
+  --line: #34424f; --accent: #6badea; --accent-soft: #15283a; --gate: #e3a650; --gate-soft: #2a2116;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 56px; display: grid; gap: 28px; }
+header { display: grid; gap: 8px; max-width: 72ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 4vw, 38px); line-height: 1.1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 700; font-size: 19px; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.dek { color: var(--muted); font-size: 16px; }
+code { font-family: var(--mono); font-size: .9em; }
+
+figure { margin: 0; display: grid; gap: 12px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.scroll svg { display: block; width: 100%; min-width: 1040px; height: auto; }
+figcaption { color: var(--muted); font-size: 14px; max-width: 80ch; }
+
+/* SVG styling through page tokens */
+.lane { fill: var(--lane); }
+.band { fill: none; stroke: var(--line); stroke-dasharray: 5 4; }
+.lh { font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; fill: var(--fg); font-weight: 500; }
+.ls { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+.box.key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.6; }
+.box.gate { fill: var(--gate-soft); stroke: var(--gate); stroke-width: 1.6; }
+.box.opt { stroke-dasharray: 4 3; }
+.bt { font-family: var(--body); font-weight: 600; font-size: 13.5px; fill: var(--fg); }
+.bt.m { font-family: var(--mono); font-weight: 500; font-size: 13px; }
+.bs { font-family: var(--body); font-size: 11.5px; fill: var(--muted); }
+.flow { fill: none; stroke: var(--accent); stroke-width: 1.7; }
+.meta { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 4; }
+.mk-flow { fill: var(--accent); }
+.mk-meta { fill: var(--muted); }
+.lbl { font-family: var(--body); font-size: 11px; fill: var(--accent); font-weight: 500; }
+.lbl.g { fill: var(--muted); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 30px; height: 0; border-top: 2px solid var(--accent); }
+.sw.d { border-top: 2px dashed var(--muted); }
+.sw.g { width: 18px; height: 12px; border: 1.6px solid var(--gate); background: var(--gate-soft); border-radius: 3px; }
+.sw.k { width: 18px; height: 12px; border: 1.6px solid var(--accent); background: var(--accent-soft); border-radius: 3px; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 32px; }
+.notes section { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.notes p { color: var(--fg); font-size: 14.5px; max-width: 62ch; }
+
+.cmp { display: grid; gap: 12px; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+tbody th { font-weight: 600; width: 22%; }
+.foot { color: var(--muted); font-size: 13px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">DIEM household monitoring system · V3</div>
+    <h1>How a household survey becomes a public dashboard</h1>
+    <p class="dek">One questionnaire defines the structure. Each survey passes through review gates into a permanent archive, is summarised in the database, and is published to ArcGIS Online, where the monitoring app and the Hub read it.</p>
+  </header>
+
+  <figure>
+    <div class="scroll">
+      <svg viewBox="0 0 1280 810" role="img" aria-label="Data architecture of the DIEM household monitoring system. The questionnaire metadata defines every stage. A provider export passes privacy clearance, standardisation, cleaning and human review, then is appended to the permanent global table. Step 3 copies one country into a working table, refreshes summary views and publishes one slice to private ArcGIS Online services, which are exposed to the public only through views filtered to opendata equals 1. The monitoring app and the DIEM Hub read those public views; restricted microdata grants copy from the private services. A private operations record tracks every step without holding survey data.">
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-flow" d="M0,0 L10,5 L0,10 z"/></marker>
+          <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-meta" d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- ===== Design-time band ===== -->
+        <rect class="band" x="8" y="6" width="1264" height="112" rx="10"/>
+        <text class="lh" x="20" y="24">DESIGN TIME · BUILT ONCE PER QUESTIONNAIRE VERSION (development/)</text>
+
+        <rect class="box" x="20" y="34" width="180" height="72" rx="6"/>
+        <text class="bt" x="32" y="56">Questionnaire</text>
+        <text class="bs" x="32" y="74">SMAR-owned XLSX template</text>
+        <text class="bs" x="32" y="89">source of all structure</text>
+
+        <rect class="box" x="240" y="34" width="220" height="72" rx="6"/>
+        <text class="bt" x="252" y="56">Phase 1 · registries</text>
+        <text class="bs" x="252" y="74">master fields, domains,</text>
+        <text class="bs" x="252" y="89">derived fields, decision log</text>
+
+        <rect class="box" x="500" y="34" width="250" height="72" rx="6"/>
+        <text class="bt" x="512" y="56">Phases 2–3 · SQL generators</text>
+        <text class="bs" x="512" y="74">aggregation universes and rules</text>
+        <text class="bs" x="512" y="89">→ table DDL + summary-view SQL</text>
+
+        <rect class="box" x="790" y="34" width="230" height="72" rx="6"/>
+        <text class="bt" x="802" y="56">Phase 5 · service schemas</text>
+        <text class="bs" x="802" y="74">schema-safe overwrite,</text>
+        <text class="bs" x="802" y="89">item IDs preserved</text>
+
+        <rect class="box" x="1060" y="34" width="200" height="72" rx="6"/>
+        <text class="bt" x="1072" y="56">Phase 6 · app metadata</text>
+        <text class="bs" x="1072" y="74">themes, question labels,</text>
+        <text class="bs" x="1072" y="89">French translations</text>
+
+        <path class="meta" d="M200 70 H238" marker-end="url(#am)"/>
+        <path class="meta" d="M460 70 H498" marker-end="url(#am)"/>
+        <path class="meta" d="M750 70 H788" marker-end="url(#am)"/>
+        <path class="meta" d="M1020 70 H1058" marker-end="url(#am)"/>
+
+        <!-- defines arrows into lanes -->
+        <path class="meta" d="M110 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="118" y="134">collection form</text>
+        <path class="meta" d="M350 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="358" y="134">rename + recode rules</text>
+        <path class="meta" d="M625 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="633" y="134">tables + views</text>
+        <path class="meta" d="M905 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="913" y="134">service layout</text>
+        <path class="meta" d="M1160 106 V148" marker-end="url(#am)"/>
+        <text class="lbl g" x="1168" y="134">labels</text>
+
+        <!-- ===== Lanes ===== -->
+        <rect class="lane" x="12" y="150" width="196" height="520" rx="8"/>
+        <rect class="lane" x="232" y="150" width="236" height="520" rx="8"/>
+        <rect class="lane" x="492" y="150" width="266" height="520" rx="8"/>
+        <rect class="lane" x="782" y="150" width="246" height="520" rx="8"/>
+        <rect class="lane" x="1052" y="150" width="216" height="520" rx="8"/>
+
+        <text class="lh" x="20" y="174">SOURCES</text>
+        <text class="ls" x="20" y="191">arrive from outside</text>
+        <text class="lh" x="240" y="174">PROCESSING</text>
+        <text class="ls" x="240" y="191">management/, every survey</text>
+        <text class="lh" x="500" y="174">DATABASE</text>
+        <text class="ls" x="500" y="191">PostgreSQL + PostGIS</text>
+        <text class="lh" x="790" y="174">ARCGIS ONLINE</text>
+        <text class="ls" x="790" y="191">hosted services</text>
+        <text class="lh" x="1060" y="174">CONSUMERS</text>
+        <text class="ls" x="1060" y="191">who reads the data</text>
+
+        <!-- Sources -->
+        <rect class="box" x="20" y="220" width="180" height="60" rx="6"/>
+        <text class="bt" x="32" y="241">Provider export</text>
+        <text class="bs" x="32" y="258">GeoPoll or Kobo, raw</text>
+        <text class="bs" x="32" y="272">delivered via SharePoint</text>
+
+        <rect class="box" x="20" y="355" width="180" height="46" rx="6"/>
+        <text class="bt" x="32" y="374">Household weights</text>
+        <text class="bs" x="32" y="391">SMAR-supplied for now</text>
+
+        <rect class="box" x="20" y="419" width="180" height="46" rx="6"/>
+        <text class="bt" x="32" y="438">ESS FIES results</text>
+        <text class="bs" x="32" y="455">may arrive after publication</text>
+
+        <rect class="box" x="20" y="612" width="180" height="46" rx="6"/>
+        <text class="bt" x="32" y="631">Admin boundaries</text>
+        <text class="bs" x="32" y="648">ADM0–2 names, p-codes</text>
+
+        <!-- Processing -->
+        <rect class="box gate" x="240" y="227" width="220" height="46" rx="6"/>
+        <text class="bt" x="252" y="246">Step 0 · privacy clearance</text>
+        <text class="bs" x="252" y="263">owner attests the file hash</text>
+
+        <rect class="box" x="240" y="291" width="220" height="46" rx="6"/>
+        <text class="bt" x="252" y="310">Step 1 · standardise</text>
+        <text class="bs" x="252" y="327">rename, recode, QA report</text>
+
+        <rect class="box" x="240" y="355" width="220" height="46" rx="6"/>
+        <text class="bt" x="252" y="374">Step 2 · clean + indicators</text>
+        <text class="bs" x="252" y="391">food security, weight_final</text>
+
+        <rect class="box opt" x="240" y="419" width="220" height="46" rx="6"/>
+        <text class="bt" x="252" y="438">Step 4 · FIES merge</text>
+        <text class="bs" x="252" y="455">only if ESS already delivered</text>
+
+        <rect class="box gate" x="240" y="483" width="220" height="46" rx="6"/>
+        <text class="bt" x="252" y="502">Human review</text>
+        <text class="bs" x="252" y="519">nothing unreviewed is loaded</text>
+
+        <rect class="box" x="240" y="547" width="220" height="46" rx="6"/>
+        <text class="bt" x="252" y="566">Global load</text>
+        <text class="bs" x="252" y="583">guarded append, opendata = 0</text>
+
+        <path class="flow" d="M350 273 V289" marker-end="url(#af)"/>
+        <path class="flow" d="M350 337 V353" marker-end="url(#af)"/>
+        <path class="flow" d="M350 401 V417" marker-end="url(#af)"/>
+        <path class="flow" d="M350 465 V481" marker-end="url(#af)"/>
+        <path class="flow" d="M350 529 V545" marker-end="url(#af)"/>
+
+        <path class="flow" d="M200 250 H238" marker-end="url(#af)"/>
+        <path class="flow" d="M200 378 H238" marker-end="url(#af)"/>
+        <path class="flow" d="M200 442 H238" marker-end="url(#af)"/>
+
+        <!-- Database -->
+        <rect class="box key" x="500" y="227" width="250" height="80" rx="6"/>
+        <text class="bt m" x="512" y="249">hh · global master table</text>
+        <text class="bs" x="512" y="267">permanent archive</text>
+        <text class="bs" x="512" y="282">all countries × all rounds</text>
+        <text class="bs" x="512" y="297">historical source of truth</text>
+
+        <rect class="box" x="500" y="355" width="250" height="62" rx="6"/>
+        <text class="bt m" x="512" y="376">hh · working table</text>
+        <text class="bs" x="512" y="394">1 country × up to 6 rounds</text>
+        <text class="bs" x="512" y="409">rebuilt for every survey</text>
+
+        <rect class="box" x="500" y="465" width="250" height="80" rx="6"/>
+        <text class="bt m" x="512" y="487">agg · summary views</text>
+        <text class="bs" x="512" y="505">adm0 · adm_repr · focus areas</text>
+        <text class="bs" x="512" y="520">trends at adm1 and adm2</text>
+        <text class="bs" x="512" y="535">17 weighted views, no geometry</text>
+
+        <rect class="box" x="500" y="610" width="250" height="50" rx="6"/>
+        <text class="bt m" x="512" y="630">ref · registries</text>
+        <text class="bs" x="512" y="648">admin units, focus areas, levels</text>
+
+        <path class="flow" d="M460 570 H480 V266 H498" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(474 440) rotate(-90)" text-anchor="middle">append</text>
+
+        <path class="flow" d="M625 307 V353" marker-end="url(#af)"/>
+        <text class="lbl" x="633" y="327">Step 3 prepare:</text>
+        <text class="lbl" x="633" y="341">copy one country</text>
+        <path class="flow" d="M625 417 V463" marker-end="url(#af)"/>
+        <text class="lbl" x="633" y="444">REFRESH</text>
+        <path class="meta" d="M625 610 V547" marker-end="url(#am)"/>
+        <text class="lbl g" x="633" y="584">joined by p-code</text>
+
+        <path class="flow" d="M200 635 H498" marker-end="url(#af)"/>
+        <text class="lbl" x="214" y="627">loaded once, kept current</text>
+
+        <!-- AGOL -->
+        <rect class="box" x="790" y="227" width="230" height="80" rx="6"/>
+        <text class="bt" x="802" y="249">Private source services</text>
+        <text class="bs" x="802" y="267">household core + optional</text>
+        <text class="bs" x="802" y="282">17 summaries, question manifest,</text>
+        <text class="bs" x="802" y="297">focus-area registry</text>
+
+        <rect class="box key" x="790" y="355" width="230" height="62" rx="6"/>
+        <text class="bt" x="802" y="376">Public views</text>
+        <text class="bs" x="802" y="394">filtered to opendata = 1</text>
+        <text class="bs" x="802" y="409">all anonymous users can see</text>
+
+        <rect class="box" x="790" y="440" width="230" height="50" rx="6"/>
+        <text class="bt" x="802" y="460">Survey config table</text>
+        <text class="bs" x="802" y="477">catalogue, synced from Highlights</text>
+
+        <rect class="box" x="790" y="505" width="230" height="42" rx="6"/>
+        <text class="bt" x="802" y="522">Survey documents</text>
+        <text class="bs" x="802" y="538">questionnaire, brief, findings</text>
+
+        <rect class="box" x="790" y="561" width="230" height="42" rx="6"/>
+        <text class="bt" x="802" y="578">Legacy V1/V2 services</text>
+        <text class="bs" x="802" y="594">frozen trend estimates</text>
+
+        <rect class="box" x="790" y="617" width="230" height="42" rx="6"/>
+        <text class="bt" x="802" y="634">Boundary reference</text>
+        <text class="bs" x="802" y="650">polygons keyed by p-code</text>
+
+        <path class="flow" d="M750 386 H770"/>
+        <path class="flow" d="M750 505 H770 V282 H788" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(764 450) rotate(-90)" text-anchor="middle">Step 3 publish</text>
+
+        <path class="flow" d="M905 307 V353" marker-end="url(#af)"/>
+        <text class="lbl" x="913" y="335">filter</text>
+
+        <!-- Consumers -->
+        <rect class="box gate" x="1060" y="227" width="200" height="80" rx="6"/>
+        <text class="bt" x="1072" y="249">Microdata grant</text>
+        <text class="bs" x="1072" y="267">one approved recipient</text>
+        <text class="bs" x="1072" y="282">temporary filtered copies</text>
+        <text class="bs" x="1072" y="297">deleted after 168 h</text>
+
+        <rect class="box key" x="1060" y="355" width="200" height="110" rx="6"/>
+        <text class="bt" x="1072" y="377">Monitoring app</text>
+        <text class="bs" x="1072" y="395">Explore · Trends · Data Lab</text>
+        <text class="bs" x="1072" y="410">maps join boundaries</text>
+        <text class="bs" x="1072" y="425">by p-code in the browser</text>
+        <text class="bs" x="1072" y="440">reads services only,</text>
+        <text class="bs" x="1072" y="455">never the database</text>
+
+        <rect class="box" x="1060" y="510" width="200" height="62" rx="6"/>
+        <text class="bt" x="1072" y="531">DIEM Hub</text>
+        <text class="bs" x="1072" y="549">data-in-emergencies.fao.org</text>
+        <text class="bs" x="1072" y="564">embeds app, passes sign-in</text>
+
+        <path class="flow" d="M1020 266 H1058" marker-end="url(#af)"/>
+
+        <path class="flow" d="M1020 386 H1040"/>
+        <path class="flow" d="M1020 465 H1040"/>
+        <path class="flow" d="M1020 526 H1040"/>
+        <path class="flow" d="M1020 582 H1040"/>
+        <path class="flow" d="M1020 638 H1040 V386"/>
+        <path class="flow" d="M1040 410 H1058" marker-end="url(#af)"/>
+        <text class="lbl" transform="translate(1057 560) rotate(-90)" text-anchor="middle">public reads</text>
+
+        <path class="meta" d="M1160 510 V467" marker-end="url(#am)"/>
+        <text class="lbl g" x="1168" y="493">embeds</text>
+
+        <!-- ===== Control band ===== -->
+        <rect class="band" x="8" y="680" width="1264" height="122" rx="10"/>
+        <text class="lh" x="20" y="792">CONTROL PLANE · RECORDS WHO DID WHAT, NEVER THE DATA</text>
+
+        <rect class="box" x="20" y="706" width="180" height="62" rx="6"/>
+        <text class="bt" x="32" y="727">Protected DB access</text>
+        <text class="bs" x="32" y="745">allowlisted operations,</text>
+        <text class="bs" x="32" y="760">credentials outside Git</text>
+
+        <rect class="box" x="240" y="706" width="510" height="62" rx="6"/>
+        <text class="bt" x="252" y="727">Survey operations record · private Git repository</text>
+        <text class="bs" x="252" y="745">ownership, clearance hash, decisions, run hashes, operation receipts</text>
+        <text class="bs" x="252" y="760">status only: no survey data is ever stored here</text>
+
+        <rect class="box gate" x="790" y="706" width="230" height="62" rx="6"/>
+        <text class="bt" x="802" y="727">Publication switch</text>
+        <text class="bs" x="802" y="745">opendata stays 0 until the data</text>
+        <text class="bs" x="802" y="760">manager approves production</text>
+
+        <rect class="box" x="1060" y="706" width="200" height="62" rx="6"/>
+        <text class="bt" x="1072" y="727">Grant registry</text>
+        <text class="bs" x="1072" y="745">invite, accept, expire</text>
+        <text class="bs" x="1072" y="760">daily cleanup job</text>
+
+        <path class="meta" d="M350 670 V704" marker-end="url(#am)"/>
+        <text class="lbl g" x="358" y="693">records each step</text>
+        <path class="meta" d="M625 670 V704" marker-end="url(#am)"/>
+        <text class="lbl g" x="633" y="693">receipts</text>
+        <path class="meta" d="M905 706 V672" marker-end="url(#am)"/>
+        <text class="lbl g" x="913" y="693">gates public views</text>
+        <path class="meta" d="M1160 706 V672" marker-end="url(#am)"/>
+        <text class="lbl g" x="1168" y="693">tracks grants</text>
+      </svg>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i class="sw"></i>data moves</span>
+      <span><i class="sw d"></i>defines, records or controls (no data)</span>
+      <span><i class="sw g"></i>a person must approve</span>
+      <span><i class="sw k"></i>the stores the design turns on</span>
+    </div>
+    <figcaption>Target architecture after the real-data rebuild on PostgreSQL + PostGIS. Data only moves left to right, and only through Step 3 does anything reach ArcGIS Online. The public sees only rows marked <code>opendata = 1</code>.</figcaption>
+  </figure>
+
+  <div class="notes">
+    <section>
+      <h2>Metadata first</h2>
+      <p>No stage hardcodes the survey structure. The SMAR questionnaire is parsed once into registries of fields, coded domains and derived fields. Those registries drive Step 1 renaming, the table definitions, the summary-view SQL, the AGOL service layout and the app's labels. A new questionnaire version means regenerating this band, not editing the stages below it.</p>
+    </section>
+    <section>
+      <h2>Two household tables</h2>
+      <p>The global table is the permanent archive and only ever grows by reviewed appends. The working table holds one country and at most six rounds, so view refreshes stay fast as history accumulates. Step 3 rebuilds it from the global table for each survey, refreshes the views, then publishes a single country-round slice by delete-then-append.</p>
+    </section>
+    <section>
+      <h2>Private by default</h2>
+      <p>Every AGOL table is a private source service with a hosted view filtered to <code>opendata = 1</code>. Every survey is loaded with <code>opendata = 0</code> until the data manager approves production. Restricted microdata leaves only through time-limited grants to one named recipient.</p>
+    </section>
+    <section>
+      <h2>Audit without data</h2>
+      <p>A private Git repository records who owns each survey, the hash of the cleared file, decisions and operation receipts. Survey files travel through SharePoint and never through Git. Agents run only allowlisted database operations and never see credentials.</p>
+    </section>
+  </div>
+
+  <section class="cmp">
+    <h2>What changes with the rebuild</h2>
+    <p class="dek">The flow above is the same today. The differences are in the database layer and in how services are shared.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">In service today (simulated data + COD R12)</th><th scope="col">After the real-data rebuild</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Database</th><td>Enterprise Geodatabase, <code>monitoring_system</code>, schema <code>hh_2025</code></td><td>Plain PostgreSQL + PostGIS, <code>diem_v3</code>, schemas <code>hh</code>, <code>ref</code>, <code>agg</code>, <code>ops</code>, <code>audit</code></td></tr>
+          <tr><th scope="row">Summary views</th><td>40 materialized views, each with and without geometry</td><td>17 views, no geometry; boundaries joined by p-code</td></tr>
+          <tr><th scope="row">AGOL services</th><td>22 public, query-only hosted tables</td><td>21 private source services, each with an <code>opendata = 1</code> public view</td></tr>
+          <tr><th scope="row">Household microdata</th><td>Public services until the cutover switches flip</td><td>Private; public only through the filtered views</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">Continues in the DIEM Hub diagram, which starts where the Consumers column ends: <code>hub_v3/docs/diagrams/diem_hub_architecture.html</code>.</p>
+  <p class="foot">Source: hh_survey_v3 repository documentation (architecture, rebuild plan, management contract), state as of 13 October 2026.</p>
+  <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hub_v3/blob/main/docs/diagrams/diem_hub_architecture.html">DIEM Hub</a> · <a href="https://github.com/Andrampa/eve/blob/main/docs/diagrams/eve_architecture.html">EVE flood monitoring</a> · <a href="https://github.com/Andrampa/vista-water-atlas/blob/main/docs/diagrams/vista_architecture.html">VISTA water atlas</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/monitoring">data-in-emergencies.fao.org/architecture</a>.</p>
+</div>

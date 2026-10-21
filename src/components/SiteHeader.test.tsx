@@ -82,3 +82,35 @@ describe('SiteFooter household survey navigation', () => {
     expect(navigation?.querySelector('a[href="/data/guide"]')?.textContent).toBe('Data access guide')
   })
 })
+
+describe('SiteHeader architecture link', () => {
+  const signedInAs = (contributor: boolean) => {
+    Object.assign(auth, {
+      status: 'authenticated',
+      user: { username: 'reader', fullName: 'Reader', capabilities: { contributor, aggregatedData: true, householdData: false } },
+    })
+  }
+
+  afterEach(() => {
+    Object.assign(auth, { status: 'anonymous', user: null })
+  })
+
+  it('is absent for anonymous visitors and signed-in non-Contributors', async () => {
+    await renderAt('/')
+    expect(container.querySelector('a[href="/architecture"]')).toBe(null)
+
+    signedInAs(false)
+    await renderAt('/')
+    expect(container.querySelector('a[href="/architecture"]')).toBe(null)
+  })
+
+  it('appears in both navigation modes for Contributors', async () => {
+    signedInAs(true)
+    await renderAt('/architecture/eve')
+    for (const selector of ['.nav-links', '#mobile-navigation']) {
+      const link = container.querySelector(`${selector} a[href="/architecture"]`)
+      expect(link?.textContent).toContain('System architecture')
+      expect(link?.getAttribute('aria-current')).toBe('page')
+    }
+  })
+})

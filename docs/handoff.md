@@ -1,5 +1,18 @@
 # Handoff
 
+## 2026-10-21 - Contributor architecture page
+
+Status: committed and pushed on `main`; see `docs/architecture_diagrams.md` and the
+changelog for deployment. Source footers are committed in all four repositories
+(VISTA on both `main` and `paper/scientific-data`); the Hub copies were synced
+without `--allow-dirty`. Remaining: a live check with a signed-in non-Contributor
+account, which needs a suitable existing account. Pre-existing and unrelated: two
+`SurveyWorkspace.test.tsx` failures that also fail without this change.
+Next file: `src/pages/Architecture.tsx`. Verification: `npx vitest run
+src/services/architectureDiagrams.test.ts src/lib/diagramDocument.test.ts
+src/pages/Architecture.test.tsx src/components/SiteHeader.test.tsx`, then
+`npm run build`.
+
 ## 2026-10-20 - Community last-login report and skill
 
 Implemented on branch `main` in `C:\git\hub_v3`; no account changes.

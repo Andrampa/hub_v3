@@ -45,6 +45,7 @@ const AboutDiem = lazy(() => import('./pages/AboutDiem'))
 const Contact = lazy(() => import('./pages/Contact'))
 const PhotoGalleries = lazy(() => import('./pages/PhotoGalleries'))
 const LegacyHubRoute = lazy(() => import('./pages/LegacyHubRoute'))
+const Architecture = lazy(() => import('./pages/Architecture'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function RouteLoading() {
@@ -127,6 +128,10 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/about" element={<AboutDiem />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/photo-galleries" element={<PhotoGalleries />} />
+            {/* Contributor-only documentation; see docs/architecture_diagrams.md. */}
+            <Route path="/architecture" element={<Architecture />} />
+            <Route path="/architecture/:key" element={<Architecture />} />
+            <Route path="/architecture/:key/full" element={<Architecture fullPage />} />
             {/* Addresses the previous site served on this domain. */}
             <Route path="/documents/:identifier/*" element={<LegacyHubRoute />} />
             <Route path="/documents/:identifier" element={<LegacyHubRoute />} />

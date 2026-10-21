@@ -52,7 +52,7 @@ html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; }
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
-svg:not(.leaflet-zoom-animated):not(.leaflet-zoom-hide):not(.country-map):not(.impact-map):not(.country-shape):not(.shock-icon) { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+svg:not(.leaflet-zoom-animated):not(.leaflet-zoom-hide):not(.country-map):not(.impact-map):not(.country-shape):not(.shock-icon):not(.architecture-map-svg) { width: 1.15em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 /* The FAO theme sets h1-h4 at weight 300. At card and section sizes that thin
    stroke made titles the faintest text on the card, below the metadata about
    them; 600 matches the hero and section headings that already override it. */
