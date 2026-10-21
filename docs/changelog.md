@@ -4,6 +4,8 @@
 
 - Add a conceptual Hub architecture diagram, `docs/diagrams/diem_hub_architecture.html`, that continues
   the monitoring-system diagram in `hh_survey_v3`; linked from `docs/architecture.md`.
+- Link the Hub diagram and `docs/architecture.md` to the VISTA architecture diagram,
+  `vista-water-atlas/docs/diagrams/vista_architecture.html`.
 
 ## 2026-10-21 - Survey catalogue cache freshness
 
