@@ -1,5 +1,10 @@
 import { hubUrl } from '../lib/hubOrigin'
 
+// Share CDN URLs within five-minute windows, then bypass stale survey status.
+function catalogCacheParameters() {
+  return { catalogWindow: String(Math.floor(Date.now() / 300_000)) }
+}
+
 const MONITORING_STATISTICS_URL = 'https://services5.arcgis.com/sjP4Ugu5s0dZWLjd/arcgis/rest/services/monitoring_system_sde_diem_statistics_for_homepage/FeatureServer/0/query'
 
 interface MonitoringStatisticsResponse {
@@ -23,6 +28,7 @@ export interface MonitoringStatistics {
 
 export async function fetchMonitoringStatistics(signal?: AbortSignal): Promise<MonitoringStatistics> {
   const params = new URLSearchParams({
+    ...catalogCacheParameters(),
     f: 'json',
     where: '1=1',
     outFields: 'hh_interviewed,tot_surveys,survey_date_char,last_publish_date_text',
@@ -255,6 +261,7 @@ function normalizeSurvey(
 
 async function fetchSurveyPage(offset: number, signal?: AbortSignal, where = '1=1') {
   const params = new URLSearchParams({
+    ...catalogCacheParameters(),
     f: 'json',
     where,
     outFields: [
@@ -339,6 +346,7 @@ export async function fetchCountryMonitoringCoverage(
   if (!/^[A-Z]{3}$/.test(normalizedIso)) return undefined
 
   const params = new URLSearchParams({
+    ...catalogCacheParameters(),
     f: 'json',
     where: [
       `admin0_isocode = '${normalizedIso}'`,
@@ -429,6 +437,7 @@ export async function fetchSurveyCollectionPeriods(
   for (let page = 0, offset = 0; ; page += 1) {
     if (page >= MAX_REGISTER_PAGES) throw new Error('The survey register returned more pages than expected and was not read completely.')
     const params = new URLSearchParams({
+      ...catalogCacheParameters(),
       f: 'json',
       where: `admin0_isocode IN (${countries.map((iso3) => `'${iso3}'`).join(',')})`,
       outFields: 'ObjectId,admin0_isocode,round,coll_start_date,coll_end_date',
@@ -487,6 +496,7 @@ export async function fetchValidatedSurveyKeys(signal?: AbortSignal): Promise<Se
   let offset = 0
   while (true) {
     const params = new URLSearchParams({
+      ...catalogCacheParameters(),
       f: 'json',
       where: `round_validated = 'Yes'`,
       outFields: 'ObjectId,admin0_isocode,round,round_validated',

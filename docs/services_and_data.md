@@ -124,6 +124,14 @@ case-insensitive matches for publisher-provided tags `Impact assessment` and
 
 `src/services/monitoring.ts` reads the public monitoring statistics service and the public `OER_Monitoring_System_View` item (`9a548eaacfb34089b21e0b28685955db`, layer `0`). The survey pipeline preserves the reviewed legacy dashboard rules: upcoming surveys are unvalidated, current, non-Uganda rounds; published surveys are validated records with a publication date. Placeholder rounds 98 and 99 remain excluded. Product item IDs are linked to their authoritative ArcGIS item pages, while the country brief and survey explorer retain their established DIEM Hub routes.
 
+All monitoring config-view queries (releases, country coverage, collection dates
+and validated keys) and homepage monitoring statistics include `catalogWindow`,
+the Unix timestamp divided into five-minute windows. Identical queries share a
+CDN URL within a window; the next window bypasses the previous cached response.
+Publication rules and ArcGIS sharing are unchanged. Open pages do not poll, and
+`loadValidatedSurveyKeys` retains its existing session cache: the five-minute
+freshness bound applies to new network reads, not every already loaded surface.
+
 `src/services/monitoringProducts.ts` (`fetchSurveyRoundCatalog`) attaches to
 each survey round the products its monitoring record links to. A link whose
 item is in the Hub content group takes that item's title, languages and Hub

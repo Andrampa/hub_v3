@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-21 - Survey catalogue cache freshness
+
+- Add a shared five-minute `catalogWindow` URL parameter to every monitoring
+  config-view query and homepage survey statistics request, limiting stale CDN
+  reuse on fresh reads without changing visibility or polling open pages.
+- Test stable window keys, exact rollover and every affected request path.
+
 ## 2026-10-20 - Community login report
 
 - Add validated one-time Windows Credential Manager setup and noninteractive

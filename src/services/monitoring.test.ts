@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchSurveyCollectionPeriods, isMonitoringRoundProduct } from './monitoring'
+import { fetchSurveyCollectionPeriods, isMonitoringRoundProduct, fetchSurveyReleases, fetchCountryMonitoringCoverage, fetchValidatedSurveyKeys, fetchMonitoringStatistics } from './monitoring'
 
 type Row = { admin0_isocode: string; round: string; coll_start_date?: number; coll_end_date?: number }
 
@@ -22,7 +22,42 @@ function registerServing(rows: Row[], pageSize: number, options: { stallAt?: num
 
 const day = (value: string) => Date.parse(`${value}T00:00:00Z`)
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+describe('survey catalogue cache windows', () => {
+  const readers = [
+    ['releases', () => fetchSurveyReleases()],
+    ['country coverage', () => fetchCountryMonitoringCoverage('SOM')],
+    ['collection periods', () => fetchSurveyCollectionPeriods([{ adm0Iso3: 'SOM', round: 90 }])],
+    ['validated keys', () => fetchValidatedSurveyKeys()],
+    ['round product', () => isMonitoringRoundProduct('a'.repeat(32))],
+    ['statistics', () => fetchMonitoringStatistics()],
+  ] as const
+
+  it.each(readers)('shares a URL within the window and changes at rollover: %s', async (_name, read) => {
+    const now = vi.spyOn(Date, 'now')
+    const fetchMock = vi.fn(async (_input: string) => new Response(JSON.stringify({
+      features: [{ attributes: { hh_interviewed: 10, tot_surveys: 1 } }],
+    })))
+    vi.stubGlobal('fetch', fetchMock)
+    now.mockReturnValue(300_000)
+    await read()
+    now.mockReturnValue(599_999)
+    await read()
+    now.mockReturnValue(600_000)
+    await read()
+
+    const urls = fetchMock.mock.calls.map((call) => new URL(call[0]))
+    expect(urls[0].searchParams.get('catalogWindow')).toBe('1')
+    expect(urls[1].href).toBe(urls[0].href)
+    expect(urls[2].searchParams.get('catalogWindow')).toBe('2')
+    urls.forEach((url) => url.searchParams.delete('catalogWindow'))
+    expect(urls[2].href).toBe(urls[0].href)
+  })
+})
 
 describe('survey collection periods', () => {
   it('matches a survey on country and round', async () => {
