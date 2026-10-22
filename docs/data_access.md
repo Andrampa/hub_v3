@@ -143,20 +143,22 @@ not been done yet.
   each and what is required), the three steps to the data, and the
   questionnaire generations as a compact timeline, then routes to the survey
   data workspace. It lists no dataset and requests no protected item metadata.
-  The `#aggregated` and `#microdata` anchors are kept for country-page links.
+  The `#aggregated` and `#microdata` anchors are kept for older links; country
+  pages now link into `/data/surveys` with the country already chosen.
 - `/data/surveys`: the survey data workspace, where data is chosen by country
   and round and downloaded as a package. See `docs/data_access_restructure.md`.
   It also holds what `/data` used to carry for signed-in members: temporary
   microdata grants, household microdata collections, the full microdata licence,
   and — under technical resources — the source datasets, boundaries,
-  documentation and API tools. `GRANTS_ROUTE` (`/data/surveys#temporary-microdata`)
-  opens its microdata tab directly for a newly accepted grant.
+  documentation and API tools. It is a guided flow; see "Guided survey data flow"
+  below. `GRANTS_ROUTE` (`/data/surveys#temporary-microdata`) opens the microdata
+  route directly for a newly accepted grant.
 - `/data/:datasetId`: internal dataset explorer for supported microdata, aggregated data and boundary resources.
 - Explorer: real ArcGIS service geometry where available, interactive labelled basemap with selectable features and extent controls, live item/layer metadata, recommended country/round filters, matching-record count, table preview, copyable service/query URLs, and current-filter downloads.
 - Every dataset explorer links to the current administrative reference boundary
   dataset so analysts can join survey and aggregate records to the matching
   ADM geometry through the published administrative codes.
-- Microdata (workspace tab): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`. The survey-first picker merges accessible master and temporary-grant scopes, allows up to ten surveys per selection, offers V3 mandatory/optional choice and a coded / labelled / both values choice, and performs live access-and-record-count preflight. The check also samples up to 30 rows per table to show an informational size estimate using the selected encoder and a 20% margin. After licence acceptance, **Prepare microdata downloads** reads the surveys sequentially and splits them using actual sizes into whole-survey parts. Each part has a separate user-clicked download link, its own licence, manifest and documentation; no automatic sequence of file saves is started. Labels come from layer coded-value domains and are offered only while the live domains match the digests recorded by `scripts/audit_microdata_domains.py` in `src/data/auditedDomains.json`; each survey folder carries `value_labels.csv` for verified tables. See `docs/microdata_access_restructure.md` §8a. Each part holds at most 50,000 source records, 40 MB of actual encoded data CSV (coded and labelled together) and 20 source tables. A single survey must fit these limits; no partial survey is offered. Errors receive focus, replace the ready hint and preserve completed parts, as does cancellation. Prepared compressed ZIP retention has a separate 40 MB limit; clearing parts, changing the selection or leaving the picker revokes their object URLs.
+- Microdata (workspace route): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`. The survey-first picker merges accessible master and temporary-grant scopes, allows up to ten surveys per selection, offers V3 mandatory/optional choice and a coded / labelled / both values choice, and performs a live access-and-record-count check on its Review step. The check also samples up to 30 rows per table to show an informational size estimate using the selected encoder and a 20% margin. After licence acceptance, **Prepare microdata downloads** on the Download step reads the surveys sequentially and splits them using actual sizes into whole-survey parts. Each part has a separate user-clicked download link, its own licence, manifest and documentation; no automatic sequence of file saves is started. Labels come from layer coded-value domains and are offered only while the live domains match the digests recorded by `scripts/audit_microdata_domains.py` in `src/data/auditedDomains.json`; each survey folder carries `value_labels.csv` for verified tables. See `docs/microdata_access_restructure.md` §8a. Each part holds at most 50,000 source records, 40 MB of actual encoded data CSV (coded and labelled together) and 20 source tables. A single survey must fit these limits; no partial survey is offered. Errors receive focus, replace the ready hint and preserve completed parts, as does cancellation. Prepared compressed ZIP retention has a separate 40 MB limit; clearing parts, changing the selection or leaving the picker revokes their object URLs.
 - If the complete microdata selection fits one ZIP, it uses the ordinary filename
   (without `_part1`) and starts one automatic download, keeping the link as a
   fallback. Multiple ZIPs require separate clicks. A retention-limit stop names
@@ -166,6 +168,55 @@ not been done yet.
 - Boundaries: current and historical ADM1/ADM2 operational references, under workspace technical resources.
 - Tools: microdata labelling repository and DIEM API examples, under workspace technical resources.
 - Citations: English, French and Spanish citation text plus both licences, in `/data/guide`.
+
+## Guided survey data flow
+
+`/data/surveys` asks one thing at a time. Without a `type` it shows the entry
+choice (aggregated data or household microdata). Each route then has one ordered
+step list and Back / Next actions:
+
+- Aggregated data: Surveys → Options (themes, and the layout when more than one
+  survey is chosen) → Review → Download.
+- Household microdata: Surveys → Options (values, and V3 tables) → Review →
+  Licence → Download. An account with no microdata path is offered the FAO
+  Microdata Catalogue and the request form at once instead of an empty list.
+
+Every step stays mounted and only the current one is shown, so selections, a
+finished check, the licence acceptance and prepared parts (with their object
+URLs) survive moving between steps and between the two routes.
+
+URL contract (`src/lib/surveyFlow.ts`): `type`, `step`, `surveys` (canonical
+keys such as `v2:AFG:8`, comma-separated), and the short incoming form `country`
+with optional `round`; `test=1` is unchanged. The URL states intent only. A
+step is shown only when every earlier step is finished, so a refreshed or shared
+`step=download` returns to the earliest unfinished step; a check result or a
+licence acceptance is never read from the URL. A survey request is applied once
+the route's discovery has settled, only to surveys that account is offered, and
+replaces any stored selection; it is then removed from the URL and session
+storage keeps the selection. A requested survey that was not offered is named:
+"not among the surveys your account can download here" after complete
+discovery, "could not be confirmed" when a source did not answer. A country and
+round that match more than one generation select nothing and say so. A request
+over the package limit selects up to the limit and names the rest. Sign-in opens
+in a popup, so the request survives it.
+
+Review checks by itself: once per package configuration (account, surveys,
+sources and options), when the Review step opens. Leaving Review, changing the
+package, signing out or switching account cancels a check in progress; progress,
+result and failure updates are ignored once their run is no longer current. A
+failure or cancellation is never retried automatically; Review offers the check
+again. Cancellation reaches every request of the microdata check, including
+source resolution and the survey register. Aggregated counts run at most six at
+a time. Preparation still re-resolves access live; a passed Review check is not
+an access grant. The licence step is skipped once it has been accepted in the
+current visit by the same account. Focus moves to the new step's heading after
+every step change, including the browser's Back.
+
+Links into the flow: country pages (`Get aggregated data`, `Access household
+microdata`) open the matching route with the country chosen; the surveys
+catalogue offers `Get data` for each published round. Brief and presentation
+pages do not link yet: their catalogue records carry no authoritative survey
+identifier. The Household Survey Explorer lives in its own repository.
 
 ## Content visibility
 

@@ -575,24 +575,41 @@ export async function countSurveySlices(
   slices: Array<{ survey: AvailableSurvey; theme: SurveyThemeSource }>,
   requester: ProtectedRequester,
   onProgress?: (completed: number, total: number) => void,
+  options: { signal?: AbortSignal; concurrency?: number } = {},
 ): Promise<SurveySliceCount[]> {
+  const { signal } = options
+  // Ten surveys across five themes is fifty count queries; a bounded pool keeps
+  // a check that now starts on its own from arriving as one burst.
+  const concurrency = Math.max(1, options.concurrency ?? COUNT_CONCURRENCY)
+  const results: SurveySliceCount[] = new Array(slices.length)
   let completed = 0
-  return Promise.all(slices.map(async ({ survey, theme }) => {
-    try {
-      const response = await requester<{ count?: number }>(`${theme.layerUrl}/query`, {
-        where: surveySliceWhere(survey, theme),
-        returnCountOnly: 'true',
-        returnGeometry: 'false',
-      })
-      return { surveyKey: survey.key, themeId: theme.id, count: response.count || 0 }
-    } catch (error) {
-      return { surveyKey: survey.key, themeId: theme.id, error: readableFailure(error) }
-    } finally {
+  let next = 0
+  async function worker() {
+    while (next < slices.length) {
+      if (signal?.aborted) throw new DOMException('The count was cancelled.', 'AbortError')
+      const index = next
+      next += 1
+      const { survey, theme } = slices[index]
+      try {
+        const response = await requester<{ count?: number }>(`${theme.layerUrl}/query`, {
+          where: surveySliceWhere(survey, theme),
+          returnCountOnly: 'true',
+          returnGeometry: 'false',
+        }, { signal })
+        results[index] = { surveyKey: survey.key, themeId: theme.id, count: response.count || 0 }
+      } catch (error) {
+        if (signal?.aborted) throw new DOMException('The count was cancelled.', 'AbortError')
+        results[index] = { surveyKey: survey.key, themeId: theme.id, error: readableFailure(error) }
+      }
       completed += 1
-      onProgress?.(completed, slices.length)
+      if (!signal?.aborted) onProgress?.(completed, slices.length)
     }
-  }))
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, slices.length) }, worker))
+  return results
 }
+
+const COUNT_CONCURRENCY = 6
 
 /** Replaceable in tests; the register is public, so it needs no requester. */
 let loadValidatedSurveys: () => Promise<Set<string>> = () => fetchValidatedSurveyKeys()

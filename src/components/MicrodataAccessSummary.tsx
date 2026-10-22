@@ -7,8 +7,10 @@ export function MicrodataAccessSummary({ discovery, checking, householdData, rec
 }) {
   const bundles = discovery?.bundles.filter((bundle) => bundle.status === 'active') || []
   const grants = new Set(bundles.map((bundle) => bundle.grantId)).size
-  const access = [householdData ? 'household collections' : '', grants ? grants + ' temporary grant' + (grants === 1 ? '' : 's') : ''].filter(Boolean).join(' · ')
-  const status = discovery?.error ? 'Access could not be fully checked.' : access || (checking ? 'Checking access…' : 'Request access to household microdata')
+  // Names the paths held, never "all": group membership does not prove that
+  // every collection behind it opens, which the survey list itself shows.
+  const access = [householdData ? 'household-data group' : '', grants ? grants + ' temporary grant' + (grants === 1 ? '' : 's') : ''].filter(Boolean).join(' and ')
+  const status = discovery?.error ? 'Access could not be fully checked.' : access ? `Your microdata access: ${access}` : (checking ? 'Checking access…' : 'Request access to household microdata')
   return <div id="step-microdata" className="microdata-access-summary">
     <div className="package-actions"><span>{status}</span>
       <button type="button" disabled={checking} onClick={recheck}>{checking ? 'Re-checking access…' : 'Re-check access'}</button></div>

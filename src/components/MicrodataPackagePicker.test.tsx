@@ -2,7 +2,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const auth = {
   status: 'authenticated',
@@ -88,17 +88,11 @@ it('selects a live survey, preflights it, and offers a licensed package download
   }))
   const download = Array.from(host.querySelectorAll('button')).find((button) => button.textContent === 'Prepare microdata downloads') as HTMLButtonElement
   expect(download.disabled).toBe(true)
-  expect(host.textContent).toContain('Open the microdata licence above and accept it to download.')
-  const disclosure = host.querySelector('details.licence-disclosure') as HTMLDetailsElement
-  expect(disclosure.open).toBe(false)
-  expect(disclosure.textContent).toContain('Your microdata licence')
-  await act(async () => {
-    disclosure.open = true
-    disclosure.dispatchEvent(new Event('toggle'))
-  })
+  expect(host.querySelector('#microdata-download-hint')?.textContent).toBe('Accept the microdata licence to download.')
+  // The licence is its own step, shown in full rather than behind a disclosure.
+  const licenceStep = host.querySelector('#microdata-step-licence') as HTMLElement
+  expect(licenceStep.textContent).toContain('Your microdata licence')
   await acceptLicence()
-  expect(disclosure.open).toBe(true)
-  expect(disclosure.textContent).toContain('Microdata licence accepted')
   expect(download.disabled).toBe(false)
   await act(async () => download.click())
   expect(buildMicrodataParts).toHaveBeenCalledOnce()
@@ -245,14 +239,14 @@ it('explains a failed access check beside the disabled download button', async (
   await act(async () => button('Check access and count records').click())
   expect(host.textContent).toContain('The source could not be reached.')
   expect(host.querySelector('#microdata-download-hint')?.textContent)
-    .toBe('The access check failed. Read the message above, then check again.')
+    .toBe('The access check failed. Return to Review and check again.')
   expect(button('Prepare microdata downloads').disabled).toBe(true)
   const survey = host.querySelector('details.microdata-country input[type="checkbox"]') as HTMLInputElement
   await act(async () => survey.click())
   await act(async () => survey.click())
   expect(host.textContent).not.toContain('The source could not be reached.')
   expect(host.querySelector('#microdata-download-hint')?.textContent)
-    .toBe('Check access above, then open and accept the microdata licence.')
+    .toBe('Return to Review to check access and count records.')
 })
 
 it('keeps the inventory and selections visible while a refresh is pending', async () => {
@@ -316,4 +310,93 @@ it.each(['account', 'sign-out', 'test-mode'])('clears the old displayed inventor
   if (change === 'sign-out') auth.status = 'anonymous'
   await act(async () => root.render(render(change === 'test-mode')))
   expect(host.textContent).not.toContain('Nigeria')
+})
+
+describe('guided steps', () => {
+  const flow = (props: Record<string, unknown> = {}) => <MemoryRouter><MicrodataPackagePicker
+    grantDiscovery={{ bundles: [], source: 'none' }} grantChecking={false}
+    householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup"
+    {...props}
+  /></MemoryRouter>
+  const storeSelection = (keys: string[]) => sessionStorage.setItem('diem.microdata-selection.v1.alice.production', JSON.stringify(keys))
+
+  it('checks access by itself on Review, once for the package', async () => {
+    storeSelection(['v2:NGA:8'])
+    const onStep = vi.fn()
+    await act(async () => root.render(flow({ requested: 'review', onStep })))
+    expect(preflightMicrodataPackage).toHaveBeenCalledOnce()
+    expect(onStep).not.toHaveBeenCalled()
+    expect(host.querySelector('#microdata-step-review')?.hasAttribute('hidden')).toBe(false)
+    await act(async () => root.render(flow({ requested: 'review', onStep })))
+    expect(preflightMicrodataPackage).toHaveBeenCalledOnce()
+  })
+
+  it('does not restart a failed check on its own', async () => {
+    storeSelection(['v2:NGA:8'])
+    preflightMicrodataPackage.mockRejectedValueOnce(new Error('The source could not be reached.'))
+    await act(async () => root.render(flow({ requested: 'review', onStep: vi.fn() })))
+    expect(host.textContent).toContain('The source could not be reached.')
+    await act(async () => root.render(flow({ requested: 'review', onStep: vi.fn() })))
+    expect(preflightMicrodataPackage).toHaveBeenCalledOnce()
+    await act(async () => button('Check access and count records').click())
+    expect(preflightMicrodataPackage).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops a running check when the user leaves Review', async () => {
+    storeSelection(['v2:NGA:8'])
+    let signal!: AbortSignal
+    preflightMicrodataPackage.mockImplementationOnce(({ signal: current }) => {
+      signal = current
+      // As the real check does: a cancelled request rejects.
+      return new Promise((_resolve, reject) => current.addEventListener('abort', () => reject(new Error('The microdata package was cancelled.'))))
+    })
+    await act(async () => root.render(flow({ requested: 'review', onStep: vi.fn() })))
+    expect(signal.aborted).toBe(false)
+    await act(async () => root.render(flow({ requested: 'options', onStep: vi.fn() })))
+    expect(signal.aborted).toBe(true)
+    await act(async () => root.render(flow({ requested: 'review', onStep: vi.fn() })))
+    expect(host.textContent).toContain('The check was stopped before it finished')
+    expect(preflightMicrodataPackage).toHaveBeenCalledOnce()
+  })
+
+  it('sends a URL that skips ahead back to the earliest unfinished step', async () => {
+    storeSelection(['v2:NGA:8'])
+    preflightMicrodataPackage.mockImplementationOnce(() => new Promise(() => {}))
+    const onStep = vi.fn()
+    // A licence acceptance and a finished check are never read from the URL.
+    await act(async () => root.render(flow({ requested: 'download', onStep })))
+    expect(onStep).toHaveBeenCalledWith('review', { replace: true })
+
+    sessionStorage.clear()
+    onStep.mockClear()
+    await act(async () => root.unmount())
+    root = createRoot(host)
+    await act(async () => root.render(flow({ requested: 'options', onStep })))
+    expect(onStep).toHaveBeenCalledWith('surveys', { replace: true })
+  })
+
+  it('applies a link request to the surveys this account can open', async () => {
+    const onRequestApplied = vi.fn()
+    await act(async () => root.render(flow({ request: { keys: [], country: 'NGA', round: 8 }, onRequestApplied, onStep: vi.fn() })))
+    expect(onRequestApplied).toHaveBeenCalledWith(undefined)
+    expect((host.querySelector('details.microdata-country input[type="checkbox"]') as HTMLInputElement).checked).toBe(true)
+    expect((host.querySelector('details.microdata-country') as HTMLDetailsElement).open).toBe(true)
+  })
+
+  it('names a requested survey the account cannot open instead of dropping it', async () => {
+    const onRequestApplied = vi.fn()
+    await act(async () => root.render(flow({ request: { keys: [], country: 'NGA', round: 9 }, onRequestApplied, onStep: vi.fn() })))
+    expect(onRequestApplied.mock.calls[0][0]).toContain('Nigeria round 9 is not among the surveys your account can download here')
+    expect((host.querySelector('details.microdata-country input[type="checkbox"]') as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('skips the licence step once the licence has been accepted in this visit', async () => {
+    storeSelection(['v2:NGA:8'])
+    const onStep = vi.fn()
+    await act(async () => root.render(flow({ requested: 'review', onStep })))
+    expect(button('Next: licence').disabled).toBe(false)
+    await acceptLicence()
+    await act(async () => button('Next: download').click())
+    expect(onStep).toHaveBeenLastCalledWith('download')
+  })
 })

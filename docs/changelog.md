@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-10-22 - Guided survey data flow
+
+- Turn `/data/surveys` into a step-by-step flow: an entry choice between
+  aggregated data and household microdata, then one ordered step list with Back
+  and Next (aggregated: Surveys, Options, Review, Download; microdata: Surveys,
+  Options, Review, Licence, Download). Steps stay mounted, so selections, checks,
+  licence acceptance and prepared parts survive navigation.
+- Add the URL contract in `src/lib/surveyFlow.ts` (`type`, `step`, `surveys`,
+  `country`, `round`), with step guards that return a skipped-ahead URL to the
+  earliest unfinished step and survey requests applied only to surveys the
+  account is offered, naming any that are not. Grant invitation hashes still
+  open the microdata route.
+- Review now counts records and checks access by itself, once per package
+  configuration, with cancellation on leaving Review or changing the package and
+  no automatic retry. The microdata check passes cancellation to source
+  resolution and the survey register and reports sampling as its own phase;
+  aggregated counts are cancellable and run at most six at a time.
+- Country pages link to the flow with the country chosen ("Get aggregated data",
+  "Access household microdata"); the surveys catalogue adds "Get data" per
+  round. Clearer microdata access summary wording; an account without a
+  microdata path is offered the catalogue and request form directly.
+
 ## 2026-10-22 - Architecture diagram review improvements
 
 - Correct the Hub diagram's token persistence, shared microdata access paths and

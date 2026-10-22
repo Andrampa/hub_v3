@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SurveyDiscoveryResult } from '../services/surveyAccess'
 
@@ -119,11 +119,20 @@ let root: Root
  * selecting rounds. The collapsed default is covered by its own tests, which
  * pass `{ expand: false }`.
  */
+/** The router location the page last navigated to, for asserting the URL contract. */
+let location: { pathname: string; search: string; hash: string } | undefined
+
+function LocationProbe() {
+  location = useLocation()
+  return null
+}
+
 async function render(path = '/data/surveys', { expand = true }: { expand?: boolean } = {}) {
   await act(async () => {
     root.render(
       <MemoryRouter initialEntries={[path]}>
         <SurveyWorkspace />
+        <LocationProbe />
       </MemoryRouter>,
     )
   })
@@ -278,7 +287,7 @@ describe('survey workspace access states', () => {
     expect(container.textContent).not.toContain('Microdata is available by request')
     expect(container.textContent).not.toContain('collections are available to your account')
     expect(container.textContent).not.toContain('seven days')
-    expect(container.textContent).toContain('Household microdata follows its own route')
+    expect(container.textContent).toContain('under a stricter licence than aggregated data')
   })
 })
 
@@ -894,19 +903,33 @@ describe('package download', () => {
   })
 })
 
-describe('microdata tab', () => {
-  it('opens itself when an accepted grant invitation sends the user here', async () => {
-    // GRANTS_ROUTE: the grants live in this tab now, and a hidden panel cannot be scrolled to.
+describe('data type', () => {
+  it('opens microdata when an accepted grant invitation sends the user here', async () => {
+    // GRANTS_ROUTE: the invitation links carry a hash and no type; they must keep working.
     await render('/data/surveys#temporary-microdata')
 
-    expect(container.querySelector('#tab-microdata')?.getAttribute('aria-selected')).toBe('true')
     expect(container.querySelector('#panel-microdata')?.hasAttribute('hidden')).toBe(false)
+    expect(container.querySelector('#panel-aggregated')?.hasAttribute('hidden')).toBe(true)
   })
 
-  it('opens on aggregated data otherwise', async () => {
+  it('asks which data type is needed when the URL does not say', async () => {
     await render()
 
-    expect(container.querySelector('#tab-aggregated')?.getAttribute('aria-selected')).toBe('true')
+    expect(container.querySelector('.workspace-entry')).not.toBe(null)
+    expect(container.querySelector('#panel-aggregated')?.hasAttribute('hidden')).toBe(true)
+    expect(container.querySelector('#panel-microdata')?.hasAttribute('hidden')).toBe(true)
+  })
+
+  it('opens the chosen route from the entry choice', async () => {
+    await render()
+    const choose = Array.from(container.querySelectorAll('.access-card button'))
+      .find((entry) => entry.textContent?.startsWith('Choose household microdata')) as HTMLButtonElement
+
+    await click(choose)
+
+    expect(container.querySelector('.workspace-entry')).toBe(null)
+    expect(container.querySelector('#panel-microdata')?.hasAttribute('hidden')).toBe(false)
+    expect(location?.search).toBe('?type=microdata')
   })
 
   it('carries the routes and the full licence wherever microdata is offered', async () => {
@@ -925,13 +948,13 @@ describe('microdata tab', () => {
     // was no expectation, which is the same reason the grants section renders
     // nothing at all without a grant.
     await render('/data/surveys#temporary-microdata')
-    expect(container.querySelector('#step-microdata-package')).toBe(null)
+    expect(container.querySelector('.microdata-flow')).toBe(null)
     expect(container.querySelector('#panel-microdata')?.textContent)
       .toContain('the microdataset will not be redisseminated')
 
     auth.user = { username: 'hana', capabilities: { contributor: false, aggregatedData: true, householdData: true } }
     await render('/data/surveys#temporary-microdata')
-    expect(container.querySelector('#step-microdata-package')).not.toBe(null)
+    expect(container.querySelector('.microdata-flow')).not.toBe(null)
     expect(container.querySelector('#panel-microdata')?.textContent)
       .toContain('the microdataset will not be redisseminated')
   })
@@ -951,18 +974,6 @@ describe('microdata tab', () => {
     const section = container.querySelector('[aria-labelledby="step-household"]')
     expect(section?.textContent).toContain('DIEM Household Surveys Microdata')
     expect(section?.querySelector('a[href="/data/2d15e5b7768949b4905e452fcc5e0440"]')).not.toBe(null)
-  })
-
-  it('switches to the tab from the access summary, and moves focus with it', async () => {
-    await render()
-    const open = Array.from(container.querySelectorAll('.access-card button'))
-      .find((entry) => entry.textContent?.startsWith('See your microdata')) as HTMLButtonElement
-
-    await click(open)
-
-    const tab = container.querySelector('#tab-microdata')
-    expect(tab?.getAttribute('aria-selected')).toBe('true')
-    expect(document.activeElement).toBe(tab)
   })
 
   it('no longer sends anyone to the /data microdata section', async () => {
@@ -1061,23 +1072,108 @@ describe('technical resources', () => {
   })
 })
 
-describe('workspace tabs', () => {
-  it('keeps both panels mounted and moves between tabs with the arrow keys', async () => {
-    await render()
+describe('guided aggregated steps', () => {
+  const visibleStep = () => Array.from(container.querySelectorAll('#panel-aggregated .flow-step'))
+    .filter((section) => !section.hasAttribute('hidden')).map((section) => section.id)
+  const flowButton = (label: string) => Array.from(container.querySelectorAll('.flow-actions button'))
+    .find((entry) => entry.textContent === label && !entry.closest('[hidden]')) as HTMLButtonElement
 
-    const tabs = Array.from(container.querySelectorAll('[role="tab"]')) as HTMLButtonElement[]
-    expect(container.querySelector('#panel-aggregated')).not.toBe(null)
+  it('keeps both routes mounted and shows one step at a time', async () => {
+    await render('/data/surveys?type=aggregated')
+
     expect(container.querySelector('#panel-microdata')).not.toBe(null)
-    expect(tabs.map((tab) => tab.tabIndex)).toEqual([0, -1])
+    expect(visibleStep()).toEqual(['aggregated-step-surveys'])
+    expect(container.querySelector('[aria-current="step"]')?.textContent).toContain('Surveys')
+  })
 
-    await act(async () => {
-      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+  it('moves forward with Next, records the step in the URL and focuses its heading', async () => {
+    await render('/data/surveys?type=aggregated')
+    expect(flowButton('Next: options').disabled).toBe(true)
+
+    await click(checkboxes()[0])
+    await click(flowButton('Next: options'))
+
+    expect(visibleStep()).toEqual(['aggregated-step-options'])
+    expect(location?.search).toBe('?type=aggregated&step=options')
+    expect(document.activeElement?.id).toBe('aggregated-step-options-heading')
+  })
+
+  it('counts the package by itself when Review opens, once', async () => {
+    auth.requestProtected.mockImplementation(async (_url: string, params?: Record<string, unknown>) => (
+      params?.returnCountOnly ? { count: 120 } : {}
+    ))
+    await render('/data/surveys?type=aggregated')
+    await click(checkboxes()[0])
+    await click(flowButton('Next: options'))
+    await click(flowButton('Next: review'))
+
+    const counts = () => auth.requestProtected.mock.calls.filter(([, params]) => (params as Record<string, unknown> | undefined)?.returnCountOnly)
+    expect(counts()).toHaveLength(1)
+    expect(container.textContent).toContain('Preflight passed: 120 records')
+    expect(flowButton('Next: download').disabled).toBe(false)
+
+    await click(flowButton('Next: download'))
+    await click(flowButton('Back'))
+    expect(counts()).toHaveLength(1)
+  })
+
+  it('returns a URL that skips ahead to the earliest unfinished step', async () => {
+    await render('/data/surveys?type=aggregated&step=download')
+
+    expect(visibleStep()).toEqual(['aggregated-step-surveys'])
+    expect(location?.search).toBe('?type=aggregated')
+  })
+
+  it('preselects a survey a link asks for, opens its country and cleans the URL', async () => {
+    await render('/data/surveys?type=aggregated&country=TCD&round=3', { expand: false })
+
+    const chad = container.querySelector('#country-rounds-TCD')
+    expect(chad).not.toBe(null)
+    expect((chad?.querySelector('input') as HTMLInputElement).checked).toBe(true)
+    expect(location?.search).toBe('?type=aggregated')
+  })
+
+  it('replaces a stored selection with the one a link asks for', async () => {
+    sessionStorage.setItem('diem.survey-selection.alice.production', JSON.stringify({ version: 1, keys: ['v2:NGA:8'] }))
+    await render('/data/surveys?type=aggregated&surveys=v2:TCD:3')
+
+    const checked = checkboxes().filter((box) => box.checked).map((box) => box.getAttribute('aria-label'))
+    expect(checked).toEqual(['Chad, round 3'])
+  })
+
+  it('does not leave an earlier choice selected when the requested round is unavailable', async () => {
+    sessionStorage.setItem('diem.survey-selection.alice.production', JSON.stringify({ version: 1, keys: ['v2:NGA:8'] }))
+    await render('/data/surveys?type=aggregated&country=TCD&round=99')
+
+    expect(checkboxes().some((box) => box.checked)).toBe(false)
+  })
+
+  it('keeps the selection for a link that only names a country', async () => {
+    sessionStorage.setItem('diem.survey-selection.alice.production', JSON.stringify({ version: 1, keys: ['v2:NGA:8'] }))
+    await render('/data/surveys?type=aggregated&country=TCD', { expand: false })
+
+    expect(container.querySelector('#country-rounds-TCD')).not.toBe(null)
+    expect(container.querySelector('#panel-aggregated .flow-selection')?.textContent).toContain('Nigeria round 8')
+  })
+
+  it('names a requested round the account cannot download, without claiming why', async () => {
+    await render('/data/surveys?type=aggregated&country=NGA&round=99')
+
+    expect(container.querySelector('.flow-intent-notice')?.textContent)
+      .toContain('Nigeria round 99 is not among the surveys your account can download here. It may not be released yet')
+    expect(checkboxes().some((box) => box.checked)).toBe(false)
+  })
+
+  it('reports a request as unconfirmed, not unavailable, when a source did not answer', async () => {
+    discoverAggregatedSurveys.mockImplementation((_requester: unknown, options: { onProgress?: (value: SurveyDiscoveryResult) => void }) => {
+      const result = discovery({ status: 'partial', unavailableSourceCount: 1 })
+      options.onProgress?.(result)
+      return Promise.resolve(result)
     })
+    await render('/data/surveys?type=aggregated&country=NGA&round=99')
 
-    const updated = Array.from(container.querySelectorAll('[role="tab"]')) as HTMLButtonElement[]
-    expect(updated[1].getAttribute('aria-selected')).toBe('true')
-    expect(updated.map((tab) => tab.tabIndex)).toEqual([-1, 0])
-    expect(container.querySelector('#panel-aggregated')?.hasAttribute('hidden')).toBe(true)
+    expect(container.querySelector('.flow-intent-notice')?.textContent)
+      .toContain('could not be confirmed because a data source did not answer')
   })
 })
 

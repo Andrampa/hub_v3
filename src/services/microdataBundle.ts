@@ -198,7 +198,12 @@ function documentationText(survey: MicrodataSurvey, included: MicrodataComponent
 
 /** A live, authorization-aware count; no household rows are retained. */
 export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOptions, 'budget'> & { budget?: MicrodataPackageBudget }) {
-  const { surveys, requester, signal, onProgress } = options
+  const { surveys, signal, onProgress } = options
+  // Every request this check makes carries the cancellation, including the item
+  // and service lookups inside source resolution, which take no signal of their own.
+  const requester: ProtectedRequester = (url, params, requestOptions) => (
+    options.requester(url, params, { ...requestOptions, signal: requestOptions?.signal || signal })
+  )
   if (!surveys.length) throw new Error('Select at least one microdata survey.')
   if (surveys.length > MICRODATA_SURVEY_LIMIT || new Set(surveys.map((survey) => survey.key)).size !== surveys.length) {
     throw new Error(`Select no more than ${MICRODATA_SURVEY_LIMIT} distinct surveys in one microdata package.`)
@@ -220,7 +225,8 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
   }
 
   if (!options.contributor) {
-    const validated = await fetchValidatedSurveyKeys().catch(() => null)
+    const validated = await fetchValidatedSurveyKeys(signal).catch(() => null)
+    assertLive(signal)
     if (!validated) throw new Error('The survey register could not be checked. No package was created.')
     if (surveys.some((survey) => !validated.has(`${survey.adm0Iso3}:${survey.round}`))) {
       throw new Error('A selected survey is no longer validated for release. Refresh your selection and try again.')
@@ -229,11 +235,15 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
 
   const resolved: ResolvedComponent[] = []
   let recordCount = 0
+  // Counting and size sampling are separate phases of one total, so progress
+  // never reports the check finished while samples are still being read.
+  const total = chosen.length * (options.estimateSize ? 2 : 1)
   for (const [index, { survey, component }] of chosen.entries()) {
     assertLive(signal)
-    onProgress?.({ stage: 'reading-schema', completed: index, total: chosen.length,
+    onProgress?.({ stage: 'reading-schema', completed: index, total,
       label: `${survey.countryName} round ${survey.round}` })
     const definition = await (options.resolve || resolveCurrent)(component, requester)
+    assertLive(signal)
     validateResolvedSource(survey, component, definition)
     const { where } = componentWhere(survey, definition, options.contributor)
     const countResponse = await requester<{ count?: number }>(`${definition.layerUrl}/query`, {
@@ -247,7 +257,7 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
     const labels = await labelStatus(survey.generation, component.component, component.source,
       component.itemId, definition.layer.fields, options.audit)
     resolved.push({ survey, component, definition, where, count, labels })
-    onProgress?.({ stage: 'counting', completed: index + 1, total: chosen.length })
+    onProgress?.({ stage: 'counting', completed: index + 1, total })
   }
   const values = options.values || 'codes'
   if (options.splitParts && options.budget) {
@@ -269,8 +279,10 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
   let estimatedBytes: number | undefined
   if (options.estimateSize) {
     estimatedBytes = 0
-    for (const entry of resolved) {
+    for (const [index, entry] of resolved.entries()) {
       assertLive(signal)
+      onProgress?.({ stage: 'counting', completed: chosen.length + index, total,
+        label: `Estimating size · ${entry.survey.countryName} round ${entry.survey.round}` })
       const columns = usableFields(entry.definition.layer.fields).map((field) => field.name)
       const plan = labelPlan(entry.definition.layer.fields, columns)
       const sample = await requester<{ features?: Array<{ attributes: Record<string, unknown> }> }>(`${entry.definition.layerUrl}/query`, {

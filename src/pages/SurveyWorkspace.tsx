@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { GRANTS_SECTION_ID } from '../components/MicrodataInvitationDialog'
 import { MicrodataLicence, type MicrodataAccess } from '../components/MicrodataLicence'
 import { MicrodataPackagePicker } from '../components/MicrodataPackagePicker'
+import { FlowActions, FlowStepList, FlowStepPanel, useStepHeadingFocus } from '../components/SurveyFlowNav'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
 import { useMicrodataGrants } from '../hooks/useMicrodataGrants'
@@ -12,6 +13,21 @@ import { MicrodataAccessSummary } from '../components/MicrodataAccessSummary'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { formatNumber } from '../lib/format'
 import { hubPath } from '../lib/hubOrigin'
+import {
+  FLOW_STEPS,
+  describeRequestOutcome,
+  flowType,
+  guardedStep,
+  hasSurveyRequest,
+  requestedStep,
+  resolveSurveyRequest,
+  surveyRequest,
+  withFlowParams,
+  withoutSurveyRequest,
+  type FlowStep,
+  type FlowType,
+  type SurveyRequest,
+} from '../lib/surveyFlow'
 import { fetchSurveyCollectionPeriods, type SurveyCollectionPeriod } from '../services/monitoring'
 import {
   ANALYSIS_TOOLS,
@@ -57,7 +73,6 @@ const SELECTION_STORAGE_KEY = 'diem.survey-selection'
 const SELECTION_SCHEMA_VERSION = 1
 const LAYOUT_STORAGE_KEY = 'diem.survey-package-layout'
 
-type WorkspaceMode = 'aggregated' | 'microdata'
 type SelectionScope = 'production' | 'test'
 
 /** Named stages, so a long build says what it is doing rather than only spinning. */
@@ -71,10 +86,10 @@ const BUNDLE_STAGE_COPY: Record<BundleProgress['stage'], string> = {
   ready: 'Ready',
 }
 
-const WORKSPACE_MODES: Array<{ id: WorkspaceMode; label: string }> = [
-  { id: 'aggregated', label: 'Aggregated data' },
-  { id: 'microdata', label: 'Microdata access' },
-]
+const FLOW_TITLES: Record<FlowType, string> = {
+  aggregated: 'Aggregated survey data',
+  microdata: 'Household microdata',
+}
 
 type IconName = 'arrow' | 'check' | 'external' | 'lock' | 'shield' | 'table' | 'flask' | 'search'
 
@@ -164,7 +179,7 @@ function writeStoredLayout(account: string, scope: SelectionScope, layout: Bundl
   }
 }
 
-function SignInGate() {
+function SignInGate({ type }: { type?: FlowType }) {
   const auth = useAuth()
   usePageMetadata({
     title: 'Your surveys',
@@ -176,9 +191,10 @@ function SignInGate() {
         <span className="eyebrow"><span/> Your surveys</span>
         <h1>Sign in to choose your surveys</h1>
         <p>The workspace lists the surveys your account can download — country by country, round by round — and packages them with the documentation that belongs to each one. Aggregated survey data is available to any DIEM community account.</p>
+        {type === 'microdata' && <p>Household microdata also needs approved access: membership of the household-data group or a temporary grant. After signing in you will see which surveys your account can open.</p>}
         <div className="workspace-gate-actions">
-          {/* Sign-in returns here rather than to /data, so the visitor keeps the
-              destination they asked for. */}
+          {/* Sign-in opens in a popup and this page stays where it is, so the
+              data type, step and any survey a link asked for are kept. */}
           <button type="button" onClick={() => void auth.signIn()} disabled={auth.status === 'authenticating'}>
             <Icon name="lock"/>{auth.status === 'authenticating' ? 'Opening sign in…' : 'Sign in or create an account'}
           </button>
@@ -207,9 +223,10 @@ export function collectionPeriodLabel(period: SurveyCollectionPeriod) {
   return start ? `From ${start}` : end ? `Until ${end}` : ''
 }
 
-function AggregatedAccessCard({ result, onRetry }: {
+function AggregatedAccessCard({ result, onRetry, action }: {
   result?: SurveyDiscoveryResult
   onRetry: () => void
+  action?: React.ReactNode
 }) {
   /*
    * Production sources only, in every mode. With test mode open, discovery also
@@ -230,6 +247,7 @@ function AggregatedAccessCard({ result, onRetry }: {
       <article className="access-card">
         <h2>Aggregated survey data</h2>
         <p className="access-card-lede">Checking which surveys your account can download…</p>
+        {action}
       </article>
     )
   }
@@ -256,6 +274,7 @@ function AggregatedAccessCard({ result, onRetry }: {
           This is a valid DIEM community account, but it cannot open the aggregated data sources yet. Access normally activates within 15 minutes of account creation. If this account is older, contact the DIEM Hub team.
           <button type="button" onClick={onRetry}>Check again</button>
         </p>
+        {action}
       </article>
     )
   }
@@ -287,6 +306,7 @@ function AggregatedAccessCard({ result, onRetry }: {
           <button type="button" onClick={onRetry}>Check again</button>
         </p>
       )}
+      {action}
     </article>
   )
 }
@@ -305,11 +325,11 @@ function MicrodataAccessCard({ onOpen }: { onOpen: () => void }) {
   return (
     <article className="access-card">
       <h2>Household microdata</h2>
-      <p className="access-card-lede">Household microdata follows its own route, with a stricter licence than aggregated data.</p>
-      <p className="access-card-state">Any collection or temporary grant approved for your account is listed under microdata access, below.</p>
+      <p className="access-card-lede">Anonymized household-level records, under a stricter licence than aggregated data.</p>
+      <p className="access-card-state">Needs approved access: the household-data group or a temporary grant. Published collections are also in the FAO Microdata Catalogue (FAM).</p>
       <div className="access-card-links">
-        <button type="button" className="access-card-action" onClick={onOpen}>See your microdata<Icon name="arrow"/></button>
-        <Link className="access-card-action" to="/data/microdata-request">Request access<Icon name="arrow"/></Link>
+        <button type="button" className="access-card-choose" onClick={onOpen}>Choose household microdata<Icon name="arrow"/></button>
+        <Link className="access-card-action" to="/data/microdata-request">Request microdata access<Icon name="arrow"/></Link>
       </div>
     </article>
   )
@@ -348,21 +368,46 @@ export default function SurveyWorkspace() {
   const location = useLocation()
   const arrivingForGrants = [`#${GRANTS_SECTION_ID}`, '#temporary-microdata', '#step-microdata', '#step-household'].includes(location.hash)
   /*
-   * The invitation dialog sends an accepted recipient here with the grants hash.
-   * The grants live in the microdata tab, and a hidden panel cannot be scrolled
-   * to, so arriving that way opens the tab - on first render and on a later
-   * navigation to the same page.
+   * The data type comes from the URL. The invitation dialog sends an accepted
+   * recipient here with a grants hash and no type; that arrival still means
+   * microdata, so existing grant links keep working without a rewrite.
    */
-  const [mode, setMode] = useState<WorkspaceMode>(arrivingForGrants ? 'microdata' : 'aggregated')
+  const type: FlowType | undefined = flowType(searchParams) || (arrivingForGrants ? 'microdata' : undefined)
+  const requested: FlowStep = type ? requestedStep(searchParams, type) : 'surveys'
+
+  /*
+   * A link's survey request (`surveys`, or `country` with `round`) is held until
+   * the matching route has applied it against what the account can open; only
+   * then is it removed from the URL. Signing in happens in a popup, so the
+   * request survives it.
+   */
+  const [surveyIntent, setSurveyIntent] = useState<SurveyRequest | undefined>(() => surveyRequest(searchParams))
+  const requestSignature = hasSurveyRequest(searchParams) ? `${searchParams.get('surveys')}|${searchParams.get('country')}|${searchParams.get('round')}` : ''
   useEffect(() => {
-    if (arrivingForGrants) setMode('microdata')
-  }, [arrivingForGrants])
+    if (requestSignature) setSurveyIntent(surveyRequest(searchParams))
+    // The signature is the dependency: other parameter changes must not re-apply a request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestSignature])
+  const [intentNotice, setIntentNotice] = useState<string>()
+  const finishIntent = useCallback((notice?: string) => {
+    setSurveyIntent(undefined)
+    setIntentNotice(notice)
+    setSearchParams((current) => withoutSurveyRequest(current), { replace: true })
+  }, [setSearchParams])
+
+  /** Deliberate moves push a history entry, so the browser's Back returns to the previous step. */
+  const goTo = useCallback((step: FlowStep, options: { replace?: boolean } = {}) => {
+    setSearchParams((current) => withFlowParams(current, { type, step: step === 'surveys' ? undefined : step }), { replace: options.replace })
+  }, [setSearchParams, type])
+  const chooseType = useCallback((next: FlowType | undefined) => {
+    setSearchParams((current) => withFlowParams(current, { type: next, step: undefined }))
+  }, [setSearchParams])
 
   useEffect(() => {
-    if (mode === 'microdata' && location.hash === '#step-household') {
+    if (type === 'microdata' && location.hash === '#step-household') {
       document.getElementById('step-household')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
     }
-  }, [mode, location.hash])
+  }, [type, location.hash])
 
   const householdData = Boolean(auth.user?.capabilities?.householdData)
   const [microdataResources, setMicrodataResources] = useState<ResolvedDataResource[]>()
@@ -374,6 +419,11 @@ export default function SurveyWorkspace() {
   const microdataAccess: MicrodataAccess = hasActiveGrant
     ? householdData ? 'temporaryGrantAndHouseholdGroup' : 'temporaryGrant'
     : householdData ? 'householdGroup' : 'none'
+  // Without any microdata path there is no list to apply a request to; the
+  // page offers the catalogue and the request form instead.
+  useEffect(() => {
+    if (type === 'microdata' && surveyIntent && grantDiscovery && !grantChecking && !householdData && !hasActiveGrant) finishIntent()
+  }, [finishIntent, grantChecking, grantDiscovery, hasActiveGrant, householdData, surveyIntent, type])
 
   /**
    * The household collections, resolved against the signed-in identity.
@@ -423,7 +473,11 @@ export default function SurveyWorkspace() {
   const preflightRef = useRef<HTMLParagraphElement>(null)
   const [focusPreflight, setFocusPreflight] = useState(0)
   const revalidated = useRef<string | undefined>(undefined)
-  const tabRefs = useRef<Record<WorkspaceMode, HTMLButtonElement | null>>({ aggregated: null, microdata: null })
+  const countAbort = useRef<AbortController | undefined>(undefined)
+  const [countCancelled, setCountCancelled] = useState(false)
+  /** The package an automatic count last started for, so it runs once per package, not per render. */
+  const countAttempted = useRef<string | undefined>(undefined)
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => new Set())
 
   /**
    * Selection follows the identity, and is dropped the moment it changes.
@@ -503,6 +557,26 @@ export default function SurveyWorkspace() {
     const available = new Set(surveys.map((survey) => survey.key))
     return selection[scope].filter((key) => !available.has(key)).length
   }, [result?.status, scope, selection, settled, surveys])
+
+  /*
+   * A link's survey request, applied once discovery has settled and only to
+   * surveys this account was offered. An explicit request replaces the stored
+   * selection rather than merging with it: the link says what it wants.
+   */
+  useEffect(() => {
+    if (type !== 'aggregated' || !surveyIntent || !settled) return
+    const outcome = resolveSurveyRequest(surveyIntent, surveys, isContributor ? undefined : SELECTION_LIMIT)
+    if (outcome.countries.length) setExpandedCountries((current) => new Set([...current, ...outcome.countries]))
+    // A link naming surveys replaces the selection even when none of them could
+    // be selected, so an earlier choice is never mistaken for the one asked
+    // for. A country-only link just opens the country and keeps the selection.
+    if (outcome.keys.length || surveyIntent.keys.length || surveyIntent.round !== undefined) {
+      setSelection((current) => ({ ...current, [scope]: outcome.keys }))
+      writeStoredSelection(accountKey, scope, outcome.keys)
+      setDroppedCount(0)
+    }
+    finishIntent(describeRequestOutcome({ ...outcome, complete: result?.status === 'complete', limit: SELECTION_LIMIT }))
+  }, [accountKey, finishIntent, isContributor, result?.status, scope, settled, surveyIntent, surveys, type])
 
   // Collection dates for the list. Best effort: without them a row still shows
   // its round and generation, and the package states the dates on its own.
@@ -623,32 +697,57 @@ export default function SurveyWorkspace() {
   }
 
   /**
-   * Counts are measured on request, never on every checkbox.
+   * Counts are measured for a settled package, never on every checkbox.
    *
    * Ten surveys across five themes is fifty queries; running those while
-   * somebody is still clicking would cost far more than it tells them.
+   * somebody is still clicking would cost far more than it tells them. The
+   * count starts on its own when the Review step opens, once per package, and
+   * by request after that. Each run owns its controller: a superseded or
+   * cancelled run can no longer write progress, counts or focus.
    */
   async function runPreflight() {
     const slices = plan.flatMap((entry) => entry.included.map((theme) => ({ survey: entry.survey, theme })))
     if (!slices.length) return
+    countAbort.current?.abort()
+    const controller = new AbortController()
+    countAbort.current = controller
+    setCountCancelled(false)
     setCountProgress({ done: 0, total: slices.length })
-    const measured = await countSurveySlices(slices, auth.requestProtected, (done, total) => {
-      setCountProgress({ done, total })
-    })
-    setCounts(measured)
-    setCountProgress(undefined)
-    setFocusPreflight((value) => value + 1)
+    try {
+      const measured = await countSurveySlices(slices, auth.requestProtected, (done, total) => {
+        if (countAbort.current === controller) setCountProgress({ done, total })
+      }, { signal: controller.signal })
+      if (countAbort.current === controller && !controller.signal.aborted) {
+        setCounts(measured)
+        setFocusPreflight((value) => value + 1)
+      }
+    } catch {
+      if (countAbort.current === controller) setCountCancelled(true)
+    } finally {
+      if (countAbort.current === controller) {
+        countAbort.current = undefined
+        setCountProgress(undefined)
+      }
+    }
   }
 
   // Any change to what would be packaged invalidates a measurement of it, and
   // every outcome of building the previous package: a "cancelled" or "ready"
-  // left on screen would describe a package that no longer exists.
+  // left on screen would describe a package that no longer exists. A count
+  // still running for the old package is stopped; its answer would be stale.
   useEffect(() => {
+    if (countAbort.current) {
+      const running = countAbort.current
+      countAbort.current = undefined
+      running.abort()
+      setCountProgress(undefined)
+    }
     setCounts(undefined)
+    setCountCancelled(false)
     setBundleReady(undefined)
     setBundleError(undefined)
     setBundleCancelled(false)
-  }, [activeThemeIds, selectedKeys])
+  }, [activeThemeIds, selectedKeys, accountKey])
 
   const bundleSlices = useMemo(
     () => plan.flatMap((entry) => entry.included.map((theme) => ({ survey: entry.survey, theme }))),
@@ -703,6 +802,39 @@ export default function SurveyWorkspace() {
     }
     return undefined
   })()
+
+  /*
+   * Guided steps for aggregated data. A step may be shown only when every step
+   * before it is finished; until discovery settles the selection is not known,
+   * so the first step is shown and the URL is left alone.
+   */
+  const aggregatedReady = (step: FlowStep) => {
+    if (step === 'surveys') return true
+    if (step === 'options') return selectedSurveys.length > 0
+    if (step === 'review') return selectedSurveys.length > 0 && fileCount > 0
+    return selectedSurveys.length > 0 && fileCount > 0 && !downloadBlocker
+  }
+  const aggregatedStep: FlowStep = type !== 'aggregated' || !settled || surveyIntent
+    ? 'surveys'
+    : guardedStep(FLOW_STEPS.aggregated, requested, aggregatedReady)
+  useEffect(() => {
+    if (type === 'aggregated' && settled && !surveyIntent && aggregatedStep !== requested) goTo(aggregatedStep, { replace: true })
+  }, [aggregatedStep, goTo, requested, settled, surveyIntent, type])
+  useStepHeadingFocus('aggregated-step', aggregatedStep)
+
+  const packageKey = `${accountKey}|${bundleSlices.map(({ survey, theme }) => `${survey.key}|${theme.id}`).join(',')}`
+  useEffect(() => {
+    if (aggregatedStep !== 'review' || !bundleSlices.length || countsCoverPackage || countAbort.current || unconfirmedCount > 0) return
+    if (countAttempted.current === packageKey) return
+    countAttempted.current = packageKey
+    void runPreflight()
+    // runPreflight reads the current plan; the package key is what identifies it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aggregatedStep, bundleSlices.length, countsCoverPackage, packageKey, unconfirmedCount])
+  // Leaving Review stops a count in progress; coming back offers it again rather than restarting it.
+  useEffect(() => {
+    if (aggregatedStep !== 'review') countAbort.current?.abort()
+  }, [aggregatedStep])
 
   function chooseLayout(next: BundleLayout) {
     setLayoutPreference(next)
@@ -761,23 +893,16 @@ export default function SurveyWorkspace() {
     if (focusPreflight) preflightRef.current?.focus()
   }, [focusPreflight])
 
-  // Leaving the page must not leave an archive building against a dead session.
-  useEffect(() => () => bundleAbort.current?.abort(), [])
+  // Leaving the page must not leave an archive building, or a count running, against a dead session.
+  useEffect(() => () => {
+    bundleAbort.current?.abort()
+    countAbort.current?.abort()
+  }, [])
 
   function toggleTheme(id: string) {
     setChosenThemes((current) => (
       current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
     ))
-  }
-
-  function onTabKeyDown(event: React.KeyboardEvent) {
-    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0
-    if (!step) return
-    event.preventDefault()
-    const index = WORKSPACE_MODES.findIndex((entry) => entry.id === mode)
-    const next = WORKSPACE_MODES[(index + step + WORKSPACE_MODES.length) % WORKSPACE_MODES.length]
-    setMode(next.id)
-    tabRefs.current[next.id]?.focus()
   }
 
   function enterTestMode() {
@@ -818,7 +943,6 @@ export default function SurveyWorkspace() {
       .sort((left, right) => left.name.localeCompare(right.name))
   }, [visible])
 
-  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => new Set())
   // Narrowing the list already makes it short, so a search or "selected only"
   // opens every matching country rather than asking for one click each - as
   // does a list with a single country, where collapsing would only add a click.
@@ -847,7 +971,9 @@ export default function SurveyWorkspace() {
   if (auth.status === 'loading') {
     return <><SiteHeader/><main className="workspace-loading"><span className="loader"/><strong>Opening Your surveys</strong></main><SiteFooter/></>
   }
-  if (auth.status !== 'authenticated') return <><SiteHeader/><SignInGate/><SiteFooter/></>
+  if (auth.status !== 'authenticated') return <><SiteHeader/><SignInGate type={type}/><SiteFooter/></>
+
+  const otherType: FlowType = type === 'microdata' ? 'aggregated' : 'microdata'
 
   return (
     <>
@@ -856,22 +982,37 @@ export default function SurveyWorkspace() {
         <section className="workspace-hero">
           <div className="section-wrap">
             <span className="eyebrow"><span/> Your surveys</span>
-            <h1>Choose your surveys</h1>
-            <p>Pick the countries and rounds you need. The Hub resolves which data infrastructure holds each survey and packages the matching documentation with it.</p>
+            <h1>{type ? FLOW_TITLES[type] : 'Which data do you need?'}</h1>
+            <p>{type === 'microdata'
+              ? 'Choose household surveys your account can open, check access, accept the microdata licence and prepare the download, one step at a time.'
+              : type === 'aggregated'
+                ? 'Choose surveys by country and round, pick the themes you need, and download them with the documentation for each questionnaire generation.'
+                : 'DIEM household survey data comes in two forms. Choose one to start; you can switch at any time.'}</p>
           </div>
         </section>
 
-        <section className="workspace-summary">
-          <div className="section-wrap">
-            <AggregatedAccessCard result={result} onRetry={() => setReloadVersion((value) => value + 1)}/>
-            <MicrodataAccessCard onOpen={() => {
-              setMode('microdata')
-              // Focus follows the switch, so a keyboard user lands on the tab
-              // whose panel just opened rather than on a button above it.
-              tabRefs.current.microdata?.focus()
-            }}/>
+        {!type && (
+          <section className="workspace-summary workspace-entry" aria-label="Choose the data type">
+            <div className="section-wrap">
+              <AggregatedAccessCard
+                result={result}
+                onRetry={() => setReloadVersion((value) => value + 1)}
+                action={<button type="button" className="access-card-choose" onClick={() => chooseType('aggregated')}>Choose aggregated data<Icon name="arrow"/></button>}
+              />
+              <MicrodataAccessCard onOpen={() => chooseType('microdata')}/>
+            </div>
+          </section>
+        )}
+
+        {type && (
+          <div className="section-wrap flow-header">
+            <p className="flow-switch">
+              {FLOW_TITLES[type]}
+              <button type="button" onClick={() => chooseType(otherType)}>Switch to {FLOW_TITLES[otherType].toLowerCase()}</button>
+            </p>
+            {intentNotice && <p className="survey-dropped flow-intent-notice" role="status">{intentNotice}</p>}
           </div>
-        </section>
+        )}
 
         {testMode && (
           <div className="test-mode-banner" role="status">
@@ -887,30 +1028,22 @@ export default function SurveyWorkspace() {
         )}
 
         <div className="section-wrap">
-          {/* Tabs, not routes: one destination, and switching keeps each mode's
-              own selection because the two packages are separate. */}
-          {/* Roving tabindex: one stop in the Tab order, arrows move between
-              tabs, and both panels stay mounted so `aria-controls` always
-              resolves - the pattern assistive technology expects. */}
-          <div className="workspace-tabs" role="tablist" aria-label="Data type" onKeyDown={onTabKeyDown}>
-            {WORKSPACE_MODES.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                id={`tab-${id}`}
-                ref={(node) => { tabRefs.current[id] = node }}
-                aria-selected={mode === id}
-                aria-controls={`panel-${id}`}
-                tabIndex={mode === id ? 0 : -1}
-                onClick={() => setMode(id)}
-              >{label}</button>
-            ))}
-          </div>
-
-          <div className="workspace-panel" id="panel-aggregated" role="tabpanel" aria-labelledby="tab-aggregated" hidden={mode !== 'aggregated'}>
-              <section className="workspace-step" aria-labelledby="step-surveys">
-                <h2 id="step-surveys"><span>1</span>Select surveys</h2>
+          {/* Both routes stay mounted, so switching keeps each one's own
+              selection: the two packages are separate. */}
+          <div className="workspace-panel" id="panel-aggregated" hidden={type !== 'aggregated'}>
+              <FlowStepList
+                id="aggregated-steps"
+                steps={FLOW_STEPS.aggregated}
+                current={aggregatedStep}
+                done={(step) => FLOW_STEPS.aggregated.indexOf(step) < FLOW_STEPS.aggregated.indexOf(aggregatedStep)}
+                reachable={(step) => guardedStep(FLOW_STEPS.aggregated, step, aggregatedReady) === step}
+                onSelect={(step) => goTo(step)}
+              />
+              <p className="flow-selection" aria-live="polite">
+                {formatNumber(selectedSurveys.length)} survey{selectedSurveys.length === 1 ? '' : 's'} selected
+                {selectedSurveys.length > 0 && `: ${selectedSurveys.slice(0, 4).map((survey) => `${survey.countryName} round ${survey.round}`).join(', ')}${selectedSurveys.length > 4 ? ` and ${formatNumber(selectedSurveys.length - 4)} more` : ''}`}
+              </p>
+              <FlowStepPanel id="aggregated-step" step="surveys" current={aggregatedStep} title={<><span>1</span>Select surveys</>}>
 
                 <div className="survey-filters">
                   <label className="survey-search">
@@ -1057,12 +1190,18 @@ export default function SurveyWorkspace() {
                     </p>
                   )}
                 </fieldset>
-              </section>
+                <FlowActions
+                  id="aggregated-surveys"
+                  onNext={() => goTo('options')}
+                  nextDisabled={!aggregatedReady('options')}
+                  nextLabel="Next: options"
+                  hint={aggregatedReady('options') ? undefined : 'Select at least one survey to continue.'}
+                />
+              </FlowStepPanel>
 
-              {/* Later steps stay readable and state their own prerequisite rather
-                  than presenting a disabled region nobody can enter. */}
-              <section className={selectedSurveys.length ? 'workspace-step' : 'workspace-step workspace-step--pending'} aria-labelledby="step-themes">
-                <h2 id="step-themes"><span>2</span>Choose thematic areas</h2>
+              {/* Each step states its own prerequisite rather than presenting a
+                  disabled region nobody can enter. */}
+              <FlowStepPanel id="aggregated-step" step="options" current={aggregatedStep} title={<><span>2</span>Choose thematic areas and layout</>}>
                 {!selectedSurveys.length ? (
                   <p>Choose at least one survey to continue to thematic areas.</p>
                 ) : (
@@ -1105,20 +1244,9 @@ export default function SurveyWorkspace() {
                     {themeChoice === 'custom' && !activeThemeIds.length && (
                       <p className="theme-empty">Choose at least one thematic area to review the package.</p>
                     )}
-                  </>
-                )}
-              </section>
 
-              <section className={fileCount ? 'workspace-step' : 'workspace-step workspace-step--pending'} aria-labelledby="step-review">
-                <h2 id="step-review"><span>3</span>Review package</h2>
-                {!fileCount ? (
-                  <p>{selectedSurveys.length
-                    ? 'Choose at least one thematic area that your selected surveys carry, and the package appears here.'
-                    : 'The review lists every survey, its themes, the file count and the record count before anything is downloaded.'}</p>
-                ) : (
-                  <>
                     {selectedSurveys.length > 1 && (
-                      <fieldset className="package-layout-choice">
+                      <fieldset className="package-layout-choice flow-layout-choice">
                         <legend>How should the data be arranged?</legend>
                         <div className="package-layout-options">
                           <label>
@@ -1132,6 +1260,25 @@ export default function SurveyWorkspace() {
                         </div>
                       </fieldset>
                     )}
+                  </>
+                )}
+                <FlowActions
+                  id="aggregated-options"
+                  onBack={() => goTo('surveys')}
+                  onNext={() => goTo('review')}
+                  nextDisabled={!aggregatedReady('review')}
+                  nextLabel="Next: review"
+                  hint={aggregatedReady('review') ? undefined : 'Choose at least one thematic area that your selected surveys carry.'}
+                />
+              </FlowStepPanel>
+
+              <FlowStepPanel id="aggregated-step" step="review" current={aggregatedStep} title={<><span>3</span>Review package</>}>
+                {!fileCount ? (
+                  <p>{selectedSurveys.length
+                    ? 'Choose at least one thematic area that your selected surveys carry, and the package appears here.'
+                    : 'The review lists every survey, its themes, the file count and the record count before anything is downloaded.'}</p>
+                ) : (
+                  <>
                     <p className="package-preflight">
                       {formatNumber(selectedSurveys.length)} survey{selectedSurveys.length === 1 ? '' : 's'} · {formatNumber(activeThemeIds.length)} theme{activeThemeIds.length === 1 ? '' : 's'} · {formatNumber(fileCount)} data file{fileCount === 1 ? '' : 's'}
                       {counts && <> · {formatNumber(counts.reduce((total, entry) => total + (entry.count || 0), 0))} records</>}
@@ -1191,6 +1338,50 @@ export default function SurveyWorkspace() {
                       </div>
                     )}
 
+                    {/* The count starts by itself when this step opens; the
+                        button is the retry after a failure or a cancellation. */}
+                    <div className="package-actions">
+                      <button type="button" onClick={() => { countAttempted.current = packageKey; void runPreflight() }} disabled={Boolean(countProgress) || Boolean(bundleProgress)}>
+                        {countProgress
+                          ? `Counting… ${formatNumber(countProgress.done)} of ${formatNumber(countProgress.total)}`
+                          : countsCoverPackage ? 'Count records again' : 'Count records'}
+                      </button>
+                      {countProgress && (
+                        <button type="button" className="package-cancel" onClick={() => countAbort.current?.abort()}>Cancel count</button>
+                      )}
+                    </div>
+                    <p className="package-status" aria-live="polite">
+                      {countProgress ? `Counting records: ${formatNumber(countProgress.done)} of ${formatNumber(countProgress.total)} files checked.` : ''}
+                    </p>
+                    {countCancelled && !countProgress && (
+                      <p className="package-outcome" role="status">The count was stopped before it finished. Count records to check this package again.</p>
+                    )}
+                    {!countProgress && (downloadBlocker || countsCoverPackage) && (
+                      <p
+                        ref={preflightRef}
+                        tabIndex={-1}
+                        id="package-preflight"
+                        className={downloadBlocker ? 'package-blocker' : 'package-ready'}
+                      >
+                        {downloadBlocker
+                          || `Preflight passed: ${formatNumber(countedRecords)} records in ${formatNumber(fileCount)} data file${fileCount === 1 ? '' : 's'}, every survey confirmed and within the package budget. The package is ready to download.`}
+                      </p>
+                    )}
+                  </>
+                )}
+                <FlowActions
+                  id="aggregated-review"
+                  onBack={() => goTo('options')}
+                  onNext={() => goTo('download')}
+                  nextDisabled={!aggregatedReady('download')}
+                  nextLabel="Next: download"
+                  hint={aggregatedReady('download') ? undefined : countProgress ? 'Counting records. Please wait.' : 'The package can be downloaded once its records are counted and every check passes.'}
+                />
+              </FlowStepPanel>
+
+              <FlowStepPanel id="aggregated-step" step="download" current={aggregatedStep} title={<><span>4</span>Download</>}>
+                {fileCount > 0 && (
+                  <>
                     {/* Stated immediately before generating, per plan section 10:
                         what the file will be called, what it holds, under which
                         licence, what is missing, and whether preflight passed.
@@ -1234,13 +1425,6 @@ export default function SurveyWorkspace() {
                     </dl>
 
                     <div className="package-actions">
-                      {/* Preflight comes first in the tab order as well as in the
-                          flow: it is the step that enables everything after it. */}
-                      <button type="button" onClick={() => void runPreflight()} disabled={Boolean(countProgress) || Boolean(bundleProgress)}>
-                        {countProgress
-                          ? `Counting… ${formatNumber(countProgress.done)} of ${formatNumber(countProgress.total)}`
-                          : countsCoverPackage ? 'Count records again' : 'Count records'}
-                      </button>
                       <button
                         type="button"
                         className="package-download"
@@ -1256,18 +1440,6 @@ export default function SurveyWorkspace() {
                         <button type="button" className="package-cancel" onClick={() => bundleAbort.current?.abort()}>Cancel</button>
                       )}
                     </div>
-
-                    {!bundleProgress && (downloadBlocker || countsCoverPackage) && (
-                      <p
-                        ref={preflightRef}
-                        tabIndex={-1}
-                        id="package-preflight"
-                        className={downloadBlocker ? 'package-blocker' : 'package-ready'}
-                      >
-                        {downloadBlocker
-                          || `Preflight passed: ${formatNumber(countedRecords)} records in ${formatNumber(fileCount)} data file${fileCount === 1 ? '' : 's'}, every survey confirmed and within the package budget. The package is ready to download.`}
-                      </p>
-                    )}
 
                     {/* Progress only. The outcome below is a separate element so
                         it can take focus without the live region re-announcing. */}
@@ -1293,17 +1465,25 @@ export default function SurveyWorkspace() {
                     )}
                   </>
                 )}
-              </section>
+                <FlowActions id="aggregated-download" onBack={() => goTo('review')}/>
+              </FlowStepPanel>
           </div>
 
-          <div className="workspace-panel" id="panel-microdata" role="tabpanel" aria-labelledby="tab-microdata" hidden={mode !== 'microdata'}>
+          <div className="workspace-panel" id="panel-microdata" hidden={type !== 'microdata'}>
             {(householdData || hasActiveGrant || grantChecking || grantDiscovery?.error) && <MicrodataAccessSummary discovery={grantDiscovery} checking={grantChecking} householdData={householdData} recheck={() => void recheckGrants()} />}
             {householdData || hasActiveGrant ? <MicrodataPackagePicker grantDiscovery={grantDiscovery} grantPending={grantPending} grantChecking={grantChecking}
               householdData={householdData} contributor={isContributor} testMode={testMode}
-              licenceAccess={microdataAccess} collectionDates={microdataCollectionDates} onBusyChange={setMicrodataBusy} onRecheck={() => void recheckGrants()} /> : <section className="workspace-step" id="step-microdata-package">
-              <h2>Request access to household microdata</h2>
-              <p>{grantChecking ? 'Checking your approved surveys…' : 'Browse published collections or request access to the household surveys you need.'}</p>
-              <Link to="/data/microdata-request">Request microdata access</Link>
+              licenceAccess={microdataAccess} collectionDates={microdataCollectionDates} onBusyChange={setMicrodataBusy} onRecheck={() => void recheckGrants()}
+              active={type === 'microdata'} requested={type === 'microdata' ? requested : 'surveys'} onStep={goTo}
+              request={type === 'microdata' ? surveyIntent : undefined} onRequestApplied={finishIntent} /> : <section className="workspace-step" id="step-microdata-package">
+              {/* No microdata path yet: the two routes are offered at once rather
+                  than an empty survey list to step through. */}
+              <h2>Get household microdata</h2>
+              <p>{grantChecking ? 'Checking your approved surveys…' : 'Your account has no approved microdata access yet. Published DIEM microdata is in the FAO Microdata Catalogue (FAM); for a survey that has not reached it, request direct access.'}</p>
+              <div className="workspace-step-actions">
+                <a href={FAM_URL} target="_blank" rel="noreferrer">Browse DIEM collections in the FAO Microdata Catalogue<Icon name="external"/></a>
+                <Link to="/data/microdata-request">Request microdata access<Icon name="arrow"/></Link>
+              </div>
               <details className="microdata-help"><summary>Microdata licence</summary><MicrodataLicence access={microdataAccess} /></details>
             </section>}
             <details className="microdata-help microdata-reference" open={location.hash === '#step-household' || undefined}><summary>Documentation and reference data</summary>

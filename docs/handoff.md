@@ -1,5 +1,42 @@
 # Handoff
 
+## 2026-10-22 - Guided survey data flow
+
+Status: implemented on `main` in `C:\git\hub_v3`, not committed. Build passes;
+all tests pass except one ("treats a temporary grant holder…", expects
+`.grant-section`), which also fails at the last commit. Checked live as a
+Contributor on `http://127.0.0.1:4174`: entry choice, aggregated route with a
+link-selected survey and automatic count, browser Back, refresh on a later
+step, microdata route through Review with the automatic check and cancel on
+leaving Review, catalogue "Get data" links, and 375 px width. Not checked live:
+the country-page links (that dev server returned Vite "Outdated Optimize Dep"),
+licence acceptance and preparation (accepting the licence is the user's
+decision), and a standard account. The follow-up fixes (step-list scrolling,
+link requests replacing the selection, access-summary type size) were then
+checked live and work.
+Files: `src/lib/surveyFlow.ts` (+ test), `src/components/SurveyFlowNav.tsx`,
+`src/pages/SurveyWorkspace.tsx`, `src/components/MicrodataPackagePicker.tsx`,
+`src/components/MicrodataAccessSummary.tsx`, `src/components/CountryMonitoring.tsx`,
+`src/components/SurveyCatalogue.tsx`, `src/services/microdataBundle.ts`,
+`src/services/surveyAccess.ts`, the two stylesheets, both test files,
+`docs/data_access.md`, `docs/changelog.md`.
+Remaining, in order:
+1. Signed-in check of what is listed above as not checked live, plus a full
+   standard-account walkthrough and screen-reader focus. Step changes take
+   180–390 ms in the development build with both routes mounted; recheck in a
+   production build.
+2. Structured per-survey results from `preflightMicrodataPackage` (it still
+   stops at the first failure), so Review can offer "remove this survey" or
+   "request access" for the survey concerned.
+3. Brief and presentation links into the flow, once catalogue records carry an
+   authoritative country and round; explorer links belong in the explorer's
+   repository.
+4. Trace the survey-count differences (home 234, aggregated 209, microdata 208)
+   before explaining them on the page.
+Next file: `src/components/MicrodataPackagePicker.tsx`. Verification:
+`npx vitest run src/lib/surveyFlow.test.ts src/pages/SurveyWorkspace.test.tsx
+src/components/MicrodataPackagePicker.test.tsx`, then `npm run build`.
+
 ## 2026-10-22 - Architecture review improvements
 
 Status: committed and pushed in all four repositories (VISTA on both `main` and

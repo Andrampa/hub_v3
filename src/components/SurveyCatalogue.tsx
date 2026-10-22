@@ -10,6 +10,7 @@ import {
   type SurveyRoundCatalog,
 } from '../services/monitoringProducts'
 import { monitoringCountryPath } from '../services/monitoringEmbed'
+import { surveyDataPath } from '../lib/surveyFlow'
 import '../survey-catalogue.css'
 
 const PAGE_SIZE = 15
@@ -296,6 +297,14 @@ export function SurveyCatalogue() {
                           {!upcoming && (
                             <Link to={`${monitoringCountryPath(round.iso3, round.roundValue)}&landing=1`} aria-label={`Explore ${round.country} round ${round.roundValue}`}>
                               Explore <span aria-hidden="true">→</span>
+                            </Link>
+                          )}
+                          {/* Country and round are the register's own identifiers,
+                              so the workspace can match them exactly; it then
+                              says whether this account can download the round. */}
+                          {!upcoming && Number.isInteger(Number(round.roundValue)) && (
+                            <Link className="rounds-data" to={surveyDataPath({ country: round.iso3, round: Number(round.roundValue) })} aria-label={`Get survey data for ${round.country} round ${round.roundValue}`}>
+                              Get data
                             </Link>
                           )}
                         </td>

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { formatDate } from '../lib/catalog'
+import { surveyDataPath } from '../lib/surveyFlow'
 import type { CountryMonitoringCoverage } from '../services/monitoring'
 import { monitoringCountryPath } from '../services/monitoringEmbed'
 
@@ -65,14 +66,17 @@ export function CountryMonitoring({ countryName, coverage }: CountryMonitoringPr
               Anomaly detection
             </Link>
           )}
+          {/* Into the guided workspace with this country opened, not onto the
+              explanation page. "Get" and "Access", not "Download": both routes
+              still check access, and microdata needs its licence accepted. */}
           {capabilities?.aggregatedData && (
-            <Link className="country-monitoring-secondary" to="/data#aggregated">
-              Download aggregated data
+            <Link className="country-monitoring-secondary" to={surveyDataPath({ type: 'aggregated', country: coverage.iso3 })}>
+              Get aggregated data
             </Link>
           )}
           {capabilities?.householdData && (
-            <Link className="country-monitoring-secondary" to="/data#microdata">
-              Download household microdata
+            <Link className="country-monitoring-secondary" to={surveyDataPath({ type: 'microdata', country: coverage.iso3 })}>
+              Access household microdata
             </Link>
           )}
         </div>
