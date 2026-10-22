@@ -66,6 +66,9 @@ const signIn = (contributor: boolean, username = 'reader') => {
 
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true
+  // happy-dom does not implement the browser's top layer or native modal focus.
+  vi.spyOn(HTMLDialogElement.prototype, 'showModal').mockImplementation(function (this: HTMLDialogElement) { this.open = true })
+  vi.spyOn(HTMLDialogElement.prototype, 'close').mockImplementation(function (this: HTMLDialogElement) { this.open = false })
   auth.status = 'anonymous'
   auth.user = null
   loadArchitectureManifest.mockReset().mockResolvedValue(validateArchitectureManifest(manifestJson))
@@ -78,6 +81,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount())
   container.remove()
+  vi.restoreAllMocks()
 })
 
 const iframe = () => container.querySelector('iframe')
@@ -229,8 +233,45 @@ describe('Architecture for Contributors', () => {
     const expand = container.querySelector('.architecture-frame-tools button') as HTMLButtonElement
     await act(async () => expand.click())
     expect(container.querySelector('.architecture-frame.is-expanded')).not.toBe(null)
-    await act(async () => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })) })
+    const dialog = container.querySelector('dialog')!
+    expect(dialog.open).toBe(true)
+    expect(dialog.getAttribute('aria-label')).toContain('EVE flood monitoring')
+    expect(container.querySelectorAll('iframe')).toHaveLength(1)
+    // The inline frame keeps an empty stage so the page behind does not shrink.
+    expect(container.querySelector('.architecture-frame-inline > .architecture-frame-stage[aria-hidden="true"]')).not.toBe(null)
+    await act(async () => { dialog.dispatchEvent(new Event('cancel', { cancelable: true })) })
     expect(container.querySelector('.architecture-frame.is-expanded')).toBe(null)
+    expect(document.activeElement).toBe(expand)
+    expect(container.querySelectorAll('iframe')).toHaveLength(1)
+  })
+
+  it('closes the modal using its visible close button and on diagram navigation', async () => {
+    await renderAt('/architecture/eve')
+    await act(async () => (container.querySelector('.architecture-frame-tools button') as HTMLButtonElement).click())
+    await act(async () => (container.querySelector('dialog button') as HTMLButtonElement).click())
+    expect(container.querySelector('dialog')).toBe(null)
+    await act(async () => (container.querySelector('.architecture-frame-tools button') as HTMLButtonElement).click())
+    await act(async () => navigateTo('/architecture/hub'))
+    await flush()
+    expect(container.querySelector('dialog')).toBe(null)
+    expect(document.body.style.overflow).not.toBe('hidden')
+  })
+
+  it('keeps the target-architecture status visible inside the expanded view', async () => {
+    await renderAt('/architecture/monitoring')
+    // The embedded document no longer carries its own status line.
+    expect(iframe()?.getAttribute('srcdoc')).not.toContain('architecture-status')
+    await act(async () => (container.querySelector('.architecture-frame-tools button') as HTMLButtonElement).click())
+    const status = container.querySelector('dialog .architecture-status')
+    expect(status?.textContent).toContain('Target architecture')
+    expect(status?.querySelector('time')?.getAttribute('dateTime')).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  })
+
+  it('shows architecture status and includes complete handoffs in the mobile list', async () => {
+    await renderAt('/architecture/monitoring')
+    expect(container.querySelector('.architecture-status')?.textContent).toContain('Target architecture')
+    const details = [...container.querySelectorAll('.architecture-map-list p')].map((node) => node.textContent)
+    expect(details).toEqual(manifestJson.relationships.map((relationship) => relationship.detail))
   })
 })
 

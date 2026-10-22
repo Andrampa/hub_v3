@@ -28,7 +28,7 @@ export const DIAGRAM_CSP = [
  */
 const ALLOWED_ELEMENTS = new Set([
   'div', 'header', 'section', 'figure', 'figcaption', 'h1', 'h2', 'h3', 'h4', 'p', 'span', 'i', 'b', 'em',
-  'strong', 'small', 'code', 'br', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'caption',
+  'strong', 'small', 'code', 'br', 'ul', 'ol', 'li', 'details', 'summary', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'caption',
   'svg', 'g', 'defs', 'marker', 'path', 'rect', 'text', 'tspan', 'line', 'polyline', 'polygon', 'circle',
   'ellipse',
 ])
@@ -93,11 +93,13 @@ export interface SanitizedDiagram {
   body: string
 }
 
-export function sanitizeDiagram(source: string): SanitizedDiagram {
+export function sanitizeDiagram(source: string, { hideStatus = false }: { hideStatus?: boolean } = {}): SanitizedDiagram {
   const parsed = new DOMParser().parseFromString(source, 'text/html')
   const title = parsed.querySelector('title')?.textContent?.trim() || 'Architecture diagram'
   const css = Array.from(parsed.querySelectorAll('style'), (style) => sanitizeDiagramCss(style.textContent || '')).join('\n')
   sanitizeElement(parsed.body)
+  // The Hub shows the status line in its own panel; a standalone copy keeps it.
+  if (hideStatus) for (const status of Array.from(parsed.body.querySelectorAll('.architecture-status'))) status.remove()
   return { title, css, body: parsed.body.innerHTML }
 }
 
@@ -127,10 +129,12 @@ export interface DiagramDocumentOptions {
   theme?: 'light' | 'dark'
   /** Prepended as an HTML comment; used to date a downloaded copy. */
   provenance?: string
+  /** Drop the source's status line, for the Hub view that shows it alongside. */
+  hideStatus?: boolean
 }
 
 export function buildDiagramDocument(source: string, options: DiagramDocumentOptions = {}) {
-  const { title, css, body } = sanitizeDiagram(source)
+  const { title, css, body } = sanitizeDiagram(source, { hideStatus: options.hideStatus })
   const fontFaceCss = sanitizeFontFaceCss(options.fontFaceCss || '')
   const comment = options.provenance ? `<!-- ${options.provenance.replace(/--/g, '-')} -->\n` : ''
   return `<!doctype html>

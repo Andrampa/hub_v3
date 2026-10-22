@@ -119,8 +119,11 @@
 .architecture-frame-status.is-error strong { color: var(--deep-blue); font-size: 17px; }
 .architecture-frame-status button { padding: 9px 14px; border: 0; border-radius: 8px; background: var(--deep-blue); color: #fff; font-weight: 700; cursor: pointer; }
 
-.architecture-frame.is-expanded { position: fixed; inset: 12px; z-index: 1000; border-radius: 12px; box-shadow: 0 0 0 100vmax rgba(5, 28, 44, .62); grid-template-rows: auto 1fr; }
+.architecture-frame.is-expanded { position: fixed; inset: 12px; margin: auto; padding: 0; width: calc(100% - 24px); height: calc(100% - 24px); max-width: none; max-height: none; border-radius: 12px; grid-template-rows: auto minmax(0, 1fr); color: var(--ink); }
+.architecture-frame.is-expanded::backdrop { background: rgba(5, 28, 44, .62); }
 .architecture-frame.is-expanded .architecture-frame-stage { height: auto; }
+.architecture-status { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 10px 14px; border-left: 3px solid var(--fao-blue); background: var(--mist); color: var(--deep-blue); font-size: 13px; line-height: 1.6; }
+.architecture-fullpage > .architecture-status { flex: 0 0 auto; }
 
 @media (prefers-reduced-motion: no-preference) {
   .architecture-iframe { animation: architecture-enter .32s ease-out both; }
@@ -167,14 +170,14 @@
 .architecture-guide-exceptions { font-size: 13px !important; }
 
 /* Full page */
-.architecture-fullpage { display: grid; grid-template-rows: auto 1fr; height: 100vh; background: #f8fafc; }
+.architecture-fullpage { display: flex; flex-direction: column; height: 100vh; background: #f8fafc; }
 .architecture-fullpage-bar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 10px 18px;
   border-bottom: 1px solid var(--line); background: #fff; color: var(--deep-blue);
 }
 .architecture-fullpage-bar a { color: var(--fao-blue); font-size: 13px; font-weight: 700; }
 .architecture-fullpage-bar strong { flex: 1; font-size: 16px; }
-.architecture-fullpage .architecture-frame { border: 0; border-radius: 0; }
+.architecture-fullpage .architecture-frame { flex: 1; min-height: 0; border: 0; border-radius: 0; }
 .architecture-fullpage .architecture-frame-stage { height: 100%; }
 .architecture-fullpage .architecture-unknown { margin: 24px; }
 
@@ -201,6 +204,7 @@
 .architecture-map-list-route a { color: var(--deep-blue); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .architecture-map-list strong { color: var(--ink); font-size: 14px; }
 .architecture-map-list small { color: var(--ink-faint); font-size: var(--text-small); }
+.architecture-map-list p { margin: 4px 0 0; color: var(--ink-muted); font-size: 13px; line-height: 1.6; }
 
 @media (max-width: 700px) {
   .architecture-map { padding: 12px; background: transparent; border: 0; box-shadow: none; }
@@ -209,3 +213,6 @@
   .architecture-tabs { grid-auto-flow: column; grid-auto-columns: minmax(160px, 1fr); grid-template-columns: none; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
   .architecture-tabs a { scroll-snap-align: start; }
 }
+
+/* Expanded dialog header: status above the close toolbar */
+.architecture-dialog-head .architecture-status { border-radius: 0; }

@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="diem-architecture-status" content="target">
+<meta name="diem-architecture-as-of" content="2026-10-13">
 <title>DIEM Household Data Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -84,14 +91,34 @@ th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-botto
 thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 tbody th { font-weight: 600; width: 22%; }
 .foot { color: var(--muted); font-size: 13px; }
+
+.architecture-status { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--lane); color: var(--fg); font-size: 14px; }
+.reading-sequence { margin-block: 24px; }
+.reading-sequence summary { cursor: pointer; font-weight: 600; color: var(--accent); padding-block: 8px; }
+.reading-sequence summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.reading-sequence ol { padding-left: 24px; max-width: 85ch; }
+.reading-sequence li { margin-block: 8px; }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">DIEM household monitoring system · V3</div>
     <h1>How a household survey becomes a public dashboard</h1>
     <p class="dek">One questionnaire defines the structure. Each survey passes through review gates into a permanent archive, is summarised in the database, and is published to ArcGIS Online, where the monitoring app and the Hub read it.</p>
+    <p class="architecture-status"><strong>Target architecture after the real-data rebuild</strong> · As of 13 October 2026.</p>
   </header>
+
+  <details class="reading-sequence">
+    <summary>How to read this diagram</summary>
+    <ol>
+      <li>Start with the questionnaire metadata: it defines the structure used throughout the pipeline.</li>
+      <li>Follow the provider export through privacy clearance, standardisation, cleaning and human review.</li>
+      <li>Read Step 3 from the permanent archive through the country working table and summary views.</li>
+      <li>Finish at ArcGIS Online: private sources feed filtered public views and restricted microdata grants.</li>
+    </ol>
+  </details>
 
   <figure>
     <div class="scroll">
@@ -404,3 +431,6 @@ tbody th { font-weight: 600; width: 22%; }
   <p class="foot">Source: hh_survey_v3 repository documentation (architecture, rebuild plan, management contract), state as of 13 October 2026.</p>
   <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hub_v3/blob/main/docs/diagrams/diem_hub_architecture.html">DIEM Hub</a> · <a href="https://github.com/Andrampa/eve/blob/main/docs/diagrams/eve_architecture.html">EVE flood monitoring</a> · <a href="https://github.com/Andrampa/vista-water-atlas/blob/main/docs/diagrams/vista_architecture.html">VISTA water atlas</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/monitoring">data-in-emergencies.fao.org/architecture</a>.</p>
 </div>
+
+</body>
+</html>

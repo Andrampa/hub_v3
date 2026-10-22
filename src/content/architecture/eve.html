@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="diem-architecture-status" content="current">
+<meta name="diem-architecture-as-of" content="2026-10-21">
 <title>EVE Data Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,14 +96,34 @@ thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; t
 tbody th { font-weight: 600; width: 22%; }
 .foot { color: var(--muted); font-size: 13px; }
 .foot a { color: var(--accent); }
+
+.architecture-status { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--lane); color: var(--fg); font-size: 14px; }
+.reading-sequence { margin-block: 24px; }
+.reading-sequence summary { cursor: pointer; font-weight: 600; color: var(--accent); padding-block: 8px; }
+.reading-sequence summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.reading-sequence ol { padding-left: 24px; max-width: 85ch; }
+.reading-sequence li { margin-block: 8px; }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">DIEM EVE flood monitoring · operational</div>
     <h1>How a daily satellite image becomes a dekadal flood table</h1>
     <p class="dek">A daily job turns each NOAA VIIRS composite into an Earth Engine asset. Once per dekad, EVE combines them into one flood raster, counts what was flooded in every district and appends the result to ArcGIS Online, where the EVE web app and the DIEM Hub read it.</p>
+    <p class="architecture-status"><strong>Current implementation</strong> · As of 21 October 2026.</p>
   </header>
+
+  <details class="reading-sequence">
+    <summary>How to read this diagram</summary>
+    <ol>
+      <li>Start at the daily VIIRS run, which prepares flood composites for the dekadal EVE pipeline.</li>
+      <li>Follow flood observations and the VISTA monthly flood-frequency reference through the exposure calculations.</li>
+      <li>Trace ADM2, ADM1 and ADM0 exposure tables into ArcGIS Online, then into the EVE app and Hub country eligibility.</li>
+      <li>Read the control band last: scheduling, operator recovery and deployment govern the pipeline without carrying its data.</li>
+    </ol>
+  </details>
 
   <figure>
     <div class="scroll">
@@ -391,3 +418,6 @@ tbody th { font-weight: 600; width: 22%; }
   <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hh_survey_v3/blob/main/docs/diagrams/diem_data_architecture.html">DIEM household monitoring</a> · <a href="https://github.com/Andrampa/hub_v3/blob/main/docs/diagrams/diem_hub_architecture.html">DIEM Hub</a> · <a href="https://github.com/Andrampa/vista-water-atlas/blob/main/docs/diagrams/vista_architecture.html">VISTA water atlas</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/eve">data-in-emergencies.fao.org/architecture</a>.</p>
   <p class="foot">The VISTA monthly flood-frequency reference that EVE reads is produced as drawn in the VISTA diagram: NOAA composites, the Earth Engine dekadal archive and the Phase 5 monthly statistics.</p>
 </div>
+
+</body>
+</html>

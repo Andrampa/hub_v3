@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "syncedAt": "2026-10-21T19:54:07.072Z",
+  "syncedAt": "2026-10-22T08:40:01.794Z",
   "diagrams": [
     {
       "key": "monitoring",
@@ -10,11 +10,13 @@
       "repository": "Andrampa/hh_survey_v3",
       "repositoryVisibility": "private",
       "path": "docs/diagrams/diem_data_architecture.html",
-      "commit": "ba34d021022b2824de9b9121ad6721e7bb6f2c04",
-      "sourceChangedAt": "2026-10-21T19:53:33.000Z",
+      "commit": "091cc76cd474951ee4c143cf60bd0ee8c5968db1",
+      "sourceChangedAt": "2026-10-22T08:39:37.000Z",
       "uncommittedChanges": false,
-      "sha256": "7d7bcab438fbd650e4200577843f22bba0413bd6fbead76a2c22c9f8d1c4d92f",
-      "sortOrder": 1
+      "sha256": "56941a54fb0cf5816a7e7b6f7f05d76449cdfe87d9d11ab36dc837f2d2aa84c3",
+      "sortOrder": 1,
+      "status": "target",
+      "architectureAsOf": "2026-10-13"
     },
     {
       "key": "hub",
@@ -24,11 +26,13 @@
       "repository": "Andrampa/hub_v3",
       "repositoryVisibility": "public",
       "path": "docs/diagrams/diem_hub_architecture.html",
-      "commit": "b574069fb2906f368018f6d21a913f5ede90e2a5",
-      "sourceChangedAt": "2026-10-21T19:54:03.000Z",
+      "commit": "e0319707ffc462f68b6fb9b4fc6645c9a932be07",
+      "sourceChangedAt": "2026-10-22T08:39:58.000Z",
       "uncommittedChanges": false,
-      "sha256": "489fec13eb4973a7680c9eea89e0bd1b1e96e3f281191b8a8d57f098435ea97d",
-      "sortOrder": 2
+      "sha256": "867a5e0fed5f34c3f863eb98bdcd3b55a9cc1e810ff31e9430be5a2d6b2f39bf",
+      "sortOrder": 2,
+      "status": "current",
+      "architectureAsOf": "2026-10-22"
     },
     {
       "key": "eve",
@@ -38,11 +42,13 @@
       "repository": "Andrampa/eve",
       "repositoryVisibility": "private",
       "path": "docs/diagrams/eve_architecture.html",
-      "commit": "a81751154305c3c52be343b802ae690ce05de935",
-      "sourceChangedAt": "2026-10-21T19:53:37.000Z",
+      "commit": "626d02229f3be7dd3741a5044b6625d1d6f37f15",
+      "sourceChangedAt": "2026-10-22T08:39:40.000Z",
       "uncommittedChanges": false,
-      "sha256": "f9054babb50aea19620ca19365ff554deca4ee511e9c95cc122b121b786c19ac",
-      "sortOrder": 3
+      "sha256": "392787b15566cae6d714767dd12ea01ab3627ea17ac6034cc383a1f06ce43444",
+      "sortOrder": 3,
+      "status": "current",
+      "architectureAsOf": "2026-10-21"
     },
     {
       "key": "vista",
@@ -52,11 +58,13 @@
       "repository": "Andrampa/vista-water-atlas",
       "repositoryVisibility": "private",
       "path": "docs/diagrams/vista_architecture.html",
-      "commit": "d9f39efba5738db6012db3d40970f1111bc750a0",
-      "sourceChangedAt": "2026-10-21T19:53:47.000Z",
+      "commit": "499befc69f632f26442b0de8edf5e92889be3ad3",
+      "sourceChangedAt": "2026-10-22T08:39:50.000Z",
       "uncommittedChanges": false,
-      "sha256": "837bc8e9fd0ba9f1cc270bd79c7884b8c2ce56271c8145a9636785e7a860f285",
-      "sortOrder": 4
+      "sha256": "ff9897998fddc89c5cf842be8e17cacc2c250cdd2ef65212d49400b1c95122f0",
+      "sortOrder": 4,
+      "status": "current",
+      "architectureAsOf": "2026-10-21"
     }
   ],
   "relationships": [

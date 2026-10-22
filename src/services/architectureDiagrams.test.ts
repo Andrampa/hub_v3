@@ -28,6 +28,15 @@ describe('validateArchitectureManifest', () => {
     rejects((manifest) => { manifest.schemaVersion = 2 }, /schema version 2.*reads version 1.*sync_architecture_diagrams/)
   })
 
+  it('keeps older version-1 manifests valid and validates optional architecture metadata', () => {
+    const old = clone()
+    for (const diagram of old.diagrams) { delete diagram.status; delete diagram.architectureAsOf }
+    expect(validateArchitectureManifest(old).diagrams[0].status).toBeUndefined()
+    rejects((manifest) => { manifest.diagrams[0].status = 'deployed' }, /architecture status/)
+    rejects((manifest) => { manifest.diagrams[0].architectureAsOf = '2026-02-30' }, /reference date/)
+    rejects((manifest) => { manifest.diagrams[0].architectureAsOf = 'yesterday' }, /reference date/)
+  })
+
   it('rejects duplicate keys, malformed keys and short commits', () => {
     rejects((manifest) => { manifest.diagrams[1].key = 'monitoring' }, /repeats the key/)
     rejects((manifest) => { manifest.diagrams[0].key = 'Monitoring!' }, /invalid key/)

@@ -1,5 +1,17 @@
 # Handoff
 
+## 2026-10-22 - Architecture review improvements
+
+Status: committed and pushed in all four repositories (VISTA on both `main` and
+`paper/scientific-data`); the Hub copies were synced without `--allow-dirty`.
+Deployment is recorded in the changelog. Remaining: a signed-in Contributor look
+at the expanded dialog header (status line above the close toolbar), and the
+deferred shared visual-vocabulary redesign of the four diagrams.
+Next file: `src/pages/Architecture.tsx`. Verification: `npx vitest run
+src/services/architectureDiagrams.test.ts src/lib/diagramDocument.test.ts
+src/pages/Architecture.test.tsx src/components/SiteHeader.test.tsx`, then
+`npm run build` and `node scripts/sync_architecture_diagrams.mjs --check`.
+
 ## 2026-10-21 - Contributor architecture page
 
 Status: committed and pushed on `main`; see `docs/architecture_diagrams.md` and the

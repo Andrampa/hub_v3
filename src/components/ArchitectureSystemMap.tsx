@@ -241,6 +241,7 @@ export function ArchitectureSystemMap({ diagrams, relationships, selectedKey }: 
             </span>
             <strong>{relationship.label}</strong>
             <small>{kindsText(relationship.kinds)}</small>
+            <p>{relationship.detail}</p>
           </li>
         ))}
       </ul>

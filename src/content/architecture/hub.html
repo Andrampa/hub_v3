@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="diem-architecture-status" content="current">
+<meta name="diem-architecture-as-of" content="2026-10-22">
 <title>DIEM Hub Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,18 +96,39 @@ th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-botto
 thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 tbody th { font-weight: 600; width: 22%; }
 .foot { color: var(--muted); font-size: 13px; }
+
+.architecture-status { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--lane); color: var(--fg); font-size: 14px; }
+.reading-sequence { margin-block: 24px; }
+.reading-sequence summary { cursor: pointer; font-weight: 600; color: var(--accent); padding-block: 8px; }
+.reading-sequence summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.reading-sequence ol { padding-left: 24px; max-width: 85ch; }
+.reading-sequence li { margin-block: 8px; }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">DIEM Hub 3.0 · continues the household data architecture</div>
     <h1>How the Hub turns ArcGIS Online into a public front door</h1>
     <p class="dek">The Hub keeps no catalogue and no database of its own. It reads ArcGIS Online live, in the visitor's browser, along four paths: the public catalogue, household surveys, protected data and temporary microdata grants.</p>
+    <p class="architecture-status"><strong>Current implementation</strong> · As of 22 October 2026.</p>
   </header>
+
+  <details class="reading-sequence">
+    <summary>How to read this diagram</summary>
+    <ol>
+      <li>Read the public row from the Hub content group through catalogue services to product pages and external resources.</li>
+      <li>Follow survey configuration rows and homepage statistics into the survey pages; the separate monitoring app receives URL state and a short-lived token through the embed bridge.</li>
+      <li>Read the protected row as an item-by-item access check using the signed-in reader’s token. Household-data membership and temporary grants are separate paths to the same microdata picker.</li>
+      <li>Follow grant discovery from the reader’s groups. The browser checks pending invitations first; the server validates them only as a fallback. The expiry job removes grant copies.</li>
+      <li>Finish with the foundations: OAuth PKCE, per-tab sessionStorage and ArcGIS sharing. Signing in does not grant access to every item.</li>
+    </ol>
+  </details>
 
   <figure>
     <div class="scroll">
-      <svg viewBox="0 0 1280 816" role="img" aria-label="DIEM Hub architecture. Columns run from ArcGIS Online, through Hub code in the browser, to Hub pages and to applications outside the Hub. Four rows are the access paths. Public: the Hub content group and editorial tables feed the catalogue, country, hazard and flood pages, which open authoritative resources and link to EVE and VISTA. Surveys: the survey config view and homepage statistics from the monitoring system feed the survey rounds table, and the monitoring app is embedded through an origin-checked bridge that passes URL state and the sign-in token. Protected: every protected item is re-resolved with the user's own token before the workspace or dataset explorer shows it. Grants: the Hub discovers grant copies through the user's own group membership, and a Firebase function checks pending invitations against the private registry. ArcGIS sharing is the only authorization.">
+      <svg viewBox="0 0 1280 816" role="img" aria-label="DIEM Hub architecture. Columns run from ArcGIS Online, through Hub code in the browser, to Hub pages and to applications outside the Hub. Four rows are the access paths. Public: the Hub content group and editorial tables feed the catalogue, country, hazard and flood pages, which open authoritative resources and link to EVE and VISTA. Surveys: the survey config view and homepage statistics from the monitoring system feed the survey rounds table, and the monitoring app is embedded through an origin-checked bridge that passes URL state and the sign-in token. Protected: every protected item is re-resolved with the user's own token before the workspace or dataset explorer shows it. Grants: the Hub discovers grant copies through the user's own group membership, and the browser checks pending invitations first, using a Firebase function against the private registry only as a fallback. ArcGIS sharing is the only authorization.">
         <defs>
           <marker id="af" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-flow" d="M0,0 L10,5 L0,10 z"/></marker>
           <marker id="am" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="mk-meta" d="M0,0 L10,5 L0,10 z"/></marker>
@@ -196,7 +224,7 @@ tbody th { font-weight: 600; width: 22%; }
         <text class="bs" x="1022" y="347">reads the public views itself</text>
         <text class="bs" x="1022" y="362">from the monitoring system</text>
         <path class="flow" d="M400 266 H448" marker-end="url(#af)"/>
-        <text class="lbl" x="425.0" y="260" text-anchor="middle">query</text>
+        <text class="lbl" x="425.0" y="260" text-anchor="middle">config</text>
         <path class="flow" d="M400 339 H422 V286 H448" marker-end="url(#af)"/>
         <path class="flow" d="M690 271 H738" marker-end="url(#af)"/>
         <text class="lbl" x="715.0" y="265" text-anchor="middle">rows</text>
@@ -206,7 +234,7 @@ tbody th { font-weight: 600; width: 22%; }
         <text class="lbl" x="985.0" y="333" text-anchor="middle">iframe</text>
         <text class="lh" x="28" y="416">PROTECTED</text>
         <text class="ls" x="28" y="433">Community members;</text>
-        <text class="ls" x="28" y="448">microdata only for</text>
+        <text class="ls" x="28" y="448">master microdata for</text>
         <text class="ls" x="28" y="463">the household group</text>
         <rect class="box " x="170" y="404" width="230" height="78" rx="6"/>
         <text class="bt" x="182" y="424">Protected items</text>
@@ -247,18 +275,20 @@ tbody th { font-weight: 600; width: 22%; }
         <text class="bt" x="182" y="648">Grant registry</text>
         <text class="bs" x="182" y="665">private table, FAO org</text>
         <rect class="box " x="450" y="566" width="240" height="52" rx="6"/>
-        <text class="bt" x="462" y="586">grant discovery</text>
-        <text class="bs" x="462" y="603">own groups with the grant tag</text>
+        <text class="bt" x="462" y="586">grant + invitation checks</text>
+        <text class="bs" x="462" y="603">own groups; browser checks first</text>
         <rect class="box srv" x="450" y="628" width="240" height="52" rx="6"/>
         <text class="bt" x="462" y="648">Firebase function</text>
-        <text class="bs" x="462" y="665">checks pending invitations</text>
+        <text class="bs" x="462" y="665">invitation-check fallback</text>
         <rect class="box " x="740" y="566" width="220" height="70" rx="6"/>
-        <text class="bt" x="752" y="586">Grants + microdata picker</text>
-        <text class="bs" x="752" y="603">shown only with a grant</text>
+        <text class="bt" x="752" y="586">Shared microdata picker</text>
+        <text class="bs" x="752" y="603">household group or grant</text>
         <text class="bs" x="752" y="618">bounded package download</text>
         <rect class="box hand" x="1010" y="566" width="250" height="52" rx="6"/>
         <text class="bt" x="1022" y="586">Daily expiry job</text>
         <text class="bs" x="1022" y="603">deletes copies when time is up</text>
+        <path class="flow" d="M570 528 V546 H850 V564" marker-end="url(#af)"/>
+        <text class="lbl" x="858" y="552">master access</text>
         <path class="flow" d="M400 592 H448" marker-end="url(#af)"/>
         <text class="lbl" x="425.0" y="586" text-anchor="middle">groups</text>
         <path class="flow" d="M400 654 H448" marker-end="url(#af)"/>
@@ -281,7 +311,7 @@ tbody th { font-weight: 600; width: 22%; }
         <text class="bs" x="752" y="765">ArcGIS sharing, item by item</text>
         <rect class="box " x="1010" y="728" width="250" height="52" rx="6"/>
         <text class="bt" x="1022" y="748">Tokens</text>
-        <text class="bs" x="1022" y="765">memory only, never in URLs</text>
+        <text class="bs" x="1022" y="765">per-tab sessionStorage</text>
       </svg>
     </div>
     <div class="legend" aria-hidden="true">
@@ -305,15 +335,18 @@ tbody th { font-weight: 600; width: 22%; }
     </section>
     <section>
       <h2>Sign-in opens, sharing authorizes</h2>
-      <p>Signing in with a Community account opens the data workspace, but every protected item is fetched again with the user's own token, and ArcGIS decides. A typed URL grants nothing. The one server function answers only whether a pending invitation is real; it never returns data.</p>
+      <p>Signing in with a Community account opens the data workspace, but every protected item is fetched again with the user's own token, and ArcGIS decides. A typed URL grants nothing. The browser checks the recipient’s invitation metadata first. Only when that cannot confirm a grant does the server function validate the invitation against the private registry; it never returns survey data.</p>
     </section>
     <section>
       <h2>Where it meets the monitoring system</h2>
-      <p>The two systems share ArcGIS Online and nothing else. The monitoring pipeline writes the survey config view, homepage statistics, V3 services and grant copies; the Hub reads them. The monitoring app is a separate site that the Hub frames and hands a short-lived sign-in token. See <code>hh_survey_v3/docs/diagrams/diem_data_architecture.html</code>.</p>
+      <p>ArcGIS Online carries the shared data; the embed bridge also passes URL state and a short-lived token. The monitoring pipeline writes the survey config view, homepage statistics, V3 services and grant copies; the Hub reads them. The monitoring app is a separate site that the Hub frames and hands a short-lived sign-in token. See <code>hh_survey_v3/docs/diagrams/diem_data_architecture.html</code>.</p>
     </section>
   </div>
 
-  <p class="foot">Source: hub_v3 repository documentation (architecture, data access, temporary microdata grants, service manifest) and source on main, 21 October 2026.</p>
+  <p class="foot">Source: hub_v3 repository documentation (architecture, data access, temporary microdata grants, service manifest) and source on main, 22 October 2026.</p>
   <p class="foot">The VISTA side of the "EVE · VISTA" link-out, from NOAA composites to the public bucket, Earth Engine apps and the monthly frequency EVE reads, is drawn in <code>vista-water-atlas/docs/diagrams/vista_architecture.html</code>.</p>
   <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hh_survey_v3/blob/main/docs/diagrams/diem_data_architecture.html">DIEM household monitoring</a> · <a href="https://github.com/Andrampa/eve/blob/main/docs/diagrams/eve_architecture.html">EVE flood monitoring</a> · <a href="https://github.com/Andrampa/vista-water-atlas/blob/main/docs/diagrams/vista_architecture.html">VISTA water atlas</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/hub">data-in-emergencies.fao.org/architecture</a>.</p>
 </div>
+
+</body>
+</html>

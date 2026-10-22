@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-22 - Architecture diagram review improvements
+
+- Correct the Hub diagram's token persistence, shared microdata access paths and
+  browser-first invitation checks. Make all four authoritative source diagrams
+  standalone UTF-8 documents with explicit architecture status, reference dates
+  and expandable numbered reading guides; distinguish VISTA's planned and
+  conditional components. Reroute the master-access arrow so it crosses nothing.
+- Use a native modal dialog for expanded diagrams and include complete handoff
+  descriptions on phones. The Hub panel and the expanded dialog show each
+  diagram's status, which the embedded document then omits; downloads keep it.
+  Document the iframe Escape limitation and optional, backward-compatible
+  manifest metadata in `docs/architecture_diagrams.md`.
+
 ## 2026-10-21 - Contributor architecture page
 
 - Add `/architecture`, `/architecture/:key` and `/architecture/:key/full`: a

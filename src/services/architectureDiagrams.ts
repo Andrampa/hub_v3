@@ -25,6 +25,8 @@ export interface ArchitectureDiagram {
   uncommittedChanges: boolean
   sha256: string
   sortOrder: number
+  status?: 'current' | 'target'
+  architectureAsOf?: string
 }
 
 export interface ArchitectureRelationship {
@@ -109,6 +111,15 @@ export function validateArchitectureManifest(input: unknown): ArchitectureManife
     if (typeof raw.sortOrder !== 'number' || !Number.isFinite(raw.sortOrder)) {
       throw new ArchitectureManifestError(`The ${key} sort order is invalid.`)
     }
+    if (raw.status !== undefined && raw.status !== 'current' && raw.status !== 'target') {
+      throw new ArchitectureManifestError(`The ${key} architecture status is invalid.`)
+    }
+    if (raw.architectureAsOf !== undefined && (typeof raw.architectureAsOf !== 'string'
+      || !/^\d{4}-\d{2}-\d{2}$/.test(raw.architectureAsOf)
+      || Number.isNaN(Date.parse(raw.architectureAsOf))
+      || new Date(raw.architectureAsOf).toISOString().slice(0, 10) !== raw.architectureAsOf)) {
+      throw new ArchitectureManifestError(`The ${key} architecture reference date is invalid.`)
+    }
     return {
       key,
       title: text(raw.title, `${key} title`, 80),
@@ -122,6 +133,8 @@ export function validateArchitectureManifest(input: unknown): ArchitectureManife
       uncommittedChanges: raw.uncommittedChanges === true,
       sha256,
       sortOrder: raw.sortOrder,
+      status: raw.status,
+      architectureAsOf: raw.architectureAsOf,
     }
   })
   if (!Array.isArray(input.relationships)) throw new ArchitectureManifestError('The architecture manifest has no relationships list.')

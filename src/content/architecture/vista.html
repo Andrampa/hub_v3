@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="diem-architecture-status" content="current">
+<meta name="diem-architecture-as-of" content="2026-10-21">
 <title>VISTA Data Architecture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,14 +96,37 @@ th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-botto
 thead th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
 tbody th { font-weight: 600; width: 22%; }
 .foot { color: var(--muted); font-size: 13px; }
+
+.architecture-status { padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--lane); color: var(--fg); font-size: 14px; }
+.reading-sequence { margin-block: 24px; }
+.reading-sequence summary { cursor: pointer; font-weight: 600; color: var(--accent); padding-block: 8px; }
+.reading-sequence summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.reading-sequence ol { padding-left: 24px; max-width: 85ch; }
+.reading-sequence li { margin-block: 8px; }
+.box.planned { stroke: var(--muted); stroke-dasharray: 1 4; stroke-linecap: round; fill: var(--bg); }
+.sw.planned { width: 18px; height: 12px; border: 2px dotted var(--muted); }
+.sw.conditional { width: 18px; height: 12px; border: 1.5px dashed var(--muted); }
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header>
     <div class="eyebrow">DIEM flood services · VISTA, VIIRS Surface Water Temporal Atlas</div>
     <h1>How NOAA flood composites become a global flood reference</h1>
     <p class="dek">An operator builds dekadal rasters on a workstation and uploads them to Google Cloud. Earth Engine computes the multi-year statistics. The public reads one bucket and one Earth Engine project, and EVE uses the monthly flood frequency to tell seasonal from exceptional flooding.</p>
+    <p class="architecture-status"><strong>Current implementation; planned components labelled separately</strong> · As of 21 October 2026.</p>
   </header>
+
+  <details class="reading-sequence">
+    <summary>How to read this diagram</summary>
+    <ol>
+      <li>Start with the operator configuration and NOAA five-day flood composites. Phase 1 builds dekadal rasters; Pipeline B recovers logged gaps.</li>
+      <li>Follow Phase 2 through Cloud Storage into the Earth Engine dekadal archive.</li>
+      <li>Read the statistics in dependency order: dekadal counts and frequency, the rolling monthly archive, then monthly statistics. Phase 3B mosaics dekadal exports.</li>
+      <li>Finish at the public delivery paths and EVE’s monthly flood-frequency input. Dotted boxes are planned; dashed boxes are implemented conditional steps. Every phase is started by an operator.</li>
+    </ol>
+  </details>
 
   <figure>
     <div class="scroll">
@@ -160,7 +190,7 @@ tbody th { font-weight: 600; width: 22%; }
         <text class="bs" x="32" y="253">public S3, AWS CLI</text>
         <text class="bs" x="32" y="268">136 GeoTIFF tiles</text>
         <text class="bs" x="32" y="283">pulled on demand</text>
-        <rect class="box opt" x="20" y="300" width="156" height="46" rx="6"/>
+        <rect class="box planned" x="20" y="300" width="156" height="46" rx="6"/>
         <text class="bt" x="32" y="321">Daily VIIRS</text>
         <text class="bs" x="32" y="339">planned fallback only</text>
         <rect class="box" x="20" y="560" width="156" height="62" rx="6"/>
@@ -251,7 +281,7 @@ tbody th { font-weight: 600; width: 22%; }
         <text class="bs" x="910" y="253">comparison explorer,</text>
         <text class="bs" x="910" y="268">asset preview</text>
         <text class="bs" x="910" y="283">public, no account</text>
-        <rect class="box opt" x="898" y="318" width="170" height="46" rx="6"/>
+        <rect class="box planned" x="898" y="318" width="170" height="46" rx="6"/>
         <text class="bt" x="910" y="339">FAO STAC collection</text>
         <text class="bs" x="910" y="357">planned, not published</text>
         <rect class="box gate" x="898" y="544" width="170" height="62" rx="6"/>
@@ -319,6 +349,8 @@ tbody th { font-weight: 600; width: 22%; }
       </svg>
     </div>
     <div class="legend" aria-hidden="true">
+      <span><i class="sw conditional"></i>implemented, conditional</span>
+      <span><i class="sw planned"></i>planned, not operational</span>
       <span><i class="sw"></i>data moves</span>
       <span><i class="sw d"></i>configures, links or controls (no data)</span>
       <span><i class="sw g"></i>a person must approve</span>
@@ -326,7 +358,7 @@ tbody th { font-weight: 600; width: 22%; }
       <span><i class="sw s"></i>runs on a server (Earth Engine batch tasks)</span>
       <span><i class="sw h"></i>also in another DIEM diagram</span>
     </div>
-    <figcaption>What the code on <code>main</code> does today, 21 October 2026. Grey dashed boxes run only on a condition or are planned. Every output is a global raster on one EPSG:4326 grid of about 375 m, keyed by dekad (<code>YYYYMMdD</code>) or by one of 36 recurring keys (<code>MMdD</code>). No administrative units are stored; FAO GAUL boundaries are added only when maps, GIFs and example scripts are drawn.</figcaption>
+    <figcaption>What the code on <code>main</code> does today, 21 October 2026. Grey dashed boxes are implemented steps that run only on a condition; grey dotted boxes are planned and not operational. Every output is a global raster on one EPSG:4326 grid of about 375 m, keyed by dekad (<code>YYYYMMdD</code>) or by one of 36 recurring keys (<code>MMdD</code>). No administrative units are stored; FAO GAUL boundaries are added only when maps, GIFs and example scripts are drawn.</figcaption>
   </figure>
 
   <div class="notes">
@@ -367,3 +399,6 @@ tbody th { font-weight: 600; width: 22%; }
   <p class="foot">Source: vista-water-atlas README, operational workflow, codex context and configuration; fao-vista-app README and deploy workflow; EVE configuration and data manual; hub_v3 architecture. State as of 21 October 2026.</p>
   <p class="foot">Part of a set of four DIEM architecture diagrams: <a href="https://github.com/Andrampa/hh_survey_v3/blob/main/docs/diagrams/diem_data_architecture.html">DIEM household monitoring</a> · <a href="https://github.com/Andrampa/hub_v3/blob/main/docs/diagrams/diem_hub_architecture.html">DIEM Hub</a> · <a href="https://github.com/Andrampa/eve/blob/main/docs/diagrams/eve_architecture.html">EVE flood monitoring</a>. DIEM Contributors can read all four together in the Hub at <a href="https://data-in-emergencies.fao.org/architecture/vista">data-in-emergencies.fao.org/architecture</a>.</p>
 </div>
+
+</body>
+</html>

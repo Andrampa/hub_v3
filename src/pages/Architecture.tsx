@@ -125,7 +125,7 @@ function useDiagram(diagram: ArchitectureDiagram | undefined) {
     Promise.all([loadDiagramSource(key), loadDiagramFontFaceCss()])
       .then(([source, fontFaceCss]) => {
         if (!active) return
-        const srcdoc = buildDiagramDocument(source, { fontFaceCss, theme: 'light' })
+        const srcdoc = buildDiagramDocument(source, { fontFaceCss, theme: 'light', hideStatus: true })
         setState({ status: 'ready', key, source, srcdoc, fontFaceCss })
       })
       .catch((reason) => {
@@ -192,6 +192,7 @@ function ArchitectureWorkspace({ routeKey, fullPage }: { routeKey?: string; full
           <strong>{selected ? selected.title : 'Diagram not found'}</strong>
           {selected && diagramState?.status === 'ready' && <DownloadButton diagram={selected} state={diagramState} />}
         </header>
+        {selected && <DiagramStatus diagram={selected} />}
         {selected
           ? <DiagramFrame diagram={selected} state={diagramState} onRetry={retryDiagram} variant="full" />
           : <UnknownDiagram routeKey={routeKey || ''} diagrams={manifestState.manifest.diagrams} />}
@@ -256,6 +257,7 @@ function ArchitectureWorkspace({ routeKey, fullPage }: { routeKey?: string; full
                     </div>
                   </header>
                   <p className="architecture-summary">{selected.summary}</p>
+                  <DiagramStatus diagram={selected} />
                   <DiagramFrame diagram={selected} state={diagramState} onRetry={retryDiagram} variant="inline" />
                 </section>
                 <DiagramDetails diagram={selected} manifest={manifestState.manifest} />
@@ -270,7 +272,7 @@ function ArchitectureWorkspace({ routeKey, fullPage }: { routeKey?: string; full
   )
 }
 
-function DiagramFrame({ diagram, state, onRetry, variant }: {
+export function DiagramFrame({ diagram, state, onRetry, variant }: {
   diagram: ArchitectureDiagram
   state: DiagramState | null
   onRetry: () => void
@@ -279,35 +281,25 @@ function DiagramFrame({ diagram, state, onRetry, variant }: {
   const [expanded, setExpanded] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
   const expandRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
     if (!expanded) return
+    const dialog = dialogRef.current!
+    dialog.showModal()
     closeRef.current?.focus()
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setExpanded(false)
-    }
-    window.addEventListener('keydown', onKey)
     return () => {
       document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', onKey)
+      dialog.close()
       expandRef.current?.focus()
     }
   }, [expanded])
 
   useEffect(() => { setExpanded(false) }, [diagram.key])
 
-  return (
-    <div className={`architecture-frame architecture-frame-${variant}${expanded ? ' is-expanded' : ''}`}>
-      {variant === 'inline' && (
-        <div className="architecture-frame-tools">
-          <span>Scroll inside the diagram to read it all.</span>
-          {expanded
-            ? <button ref={closeRef} type="button" onClick={() => setExpanded(false)}>Close expanded view <span aria-hidden="true">×</span></button>
-            : <button ref={expandRef} type="button" aria-label={`Expand the ${diagram.title} diagram`} onClick={() => setExpanded(true)}>Expand <span aria-hidden="true">⤢</span></button>}
-        </div>
-      )}
+  const stage = (
       <div className="architecture-frame-stage">
         {state?.status === 'ready' && (
           <iframe
@@ -333,8 +325,44 @@ function DiagramFrame({ diagram, state, onRetry, variant }: {
           </div>
         )}
       </div>
+  )
+  return (
+    <div className={`architecture-frame architecture-frame-${variant}`}>
+      {variant === 'inline' && (
+        <div className="architecture-frame-tools">
+          <span>Scroll inside the diagram to read it all.</span>
+          <button ref={expandRef} type="button" aria-label={`Expand the ${diagram.title} diagram`} onClick={() => setExpanded(true)}>Expand <span aria-hidden="true">⤢</span></button>
+        </div>
+      )}
+      {/* An empty stage keeps the page height while the diagram is in the dialog. */}
+      {expanded ? <div className="architecture-frame-stage" aria-hidden="true" /> : stage}
+      {expanded && (
+        <dialog ref={dialogRef} className="architecture-frame is-expanded" aria-label={`${diagram.title} expanded diagram`}
+          onCancel={(event) => { event.preventDefault(); setExpanded(false) }}
+          onClose={() => setExpanded(false)}>
+          {/* The page's status panel sits behind the backdrop, and the
+              embedded document drops its own status line, so the dialog
+              carries it. One wrapper keeps the dialog's two grid rows. */}
+          <div className="architecture-dialog-head">
+            <DiagramStatus diagram={diagram} />
+            <div className="architecture-frame-tools">
+              <span>Use Close expanded view to exit when reading inside the diagram.</span>
+              <button ref={closeRef} type="button" onClick={() => setExpanded(false)}>Close expanded view <span aria-hidden="true">×</span></button>
+            </div>
+          </div>
+          {stage}
+        </dialog>
+      )}
     </div>
   )
+}
+
+function DiagramStatus({ diagram }: { diagram: ArchitectureDiagram }) {
+  if (!diagram.status && !diagram.architectureAsOf) return null
+  return <p className="architecture-status">
+    {diagram.status && <strong>{diagram.status === 'target' ? 'Target architecture' : 'Current implementation'}</strong>}
+    {diagram.architectureAsOf && <span>Architecture described as of <time dateTime={diagram.architectureAsOf}>{formatDate(diagram.architectureAsOf)}</time>.</span>}
+  </p>
 }
 
 /**

@@ -115,6 +115,13 @@ function main() {
     const [commit, sourceChangedAt] = git(repoDir, ['log', '-1', '--format=%H%n%cI', '--', entry.path]).split('\n')
     const html = readFileSync(sourcePath, 'utf8')
     checkSource(entry.key, html)
+    // Editorial architecture state belongs to the authoritative source, not its copy date.
+    const status = html.match(/<meta name="diem-architecture-status" content="([^"]+)">/)?.[1]
+    const architectureAsOf = html.match(/<meta name="diem-architecture-as-of" content="([^"]+)">/)?.[1]
+    if (status !== undefined && !['current', 'target'].includes(status)) fail(`${entry.key}: invalid architecture status.`)
+    if (architectureAsOf !== undefined && (!/^\d{4}-\d{2}-\d{2}$/.test(architectureAsOf)
+      || Number.isNaN(Date.parse(architectureAsOf))
+      || new Date(architectureAsOf).toISOString().slice(0, 10) !== architectureAsOf)) fail(`${entry.key}: invalid architecture reference date.`)
     files.set(entry.key, html)
     diagrams.push({
       key: entry.key,
@@ -129,6 +136,8 @@ function main() {
       uncommittedChanges: dirty,
       sha256: createHash('sha256').update(html, 'utf8').digest('hex'),
       sortOrder: entry.sortOrder,
+      ...(status ? { status } : {}),
+      ...(architectureAsOf ? { architectureAsOf } : {}),
     })
   }
 

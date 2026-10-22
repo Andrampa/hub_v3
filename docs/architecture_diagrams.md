@@ -77,6 +77,12 @@ Schema version 1, validated by `validateArchitectureManifest`
   (repository-relative `.html`, no `..`), `commit` (full 40-character hash of the
   last commit touching the file), `sourceChangedAt` (that commit's date, UTC),
   `uncommittedChanges`, `sha256` of the copied file, `sortOrder`.
+- Optional version-1 fields: `status` (`current` or `target`) and
+  `architectureAsOf` (a valid `YYYY-MM-DD` date). The sync reads these from the
+  source HTML's `diem-architecture-status` and `diem-architecture-as-of` meta
+  tags. Older manifests without them remain valid. This is the date the
+  architecture describes, not a claim that a fresh operational audit took place;
+  it is separate from the source commit date and the Hub copy date.
 - Each relationship: `from`, `to` (listed keys), `kinds` (`data`, `embedded`,
   `link`), `label`, `detail`.
 
@@ -100,8 +106,13 @@ document; fetched HTML is never inserted into the Hub DOM.
 
 - Rendered in `<iframe sandbox="" srcdoc>`: no `allow-scripts`, no
   `allow-same-origin`. The frame has a reserved responsive height
-  (`clamp(440px, 74vh, 920px)`) with internal scrolling, an Expand overlay
-  (Escape closes) and the diagrams' own horizontal scrolling.
+  (`clamp(440px, 74vh, 920px)`) with internal scrolling, an Expand modal
+  and the diagrams' own horizontal scrolling. The native `<dialog>` uses
+  `showModal()` for focus containment and an inert background, restores focus
+  to Expand when closed, and closes on Escape while the parent document has
+  focus. Escape inside the script-free frame does not reach the parent; the
+  always-visible Close expanded view button is the reliable exit. Scripts and
+  same-origin access remain forbidden in the iframe.
 - Allowlist sanitizer: only the HTML and SVG elements and attributes the
   diagrams use survive. Scripts, event handlers, forms, frames, objects, images,
   `use`, `foreignObject`, animation and every non-local `url()` are removed;
@@ -113,6 +124,15 @@ document; fetched HTML is never inserted into the Hub DOM.
   img-src data:; base-uri 'none'; form-action 'none'`.
 - Links become plain text so the frame cannot navigate away; related systems
   and source links live in the Hub interface.
+- All four sources are standalone UTF-8 HTML documents with a viewport and
+  language declaration. Each has a visible architecture status line
+  (`.architecture-status`); the Hub shows the status in its own panel and drops
+  that line from the embedded view (`hideStatus`), while downloads keep it. Each
+  also has an expandable numbered reading sequence (`details`/`summary`, allowed by the
+  sanitizer). The native disclosure works without scripts in the frame and in
+  downloaded copies. VISTA uses dotted boxes for planned components and dashed
+  grey boxes for implemented conditional steps; the full shared-symbol redesign
+  remains separate work.
 - Fonts: the Hub has no dark theme, so `data-theme="light"` is always set. The
   Hub's Open Sans replaces Archivo and IBM Plex Sans, embedded as a `data:`
   font because the opaque-origin frame cannot fetch it; monospace falls back to
@@ -139,8 +159,23 @@ edges that skip a column arc around the column they cross, and long labels wrap
 to two lines. The map is never drawn below 1:1 (900 px), so its text stays at or
 above the Hub's 11 px floor. Below 700 px it is replaced by a list of the same
 handoffs, and the diagram tabs become a horizontal strip.
+The phone list includes the full handoff descriptions available in the desktop
+map caption.
 
 ## Verification
+
+2026-10-22 follow-up: 48 focused tests pass, including old-manifest compatibility,
+invalid optional metadata, complete source-document rendering, modal cancellation,
+close/navigation cleanup and mobile handoff text. Build passes with the existing
+large-chunk warning. A temporary local harness exercised the actual frame and
+system-map components with all real source files: native modal/inert background,
+focus return, parent Escape, iframe Escape limitation, expandable reading guide,
+loading/error/retry, full-page sizing, and no outer horizontal overflow at 375,
+768, 1024 and 1440 px. Hub corrections and VISTA notation were visually checked.
+This is component verification, not a fresh signed-in Contributor acceptance
+test. The temporary harness was removed after checking. Source parity passes
+with `--check --allow-dirty`; ordinary `--check` intentionally refuses the
+uncommitted source changes.
 
 - `npx vitest run src/services/architectureDiagrams.test.ts src/lib/diagramDocument.test.ts src/pages/Architecture.test.tsx src/components/SiteHeader.test.tsx`
 - Signed-in Contributor check, 2026-10-21, in the in-app browser at 1280 px and

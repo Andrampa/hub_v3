@@ -101,6 +101,12 @@ describe('buildDiagramDocument', () => {
     const html = buildDiagramDocument(source)
     const rendered = new DOMParser().parseFromString(html, 'text/html')
     const original = new DOMParser().parseFromString(source, 'text/html')
+    expect(source).toMatch(/^<!doctype html>/i)
+    expect(original.documentElement.lang).toBe('en')
+    expect(original.querySelector('meta[charset]')?.getAttribute('charset')).toBe('utf-8')
+    expect(original.querySelector('meta[name="viewport"]')).not.toBe(null)
+    expect(rendered.querySelector('.reading-sequence ol')?.children.length).toBeGreaterThanOrEqual(4)
+    expect(rendered.querySelector('.architecture-status')?.textContent).toMatch(/ · As of \d{1,2} [A-Z][a-z]+ \d{4}\./)
     expect(rendered.querySelectorAll('svg rect').length).toBe(original.querySelectorAll('svg rect').length)
     expect(rendered.querySelectorAll('svg text').length).toBe(original.querySelectorAll('svg text').length)
     expect(rendered.querySelectorAll('[marker-end]').length).toBe(original.querySelectorAll('[marker-end]').length)
@@ -108,5 +114,15 @@ describe('buildDiagramDocument', () => {
     expect(rendered.querySelector('.legend')).not.toBe(null)
     expect(rendered.querySelectorAll('a')).toHaveLength(0)
     expect(html).not.toMatch(/fonts\.(googleapis|gstatic)\.com/)
+  })
+})
+
+describe('status line', () => {
+  const source = '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>S</title></head><body><div class="wrap"><p class="architecture-status"><strong>Current implementation</strong> · As of 22 October 2026.</p><svg role="img" aria-label="A drawing with a long enough label"></svg></div></body></html>'
+
+  it('keeps the status line in standalone copies and drops it from the Hub view', () => {
+    expect(buildDiagramDocument(source)).toContain('architecture-status')
+    expect(buildDiagramDocument(source, { hideStatus: true })).not.toContain('architecture-status')
+    expect(buildDiagramDocument(source, { hideStatus: true })).toContain('A drawing with a long enough label')
   })
 })
