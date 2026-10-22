@@ -12,6 +12,8 @@
   diagram's status, which the embedded document then omits; downloads keep it.
   Document the iframe Escape limitation and optional, backward-compatible
   manifest metadata in `docs/architecture_diagrams.md`.
+- Deployed to review and production on 2026-10-22 from deployment commit
+  `13e19bc` (Manual Deploy runs 39749860521 and 39750276270).
 
 ## 2026-10-21 - Contributor architecture page
 
