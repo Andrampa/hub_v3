@@ -21,6 +21,8 @@
   "Access household microdata"); the surveys catalogue adds "Get data" per
   round. Clearer microdata access summary wording; an account without a
   microdata path is offered the catalogue and request form directly.
+- Deployed to review and production on 2026-10-22 from deployment commit
+  `c4aee1f` (Manual Deploy runs 39761775574 and 39762176331).
 
 ## 2026-10-22 - Architecture diagram review improvements
 
