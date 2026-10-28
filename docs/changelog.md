@@ -12,7 +12,12 @@
   confirmed one: the signed-in failure was not reproduced.
 - Boundary Python and R scripts now download geometry (GeoJSON, GeoPackage,
   shapefile) without sign-in. Both were generated from the app code and run
-  against the current and archived services. Not yet deployed.
+  against the current and archived services. Python is verified on the whole
+  ADM2 layer; R is not: one heavy batch is not served within 10 minutes.
+- This entry and the two below (simpler workspace reference panel, microdata
+  explore links) plus the guide consolidation were deployed to review and
+  production on 2026-10-28 from deployment commit `46c69f14` (Manual Deploy runs
+  40723186100 and 40728173344).
 
 ## 2026-10-28 - Microdata explore links beside the surveys
 
@@ -23,7 +28,7 @@
   country and round; V3 rows name the mandatory and optional tables. Active
   grant tables that produced no confirmed row, matched per table, are listed
   beneath the survey list with their own Explore links, also when the whole
-  inventory fails to load. Not yet deployed.
+  inventory fails to load.
 
 ## 2026-10-28 - Simpler workspace reference panel
 
@@ -35,7 +40,7 @@
   boundaries.
 - The guide drops its Data API section and the pointer to opening source
   datasets directly, and describes the coded/labelled download choice instead
-  of the labelling tools. Not yet deployed.
+  of the labelling tools.
 
 ## 2026-10-28 - Data access guidance consolidated into the guide
 
@@ -50,7 +55,7 @@
   cards now say "No production data yet" while a generation's aggregated
   services are all preview.
 - Remove `DataAccess.tsx`, its test and the stylesheet rules only it used. Add
-  `DataGuide.test.tsx`. Not yet deployed.
+  `DataGuide.test.tsx`.
 
 ## 2026-10-22 - Guided survey data flow
 
