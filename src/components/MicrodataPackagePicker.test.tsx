@@ -482,3 +482,70 @@ describe('exploring without bulk export', () => {
     expect(note?.querySelector('a')?.getAttribute('href')).toBe('/data/grants/view-sdn')
   })
 })
+
+it('offers the combined layout only for several surveys and sends it to the check and the build', async () => {
+  const survey = (round: number) => ({ key: `v2:NGA:${round}`, generation: 'v2', adm0Iso3: 'NGA', countryName: 'Nigeria',
+    round, testData: false, components: [{ component: 'household', source: 'master',
+      itemId: 'master', layerUrl: 'https://example.test/0', countryField: 'adm0_iso3', roundField: 'round', bulkExportEnabled: true }] })
+  discoverMicrodataAccess.mockResolvedValue({
+    surveys: [survey(7), survey(8)],
+    master: { status: 'complete', surveys: [], sources: [], pendingSourceCount: 0, unavailableSourceCount: 0 },
+    grantCheckFailed: false, grantIssues: [],
+  })
+  await act(async () => root.render(<MemoryRouter><MicrodataPackagePicker
+    grantDiscovery={{ bundles: [], source: 'none' }} grantChecking={false}
+    householdData={true} contributor={true} testMode={false} licenceAccess="householdGroup"
+  /></MemoryRouter>))
+  const boxes = () => Array.from(host.querySelectorAll<HTMLInputElement>('details.microdata-country input[type="checkbox"]'))
+  const layoutRadios = () => Array.from(host.querySelectorAll<HTMLInputElement>('input[name="microdata-layout-choice"]'))
+  await act(async () => boxes()[0].click())
+  expect(layoutRadios()).toHaveLength(0)
+  await act(async () => boxes()[1].click())
+  expect(layoutRadios()).toHaveLength(2)
+  expect(layoutRadios()[0].checked).toBe(true)
+  await act(async () => layoutRadios()[1].click())
+  expect(host.textContent).toContain('Combined by questionnaire version')
+  expect(host.textContent).toContain('1 CSV (coded values)')
+  const check = Array.from(host.querySelectorAll('button')).find((entry) => entry.textContent === 'Check access and count records') as HTMLButtonElement
+  await act(async () => check.click())
+  expect(preflightMicrodataPackage).toHaveBeenLastCalledWith(expect.objectContaining({ layout: 'combined-by-generation' }))
+  await acceptLicence()
+  const prepare = Array.from(host.querySelectorAll('button')).find((entry) => entry.textContent === 'Prepare microdata downloads') as HTMLButtonElement
+  await act(async () => prepare.click())
+  expect(buildMicrodataParts).toHaveBeenCalledWith(expect.objectContaining({ layout: 'combined-by-generation' }))
+  expect(host.textContent).toContain('Download part 1')
+  await act(async () => layoutRadios()[0].click())
+  expect(prepare.disabled).toBe(true)
+  expect(host.textContent).not.toContain('Download part 1')
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test')
+  await act(async () => button('Check access and count records').click())
+  expect(preflightMicrodataPackage).toHaveBeenLastCalledWith(expect.objectContaining({ layout: 'per-survey' }))
+  await act(async () => layoutRadios()[1].click())
+  // Dropping back to one survey returns to separate folders.
+  await act(async () => boxes()[1].click())
+  expect(layoutRadios()).toHaveLength(0)
+  expect(host.textContent).toContain('One folder per survey')
+  await act(async () => button('Check access and count records').click())
+  expect(preflightMicrodataPackage).toHaveBeenLastCalledWith(expect.objectContaining({ layout: 'per-survey' }))
+})
+
+it('uses the checked column-set count in the combined-layout review summary', async () => {
+  const survey = (round: number) => ({ key: `v2:NGA:${round}`, generation: 'v2', adm0Iso3: 'NGA', countryName: 'Nigeria',
+    round, testData: false, components: [{ component: 'household', source: 'master',
+      itemId: 'master', layerUrl: 'https://example.test/0', countryField: 'adm0_iso3', roundField: 'round', bulkExportEnabled: true }] })
+  discoverMicrodataAccess.mockResolvedValue({
+    surveys: [survey(7), survey(8)],
+    master: { status: 'complete', surveys: [], sources: [], pendingSourceCount: 0, unavailableSourceCount: 0 },
+    grantCheckFailed: false, grantIssues: [],
+  })
+  await renderWithSelection()
+  await act(async () => (host.querySelectorAll('details.microdata-country input[type="checkbox"]')[1] as HTMLInputElement).click())
+  await act(async () => (host.querySelectorAll('input[name="microdata-layout-choice"]')[1] as HTMLInputElement).click())
+  // Two same-generation views can expose different column sets.
+  preflightMicrodataPackage.mockResolvedValueOnce({ recordCount: 5025, sourceTableCount: 2,
+    outputFileCount: 2, resolved: [] })
+  await act(async () => button('Check access and count records').click())
+  expect(host.textContent).toContain('written as 2 CSV files')
+  const dataFiles = Array.from(host.querySelectorAll('dt')).find((entry) => entry.textContent === 'Data files')!
+  expect(dataFiles.nextElementSibling?.textContent).toBe('2 CSVs (coded values)')
+})

@@ -36,6 +36,12 @@ export interface MicrodataPackageBudget {
   sourceTables: number
 }
 
+/**
+ * One folder per survey (the default), or one folder per questionnaire
+ * generation whose CSVs stack the rows of every selected survey.
+ */
+export type MicrodataLayout = 'per-survey' | 'combined-by-generation'
+
 /** CSV files a package writes for each source table. */
 export function outputFilesPerTable(values: MicrodataValues = 'codes') {
   return values === 'both' ? 2 : 1
@@ -47,6 +53,8 @@ export interface MicrodataBundleOptions {
   contributor: boolean
   /** Coded values (default), domain labels in place of codes, or both files. */
   values?: MicrodataValues
+  /** Separate survey folders (default) or survey rows combined per generation. */
+  layout?: MicrodataLayout
   requester: ProtectedRequester
   budget: MicrodataPackageBudget
   signal?: AbortSignal
@@ -74,6 +82,9 @@ interface DataFileManifest {
   item_id: string
   layer_id: number
   layer_name: string
+  /** The columns that identify each row's survey, so combined files stay attributable. */
+  country_field: string
+  round_field: string
   item_modified?: string
   query_endpoint: string
   query_parameters: Record<string, string>
@@ -97,11 +108,30 @@ interface ValueLabelManifest {
   audited_at?: string
 }
 
+interface SurveyManifest {
+  key: string
+  country: string
+  adm0_iso3: string
+  round: number
+  generation: MicrodataSurvey['generation']
+  folder: string
+}
+
+interface PackageManifest {
+  layout: MicrodataLayout
+  surveys: SurveyManifest[]
+  files: DataFileManifest[]
+  value_labels: ValueLabelManifest[]
+  [key: string]: unknown
+}
+
 interface ResolvedComponent {
   survey: MicrodataSurvey
   component: MicrodataSurveyComponent
   definition: DatasetDefinition
   where: string
+  countryField: string
+  roundField: string
   count: number
   labels: LabelStatus
 }
@@ -112,6 +142,11 @@ function assertLive(signal?: AbortSignal) {
 
 function isoDate(date: Date) {
   return date.toISOString().slice(0, 10)
+}
+
+/** The label mapping file; test packages mark every CSV name, not only folders. */
+function valueLabelsName(testData: boolean) {
+  return `${testData ? 'TEST_DATA_' : ''}value_labels.csv`
 }
 
 function surveyFolder(survey: MicrodataSurvey) {
@@ -170,12 +205,17 @@ function validateResolvedSource(survey: MicrodataSurvey, component: MicrodataSur
 }
 
 function documentationText(survey: MicrodataSurvey, included: MicrodataComponent[]) {
-  const generation = GENERATIONS[survey.generation]
+  return generationDocumentationText(survey.generation,
+    [`Household microdata documentation — ${survey.countryName}, round ${survey.round}`], included)
+}
+
+function generationDocumentationText(generationId: MicrodataSurvey['generation'], heading: string[], included: MicrodataComponent[]) {
+  const generation = GENERATIONS[generationId]
   const documents = DOCUMENTATION_RESOURCES.filter((resource) => (
-    resource.version === survey.generation && (resource.audience === 'microdata' || resource.audience === 'both')
+    resource.version === generationId && (resource.audience === 'microdata' || resource.audience === 'both')
   ))
   const lines = [
-    `Household microdata documentation — ${survey.countryName}, round ${survey.round}`,
+    ...heading,
     `Questionnaire: ${generation.label} (${generation.name})`,
     `Included tables: ${included.join(', ')}`,
     '',
@@ -187,7 +227,7 @@ function documentationText(survey: MicrodataSurvey, included: MicrodataComponent
     lines.push(`No field descriptions or codebook have been published for ${generation.label} yet.`,
       'Do not use an earlier generation\'s codebook in their place.')
   }
-  if (survey.generation === 'v3') {
+  if (generationId === 'v3') {
     lines.push('', 'V3 mandatory and optional tables are separate. To combine them for analysis,',
       'join on adm0_iso3 + round + survey_id. Optional questions were not asked in every survey;',
       'an absent optional row is not the same as a household non-response.')
@@ -245,7 +285,7 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
     const definition = await (options.resolve || resolveCurrent)(component, requester)
     assertLive(signal)
     validateResolvedSource(survey, component, definition)
-    const { where } = componentWhere(survey, definition, options.contributor)
+    const { where, countryField, roundField } = componentWhere(survey, definition, options.contributor)
     const countResponse = await requester<{ count?: number }>(`${definition.layerUrl}/query`, {
       where, returnCountOnly: 'true', returnGeometry: 'false',
     }, { signal })
@@ -256,7 +296,7 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
     }
     const labels = await labelStatus(survey.generation, component.component, component.source,
       component.itemId, definition.layer.fields, options.audit)
-    resolved.push({ survey, component, definition, where, count, labels })
+    resolved.push({ survey, component, definition, where, countryField, roundField, count, labels })
     onProgress?.({ stage: 'counting', completed: index + 1, total })
   }
   const values = options.values || 'codes'
@@ -302,9 +342,15 @@ export async function preflightMicrodataPackage(options: Omit<MicrodataBundleOpt
       }
     }
   }
+  // Combined CSVs are one per generation, table and column set. The count
+  // assumes the selection fits one part, since each part combines its own surveys.
+  const tableFiles = options.layout === 'combined-by-generation'
+    ? new Set(resolved.map(({ survey, component, definition }) => JSON.stringify([survey.generation, component.component,
+      usableFields(definition.layer.fields).map((field) => field.name)]))).size
+    : chosen.length
   return {
     resolved, recordCount, sourceTableCount: chosen.length,
-    outputFileCount: chosen.length * outputFilesPerTable(values),
+    outputFileCount: tableFiles * outputFilesPerTable(values),
     estimatedBytes,
   }
 }
@@ -363,10 +409,11 @@ async function fetchBoundedCsv(
   return { csvs, rowCount: offset }
 }
 
-function readmeText({ now, surveyCount, fileCount, recordCount, testData, values, valueLabels, partNumber }: {
+function readmeText({ now, surveyCount, fileCount, recordCount, testData, values, valueLabels, layout, partNumber }: {
   now: Date; surveyCount: number; fileCount: number; recordCount: number
-  testData: boolean; values: MicrodataValues; valueLabels: ValueLabelManifest[]; partNumber?: number
+  testData: boolean; values: MicrodataValues; valueLabels: ValueLabelManifest[]; layout: MicrodataLayout; partNumber?: number
 }) {
+  const combined = layout === 'combined-by-generation'
   const unverifiedLabels = valueLabels.filter((entry) => entry.status === 'unverified')
   return [
     `DIEM household microdata${partNumber ? ` - part ${partNumber}` : ''}`,
@@ -374,7 +421,14 @@ function readmeText({ now, surveyCount, fileCount, recordCount, testData, values
     `Generated: ${now.toISOString()}`,
     `Surveys: ${surveyCount}; data files: ${fileCount}; records: ${formatNumber(recordCount)}`,
     testData ? 'TEST DATA — simulated records for infrastructure review; do not cite as survey results.' : null,
-    'Each survey has its own folder. Read its documentation_and_metadata.txt for version-matched field descriptions and codebook links.',
+    ...(combined ? [
+      'Surveys are combined by questionnaire generation: each generation folder has one CSV per table, with the rows of',
+      `every survey${partNumber ? ' in this part' : ''} stacked in the order of ${testData ? 'TEST_DATA_' : ''}surveys.csv. adm0_iso3 and round identify each row's survey.`,
+      'Different generations are never combined. Tables whose columns differ (for example a temporary-grant view exposing',
+      'fewer fields) are written to a separate numbered file rather than reshaped. manifest.json lists every survey slice',
+      'in each file with its source, query and record count.',
+      'Read each generation folder\'s documentation_and_metadata.txt for version-matched field descriptions and codebook links.',
+    ] : ['Each survey has its own folder. Read its documentation_and_metadata.txt for version-matched field descriptions and codebook links.']),
     'V3 mandatory and optional CSVs are separate; join on adm0_iso3 + round + survey_id if needed.',
     partNumber ? 'This part contains only the complete surveys listed in manifest.json. Other selected surveys may be in other parts.' : 'All requested surveys and components are included. No partial package is returned.',
     'Use is subject to LICENCE.txt: confidentiality, research and statistical purposes only, no redistribution, and citation.',
@@ -390,12 +444,97 @@ function readmeText({ now, surveyCount, fileCount, recordCount, testData, values
     'Where the published codebook wording differs, the labels in this package take precedence.',
     'In a labelled file, a code with no label is kept as the raw code, and empty values stay empty. manifest.json lists,',
     'per labelled file, the fields labelled, fields without a domain, and any unlabelled codes.',
-    'Each survey folder has value_labels.csv (component, item_id, layer_id, variable, code, label) for verified tables.',
+    `Each ${combined ? 'generation' : 'survey'} folder has ${valueLabelsName(testData)} (component, item_id, layer_id, variable, code, label) for verified tables.`,
     unverifiedLabels.length
-      ? `value_labels.csv omits tables whose labels could not be verified: ${unverifiedLabels.map((entry) => `${entry.survey_key} ${entry.component} (${entry.reason})`).join('; ')}. It is not a codebook for them.`
+      ? `${valueLabelsName(testData)} omits tables whose labels could not be verified: ${unverifiedLabels.map((entry) => `${entry.survey_key} ${entry.component} (${entry.reason})`).join('; ')}. It is not a codebook for them.`
       : null,
     '',
   ].filter((line) => line !== null).join('\n')
+}
+
+/** Where a CSV's BOM and header line end, which is where its first row separator begins. */
+function headerLength(csv: Uint8Array) {
+  for (let index = 0; index < csv.length - 1; index += 1) {
+    if (csv[index] === 13 && csv[index + 1] === 10) return index
+  }
+  return csv.length
+}
+
+function concatBytes(chunks: Uint8Array[]) {
+  const joined = new Uint8Array(chunks.reduce((total, chunk) => total + chunk.byteLength, 0))
+  let cursor = 0
+  for (const chunk of chunks) { joined.set(chunk, cursor); cursor += chunk.byteLength }
+  return joined
+}
+
+/**
+ * Rewrites complete survey folders as one folder per questionnaire generation.
+ *
+ * Only slices with the same generation, table, values and exact header share a
+ * CSV, so V2 and V3 never mix and no column is reshaped. Rows are appended
+ * byte for byte in survey order, and every slice keeps its own manifest entry
+ * (path, source, query, record count) pointing at the file that holds it.
+ */
+function combineByGeneration(files: Record<string, Uint8Array>, manifest: PackageManifest) {
+  const decoder = new TextDecoder()
+  const encode = (text: string) => new TextEncoder().encode(text)
+  const prefix = manifest.test_data === true ? 'TEST_DATA_' : ''
+  const output: Record<string, Uint8Array> = {}
+  for (const [path, bytes] of Object.entries(files)) if (!path.includes('/')) output[path] = bytes
+  const groups = new Map<string, { path: string; chunks: Uint8Array[] }>()
+  const numbered = new Map<string, number>()
+  const combinedFiles = manifest.files.map((entry) => {
+    const csv = files[entry.path]
+    const split = headerLength(csv)
+    const header = decoder.decode(csv.subarray(0, split)).replace(/^﻿/, '')
+    const columns = header.split(',')
+    if (!columns.includes(entry.country_field) || !columns.includes(entry.round_field)) {
+      throw new Error(`${entry.survey_key} cannot be combined because its rows do not carry ${entry.country_field} and ${entry.round_field}. Choose separate survey folders.`)
+    }
+    const key = JSON.stringify([entry.generation, entry.component, entry.values, header])
+    let group = groups.get(key)
+    if (group) {
+      group.chunks.push(csv.subarray(split))
+    } else {
+      const stem = `${prefix}DIEM_${entry.generation}_household${entry.generation === 'v3' ? `_${entry.component}` : ''}`
+      const number = (numbered.get(`${stem}|${entry.values}`) || 0) + 1
+      numbered.set(`${stem}|${entry.values}`, number)
+      group = { path: `${prefix}${entry.generation}/data/${stem}${number > 1 ? `_columns${number}` : ''}${entry.values === 'labelled' ? '_labelled' : ''}.csv`, chunks: [csv] }
+      groups.set(key, group)
+    }
+    return { ...entry, path: group.path }
+  })
+  for (const { path, chunks } of groups.values()) output[path] = concatBytes(chunks)
+
+  for (const generation of [...new Set(manifest.surveys.map((survey) => survey.generation))]) {
+    const folder = `${prefix}${generation}`
+    const surveys = manifest.surveys.filter((survey) => survey.generation === generation)
+    const rows = [['survey_key', 'country', 'adm0_iso3', 'round', 'generation'],
+      ...surveys.map((survey) => [survey.key, survey.country, survey.adm0_iso3, survey.round, survey.generation])]
+    output[`${folder}/${prefix}surveys.csv`] = encode(`﻿${rows.map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`)
+    const included = [...new Set(manifest.files.filter((file) => file.generation === generation).map((file) => file.component))]
+    output[`${folder}/documentation_and_metadata.txt`] = encode(generationDocumentationText(generation, [
+      `Household microdata documentation — ${GENERATIONS[generation].label} surveys combined`,
+      `Surveys: ${surveys.map((survey) => `${survey.country} round ${survey.round}`).join('; ')}`,
+    ], included))
+    // Surveys read from the same table carry identical mappings, so each distinct
+    // body is kept once. Bodies are compared whole: a label may hold a quoted line break.
+    let header = ''
+    const bodies = new Set<string>()
+    for (const survey of surveys) {
+      const text = decoder.decode(files[`${survey.folder}/${valueLabelsName(Boolean(prefix))}`]).replace(/^﻿/, '')
+      const end = text.indexOf('\r\n')
+      header = text.slice(0, end)
+      if (text.length > end + 2) bodies.add(text.slice(end + 2))
+    }
+    output[`${folder}/${valueLabelsName(Boolean(prefix))}`] = encode(`﻿${header}\r\n${[...bodies].join('')}`)
+  }
+  const dataBytes = [...groups.values()].reduce((total, { path }) => total + output[path].byteLength, 0)
+  return {
+    files: output, dataBytes, fileCount: groups.size,
+    manifest: { ...manifest, layout: 'combined-by-generation' as const, files: combinedFiles,
+      surveys: manifest.surveys.map((survey) => ({ ...survey, folder: `${prefix}${survey.generation}` })) },
+  }
 }
 
 export interface MicrodataPart {
@@ -419,7 +558,8 @@ export async function buildMicrodataParts(options: MicrodataBundleOptions & {
   const preflight = await preflightMicrodataPackage({ ...options, splitParts: true, estimateSize: false })
   const now = options.now?.() || new Date()
   let pending: Record<string, Uint8Array> = {}
-  let manifests: Array<{ surveys: Array<{ key: string; folder: string }>; files: DataFileManifest[]; value_labels: ValueLabelManifest[] }> = []
+  let manifests: PackageManifest[] = []
+  const layout = options.layout || 'per-survey'
   let bytes = 0
   let records = 0
   let tables = 0
@@ -433,14 +573,19 @@ export async function buildMicrodataParts(options: MicrodataBundleOptions & {
     if (!manifests.length) return
     assertLive(options.signal)
     const singlePackage = final && partNumber === 0
-    const merged = { ...JSON.parse(new TextDecoder().decode(pending['manifest.json'])),
+    let merged: PackageManifest = { ...JSON.parse(new TextDecoder().decode(pending['manifest.json'])),
       part_number: partNumber + 1,
       surveys: manifests.flatMap((entry) => entry.surveys),
       files: manifests.flatMap((entry) => entry.files),
       value_labels: manifests.flatMap((entry) => entry.value_labels),
     }
+    let fileCount = merged.files.length
+    if (layout === 'combined-by-generation') {
+      const combined = combineByGeneration(pending, merged)
+      pending = combined.files; merged = combined.manifest; bytes = combined.dataBytes; fileCount = combined.fileCount
+    }
     pending['manifest.json'] = encode(`${JSON.stringify(merged, null, 2)}\n`)
-    pending['README.txt'] = encode(readmeText({ now, surveyCount: merged.surveys.length, fileCount: merged.files.length, recordCount: records, testData: options.surveys[0].testData, values: options.values || 'codes', valueLabels: merged.value_labels, partNumber: singlePackage ? undefined : partNumber + 1 }))
+    pending['README.txt'] = encode(readmeText({ now, surveyCount: merged.surveys.length, fileCount, recordCount: records, testData: options.surveys[0].testData, values: options.values || 'codes', valueLabels: merged.value_labels, layout, partNumber: singlePackage ? undefined : partNumber + 1 }))
     options.onProgress?.({ stage: 'compressing', completed: partNumber, total: 1, label: `Part ${partNumber + 1}` })
     const archive = await (options.zip || compressInWorker)(pending, options.signal)
     assertLive(options.signal)
@@ -454,10 +599,10 @@ export async function buildMicrodataParts(options: MicrodataBundleOptions & {
     options.onPart({ partNumber,
       fileName: `${options.surveys[0].testData ? 'TEST_DATA_' : ''}DIEM_microdata_${isoDate(now)}${singlePackage ? '' : `_part${partNumber}`}.zip`,
       blob: new Blob([archive as BlobPart], { type: 'application/zip' }),
-      recordCount: records, fileCount: merged.files.length, uncompressedBytes: bytes,
-      surveyKeys: merged.surveys.map((survey: { key: string }) => survey.key),
+      recordCount: records, fileCount, uncompressedBytes: bytes,
+      surveyKeys: merged.surveys.map((survey) => survey.key),
     })
-    merged.surveys.forEach((survey: { key: string }) => completedKeys.add(survey.key))
+    merged.surveys.forEach((survey) => completedKeys.add(survey.key))
     pending = {}; manifests = []; bytes = 0; records = 0; tables = 0
   }
 
@@ -471,7 +616,8 @@ export async function buildMicrodataParts(options: MicrodataBundleOptions & {
     if (records + count > options.budget.records || tables + entries.length > options.budget.sourceTables) await flush()
     let surveyFiles: Record<string, Uint8Array> = {}
     try {
-      await buildMicrodataBundle({ ...options, surveys: [survey], splitParts: false, estimateSize: false,
+      // Each survey is built as its own folder; a combined layout is applied per part in flush().
+      await buildMicrodataBundle({ ...options, surveys: [survey], layout: 'per-survey', splitParts: false, estimateSize: false,
         now: () => now,
         // Flush before accumulating a survey beyond remaining CSV capacity. The
         // current survey's bounded chunks stay live and its rows are never reread.
@@ -514,7 +660,7 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
   let uncompressedBytes = 0
   for (const [index, entry] of resolved.entries()) {
     assertLive(signal)
-    const { survey, component, definition, where, count, labels } = entry
+    const { survey, component, definition, where, countryField, roundField, count, labels } = entry
     const columns = usableFields(definition.layer.fields).map((field) => field.name)
     const plan: LabelPlan = labelPlan(definition.layer.fields, columns)
     const unlabelled: Record<string, UnlabelledCodes> = {}
@@ -543,6 +689,7 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
         component: component.component, authorizing_source: component.source,
         item_id: component.itemId, layer_id: definition.layer.id,
         layer_name: definition.layer.name,
+        country_field: countryField, round_field: roundField,
         item_modified: definition.resource.item?.modified ? new Date(definition.resource.item.modified).toISOString() : undefined,
         query_endpoint: `${definition.layerUrl}/query`,
         query_parameters: { where, outFields: '*', returnGeometry: 'false', f: 'json' },
@@ -576,11 +723,12 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
     const included = [...new Set(manifestFiles.filter((file) => file.survey_key === survey.key).map((file) => file.component))]
     files[`${folder}/survey.txt`] = encode(`${survey.countryName} (${survey.adm0Iso3}), round ${survey.round}\nQuestionnaire: ${GENERATIONS[survey.generation].label}\n${survey.testData ? 'TEST DATA — simulated records, not survey results.\n' : ''}`)
     files[`${folder}/documentation_and_metadata.txt`] = encode(documentationText(survey, included))
-    files[`${folder}/value_labels.csv`] = encode(valueLabelsCsv(labelSources.get(survey.key) || []))
+    files[`${folder}/${valueLabelsName(survey.testData)}`] = encode(valueLabelsCsv(labelSources.get(survey.key) || []))
   }
-  const manifest = {
-    package_schema_version: 2, kind: 'household-microdata', generated: now.toISOString(),
-    hub: HUB_ORIGIN, test_data: surveys[0].testData, values,
+  const layout = options.layout || 'per-survey'
+  let manifest: PackageManifest = {
+    package_schema_version: 3, kind: 'household-microdata', generated: now.toISOString(),
+    hub: HUB_ORIGIN, test_data: surveys[0].testData, values, layout: 'per-survey',
     csv_text_neutralisation: CSV_TEXT_NEUTRALISATION,
     surveys: surveys.map((survey) => ({ key: survey.key, country: survey.countryName,
       adm0_iso3: survey.adm0Iso3, round: survey.round, generation: survey.generation,
@@ -588,18 +736,24 @@ export async function buildMicrodataBundle(options: MicrodataBundleOptions) {
     files: manifestFiles,
     value_labels: valueLabels,
   }
-  files['manifest.json'] = encode(`${JSON.stringify(manifest, null, 2)}\n`)
-  files['LICENCE.txt'] = encode(microdataLicenceText())
-  files['README.txt'] = encode(readmeText({ now, surveyCount: surveys.length, fileCount: manifestFiles.length, recordCount, testData: surveys[0].testData, values, valueLabels }))
+  let packaged = files
+  let fileCount = manifestFiles.length
+  if (layout === 'combined-by-generation') {
+    const combined = combineByGeneration(files, manifest)
+    packaged = combined.files; manifest = combined.manifest; fileCount = combined.fileCount; uncompressedBytes = combined.dataBytes
+  }
+  packaged['manifest.json'] = encode(`${JSON.stringify(manifest, null, 2)}\n`)
+  packaged['LICENCE.txt'] = encode(microdataLicenceText())
+  packaged['README.txt'] = encode(readmeText({ now, surveyCount: surveys.length, fileCount, recordCount, testData: surveys[0].testData, values, valueLabels, layout }))
 
   assertLive(signal)
   onProgress?.({ stage: 'compressing', completed: 0, total: 1 })
-  const archive = await (options.zip || compressInWorker)(files, signal)
+  const archive = await (options.zip || compressInWorker)(packaged, signal)
   assertLive(signal)
   onProgress?.({ stage: 'ready', completed: 1, total: 1 })
   const fileName = `${surveys[0].testData ? 'TEST_DATA_' : ''}DIEM_microdata_${isoDate(now)}.zip`
   return {
     fileName, blob: new Blob([archive as BlobPart], { type: 'application/zip' }),
-    fileCount: manifestFiles.length, recordCount, uncompressedBytes,
+    fileCount, recordCount, uncompressedBytes,
   }
 }

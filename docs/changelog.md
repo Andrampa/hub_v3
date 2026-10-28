@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-28 - Combined microdata packages by questionnaire version
+
+- The microdata Options step offers "Combine surveys by questionnaire version"
+  when two or more surveys are selected. Each generation folder (`v2/`, `v3/`)
+  then holds one CSV per table and values choice, with the rows of every survey
+  in that download part stacked under a single header, plus `surveys.csv`
+  (`TEST_DATA_surveys.csv` in test mode; in both layouts test packages now also
+  name the mapping `TEST_DATA_value_labels.csv`),
+  one `documentation_and_metadata.txt` and a deduplicated `value_labels.csv`.
+  V2 and V3 are never combined; tables whose columns differ (for example a
+  grant view with fewer fields) go to a numbered `_columnsN` file instead of
+  being reshaped. Combining happens within each whole-survey part.
+- The microdata manifest is now `package_schema_version: 3`: a top-level
+  `layout`, and `country_field`/`round_field` on every file entry. In the
+  combined layout, each survey slice keeps its own entry pointing at the shared
+  file. Separate survey folders remain the default. This reverses the earlier
+  "no combined layout" decision at the owner's request. Not yet deployed.
+
 ## 2026-10-28 - Boundary explorer downloads
 
 - The administrative reference boundary explorer asks for a country, not a

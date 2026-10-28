@@ -185,11 +185,39 @@ DIEM_microdata_2026-09-22.zip
 A V3 survey folder holds `..._household_mandatory.csv` and, when chosen,
 `..._household_optional.csv`.
 
-- **One folder per survey. No combined layout.** The aggregated
-  combined-by-source option is deliberately not carried over. Merging household
-  records from several surveys into one table is a different disclosure question
-  from merging aggregates, and should be assessed on its own evidence if anyone
-  asks for it.
+- **One folder per survey by default; combined by generation on request.**
+  The first contract left out a combined layout because merging household
+  records is a different disclosure question from merging aggregates. On
+  2026-10-28 the owner asked for one, so with two or more surveys selected the
+  Options step offers **Combine surveys by questionnaire version**
+  (`layout: 'combined-by-generation'`):
+
+  ```text
+  DIEM_microdata_2026-10-28.zip
+  ├─ README.txt, manifest.json, LICENCE.txt
+  └─ v2/
+     ├─ surveys.csv                      survey_key,country,adm0_iso3,round,generation
+     ├─ data/DIEM_v2_household.csv       rows of every survey, one header
+     ├─ documentation_and_metadata.txt
+     └─ value_labels.csv                 distinct per-source mappings, deduplicated
+  ```
+
+  Slices share a CSV only when generation, table (`household`, `mandatory`,
+  `optional`), values (`coded`/`labelled`) and the exact header all match.
+  Otherwise they get a numbered `_columnsN` file; columns are never reshaped.
+  Rows are appended byte for byte in survey order; every survey's country and
+  round columns (`country_field`, `round_field` in the manifest) must be in the
+  header, or the package is refused. Combining is applied per whole-survey
+  part after the usual byte, record and table checks, so a combined file never
+  spans two ZIPs, and the reported CSV bytes are those actually written.
+  `manifest.files[]` keeps one entry per survey slice (source, query, record
+  count) whose `path` is the shared file; `surveys[].folder` is the generation
+  folder. Test data uses `TEST_DATA_` on the folder and file names, as before,
+  including the index and mapping files (`TEST_DATA_v2/TEST_DATA_surveys.csv`,
+  `TEST_DATA_v2/TEST_DATA_value_labels.csv`; per-survey test folders likewise
+  hold `TEST_DATA_value_labels.csv`). The Review step
+  shows an estimated CSV count until the access check returns the real one,
+  which counts differing column sets.
 - The generation appears in every directory and file name, so a V2 and a V3 table
   cannot be combined by accident once unzipped.
 - `manifest.json` carries its own `package_schema_version`, independent of the
@@ -203,6 +231,9 @@ A V3 survey folder holds `..._household_mandatory.csv` and, when chosen,
 - `README.txt` names every omitted survey and component with the reason, and
   states the V3 join explicitly.
 - No account name in the archive.
+
+`package_schema_version: 3` (2026-10-28) adds the top-level `layout` and the
+per-file `country_field`/`round_field`; everything in §8a is unchanged.
 
 ### 8a. Coded and labelled values (`package_schema_version: 2`)
 

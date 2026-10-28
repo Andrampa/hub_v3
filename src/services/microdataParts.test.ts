@@ -114,3 +114,79 @@ describe('whole-survey microdata parts', () => {
     expect(f.parts.every((part) => part.surveyKeys.length === 1 && part.fileCount === 2)).toBe(true)
   })
 })
+
+describe('combined microdata parts', () => {
+  it('marks the new survey-index CSV filename as test data', async () => {
+    const f = fixture()
+    await buildMicrodataParts({ ...f.input, surveys: f.input.surveys.map((survey) => ({ ...survey, testData: true })),
+      layout: 'combined-by-generation', onPart: (part) => f.parts.push(part) })
+    expect(f.archives[0]['TEST_DATA_v2/TEST_DATA_surveys.csv']).toBeDefined()
+    expect(f.archives[0]['TEST_DATA_v2/surveys.csv']).toBeUndefined()
+  })
+
+  it('flushes during encoding without losing slice provenance or miscounting bytes', async () => {
+    const f = fixture()
+    const single = await buildMicrodataBundle({ ...f.input, surveys: [f.input.surveys[0]] })
+    f.archives.length = 0; f.requester.mockClear()
+    await buildMicrodataParts({ ...f.input, layout: 'combined-by-generation',
+      budget: { ...f.input.budget, uncompressedBytes: single.uncompressedBytes * 2 },
+      onPart: (part) => f.parts.push(part) })
+    expect(f.parts.map((part) => part.surveyKeys)).toEqual([['v2:YEM:1', 'v2:YEM:2'], ['v2:YEM:3']])
+    expect(f.requester.mock.calls.filter(([, params]) => params?.outFields === '*')).toHaveLength(3)
+    for (const [index, archive] of f.archives.entries()) {
+      const manifest = JSON.parse(f.text(archive, 'manifest.json'))
+      expect(manifest.files.map((file: { survey_key: string }) => file.survey_key)).toEqual(f.parts[index].surveyKeys)
+      expect(f.parts[index].uncompressedBytes).toBe(archive['v2/data/DIEM_v2_household.csv'].byteLength)
+      expect(f.parts[index].fileCount).toBe(1)
+      expect(f.parts[index].uncompressedBytes).toBeLessThanOrEqual(single.uncompressedBytes * 2)
+    }
+  })
+
+  it('lists all unpublished surveys when ZIP retention fails inside onEncodedBytes', async () => {
+    const f = fixture()
+    const single = await buildMicrodataBundle({ ...f.input, surveys: [f.input.surveys[0]] })
+    f.archives.length = 0
+    await expect(buildMicrodataParts({ ...f.input, layout: 'combined-by-generation', retainedZipLimit: 4,
+      budget: { ...f.input.budget, uncompressedBytes: single.uncompressedBytes },
+      onPart: (part) => f.parts.push(part) }))
+      .rejects.toThrow('Not prepared: Yemen round 2 (V2); Yemen round 3 (V2)')
+    expect(f.parts.map((part) => part.surveyKeys)).toEqual([['v2:YEM:1']])
+  })
+
+  it('combines the surveys of each part separately, never across parts', async () => {
+    const f = fixture()
+    await buildMicrodataParts({ ...f.input, layout: 'combined-by-generation', budget: { ...f.input.budget, records: 2 }, onPart: (part) => f.parts.push(part) })
+    expect(f.parts.map((part) => [part.surveyKeys, part.fileCount])).toEqual([[['v2:YEM:1', 'v2:YEM:2'], 1], [['v2:YEM:3'], 1]])
+    expect(f.text(f.archives[0], 'v2/data/DIEM_v2_household.csv').split('\r\n')).toEqual(['adm0_iso3,round,value', 'YEM,1,abc', 'YEM,2,abc'])
+    expect(f.text(f.archives[1], 'v2/data/DIEM_v2_household.csv').split('\r\n')).toEqual(['adm0_iso3,round,value', 'YEM,3,abc'])
+    expect(f.parts[0].uncompressedBytes).toBe(f.archives[0]['v2/data/DIEM_v2_household.csv'].byteLength)
+    for (const archive of f.archives) {
+      const manifest = JSON.parse(f.text(archive, 'manifest.json'))
+      expect(manifest.layout).toBe('combined-by-generation')
+      expect(Object.keys(archive).filter((path) => path.startsWith('YEM_'))).toEqual([])
+      expect(f.text(archive, 'README.txt')).toContain('every survey in this part')
+    }
+  })
+
+  it('keeps V2 and V3 surveys in separate generation folders', async () => {
+    const f = fixture()
+    const v2 = f.input.surveys.slice(0, 2).map((survey) => ({ ...survey, testData: true }))
+    const v3: MicrodataSurvey = { ...f.input.surveys[2], key: 'v3:YEM:3', generation: 'v3', testData: true,
+      components: [{ ...f.input.surveys[2].components[0], component: 'mandatory' }] }
+    const resolve = f.input.resolve!
+    await buildMicrodataParts({ ...f.input, surveys: [...v2, v3], layout: 'combined-by-generation',
+      resolve: async (component, requester) => {
+        const def = await resolve(component, requester)
+        return component.component === 'mandatory' ? { ...def, resource: { ...def.resource, version: 'v3' } } : def
+      },
+      onPart: (part) => f.parts.push(part) })
+    const archive = f.archives[0]
+    expect(Object.keys(archive).filter((path) => path.endsWith('.csv')).sort()).toEqual([
+      'TEST_DATA_v2/TEST_DATA_surveys.csv', 'TEST_DATA_v2/TEST_DATA_value_labels.csv', 'TEST_DATA_v2/data/TEST_DATA_DIEM_v2_household.csv',
+      'TEST_DATA_v3/TEST_DATA_surveys.csv', 'TEST_DATA_v3/TEST_DATA_value_labels.csv', 'TEST_DATA_v3/data/TEST_DATA_DIEM_v3_household_mandatory.csv',
+    ])
+    expect(f.text(archive, 'TEST_DATA_v2/data/TEST_DATA_DIEM_v2_household.csv').split('\r\n')).toHaveLength(3)
+    expect(f.text(archive, 'TEST_DATA_v3/data/TEST_DATA_DIEM_v3_household_mandatory.csv').split('\r\n')).toHaveLength(2)
+    expect(f.parts[0].fileCount).toBe(2)
+  })
+})

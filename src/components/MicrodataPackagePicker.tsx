@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthContext'
 import { MicrodataLicence, type MicrodataAccess } from './MicrodataLicence'
 import { formatNumber } from '../lib/format'
 import { FLOW_STEPS, describeRequestOutcome, guardedStep, resolveSurveyRequest, type FlowStep, type SurveyRequest } from '../lib/surveyFlow'
-import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataParts, type MicrodataPart, outputFilesPerTable, preflightMicrodataPackage } from '../services/microdataBundle'
+import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataParts, type MicrodataLayout, type MicrodataPart, outputFilesPerTable, preflightMicrodataPackage } from '../services/microdataBundle'
 import { componentHasAudit, type MicrodataValues } from '../services/microdataLabels'
 import type { BundleProgress } from '../services/surveyBundle'
 import { describeSurveyScope, type GrantDiscovery, type ResolvedGrantView } from '../services/microdataGrants'
@@ -91,6 +91,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
   const [openCountries, setOpenCountries] = useState<Set<string>>(() => new Set())
   const [includeOptional, setIncludeOptional] = useState(false)
   const [valuesChoice, setValuesChoice] = useState<MicrodataValues>('codes')
+  const [layoutChoice, setLayoutChoice] = useState<MicrodataLayout>('per-survey')
   // Accepted once per visit and account: the terms are the same for every
   // package, but a refresh or another account asks again. Never read from the URL.
   const [licenceAccepted, setLicenceAccepted] = useState(false)
@@ -274,15 +275,23 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
   ).filter((component) => !componentHasAudit(survey.generation, component))
     .map((component) => `${GENERATIONS[survey.generation].label} ${component === 'household' ? 'household' : component} table`)))]
   const values: MicrodataValues = unauditedTables.length ? 'codes' : valuesChoice
-  const outputFiles = sourceTables * outputFilesPerTable(values)
+  const selectedGenerations = [...new Set(selected.map((survey) => survey.generation))]
+  // One survey has nothing to combine with, so it always gets its own folder.
+  const layout: MicrodataLayout = selected.length > 1 ? layoutChoice : 'per-survey'
+  // Before the check, a combined package is estimated at one CSV per generation
+  // and table; tables whose columns differ add files, which the check counts.
+  const estimatedFiles = (layout === 'combined-by-generation'
+    ? selectedGenerations.reduce((total, generation) => total + (generation === 'v3' && includeOptional ? 2 : 1), 0)
+    : sourceTables) * outputFilesPerTable(values)
   const fingerprint = JSON.stringify({
-    account, scope, includeOptional, values,
+    account, scope, includeOptional, values, layout,
     sources: microdataSourceFingerprint(selected),
   })
-  const selectedGenerations = [...new Set(selected.map((survey) => survey.generation))]
 
-  const selectionFingerprint = JSON.stringify({ account, status: auth.status, scope, includeOptional, values, keys: [...keys].sort() })
+  const selectionFingerprint = JSON.stringify({ account, status: auth.status, scope, includeOptional, values, layout, keys: [...keys].sort() })
   const checked = preflight?.fingerprint === fingerprint
+  // Once checked, the live count replaces the estimate (it sees differing column sets).
+  const outputFiles = checked ? preflight!.files : estimatedFiles
   const checkFailed = preflightError?.fingerprint === fingerprint
   const optionalBlocked = Boolean(optionalUnusable.length && includeOptional)
   const downloadReady = checked && licenceAccepted && !optionalBlocked && !downloadProgress && !preflightProgress
@@ -344,7 +353,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
     setPreflightProgress({ done: 0, total: sourceTables })
     try {
       const result = await preflightMicrodataPackage({
-        surveys: selected, includeV3Optional: includeOptional, contributor, values,
+        surveys: selected, includeV3Optional: includeOptional, contributor, values, layout,
         requester: auth.requestProtected, budget: MICRODATA_PACKAGE_BUDGET, signal: controller.signal,
         splitParts: true, estimateSize: true,
         onProgress: (progress) => { if (current()) setPreflightProgress({ done: progress.completed, total: progress.total, label: progress.label }) },
@@ -372,7 +381,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
     const prepared: Array<MicrodataPart & { url: string; requested: boolean }> = []
     try {
       const outcome = await buildMicrodataParts({
-        surveys: selected, includeV3Optional: includeOptional, contributor, values,
+        surveys: selected, includeV3Optional: includeOptional, contributor, values, layout,
         requester: auth.requestProtected,
         budget: MICRODATA_PACKAGE_BUDGET, signal: controller.signal,
         onProgress: setDownloadProgress,
@@ -491,7 +500,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
             )}
             {surveys.length ? (
               <>
-                <p>Household surveys your account can open. Each survey stays in its own folder; microdata from different surveys is never merged.</p>
+                <p>Household surveys your account can open. Each survey gets its own folder, unless you choose in Options to combine surveys that use the same questionnaire version.</p>
                 <div className="survey-filter-bar">
                   <label htmlFor="microdata-survey-search">Find a survey</label>
                   <input id="microdata-survey-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Country, code or round"/>
@@ -580,6 +589,15 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
                 </div>
                 {unauditedTables.length > 0 && <p className="survey-limit-note">Labelled values are not yet available for the {unauditedTables.join(', ')}: {unauditedTables.length === 1 ? 'its' : 'their'} value labels have not passed the label audit. This package uses coded values.</p>}
               </fieldset>
+              {selected.length > 1 && (
+                <fieldset className="package-layout-choice">
+                  <legend>How should the data be arranged?</legend>
+                  <div className="package-layout-options">
+                    <label><input type="radio" name="microdata-layout-choice" checked={layout === 'per-survey'} disabled={Boolean(downloadProgress)} onChange={() => setLayoutChoice('per-survey')}/><span><strong>Separate survey folders</strong><small>One folder per survey, with its own CSV for each table.</small></span></label>
+                    <label><input type="radio" name="microdata-layout-choice" checked={layout === 'combined-by-generation'} disabled={Boolean(downloadProgress)} onChange={() => setLayoutChoice('combined-by-generation')}/><span><strong>Combine surveys by questionnaire version</strong><small>One CSV per table for each questionnaire version, with the rows of every selected survey stacked. adm0_iso3 and round identify each row. {selectedGenerations.length > 1 ? `${selectedGenerations.map((generation) => GENERATIONS[generation].label).join(' and ')} surveys stay in separate files.` : 'Different versions are never combined.'}</small></span></label>
+                  </div>
+                </fieldset>
+              )}
             </> : <p>Select a survey first.</p>}
             <FlowActions
               id="microdata-options"
@@ -597,7 +615,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
                 <div><dt>Surveys</dt><dd>{formatNumber(selected.length)}</dd></div>
                 <div><dt>Source tables</dt><dd>{formatNumber(sourceTables)}</dd></div>
                 <div><dt>Data files</dt><dd>{formatNumber(outputFiles)} CSV{outputFiles === 1 ? '' : 's'} ({values === 'codes' ? 'coded values' : values === 'labels' ? 'labels' : 'coded and labelled'})</dd></div>
-                <div><dt>Layout</dt><dd>One folder per survey</dd></div>
+                <div><dt>Layout</dt><dd>{layout === 'combined-by-generation' ? `Combined by questionnaire version: one folder per version${selectedGenerations.length > 1 ? ` (${selectedGenerations.map((generation) => GENERATIONS[generation].label).join(', ')})` : ''}, combined within each download part` : 'One folder per survey'}</dd></div>
                 <div><dt>Documentation</dt><dd>Field descriptions and codebook links for {selectedGenerations.map((generation) => GENERATIONS[generation].label).join(' and ')}{selectedGenerations.includes('v3') ? `; ${GENERATIONS.v3.label} documents are not yet published` : ''}</dd></div>
               </dl>
               <MicrodataDocumentation versions={selectedGenerations} />
