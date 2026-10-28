@@ -9,12 +9,27 @@ import { FLOW_STEPS, describeRequestOutcome, guardedStep, resolveSurveyRequest, 
 import { MICRODATA_PACKAGE_BUDGET, MICRODATA_SURVEY_LIMIT, buildMicrodataParts, type MicrodataPart, outputFilesPerTable, preflightMicrodataPackage } from '../services/microdataBundle'
 import { componentHasAudit, type MicrodataValues } from '../services/microdataLabels'
 import type { BundleProgress } from '../services/surveyBundle'
-import { type GrantDiscovery } from '../services/microdataGrants'
-import { discoverMicrodataAccess, microdataSourceFingerprint, type MicrodataAccessResult } from '../services/microdataSurveyAccess'
+import { describeSurveyScope, type GrantDiscovery, type ResolvedGrantView } from '../services/microdataGrants'
+import { discoverMicrodataAccess, microdataSourceFingerprint, type MicrodataAccessResult, type MicrodataSurvey, type MicrodataSurveyComponent } from '../services/microdataSurveyAccess'
 import { GENERATIONS } from '../services/protectedData'
 
 const STORAGE_PREFIX = 'diem.microdata-selection.v1'
 const STEPS = FLOW_STEPS.microdata
+const TABLE_LABELS: Record<MicrodataSurveyComponent['component'] | ResolvedGrantView['component'], string> = {
+  household: 'household table', legacy: 'household table',
+  mandatory: 'mandatory table', core: 'mandatory table',
+  optional: 'optional table',
+}
+
+/**
+ * Where an explore-only table opens, with this survey's country and round
+ * already filtered. Grant views have their own route; ArcGIS still decides
+ * what the account can read.
+ */
+function exploreHref(part: MicrodataSurveyComponent, survey: MicrodataSurvey) {
+  const base = part.source === 'grant' ? `/data/grants/${part.itemId}` : `/data/${part.itemId}`
+  return `${base}?country=${survey.adm0Iso3}&round=${survey.round}`
+}
 
 function storedKeys(account: string, scope: string): string[] {
   if (!account) return []
@@ -162,6 +177,42 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
   const selected = useMemo(() => surveys.filter((survey) => keys.includes(survey.key)), [keys, surveys])
   const pending = result?.master.pendingSourceCount || 0
   const complete = Boolean(result && pending === 0 && !result.grantCheckFailed && !grantDiscovery?.error)
+  /*
+   * Active grant views that produced no survey row - an unreadable register, a
+   * failed query, a scope the check could not confirm. The row was their only
+   * Explore link, so they are listed on their own rather than silently lost.
+   * Matched per table, not per survey: a V3 survey whose mandatory table loaded
+   * but whose optional table failed still loses that table's only link. Matched
+   * by table kind rather than item, so a survey the household-data group already
+   * covers does not list its grant copy. Matched against every confirmed survey,
+   * test or not, so test-data mode does not make production grants look missing.
+   */
+  const unmatchedViews = useMemo(() => {
+    if (!grantDiscovery || checking || grantChecking) return []
+    const confirmed = new Set((result?.surveys || []).flatMap((survey) => survey.components
+      .map((part) => `${survey.generation}:${survey.adm0Iso3}:${survey.round}:${part.component}`)))
+    const kind = { legacy: 'household', core: 'mandatory', optional: 'optional' } as const
+    return grantDiscovery.bundles.filter((bundle) => bundle.status === 'active').flatMap((bundle) => bundle.views
+      .filter((view) => !view.surveyScope.length || view.surveyScope.some((entry) => (
+        !confirmed.has(`${view.questionnaireVersion}:${entry.adm0_iso3}:${entry.round}:${kind[view.component]}`)
+      )))
+      .map((view) => ({ bundle, view })))
+  }, [checking, grantChecking, grantDiscovery, result])
+  // Rendered with or without an inventory: a failed load must not take the
+  // approved tables' only links down with the survey list.
+  const unmatchedNote = unmatchedViews.length > 0 && (
+    <div className="microdata-unmatched" role="note">
+      <p>{result ? 'Some of your approved tables could not be matched to a survey above.' : 'Your approved surveys could not be listed.'} You can still open these tables directly.</p>
+      <ul>
+        {unmatchedViews.map(({ bundle, view }) => (
+          <li key={view.itemId}>
+            <Link to={`/data/grants/${view.itemId}`}>Explore {TABLE_LABELS[view.component]}</Link>
+            <small>{GENERATIONS[bundle.questionnaireVersion].label} · {describeSurveyScope(view.surveyScope)}</small>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 
   useEffect(() => {
     if (!complete) return
@@ -472,7 +523,12 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
                                 aria-label={`${survey.countryName}, round ${survey.round}`} onChange={() => toggle(survey.key)}/>
                               <span><strong>Round {survey.round}</strong><small>{GENERATIONS[survey.generation].label}{survey.testData ? ' · Test data' : ''}{collectionDates?.get(`${survey.adm0Iso3}:${survey.round}`) ? ' · ' + collectionDates.get(`${survey.adm0Iso3}:${survey.round}`) : ''}</small></span>
                             </label>
-                            <span>{!exportEnabled(survey) ? 'Explore only — bulk export not approved' : survey.generation === 'v3' ? 'Mandatory table' + (survey.components.some((part) => part.component === 'optional' && part.bulkExportEnabled) ? ' + optional available' : '') : 'Household table'}</span>
+                            {/* An explore-only survey cannot be packaged; the
+                                explorer is its only route, so the link sits where
+                                the user learns that. */}
+                            {!exportEnabled(survey) ? <span className="microdata-explore-only">Explore only — bulk export not approved
+                              {survey.components.map((part) => <Link key={part.itemId} to={exploreHref(part, survey)}>Explore {survey.components.length > 1 ? TABLE_LABELS[part.component] : 'data'}</Link>)}
+                            </span> : <span>{survey.generation === 'v3' ? 'Mandatory table' + (survey.components.some((part) => part.component === 'optional' && part.bulkExportEnabled) ? ' + optional available' : '') : 'Household table'}</span>}
                             {limitNotice === survey.key && <p className="survey-row-limit" role="alert">One package holds at most {MICRODATA_SURVEY_LIMIT} surveys. Remove one to select this round.</p>}
                           </div>
                         ))}
@@ -483,6 +539,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
                 </fieldset>
               </>
             ) : <p className="survey-empty">{complete ? 'You currently have no access to microdata, or your access has expired.' : 'No household surveys have been confirmed yet.'}</p>}
+            {unmatchedNote}
             <FlowActions
               id="microdata-surveys"
               onNext={() => go('options')}
@@ -612,6 +669,7 @@ export function MicrodataPackagePicker({ grantDiscovery, grantPending, grantChec
           </FlowStepPanel>
         </>
       )}
+      {!result && unmatchedNote}
       {!result && <MicrodataLicence access={licenceAccess}/>}
       <p><Link to="/data/microdata-request">Need access to another survey? Request direct access.</Link></p>
     </section>

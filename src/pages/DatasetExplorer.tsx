@@ -304,6 +304,15 @@ export default function DatasetExplorer() {
   const links = definition ? apiLinks(definition, where) : undefined
   const scripts = definition ? bulkDownloadScripts(definition, where) : undefined
   const overDownloadLimit = count !== undefined && count > BROWSER_EXPORT_LIMIT
+  // The administrative reference boundaries are not survey data: they have no
+  // round, and large packaged exports of their detailed polygons can fail or
+  // time out at the export service, so they are steered to one country. Only
+  // an exact country code or name, or an exact pcode (which belongs to one
+  // country), counts: a name such as adm1_name = 'Central' spans countries.
+  const isBoundary = definition?.resource.kind === 'reference'
+  const boundaryUnfiltered = isBoundary && !filters.some((filter) => (
+    filter.operator === 'equals' && /^(adm0_(iso3|name)|adm[12]_pcode)$/i.test(filter.fieldName)
+  ))
   // A grant whose approval did not include export gets no download controls, no
   // packaging requests and no bulk-extraction scripts. This is a policy
   // presentation, not a technical barrier: the view is Query-enabled, so an
@@ -563,7 +572,9 @@ export default function DatasetExplorer() {
       setDownloadState(`${descriptor.label} download started.`)
     } catch (error) {
       const message = error instanceof Error ? error.message : ''
-      setDownloadState(`${descriptor.label} could not be generated. ${message || 'The source item may not have this export format enabled.'}`)
+      setDownloadState(isBoundary
+        ? `${descriptor.label} could not be generated.${message ? ` ${message}` : ''} A likely cause is the size of the selection: boundary polygons are detailed, and the export service can fail or time out on large exports. Filter to one country and try again, or use the Python or R script below.`
+        : `${descriptor.label} could not be generated. ${message || 'The source item may not have this export format enabled.'}`)
     }
   }
 
@@ -659,9 +670,9 @@ export default function DatasetExplorer() {
                     <div><dt>Attributes</dt><dd>{formatNumber(fields.length)}</dd></div>
                   </dl>
                 </section>
-                <div className="control-panel-heading"><span><ExplorerIcon name="filter"/></span><div><strong>Filters</strong><small>Start with country and survey round to create a focused extract.</small></div></div>
+                <div className="control-panel-heading"><span><ExplorerIcon name="filter"/></span><div><strong>Filters</strong><small>{isBoundary ? 'Start with a country to create a focused extract.' : 'Start with country and survey round to create a focused extract.'}</small></div></div>
                 <div className="filter-builder">
-                  <label><span>Attribute</span><select value={draftField} onChange={(event) => { setDraftField(event.target.value); setDraftOperator('equals'); setDraftValue('') }}>{recommendedFields.length > 0 && <optgroup label="Recommended: country and round">{recommendedFields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</optgroup>}<optgroup label="All attributes">{remainingFields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</optgroup></select></label>
+                  <label><span>Attribute</span><select value={draftField} onChange={(event) => { setDraftField(event.target.value); setDraftOperator('equals'); setDraftValue('') }}>{recommendedFields.length > 0 && <optgroup label={isBoundary ? 'Recommended: country' : 'Recommended: country and round'}>{recommendedFields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</optgroup>}<optgroup label="All attributes">{remainingFields.map((field) => <option value={field.name} key={field.name}>{fieldLabel(field)}</option>)}</optgroup></select></label>
                   <label><span>Condition</span><select value={draftOperator} onChange={(event) => setDraftOperator(event.target.value as DatasetFilter['operator'])}>{operatorOptions(draftFieldDefinition).map((option) => <option value={option.value} key={option.value}>{option.label}</option>)}</select></label>
                   <label><span>Value</span>{showOptionList
                     ? <select value={draftValue} onChange={(event) => setDraftValue(event.target.value)}><option value="">Choose a value</option>{draftOptions.values.map((option) => <option value={option} key={option}>{option}</option>)}</select>
@@ -669,7 +680,7 @@ export default function DatasetExplorer() {
                   <button type="button" onClick={addFilter} disabled={!draftValue.trim()}>Add filter <ExplorerIcon name="arrow"/></button>
                 </div>
                 {draftOptions?.truncated && draftOperator === 'equals' && <p className="filter-option-note">This attribute has more than {formatNumber(FILTER_OPTION_LIMIT)} distinct values, so type the value instead of choosing one.</p>}
-                <div className="active-filters" aria-live="polite">{filters.length ? filters.map((filter) => <span key={filter.id}>{fieldLabel(fields.find((field) => field.name === filter.fieldName) || { name: filter.fieldName, alias: filter.fieldName, type: '' })} <em>{filter.operator === 'contains' ? 'contains' : filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='}</em> {filter.value}<button type="button" onClick={() => setFilters((current) => current.filter((candidate) => candidate.id !== filter.id))} aria-label={`Remove ${filter.fieldName} filter`}><ExplorerIcon name="close"/></button></span>) : <p>No filters applied. Choose a country and round before downloading.</p>}</div>
+                <div className="active-filters" aria-live="polite">{filters.length ? filters.map((filter) => <span key={filter.id}>{fieldLabel(fields.find((field) => field.name === filter.fieldName) || { name: filter.fieldName, alias: filter.fieldName, type: '' })} <em>{filter.operator === 'contains' ? 'contains' : filter.operator === 'greaterThan' ? '>' : filter.operator === 'lessThan' ? '<' : '='}</em> {filter.value}<button type="button" onClick={() => setFilters((current) => current.filter((candidate) => candidate.id !== filter.id))} aria-label={`Remove ${filter.fieldName} filter`}><ExplorerIcon name="close"/></button></span>) : <p>{isBoundary ? 'No filters applied. Choose a country before downloading.' : 'No filters applied. Choose a country and round before downloading.'}</p>}</div>
                 {filters.length > 0 && <button className="clear-filters" type="button" onClick={() => setFilters([])}>Clear all filters</button>}
                 {bulkExportBlocked ? (
                   <div className="download-panel download-panel--restricted" id="dataset-download">
@@ -689,7 +700,7 @@ export default function DatasetExplorer() {
                       <strong>How to get this extract instead</strong>
                       <p>Portal files are assembled in your browser, so the whole result has to fit in this tab's memory. Above {formatNumber(BROWSER_EXPORT_LIMIT)} records that becomes unreliable, and the routes below have no such limit.</p>
                       <ol>
-                        <li><strong>Narrow the selection.</strong> Add a country and a survey round above. Most analyses need one country-round at a time, and that almost always lands under the limit.</li>
+                        <li><strong>Narrow the selection.</strong> {isBoundary ? 'Add a country above. Most work needs one country at a time, and that always lands under the limit.' : 'Add a country and a survey round above. Most analyses need one country-round at a time, and that almost always lands under the limit.'}</li>
                         <li><strong>Run a bulk script.</strong> The Python and R scripts below already carry your current filters and page through the service in batches, so they handle results of any size.{isPublicRoute ? '' : ' They ask for your DIEM community sign-in when they run.'}</li>
                         <li><strong>Query the service directly.</strong> The API links below work in compatible GIS software or any HTTP client{isPublicRoute ? ', with no sign-in' : ', with the same authentication as this page'}.</li>
                       </ol>
@@ -706,6 +717,11 @@ export default function DatasetExplorer() {
                   <div className="download-format-grid"><button type="button" onClick={() => void exportCsv()} disabled={count === undefined || isQuerying || overDownloadLimit}>CSV</button><button type="button" onClick={() => void exportXlsx()} disabled={count === undefined || isQuerying || overDownloadLimit}>Excel</button>{!definition.isTable && <button type="button" onClick={() => void exportGeoJson()} disabled={count === undefined || isQuerying || overDownloadLimit}>GeoJSON</button>}</div>
                   {packagedFormats.length > 0 && <>
                     <span className="download-group-label">Packaged formats</span>
+                    {boundaryUnfiltered && (
+                      <p className="download-boundary-note" role="note">
+                        <strong>Filter to one country first.</strong> Shapefile and KML are prepared by an external export service, and a large selection of detailed boundary polygons can be too much for it: the export may fail or time out. For several countries or the whole dataset, use the Python or R script below, which downloads in small batches and writes a GeoPackage and a shapefile.
+                      </p>
+                    )}
                     <div className="download-format-grid">{packagedFormats.map((candidate) => <button type="button" key={candidate.format} onClick={() => void exportServerFormat(candidate.format)} disabled={count === undefined || isQuerying || overDownloadLimit}>{candidate.label}</button>)}</div>
                   </>}
                   {downloadState && <p className="download-status" role="status">{downloadState}</p>}
@@ -713,7 +729,7 @@ export default function DatasetExplorer() {
                 )}
                 {!bulkExportBlocked && <details className="bulk-script-panel">
                   <summary><ExplorerIcon name="code"/> Bulk API scripts <span>Python and R</span></summary>
-                  {scripts && <div><p>{isPublicRoute ? 'For larger extractions, run a script. No account is needed, and the current filters are already included.' : 'For larger extractions, run a script with your DIEM community sign-in. The current filters are already included.'}</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
+                  {scripts && <div><p>{isBoundary ? 'Download the boundaries with geometry, for any number of countries. No sign-in is needed, and the current filters are already included. Python writes GeoJSON with no extra packages, plus a GeoPackage and a shapefile when geopandas is installed; R writes a GeoPackage and a shapefile with sf.' : isPublicRoute ? 'For larger extractions, run a script. No account is needed, and the current filters are already included.' : 'For larger extractions, run a script with your DIEM community sign-in. The current filters are already included.'}</p><div className="script-actions"><button type="button" onClick={() => downloadScript(scripts.python, 'diem-bulk-download.py', 'text/x-python')}>Download Python</button><button type="button" onClick={() => void copy('python-script', scripts.python)}>{copied === 'python-script' ? 'Python copied' : 'Copy Python'}</button><button type="button" onClick={() => downloadScript(scripts.r, 'diem-bulk-download.R', 'text/x-r-source')}>Download R</button><button type="button" onClick={() => void copy('r-script', scripts.r)}>{copied === 'r-script' ? 'R copied' : 'Copy R'}</button></div></div>}
                 </details>}
                 <details className="api-panel"><summary><ExplorerIcon name="code"/> API links <span>Use in scripts and GIS tools</span></summary>{links && <div>{Object.entries(links).map(([label, value]) => <div key={label}><strong>{API_LINK_LABELS[label] || label}</strong><code>{value}</code><button type="button" onClick={() => void copy(label, value)}>{copied === label ? <ExplorerIcon name="check"/> : <ExplorerIcon name="copy"/>}<span>{copied === label ? 'Copied' : 'Copy'}</span></button></div>)}</div>}</details>
               </aside>

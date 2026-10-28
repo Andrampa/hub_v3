@@ -27,7 +27,16 @@ expectation. It also means an expired or revoked grant leaves no trace behind.
 The survey-first microdata picker consumes that same live grant discovery
 result; it does not run a second grant search. It confirms visible rows within
 each approved country/round scope before showing a survey. An active view with
-bulk export disabled remains explore-only and cannot be selected for a package.
+bulk export disabled remains explore-only and cannot be selected for a package;
+its survey row carries the Explore link(s) instead, filtered to that country and
+round (mandatory and optional named separately for V3). An active view whose
+table produced no confirmed row (matched per survey and table kind, so a V3
+optional table that failed beside a loaded mandatory table still counts) is
+listed beneath the survey list with its own Explore link. The list is shown
+even when the whole inventory fails to load, so a failed or partial check
+never removes the only way in. The
+access summary above the flow is one status line with Re-check access; it no
+longer repeats scope, export policy or table links.
 Immediately before packaging, the Hub re-resolves each item and grant scope,
 rechecks the export switch and visible row count, and aborts the current part
 if any authorization or source changed. Stored selection contains only stable

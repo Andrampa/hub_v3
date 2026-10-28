@@ -152,25 +152,41 @@ not been done yet.
 - `/data/surveys`: the survey data workspace, where data is chosen by country
   and round and downloaded as a package. See `docs/data_access_restructure.md`.
   It also holds what the old `/data` page used to carry for signed-in members: temporary
-  microdata grants, household microdata collections, the full microdata licence,
-  and — under technical resources — the source datasets, boundaries,
-  documentation and API tools. It is a guided flow; see "Guided survey data flow"
+  microdata grants and the full microdata licence. A collapsed "Boundaries and
+  documentation" panel at its foot holds the administrative reference
+  boundaries and the documentation and metadata only. The per-source status
+  list, the test-data-mode button, the API and analysis tools and the household
+  microdata collections were removed on 2026-10-28: packages now carry labelled
+  values, so the workspace no longer sends people to raw services. Contributors
+  still reach test-data mode with `?test=1`. It is a guided flow; see "Guided survey data flow"
   below. `GRANTS_ROUTE` (`/data/surveys#temporary-microdata`) opens the microdata
   route directly for a newly accepted grant.
 - `/data/:datasetId`: internal dataset explorer for supported microdata, aggregated data and boundary resources.
 - Explorer: real ArcGIS service geometry where available, interactive labelled basemap with selectable features and extent controls, live item/layer metadata, recommended country/round filters, matching-record count, table preview, copyable service/query URLs, and current-filter downloads.
+- Administrative reference boundaries (current and archived) carry no survey
+  round, so their explorer asks for a country only and its script filter
+  examples name a country and an ADM1 pcode, never a round. Whole-layer
+  Shapefile/KML exports of their detailed polygons can fail or time out at the
+  external export service, so the explorer says to filter to one country first
+  (until an exact country or pcode filter applies) and names selection size as
+  the likely cause of a failure. The signed-in failure itself was not
+  reproduced, so that cause is unconfirmed. Their Python and R scripts are spatial
+  and need no sign-in (both items are public in ArcGIS): they page the layer as
+  GeoJSON in batches of 100; Python writes GeoJSON with the standard library
+  plus GeoPackage and shapefile when geopandas is installed, R writes GeoPackage
+  and shapefile through sf. Verified 2026-10-28 against both live services.
 - Every dataset explorer links to the current administrative reference boundary
   dataset so analysts can join survey and aggregate records to the matching
   ADM geometry through the published administrative codes.
-- Microdata (workspace route): FAM as the default route with its publication lag, direct request as the exception, temporary grants, household collections for household-data members, and the full microdata licence from `src/components/MicrodataLicence.tsx`. The survey-first picker merges accessible master and temporary-grant scopes, allows up to ten surveys per selection, offers V3 mandatory/optional choice and a coded / labelled / both values choice, and performs a live access-and-record-count check on its Review step. The check also samples up to 30 rows per table to show an informational size estimate using the selected encoder and a 20% margin. After licence acceptance, **Prepare microdata downloads** on the Download step reads the surveys sequentially and splits them using actual sizes into whole-survey parts. Each part has a separate user-clicked download link, its own licence, manifest and documentation; no automatic sequence of file saves is started. Labels come from layer coded-value domains and are offered only while the live domains match the digests recorded by `scripts/audit_microdata_domains.py` in `src/data/auditedDomains.json`; each survey folder carries `value_labels.csv` for verified tables. See `docs/microdata_access_restructure.md` §8a. Each part holds at most 50,000 source records, 40 MB of actual encoded data CSV (coded and labelled together) and 20 source tables. A single survey must fit these limits; no partial survey is offered. Errors receive focus, replace the ready hint and preserve completed parts, as does cancellation. Prepared compressed ZIP retention has a separate 40 MB limit; clearing parts, changing the selection or leaving the picker revokes their object URLs.
+- Microdata (workspace route): FAM as the default route with its publication lag, direct request as the exception, temporary grants, and the full microdata licence from `src/components/MicrodataLicence.tsx`. The survey-first picker merges accessible master and temporary-grant scopes, allows up to ten surveys per selection, offers V3 mandatory/optional choice and a coded / labelled / both values choice, and performs a live access-and-record-count check on its Review step. The check also samples up to 30 rows per table to show an informational size estimate using the selected encoder and a 20% margin. After licence acceptance, **Prepare microdata downloads** on the Download step reads the surveys sequentially and splits them using actual sizes into whole-survey parts. Each part has a separate user-clicked download link, its own licence, manifest and documentation; no automatic sequence of file saves is started. Labels come from layer coded-value domains and are offered only while the live domains match the digests recorded by `scripts/audit_microdata_domains.py` in `src/data/auditedDomains.json`; each survey folder carries `value_labels.csv` for verified tables. See `docs/microdata_access_restructure.md` §8a. Each part holds at most 50,000 source records, 40 MB of actual encoded data CSV (coded and labelled together) and 20 source tables. A single survey must fit these limits; no partial survey is offered. Errors receive focus, replace the ready hint and preserve completed parts, as does cancellation. Prepared compressed ZIP retention has a separate 40 MB limit; clearing parts, changing the selection or leaving the picker revokes their object URLs.
 - If the complete microdata selection fits one ZIP, it uses the ordinary filename
   (without `_part1`) and starts one automatic download, keeping the link as a
   fallback. Multiple ZIPs require separate clicks. A retention-limit stop names
   every survey not included in the completed parts for a new selection.
 - Aggregated data (workspace): chosen by survey, with its generation resolved automatically. Multi-survey packages offer separate survey folders or combined CSVs per compatible source and generation. The review counts output files for the selected layout while separately limiting source slices and records.
 - Documentation: field descriptions, codebooks and SDMX metadata per generation, each declaring an `audience` so aggregated packages link only aggregated documentation.
-- Boundaries: current and historical ADM1/ADM2 operational references, under workspace technical resources.
-- Tools: microdata labelling repository and DIEM API examples, under workspace technical resources.
+- Boundaries: current and historical ADM1/ADM2 operational references, under the workspace's Boundaries and documentation panel.
+- Tools: no longer listed in the workspace or the guide. Package `documentation_and_metadata.txt` still names the labelling and API repositories (`ANALYSIS_TOOLS`).
 - Citations: English, French and Spanish citation text plus both licences, in `/data/guide`.
 
 ## Guided survey data flow

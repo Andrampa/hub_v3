@@ -898,6 +898,7 @@ export function apiLinks(definition: DatasetDefinition, where: string) {
  */
 export function bulkDownloadScripts(definition: DatasetDefinition, where: string) {
   if (definition.resource.kind === 'public') return publicBulkDownloadScripts(definition, where)
+  if (definition.resource.kind === 'reference') return boundaryDownloadScripts(definition, where)
   const queryUrl = `${definition.layerUrl}/query`
   const tokenUrl = `${COMMUNITY_PORTAL}/sharing/rest/generateToken`
   const filename = `${definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-bulk.csv`
@@ -1064,6 +1065,174 @@ if (length(object_ids) > 0) {
 result <- if (length(pages)) do.call(rbind, pages) else data.frame()
 write.csv(result, output, row.names = FALSE, fileEncoding = "UTF-8")
 message(sprintf("Saved %s records to %s", format(nrow(result), big.mark = ","), output))
+`
+  return { python, r }
+}
+
+/**
+ * Filter examples for the administrative reference boundaries. They carry no
+ * survey round, so the examples name a country and, where the layer has one,
+ * an ADM1 pcode. NGA and NG021 exist in both the current and archived layers.
+ */
+export function boundaryFilterExamples(fields: FeatureField[]) {
+  const country = fields.find((field) => /^adm0_iso3$/i.test(field.name))?.name || 'adm0_ISO3'
+  const pcode = fields.find((field) => /^adm1_pcode$/i.test(field.name))?.name
+  return [
+    `${country} = 'NGA'`,
+    `${country} IN ('NGA', 'PAK')`,
+    ...(pcode ? [`${pcode} = 'NG021'`] : []),
+  ]
+}
+
+/**
+ * Spatial download scripts for the administrative reference boundaries.
+ *
+ * The attribute-only CSV scripts are no use for boundaries, and a whole-layer
+ * shapefile from the export service is large enough to fail. These page
+ * through the layer as GeoJSON in small batches instead. Both boundary items
+ * are public in ArcGIS, so no sign-in is asked for. Python writes GeoJSON with
+ * the standard library, then a GeoPackage and a shapefile when geopandas is
+ * installed; R writes both through sf. Verified against the live services.
+ */
+function boundaryDownloadScripts(definition: DatasetDefinition, where: string) {
+  const queryUrl = `${definition.layerUrl}/query`
+  const output = definition.resource.fallbackTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const examples = boundaryFilterExamples(definition.layer.fields || [])
+  const python = `# DIEM administrative reference boundaries: spatial download (Python 3)
+#
+# This boundary service is public, so no account or token is needed.
+# It saves the features matching WHERE as GeoJSON (standard library only).
+# If geopandas is installed it also writes a GeoPackage and a shapefile.
+import json
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+QUERY_URL = ${JSON.stringify(queryUrl)}
+WHERE = ${JSON.stringify(where)}
+# Filter examples: remove the leading # from one line, then edit its value.
+# Text values need single quotes inside the SQL expression.
+${examples.map((example) => `# WHERE = ${JSON.stringify(example)}`).join('\n')}
+OUTPUT = ${JSON.stringify(output)}
+BATCH = 100  # polygons are detailed; small batches keep each response light
+
+
+def service_post(parameters):
+    # ArcGIS Online allows about 60 large-geometry requests a minute and
+    # answers 429 beyond that; wait out the minute and try again.
+    body = urllib.parse.urlencode(parameters).encode()
+    for attempt in range(5):
+        try:
+            with urllib.request.urlopen(QUERY_URL, body) as response:
+                payload = json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code != 429:
+                raise
+            payload = {"error": {"code": 429}}
+        if payload.get("error", {}).get("code") == 429 and attempt < 4:
+            print("ArcGIS rate limit reached; waiting 60 seconds...")
+            time.sleep(60)
+            continue
+        if "error" in payload:
+            raise RuntimeError(payload["error"])
+        return payload
+
+
+object_ids = service_post({"f": "json", "where": WHERE, "returnIdsOnly": "true"}).get("objectIds") or []
+features = []
+for start in range(0, len(object_ids), BATCH):
+    page = service_post({
+        "f": "geojson",
+        "objectIds": ",".join(map(str, object_ids[start:start + BATCH])),
+        "outFields": "*",
+        "returnGeometry": "true",
+        "outSR": "4326",
+    })
+    features.extend(page.get("features", []))
+    print(f"{len(features):,} of {len(object_ids):,} features")
+
+if not features:
+    raise SystemExit("No features match this filter; nothing was written.")
+
+with open(OUTPUT + ".geojson", "w", encoding="utf-8") as target:
+    json.dump({"type": "FeatureCollection", "features": features}, target)
+print(f"Saved {len(features):,} features to {OUTPUT}.geojson")
+
+try:
+    import geopandas
+except ImportError:
+    print("Install geopandas to also write a GeoPackage and a shapefile.")
+else:
+    # Built from the features in memory: GDAL refuses to re-read a whole-layer
+    # GeoJSON file (about 1 GB for every ADM2 polygon) as one object.
+    frame = geopandas.GeoDataFrame.from_features(features, crs="EPSG:4326")
+    frame.to_file(OUTPUT + ".gpkg", driver="GPKG")
+    # Shapefile field names are cut to 10 characters; the GeoPackage keeps
+    # the full names.
+    frame.to_file(OUTPUT + ".shp")
+    print(f"Also saved {OUTPUT}.gpkg and {OUTPUT}.shp")
+`
+  const r = `# DIEM administrative reference boundaries: spatial download (R)
+#
+# Packages: install.packages(c("sf", "jsonlite"))
+# This boundary service is public, so no account or token is needed.
+# It saves the features matching \`where\` as a GeoPackage and a shapefile.
+library(sf)
+library(jsonlite)
+
+query_url <- ${JSON.stringify(queryUrl)}
+where <- ${JSON.stringify(where)}
+# Filter examples: remove the leading # from one line, then edit its value.
+# Text values need single quotes inside the SQL expression.
+${examples.map((example) => `# where <- ${JSON.stringify(example)}`).join('\n')}
+output <- ${JSON.stringify(output)}
+batch <- 100  # polygons are detailed; small batches keep each response light
+
+query <- function(parameters) {
+  pairs <- vapply(names(parameters), function(name) {
+    paste0(name, "=", URLencode(as.character(parameters[[name]]), reserved = TRUE))
+  }, character(1))
+  paste0(query_url, "?", paste(pairs, collapse = "&"))
+}
+
+ids <- fromJSON(query(list(f = "json", where = where, returnIdsOnly = "true")))
+if (!is.null(ids$error)) stop(toJSON(ids$error, auto_unbox = TRUE))
+object_ids <- unlist(ids$objectIds)
+if (!length(object_ids)) stop("No features match this filter; nothing was written.")
+
+pages <- list()
+for (start in seq(1, length(object_ids), by = batch)) {
+  chunk <- object_ids[start:min(start + batch - 1, length(object_ids))]
+  url <- query(list(
+    f = "geojson",
+    objectIds = paste(chunk, collapse = ","),
+    outFields = "*",
+    returnGeometry = "true",
+    outSR = 4326
+  ))
+  file <- tempfile(fileext = ".geojson")
+  # ArcGIS Online allows about 60 large-geometry requests a minute and answers
+  # 429 beyond that; wait out the minute and try again.
+  for (attempt in 1:5) {
+    ok <- tryCatch({ download.file(url, file, mode = "wb", quiet = TRUE); TRUE }, error = function(e) conditionMessage(e))
+    head <- if (isTRUE(ok)) readChar(file, 200, useBytes = TRUE) else ok
+    ok <- isTRUE(ok)
+    if (ok && !grepl('"error"', head, fixed = TRUE)) break
+    if (attempt == 5) stop("The service did not return this batch: ", head)
+    message("ArcGIS rate limit or network error; waiting 60 seconds...")
+    Sys.sleep(60)
+  }
+  pages[[length(pages) + 1]] <- st_read(file, quiet = TRUE)
+  message(sprintf("%s of %s features", min(start + batch - 1, length(object_ids)), length(object_ids)))
+}
+boundaries <- do.call(rbind, pages)
+
+st_write(boundaries, paste0(output, ".gpkg"), append = FALSE, quiet = TRUE)
+# Shapefile field names are cut to 10 characters; the GeoPackage keeps the
+# full names.
+st_write(boundaries, paste0(output, ".shp"), append = FALSE, quiet = TRUE)
+message(sprintf("Saved %s features to %s.gpkg and %s.shp", nrow(boundaries), output, output))
 `
   return { python, r }
 }

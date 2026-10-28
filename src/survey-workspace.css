@@ -178,6 +178,13 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .microdata-country > summary span { min-width: 0; color: var(--ink-faint); font-size: var(--text-small); overflow-wrap: anywhere; }
 .microdata-survey-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 18px; padding: 11px 14px; border: 1px solid var(--line-faint); font-size: var(--text-small); }
 .microdata-survey-row + .microdata-survey-row { margin-top: -1px; }
+.microdata-explore-only { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: flex-end; gap: 4px 14px; }
+.microdata-explore-only a, .microdata-unmatched a { color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; }
+.microdata-unmatched { margin: 18px 0 4px; padding: 12px 16px; border-left: 3px solid var(--fao-blue); background: #f4f9f8; font-size: 13px; }
+.microdata-unmatched p { margin: 0 0 8px; }
+.microdata-unmatched ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.microdata-unmatched li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.microdata-unmatched small { color: var(--ink-faint); }
 .microdata-survey-row:has(input:checked) { border-color: #bcd8ea; background: #f1f7fb; }
 .microdata-survey-row label { display: flex; align-items: center; gap: 12px; min-width: 0; cursor: pointer; }
 .microdata-survey-row input { width: 17px; height: 17px; accent-color: var(--fao-blue); }
@@ -306,19 +313,11 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .source-row-title { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .source-row-title strong { color: var(--ink); font-size: 13px; }
 .source-row-title small { color: var(--ink-faint); font-size: var(--text-micro); }
-.source-status { font-size: var(--text-small); font-weight: 700; }
-.source-status--confirmed { color: #2f6a4c; }
-.source-status--confirmed-with-warnings { color: #8a4b12; }
-.source-status--restricted, .source-status--failed { color: #9a3412; }
-.source-status--checking, .source-status--excluded-test, .source-status--withheld { color: var(--ink-faint); }
 .source-row-message { color: var(--ink-faint); font-size: var(--text-micro); line-height: 1.55; }
 .source-row-links { display: flex; justify-content: flex-end; gap: 14px; }
 .source-row-links a { display: inline-flex; align-items: center; gap: 5px; color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; }
 
 .technical-resources-heading { margin: 28px 0 8px; color: var(--deep-blue); font-size: 13px; letter-spacing: 0; }
-.test-mode-open { display: flex; flex-direction: column; align-items: start; gap: 4px; margin: 22px 0 0; padding: 13px 16px; border: 1px dashed #c9873f; background: #fdf8f2; color: #8a4b12; font-size: 13px; font-weight: 700; text-align: left; cursor: pointer; }
-.test-mode-open svg { width: 1.2em; }
-.test-mode-open small { color: #7a4a1b; font-size: var(--text-small); font-weight: 400; }
 .technical-resources-note { margin: 20px 0 0; color: var(--ink-faint); font-size: var(--text-small); line-height: 1.7; }
 .technical-resources-note a { color: var(--fao-blue); font-weight: 700; }
 
@@ -333,6 +332,7 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
   .microdata-country > summary { display: block; }
   .microdata-country > summary strong, .microdata-country > summary span { display: block; }
   .microdata-survey-row { grid-template-columns: 1fr; }
+  .microdata-explore-only { justify-content: flex-start; }
   .workspace-hero { padding: 42px 0 34px; }
   .survey-country-toggle { grid-template-columns: 16px minmax(0, 1fr) auto; grid-template-areas: 'chev name rounds' '. gens selected'; row-gap: 4px; }
   .survey-country-chevron { grid-area: chev; }
@@ -364,10 +364,5 @@ button.access-card-action { padding: 0; border: 0; background: transparent; curs
 .microdata-access-summary > .package-actions button { padding: 7px 13px; font-size: var(--text-small); }
 .microdata-access-summary .microdata-help > summary { padding: 8px 0; font-size: 13px; }
 .microdata-flow > p:last-child { font-size: 13px; }
-.microdata-access-list { padding-left: 1.25rem; }
-.microdata-access-list li { margin: 1rem 0; }
-.microdata-access-list p { margin: .25rem 0; }
-.microdata-access-list a { display: inline-block; margin-right: 1rem; }
 .microdata-documentation { margin: 1rem 0; }
 .microdata-documentation details { margin: 0; }
-.microdata-reference { margin-top: 1.5rem; }

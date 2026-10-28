@@ -30,15 +30,11 @@ import {
 } from '../lib/surveyFlow'
 import { fetchSurveyCollectionPeriods, type SurveyCollectionPeriod } from '../services/monitoring'
 import {
-  ANALYSIS_TOOLS,
   DATA_PORTAL,
   DOCUMENTATION_RESOURCES,
   GENERATIONS,
-  MICRODATA_RESOURCES,
   REFERENCE_RESOURCES,
-  resolveProtectedResource,
   type DataGeneration,
-  type ResolvedDataResource,
 } from '../services/protectedData'
 
 import {
@@ -61,7 +57,6 @@ import {
   type AvailableSurvey,
   type SurveyDiscoveryResult,
   type SurveySliceCount,
-  type SurveySourceResult,
 } from '../services/surveyAccess'
 
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
@@ -297,7 +292,7 @@ function AggregatedAccessCard({ result, onRetry, action }: {
       )}
       {!pending && unavailableCount === 0 && warningCount > 0 && (
         <p className="access-card-state">
-          Every source was checked. {formatNumber(warningCount)} reported rows that did not match the survey schema; those rows are listed under technical resources.
+          Every source was checked. {formatNumber(warningCount)} reported rows that did not match the survey schema.
         </p>
       )}
       {!pending && result.status === 'unavailable' && surveys.length === 0 && (
@@ -333,19 +328,6 @@ function MicrodataAccessCard({ onOpen }: { onOpen: () => void }) {
       </div>
     </article>
   )
-}
-
-function SourceStatusLabel({ source }: { source: SurveySourceResult }) {
-  const labels: Record<SurveySourceResult['status'], string> = {
-    checking: 'Checking',
-    confirmed: 'Published',
-    'confirmed-with-warnings': 'Published, with row warnings',
-    restricted: 'Additional access required',
-    failed: 'Could not be checked',
-    'excluded-test': 'Test data, excluded',
-    withheld: 'Not released — Contributors only',
-  }
-  return <span className={`source-status source-status--${source.status}`}>{labels[source.status]}</span>
 }
 
 export default function SurveyWorkspace() {
@@ -403,14 +385,7 @@ export default function SurveyWorkspace() {
     setSearchParams((current) => withFlowParams(current, { type: next, step: undefined }))
   }, [setSearchParams])
 
-  useEffect(() => {
-    if (type === 'microdata' && location.hash === '#step-household') {
-      document.getElementById('step-household')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
-    }
-  }, [type, location.hash])
-
   const householdData = Boolean(auth.user?.capabilities?.householdData)
-  const [microdataResources, setMicrodataResources] = useState<ResolvedDataResource[]>()
   const [microdataBusy, setMicrodataBusy] = useState(false)
   const { discovery: grantDiscovery, checking: grantChecking, check: recheckGrants, pending: grantPending } = useMicrodataGrants({ busy: microdataBusy })
   const hasActiveGrant = Boolean(grantDiscovery?.bundles.some((bundle) => bundle.status === 'active'))
@@ -425,21 +400,6 @@ export default function SurveyWorkspace() {
     if (type === 'microdata' && surveyIntent && grantDiscovery && !grantChecking && !householdData && !hasActiveGrant) finishIntent()
   }, [finishIntent, grantChecking, grantDiscovery, hasActiveGrant, householdData, surveyIntent, type])
 
-  /**
-   * The household collections, resolved against the signed-in identity.
-   *
-   * Only asked for when the account holds household-data access: for anyone else
-   * every item would come back restricted, which is a list of refusals rather
-   * than information. ArcGIS still decides what actually opens.
-   */
-  useEffect(() => {
-    setMicrodataResources(undefined)
-    if (auth.status !== 'authenticated' || !householdData) return
-    let active = true
-    void Promise.all(MICRODATA_RESOURCES.map((resource) => resolveProtectedResource(resource, auth.requestProtected)))
-      .then((resolved) => { if (active) setMicrodataResources(resolved) })
-    return () => { active = false }
-  }, [auth.requestProtected, auth.status, householdData])
   const [result, setResult] = useState<SurveyDiscoveryResult>()
   const [reloadVersion, setReloadVersion] = useState(0)
   const [search, setSearch] = useState('')
@@ -903,12 +863,6 @@ export default function SurveyWorkspace() {
     setChosenThemes((current) => (
       current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
     ))
-  }
-
-  function enterTestMode() {
-    const next = new URLSearchParams(searchParams)
-    next.set('test', '1')
-    setSearchParams(next, { replace: true })
   }
 
   const visible = useMemo(() => {
@@ -1486,60 +1440,6 @@ export default function SurveyWorkspace() {
               </div>
               <details className="microdata-help"><summary>Microdata licence</summary><MicrodataLicence access={microdataAccess} /></details>
             </section>}
-            <details className="microdata-help microdata-reference" open={location.hash === '#step-household' || undefined}><summary>Documentation and reference data</summary>
-            {householdData && (
-              <section className="workspace-step" aria-labelledby="step-household">
-                <h2 id="step-household">Household microdata collections</h2>
-                <p>Collections your account can open, by questionnaire generation. Each opens in the dataset explorer, where it can be filtered by country and round before download.</p>
-                <ul className="source-rows">
-                  {(microdataResources || MICRODATA_RESOURCES.map((resource) => ({ ...resource, access: 'checking' as const }))).map((resource) => (
-                    <li key={resource.id}>
-                      <span className="source-row-title">
-                        <strong>{resource.fallbackTitle}</strong>
-                        <small>{GENERATIONS[resource.version].label}{resource.period ? ` · ${resource.period}` : ''}</small>
-                      </span>
-                      <span className={`source-status source-status--${resource.access === 'available' ? 'confirmed' : resource.access === 'checking' ? 'checking' : 'restricted'}`}>
-                        {resource.access === 'available'
-                          ? resource.preview ? 'Test records' : 'Available'
-                          : resource.access === 'checking' ? 'Checking' : resource.access === 'error' ? 'Could not be checked' : 'Additional access required'}
-                      </span>
-                      <span className="source-row-message">{resource.preview ? 'Simulated records published for review — not survey results.' : ''}</span>
-                      <span className="source-row-links">
-                        {resource.access === 'available' && <Link to={`/data/${resource.id}`}>Explore</Link>}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
-
-            {/* The boundary layers were reachable only from the collapsed
-                technical panel below, which people did not open. Surveys carry
-                pcodes and nothing else, so the layer that resolves them belongs
-                in the visible flow. */}
-            <section className="workspace-step" aria-labelledby="step-boundaries">
-              <h2 id="step-boundaries">Administrative reference boundaries</h2>
-              <p>Survey records carry ADM1 and ADM2 pcodes. Join them to these layers to map results or to read unit names. If a pcode is missing from the current layer, the boundary has since changed and the archive holds the configuration in use at the time of collection. <Link to="/data/guide#boundaries">How the boundaries are compiled</Link></p>
-              <ul className="source-rows">
-                {REFERENCE_RESOURCES.map((resource) => (
-                  <li key={resource.id}>
-                    <span className="source-row-title">
-                      <strong>{resource.fallbackTitle}</strong>
-                      <small>{resource.description}</small>
-                    </span>
-                    <span/>
-                    <span/>
-                    <span className="source-row-links">
-                      {resource.staticLink
-                        ? <a href={resource.staticLink} target="_blank" rel="noreferrer">Open<Icon name="external"/></a>
-                        : <Link to={`/data/${resource.id}`}>Explore</Link>}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            </details>
               <details className="microdata-help">
                 <summary>Need access to more surveys? Browse published collections or request access</summary>
               <div className="microdata-routes">
@@ -1560,40 +1460,14 @@ export default function SurveyWorkspace() {
 
           </div>
 
+          {/* Boundaries and documentation only. The per-source status list, the
+              API and analysis tools and the household collections were removed:
+              packages now carry labelled values, so nothing here sends people
+              to the raw services. Links only: ArcGIS decides what each one
+              opens for this account. */}
           <details className="technical-resources">
-            <summary>Technical resources and source datasets</summary>
+            <summary>Boundaries and documentation</summary>
             <div className="technical-resources-body">
-              <p>Every source behind this workspace, with the status of its last check. These are the published items that dashboards and scripts address directly; their links are unchanged.</p>
-              <ul className="source-rows">
-                {(result?.sources || []).map((source) => (
-                  <li key={source.resourceId}>
-                    <span className="source-row-title">
-                      <strong>{source.themeLabel}</strong>
-                      <small>{GENERATIONS[source.generation].label}{source.surveyCount === undefined ? '' : ` · ${formatNumber(source.surveyCount)} surveys`}</small>
-                    </span>
-                    <SourceStatusLabel source={source}/>
-                    {source.message && <span className="source-row-message">{source.message}</span>}
-                    <span className="source-row-links">
-                      <Link to={`/data/${source.resourceId}`}>Explore</Link>
-                      <a href={`${DATA_PORTAL}/home/item.html?id=${source.resourceId}`} target="_blank" rel="noreferrer">Source details<Icon name="external"/></a>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {!isContributor ? null : !testMode ? (
-                <button type="button" className="test-mode-open" onClick={enterTestMode}>
-                  <Icon name="flask"/>Open test-data mode
-                  <small>Shows simulated review surveys instead of production surveys. Test and production data never share a package.</small>
-                </button>
-              ) : (
-                <button type="button" className="test-mode-open" onClick={leaveTestMode}>
-                  <Icon name="flask"/>Leave test-data mode
-                  <small>Removes the simulated surveys and clears any test selection.</small>
-                </button>
-              )}
-
-              {/* These moved here from /data when it became the public overview.
-                  Links only: ArcGIS decides what each one opens for this account. */}
               <h3 className="technical-resources-heading">Administrative reference boundaries</h3>
               <ul className="source-rows">
                 {REFERENCE_RESOURCES.map((resource) => (
@@ -1639,17 +1513,6 @@ export default function SurveyWorkspace() {
                 {GENERATIONS.v3.label} field descriptions and codebook are not published yet; they are released with the first {GENERATIONS.v3.label} survey. Do not use an earlier generation's documentation in their place.
               </p>
 
-              <h3 className="technical-resources-heading">API and analysis tools</h3>
-              <ul className="source-rows">
-                {ANALYSIS_TOOLS.map((tool) => (
-                  <li key={tool.href}>
-                    <span className="source-row-title"><strong>{tool.title}</strong><small>{tool.kind}</small></span>
-                    <span/>
-                    <span className="source-row-message">{tool.description}</span>
-                    <span className="source-row-links"><a href={tool.href} target="_blank" rel="noreferrer">Repository<Icon name="external"/></a></span>
-                  </li>
-                ))}
-              </ul>
               <p className="technical-resources-note">
                 Every package carries these links for each survey, with the documentation for its generation, in <code>documentation_and_metadata.txt</code>.
               </p>

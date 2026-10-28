@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isExplorableProduct } from './arcgis'
-import { csvCell, parsePublicDatasetAddress, rowsToCsv } from './dataExplorer'
+import { bulkDownloadScripts, csvCell, parsePublicDatasetAddress, rowsToCsv, type DatasetDefinition } from './dataExplorer'
 
 const ID = 'f0e0a74518e54394a7e5d5a90bfd3e25'
 
@@ -72,5 +72,42 @@ describe('CSV cells', () => {
   it('keeps one record per row when text contains line breaks', () => {
     const csv = rowsToCsv(['id', 'note'], [{ id: 1, note: 'x\ry' }, { id: 2, note: 'z' }])
     expect(csv).toBe('\uFEFFid,note\r\n1,"x\ry"\r\n2,z')
+  })
+})
+
+describe('bulk download scripts', () => {
+  const definition = (kind: string, fields: string[]) => ({
+    resource: { id: 'item', kind, fallbackTitle: 'Current administrative reference boundaries' },
+    serviceUrl: 'https://example.test/FeatureServer',
+    layerUrl: 'https://example.test/FeatureServer/1',
+    isTable: false,
+    layer: { id: 1, name: 'layer', fields: fields.map((name) => ({ name, alias: name, type: 'esriFieldTypeString' })) },
+  }) as unknown as DatasetDefinition
+
+  it('gives the boundaries spatial scripts with country examples and no survey round', () => {
+    const { python, r } = bulkDownloadScripts(definition('reference', ['adm0_ISO3', 'adm1_pcode']), "adm0_ISO3 = 'NGA'")
+    for (const script of [python, r]) {
+      expect(script).toContain('geojson')
+      expect(script).toContain('https://example.test/FeatureServer/1/query')
+      expect(script).toContain("adm0_ISO3 IN ('NGA', 'PAK')")
+      expect(script).toContain("adm1_pcode = 'NG021'")
+      expect(script).not.toMatch(/round/i)
+      // Public services: no sign-in exchange and no token parameter.
+      expect(script).not.toMatch(/password|generateToken|"token"|token =/i)
+      expect(script).toContain('.shp')
+    }
+    expect(python).toContain('WHERE = "adm0_ISO3 = ' + "'NGA'" + '"')
+    expect(r).toContain('library(sf)')
+  })
+
+  it('omits the pcode example on a layer without ADM1 codes', () => {
+    const { python } = bulkDownloadScripts(definition('reference', ['adm0_ISO3']), '1=1')
+    expect(python).not.toContain('adm1_pcode')
+  })
+
+  it('keeps the round example for survey data', () => {
+    const { python, r } = bulkDownloadScripts(definition('aggregate', ['adm0_ISO3', 'round']), '1=1')
+    expect(python).toContain("round = 1")
+    expect(r).toContain("round = 1")
   })
 })

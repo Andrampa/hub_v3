@@ -37,7 +37,6 @@ const SECTIONS = [
   { id: 'documentation', title: 'Documentation and metadata' },
   { id: 'boundaries', title: 'Administrative boundaries' },
   { id: 'methodology', title: 'Methodology notes' },
-  { id: 'api', title: 'Data API' },
   { id: 'citation', title: 'How to cite' },
   { id: 'licensing', title: 'Licensing' },
 ]
@@ -126,7 +125,7 @@ export default function DataGuide() {
               <p>There are three levels of access, and signing in is not the same thing as being authorized. Signing in opens the workspace; what you can download is decided by the permissions attached to your account.</p>
               <ol className="guide-steps">
                 <li><strong>Without an account.</strong> This guide, and a description of everything DIEM publishes and how to obtain it.</li>
-                <li><strong>With a DIEM community account.</strong> Aggregated survey data at the lowest administrative level each survey supports, administrative reference boundaries, all technical documentation, the data API, and the microdata request form.</li>
+                <li><strong>With a DIEM community account.</strong> Aggregated survey data at the lowest administrative level each survey supports, administrative reference boundaries, all technical documentation and the microdata request form.</li>
                 <li><strong>With approved microdata access.</strong> Anonymized household-level records for the surveys covered by your approval, valid for a week and renewable.</li>
               </ol>
               <p>Accounts are free and can be created from the sign-in prompt on <Link to="/data/surveys">Your surveys</Link>. Privileges are assigned by an automated procedure: allow up to 15 minutes from account creation before full access activates. If the workspace reports no aggregated surveys immediately after you register, that is the provisioning window rather than a problem with your account.</p>
@@ -144,7 +143,6 @@ export default function DataGuide() {
                 <li>Review the package. Count the records first: the review names every file, the record total and any survey and theme combination that will be missing, and why.</li>
                 <li>Download. Choose separate survey folders or, for multiple surveys, combine compatible surveys into one CSV per theme and questionnaire generation. The zip includes documentation, a README and a manifest recording the source queries and each survey's contribution.</li>
               </ol>
-              <p>Each dataset can still be opened on its own, with a map, filters and further formats, from <em>Technical resources and source datasets</em> at the foot of the workspace. That is also the route for extractions beyond the 20 000 records a browser download can build, through the generated Python and R scripts.</p>
               <p>Before analysing, read the field descriptions and the questionnaire for the generation you are working in. Several fields are only interpretable alongside them.</p>
             </section>
 
@@ -159,7 +157,7 @@ export default function DataGuide() {
               <p><Link to="/data/microdata-request">Open the microdata request form</Link></p>
               <h3>Coded values and labelling</h3>
               <p>Microdata is disseminated in coded form, in line with good practice for data protection, standardization and analytical consistency across countries and survey rounds. Coded values keep files small, keep processing harmonized, and limit the risk of misinterpretation or unintended disclosure. The codebook maps every code to its label.</p>
-              <p>To make that easier, DIEM publishes Python and R tools that detect the questionnaire generation automatically and apply the official value labels, producing an analysis-ready dataset while preserving the original structure and file format. They are available in the <a href="https://github.com/Andrampa/diem-microdata-labelling" target="_blank" rel="noreferrer">public microdata labelling repository</a>.</p>
+              <p>When you download microdata from <Link to="/data/surveys">Your surveys</Link> you can choose coded values, labelled values or both. Labels are available where they have been verified; the download includes their mappings in <code>value_labels.csv</code>.</p>
               <h3>Reading empty fields</h3>
               <p>The questionnaire has its own internal logic with skip patterns, and not every question is asked of every household. If a question was not asked, the corresponding field for that household is empty. An empty field therefore means the household was not eligible for that question — it is not a missing value to be imputed.</p>
             </section>
@@ -200,7 +198,7 @@ export default function DataGuide() {
             <section id="documentation">
               <h2>Documentation and metadata</h2>
               <p><strong>{reference.label} documentation is still being produced.</strong> The field descriptions, codebook and detailed metadata are written alongside the questionnaire itself and are published with the first {reference.label} survey. Older-generation documentation describes a different field set and different codes, so use it for orientation only, never to interpret {reference.label} values.</p>
-              <p>Each generation carries its own documentation set. Every downloaded package links the set for its surveys' generation, and the full list is under technical resources in the workspace:</p>
+              <p>Each generation carries its own documentation set. Every downloaded package links the set for its surveys' generation, and the full list is under <em>Boundaries and documentation</em> in the workspace:</p>
               <ul className="guide-list">
                 <li><strong>Field descriptions</strong> explaining the content of every field, for microdata and for aggregated data.</li>
                 <li><strong>Codebooks</strong> mapping coded values to labels.</li>
@@ -221,7 +219,7 @@ export default function DataGuide() {
                   <li key={resource.id}><Link to={`/data/${resource.id}`}>{resource.fallbackTitle}</Link> &mdash; {resource.description}</li>
                 ))}
               </ul>
-              <p>They are also listed under &ldquo;Technical resources and source datasets&rdquo; at the foot of <Link to="/data/surveys">Your surveys</Link>.</p>
+              <p>They are also listed under &ldquo;Boundaries and documentation&rdquo; at the foot of <Link to="/data/surveys">Your surveys</Link>.</p>
             </section>
 
             <section id="methodology">
@@ -241,12 +239,6 @@ export default function DataGuide() {
               </ul>
               <h3>Country-specific notes</h3>
               <p>In Yemen, a High Frequency Monitoring system runs alongside the standard surveys. These monthly rounds cover only food security outcomes and income and shocks, giving more timely detail on those variables. Separately, the household sub-sample engaged in aquatic production — fishing or aquaculture — is often too small for administrative aggregation to be meaningful.</p>
-            </section>
-
-            <section id="api">
-              <h2>Data API</h2>
-              <p>Application Programming Interfaces allow system-to-system integration, so DIEM data can move into your own workflows without manual downloads. Using the DIEM API you can access datasets programmatically for dynamic workflows, analysis and integration.</p>
-              <p>A <a href="https://github.com/Andrampa/DIEM_API/tree/main" target="_blank" rel="noreferrer">public repository</a> provides a Jupyter Notebook demonstrating automated downloads, with installation instructions and step-by-step guidance you can adapt. A DIEM account is required, and each dataset still resolves against your own permissions. For larger extractions, the dataset explorer generates ready-made Python and R scripts that carry your current filter and read a short-lived token from your environment; tokens are never embedded in generated code.</p>
             </section>
 
             <section id="citation">

@@ -267,3 +267,81 @@ describe('table paging and sorting', () => {
     expect(container.querySelector('.dataset-table-scroll th')?.getAttribute('aria-sort')).toBe('none')
   })
 })
+
+describe('administrative reference boundaries', () => {
+  function boundary(id: string) {
+    const base = definition(id, 'reference', false)
+    return {
+      ...base,
+      isTable: false,
+      layer: { ...base.layer, fields: [
+        { name: 'OBJECTID', alias: 'OBJECTID', type: 'esriFieldTypeOID' },
+        { name: 'adm0_ISO3', alias: 'adm0_ISO3', type: 'esriFieldTypeString' },
+        { name: 'adm1_pcode', alias: 'adm1_pcode', type: 'esriFieldTypeString' },
+        { name: 'adm1_name', alias: 'adm1_name', type: 'esriFieldTypeString' },
+      ] },
+    }
+  }
+
+  it('asks for a country, never a survey round, and explains why whole exports fail', async () => {
+    fetchDatasetDefinition.mockResolvedValue(boundary(ADMIN_REFERENCE_DATASET_ID))
+    await open(ADMIN_REFERENCE_DATASET_ID)
+
+    const text = container.textContent || ''
+    expect(text).toContain('Start with a country to create a focused extract.')
+    expect(text).toContain('No filters applied. Choose a country before downloading.')
+    expect(text).not.toContain('survey round')
+    expect(container.querySelector('optgroup')?.getAttribute('label')).toBe('Recommended: country')
+    expect(container.querySelector('.download-boundary-note')?.textContent).toContain('Filter to one country first.')
+    expect(text).toContain('No sign-in is needed')
+  })
+
+  it('drops the warning once the selection is one country', async () => {
+    fetchDatasetDefinition.mockResolvedValue(boundary(ADMIN_REFERENCE_DATASET_ID))
+    // The explorer reads an incoming deep link from the address bar itself.
+    window.history.replaceState(null, '', `/data/${ADMIN_REFERENCE_DATASET_ID}?country=NGA`)
+    await act(async () => {
+      root.render(
+        <MemoryRouter initialEntries={[`/data/${ADMIN_REFERENCE_DATASET_ID}?country=NGA`]}>
+          <Routes><Route path="/data/:datasetId" element={<DatasetExplorer />} /></Routes>
+        </MemoryRouter>,
+      )
+    })
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
+
+    window.history.replaceState(null, '', '/')
+
+    expect(container.querySelector('.active-filters')?.textContent).toContain('NGA')
+    expect(container.querySelector('.download-boundary-note')).toBe(null)
+  })
+
+  it('keeps the warning for a name filter that can span countries', async () => {
+    fetchDatasetDefinition.mockResolvedValue(boundary(ADMIN_REFERENCE_DATASET_ID))
+    fetchFieldOptions.mockResolvedValue({ values: ['Central'], truncated: false })
+    await open(ADMIN_REFERENCE_DATASET_ID)
+
+    const [field] = Array.from(container.querySelectorAll('.filter-builder select')) as HTMLSelectElement[]
+    await act(async () => {
+      field.value = 'adm1_name'
+      field.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) })
+    const value = container.querySelector('.filter-builder label:nth-child(3) select, .filter-builder label:nth-child(3) input') as HTMLSelectElement | HTMLInputElement
+    await act(async () => {
+      value.value = 'Central'
+      value.dispatchEvent(new Event(value.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }))
+    })
+    await act(async () => { (Array.from(container.querySelectorAll('.filter-builder button')).find((button) => button.textContent?.includes('Add filter')) as HTMLButtonElement).click() })
+
+    expect(container.querySelector('.active-filters')?.textContent).toContain('Central')
+    expect(container.querySelector('.download-boundary-note')?.textContent).toContain('Filter to one country first.')
+  })
+
+  it('keeps the country-and-round guidance for survey data', async () => {
+    fetchDatasetDefinition.mockResolvedValue(definition(AGGREGATE_ID, 'aggregate', true))
+    await open(AGGREGATE_ID)
+
+    expect(container.textContent).toContain('Start with country and survey round')
+    expect(container.querySelector('.download-boundary-note')).toBe(null)
+  })
+})

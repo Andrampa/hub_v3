@@ -426,7 +426,8 @@ describe('test-data mode', () => {
     expect(container.textContent).toContain('Nigeria')
     expect(container.textContent).not.toContain('Chad')
     expect(container.querySelector('.access-card-lede')?.textContent).toContain('1 survey available')
-    expect(container.querySelector('.test-mode-open')?.textContent).toContain('instead of production surveys')
+    // Test-data mode is reached by ?test=1 only; the workspace no longer advertises it.
+    expect(container.querySelector('.test-mode-open')).toBe(null)
   })
 
   it('shows simulated surveys alone, never beside production ones', async () => {
@@ -959,21 +960,12 @@ describe('data type', () => {
       .toContain('the microdataset will not be redisseminated')
   })
 
-  it('lists household collections only for an account holding household-data access', async () => {
-    auth.requestProtected.mockImplementation(async (url: string) => {
-      const id = /\/content\/items\/([^/?]+)/.exec(url)?.[1]
-      if (id) return { id, title: id, type: 'Feature Service', owner: 'DIEM', modified: 1, access: 'shared' }
-      return {}
-    })
-    await render('/data/surveys#temporary-microdata')
-    expect(container.querySelector('#step-household')).toBe(null)
-
+  it('lists no raw household collections, even for household-data members', async () => {
     auth.user = { username: 'hana', capabilities: { contributor: false, aggregatedData: true, householdData: true } }
     await render('/data/surveys#temporary-microdata')
 
-    const section = container.querySelector('[aria-labelledby="step-household"]')
-    expect(section?.textContent).toContain('DIEM Household Surveys Microdata')
-    expect(section?.querySelector('a[href="/data/2d15e5b7768949b4905e452fcc5e0440"]')).not.toBe(null)
+    expect(container.querySelector('#step-household')).toBe(null)
+    expect(container.querySelector('a[href="/data/2d15e5b7768949b4905e452fcc5e0440"]')).toBe(null)
   })
 
   it('no longer sends anyone to the /data microdata section', async () => {
@@ -1059,16 +1051,19 @@ describe('microdata licence framing', () => {
   })
 })
 
-describe('technical resources', () => {
-  it('carries the boundaries, documentation and tools that left /data', async () => {
+describe('boundaries and documentation', () => {
+  it('holds boundaries and documentation only', async () => {
     await render()
 
-    const technical = container.querySelector('.technical-resources')?.textContent || ''
-    expect(technical).toContain('Administrative reference boundaries')
-    expect(technical).toContain('Documentation and metadata')
+    const panel = container.querySelector('.technical-resources')
+    const technical = panel?.textContent || ''
+    expect(panel?.querySelector('summary')?.textContent).toBe('Boundaries and documentation')
     expect(technical).toContain('Microdata codebook')
-    expect(technical).toContain('DIEM data API')
-    expect(technical).toContain('Microdata labelling')
+    expect(technical).not.toContain('DIEM data API')
+    expect(technical).not.toContain('Source details')
+    expect(panel?.querySelector('.test-mode-open')).toBe(null)
+    expect([...(panel?.querySelectorAll('h3') ?? [])].map((heading) => heading.textContent))
+      .toEqual(['Administrative reference boundaries', 'Documentation and metadata'])
   })
 })
 

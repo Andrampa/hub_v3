@@ -1,5 +1,42 @@
 # Changelog
 
+## 2026-10-28 - Boundary explorer downloads
+
+- The administrative reference boundary explorer asks for a country, not a
+  survey round, and its script examples no longer mention rounds. Survey
+  datasets keep the country-and-round guidance and round examples.
+- Before a whole-layer Shapefile or KML export of the boundaries, the explorer
+  says to filter to one country first, until a country code, country name or
+  pcode filter limits it to one country (a name like adm1_name can span
+  countries). A failed export names selection size as a likely cause, not a
+  confirmed one: the signed-in failure was not reproduced.
+- Boundary Python and R scripts now download geometry (GeoJSON, GeoPackage,
+  shapefile) without sign-in. Both were generated from the app code and run
+  against the current and archived services. Not yet deployed.
+
+## 2026-10-28 - Microdata explore links beside the surveys
+
+- Remove "Access details and table exploration" from the microdata access
+  summary; it repeated each grant's scope and export status and stayed visible
+  on every step. The summary is now one status line with Re-check access.
+- Explore-only survey rows link to their table(s), filtered to the survey's
+  country and round; V3 rows name the mandatory and optional tables. Active
+  grant tables that produced no confirmed row, matched per table, are listed
+  beneath the survey list with their own Explore links, also when the whole
+  inventory fails to load. Not yet deployed.
+
+## 2026-10-28 - Simpler workspace reference panel
+
+- The workspace's "Technical resources and source datasets" panel is now
+  "Boundaries and documentation" and holds only those two lists, for both
+  aggregated data and microdata. Removed the per-source status list, the
+  test-data-mode button (Contributors still use `?test=1`), API and analysis
+  tools, and the microdata panel's household collections and duplicate
+  boundaries.
+- The guide drops its Data API section and the pointer to opening source
+  datasets directly, and describes the coded/labelled download choice instead
+  of the labelling tools. Not yet deployed.
+
 ## 2026-10-28 - Data access guidance consolidated into the guide
 
 - Retire the "How to access data" page: `/data` now redirects to `/data/guide`,

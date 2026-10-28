@@ -400,3 +400,85 @@ describe('guided steps', () => {
     expect(onStep).toHaveBeenLastCalledWith('download')
   })
 })
+
+describe('exploring without bulk export', () => {
+  const part = (component: string, itemId: string, bulkExportEnabled: boolean, source = 'grant') => ({
+    component, source, grantId: 'g1', itemId, layerUrl: 'https://example.test/0', countryField: 'adm0_iso3', roundField: 'round', bulkExportEnabled,
+  })
+  const survey = (generation: string, iso3: string, round: number, components: unknown[]) => ({
+    key: `${generation}:${iso3}:${round}`, generation, adm0Iso3: iso3, countryName: iso3, round, testData: false, components,
+  })
+  const inventory = (surveys: unknown[], grantCheckFailed = false) => ({
+    surveys, master: { status: 'complete', surveys: [], sources: [], pendingSourceCount: 0, unavailableSourceCount: 0 }, grantCheckFailed, grantIssues: [],
+  })
+  const view = (itemId: string, component: string, questionnaireVersion: string, scope: Array<[string, number]>) => ({
+    itemId, title: itemId, component, questionnaireVersion, grantId: 'g1', schemaVersion: 1, bulkExportEnabled: false,
+    surveyScope: scope.map(([adm0_iso3, round]) => ({ adm0_iso3, round })),
+  })
+  const grants = (views: unknown[], version = 'v2') => ({ bundles: [{ key: 'g1:' + version, grantId: 'g1', questionnaireVersion: version, surveyScope: [], views, documentation: [], status: 'active', bulkExportEnabled: false, joinKeys: [] }], source: 'groups' as const })
+  async function show(discovery: ReturnType<typeof grants>) {
+    await act(async () => root.render(<MemoryRouter><MicrodataPackagePicker grantDiscovery={discovery as never} grantChecking={false}
+      householdData={false} contributor={false} testMode={false} licenceAccess="temporaryGrant" /></MemoryRouter>))
+  }
+  const row = (key: string) => [...host.querySelectorAll('.microdata-survey-row')]
+    .find((entry) => entry.querySelector('input')?.getAttribute('aria-label')?.startsWith(key))!
+
+  it('links an explore-only survey to its table, filtered to that survey', async () => {
+    discoverMicrodataAccess.mockResolvedValue(inventory([survey('v2', 'NGA', 8, [part('household', 'view-nga', false)])]))
+    await show(grants([view('view-nga', 'legacy', 'v2', [['NGA', 8]])]))
+
+    const nigeria = row('NGA, round 8')
+    expect(nigeria.querySelector('input')?.disabled).toBe(true)
+    expect(nigeria.textContent).toContain('Explore only — bulk export not approved')
+    expect([...nigeria.querySelectorAll('a')].map((link) => [link.textContent, link.getAttribute('href')]))
+      .toEqual([['Explore data', '/data/grants/view-nga?country=NGA&round=8']])
+    expect(host.querySelector('.microdata-unmatched')).toBe(null)
+  })
+
+  it('offers no Explore link where the survey can be downloaded', async () => {
+    discoverMicrodataAccess.mockResolvedValue(inventory([survey('v2', 'NGA', 8, [part('household', 'view-nga', true)])]))
+    await show(grants([view('view-nga', 'legacy', 'v2', [['NGA', 8]])]))
+
+    const nigeria = row('NGA, round 8')
+    expect(nigeria.querySelector('input')?.disabled).toBe(false)
+    expect(nigeria.querySelector('a')).toBe(null)
+  })
+
+  it('names the mandatory and optional tables of an explore-only V3 survey', async () => {
+    discoverMicrodataAccess.mockResolvedValue(inventory([survey('v3', 'COD', 2, [part('mandatory', 'core-cod', false), part('optional', 'opt-cod', false)])]))
+    await show(grants([]))
+
+    expect([...row('COD, round 2').querySelectorAll('a')].map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+      ['Explore mandatory table', '/data/grants/core-cod?country=COD&round=2'],
+      ['Explore optional table', '/data/grants/opt-cod?country=COD&round=2'],
+    ])
+  })
+
+  it('keeps a route to an approved table the check could not match to a survey', async () => {
+    discoverMicrodataAccess.mockResolvedValue(inventory([], true))
+    await show(grants([view('view-sdn', 'legacy', 'v2', [['SDN', 4]])]))
+
+    const note = host.querySelector('.microdata-unmatched')
+    expect(note?.textContent).toContain('could not be matched')
+    expect(note?.querySelector('a')?.getAttribute('href')).toBe('/data/grants/view-sdn')
+    expect(note?.textContent).toContain('SDN round 4')
+  })
+
+  it('keeps a link to a V3 optional table that failed while its mandatory table loaded', async () => {
+    discoverMicrodataAccess.mockResolvedValue(inventory([survey('v3', 'COD', 2, [part('mandatory', 'core-cod', true)])]))
+    await show(grants([view('core-cod', 'core', 'v3', [['COD', 2]]), view('opt-cod', 'optional', 'v3', [['COD', 2]])], 'v3'))
+
+    const links = [...(host.querySelector('.microdata-unmatched')?.querySelectorAll('a') ?? [])]
+    expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([['Explore optional table', '/data/grants/opt-cod']])
+  })
+
+  it('keeps the approved tables reachable when the inventory cannot be loaded at all', async () => {
+    discoverMicrodataAccess.mockRejectedValue(new Error('Register unavailable'))
+    await show(grants([view('view-sdn', 'legacy', 'v2', [['SDN', 4]])]))
+
+    expect(host.querySelector('.microdata-country')).toBe(null)
+    const note = host.querySelector('.microdata-unmatched')
+    expect(note?.textContent).toContain('could not be listed')
+    expect(note?.querySelector('a')?.getAttribute('href')).toBe('/data/grants/view-sdn')
+  })
+})
