@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`/data` is the public overview of DIEM survey data. The protected workspace - aggregated indicators chosen by survey, household microdata, operational boundaries, metadata and analysis tools - is `/data/surveys`; see `docs/data_access_restructure.md`.
+The public explanation of DIEM survey data is the guide at `/data/guide`; `/data` redirects there, keeping query string and fragment. The protected workspace - aggregated indicators chosen by survey, household microdata, operational boundaries, metadata and analysis tools - is `/data/surveys`; see `docs/data_access_restructure.md`.
 
 The current production Hub remains unchanged. ArcGIS Online remains authoritative for every item and download.
 
@@ -10,7 +10,7 @@ The current production Hub remains unchanged. ArcGIS Online remains authoritativ
 
 | Tier | Who | Sees |
 |---|---|---|
-| 1 | Anonymous | General instructions only: the access ladder, the three questionnaire generations, the microdata routes, and the public guide at `/data/guide`. No protected metadata is requested. |
+| 1 | Anonymous | The public guide at `/data/guide`: who can access what, aggregated data, the microdata routes, the three questionnaire generations, documentation, citation and licensing. The workspace shows its sign-in gate. No protected metadata is requested. |
 | 2 | Enabled member of community organization `D5aXW6TZFpeM2wke` | Aggregated data, administrative boundaries, documentation, API and tools, plus the full microdata licence with the request form beneath it. |
 | 3 | Tier 2 and member of household-data group `3f1e99b44e3e4107957de001a1242a70` | Everything, including the household microdata datasets. |
 
@@ -83,11 +83,12 @@ Surveys are chosen by country and round, not by generation: the workspace
 resolves each survey's generation and packages that generation's field schema
 and documentation links with it, so a reader never has to work out which
 codebook belongs to which period. `REFERENCE_GENERATION` still decides which
-generation the `/data` timeline presents as the current standard.
+generation the guide (`/data/guide#generations`) presents as the current standard.
 
 V3 entries are marked `preview: true`. Their Phase 5 services are published and
 queryable but currently hold simulated records, and the UI must say so wherever
-they are offered. Clear the flag when real survey data replaces the test load.
+they are offered — including the guide's generation cards, which state "No
+production data yet" while every aggregated service of a generation is preview. Clear the flag when real survey data replaces the test load.
 
 ## Resource Manifest
 
@@ -138,16 +139,19 @@ not been done yet.
 
 ## User Experience
 
-- `/data`: a public overview, identical signed in or out apart from the hero
-  action. It explains aggregated data against household microdata (who can get
-  each and what is required), the three steps to the data, and the
-  questionnaire generations as a compact timeline, then routes to the survey
-  data workspace. It lists no dataset and requests no protected item metadata.
-  The `#aggregated` and `#microdata` anchors are kept for older links; country
-  pages now link into `/data/surveys` with the country already chosen.
+- `/data`: redirects to `/data/guide`, keeping query string and fragment. The
+  separate "How to access data" overview was retired on 2026-10-28 because it
+  restated the guide; the guide's `#aggregated` and `#microdata` sections answer
+  the older anchors. Navigation offers two data destinations only: Your surveys
+  (act) and the Data access guide (read). Country pages link into
+  `/data/surveys` with the country already chosen.
+- `/data/guide`: leads with three actions (choose and download surveys, FAM,
+  request microdata) and puts who-can-access-what, aggregated data and microdata
+  before the DIEM background, generations and reference sections. Sign-in and
+  account creation stay in the workspace gate.
 - `/data/surveys`: the survey data workspace, where data is chosen by country
   and round and downloaded as a package. See `docs/data_access_restructure.md`.
-  It also holds what `/data` used to carry for signed-in members: temporary
+  It also holds what the old `/data` page used to carry for signed-in members: temporary
   microdata grants, household microdata collections, the full microdata licence,
   and — under technical resources — the source datasets, boundaries,
   documentation and API tools. It is a guided flow; see "Guided survey data flow"

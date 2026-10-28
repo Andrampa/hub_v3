@@ -176,7 +176,7 @@ function ExplorerGate({ resourceName }: { resourceName: string }) {
         <h1>Sign in to explore {resourceName}.</h1>
         <p>Filters, preview records, API links and downloads are available only to enabled DIEM community members with access to this dataset.</p>
         <button type="button" onClick={() => void auth.signIn()}>Sign in to explore data <ExplorerIcon name="arrow"/></button>
-        <Link to="/data">Return to data access</Link>
+        <Link to="/data/surveys">Return to Your surveys</Link>
       </main>
       <SiteFooter />
     </>
@@ -583,7 +583,7 @@ export default function DatasetExplorer() {
           <div className="section-wrap">
             {isPublicRoute
               ? <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/catalog">Catalogue</Link><span>/</span>{definition ? <Link to={`/catalog/${definition.resource.id}`}>{definition.resource.fallbackTitle}</Link> : <span>Dataset</span>}<span>/</span><span>Dataset explorer</span></nav>
-              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data">How to access data</Link><span>/</span><Link to="/data/surveys">Your surveys</Link><span>/</span><span>Dataset explorer</span></nav>}
+              : <nav className="dataset-breadcrumbs" aria-label="Breadcrumb"><Link to="/data/surveys">Your surveys</Link><span>/</span><span>Dataset explorer</span></nav>}
             <div className="dataset-title-row"><div><span className="kicker">Live data service</span><h1>{definition?.resource.item?.title || resource?.fallbackTitle || 'Dataset explorer'}</h1><p>{definition?.resource.description || 'Explore, filter and download the selected DIEM data resource.'}</p></div><span className="dataset-access-badge">{isPublicRoute ? 'Public data' : 'Authenticated access'}</span></div>
           </div>
         </header>

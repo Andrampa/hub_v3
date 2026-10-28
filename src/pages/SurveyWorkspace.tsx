@@ -198,7 +198,7 @@ function SignInGate({ type }: { type?: FlowType }) {
           <button type="button" onClick={() => void auth.signIn()} disabled={auth.status === 'authenticating'}>
             <Icon name="lock"/>{auth.status === 'authenticating' ? 'Opening sign in…' : 'Sign in or create an account'}
           </button>
-          <Link to="/data">What is in DIEM data<Icon name="arrow"/></Link>
+          <Link to="/data/guide#accessibility">Who can access what<Icon name="arrow"/></Link>
         </div>
         <p className="workspace-gate-note"><Icon name="shield"/> Accounts are free. Privileges usually activate within 15 minutes of account creation.</p>
       </div>

@@ -66,7 +66,7 @@ const CANONICAL_ORIGIN = 'https://data-in-emergencies.fao.org'
 const SITEMAP_TIMEOUT_MS = 20000
 const STATIC_ROUTES = [
   '/', '/catalog', '/countries', '/hazard-impact-assessments', '/flood-services',
-  '/monitoring-system', '/monitoring', '/data', '/data/guide',
+  '/monitoring-system', '/monitoring', '/data/guide',
   '/about', '/photo-galleries', '/contact',
 ]
 

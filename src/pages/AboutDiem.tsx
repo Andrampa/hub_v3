@@ -64,7 +64,7 @@ export default function AboutDiem() {
               <Link to="/monitoring-system">Household monitoring <span aria-hidden="true">→</span></Link>
               <Link to="/hazard-impact-assessments">Hazard impacts <span aria-hidden="true">→</span></Link>
               <Link to="/flood-analysis">Flood monitoring and risk <span aria-hidden="true">→</span></Link>
-              <Link to="/data">Data access <span aria-hidden="true">→</span></Link>
+              <Link to="/data/guide">Data access <span aria-hidden="true">→</span></Link>
             </nav>
           </div>
         </section>

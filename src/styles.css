@@ -212,7 +212,6 @@ main:focus { outline: none; }
 .country-profile-hero :is(.eyebrow, .kicker),
 .hub-catalog-band :is(.eyebrow, .kicker),
 .cross-country-strip :is(.eyebrow, .kicker),
-.data-gate-hero :is(.eyebrow, .kicker),
 .guide-hero :is(.eyebrow, .kicker),
 .about-hero :is(.eyebrow, .kicker),
 .about-contact :is(.eyebrow, .kicker),

@@ -43,19 +43,18 @@ afterEach(async () => {
 })
 
 describe('SiteHeader household survey navigation', () => {
-  it('offers the overview, personal workspace and guide in both navigation modes', async () => {
-    await renderAt('/data')
+  it('offers the personal workspace and guide, not the retired overview, in both navigation modes', async () => {
+    await renderAt('/data/guide')
 
     for (const selector of ['.nav-links', '#mobile-navigation']) {
       const navigation = container.querySelector(selector)
-      expect(navigation?.querySelector('a[href="/data"]')).not.toBe(null)
+      expect(navigation?.querySelector('a[href="/data"]')).toBe(null)
       expect(navigation?.querySelector('a[href="/data/surveys"]')?.textContent).toContain('Your surveys')
       expect(navigation?.querySelector('a[href="/data/guide"]')?.textContent).toContain('Data access guide')
     }
   })
 
   it.each([
-    ['/data', 'How to access data'],
     ['/data/surveys', 'Your surveys'],
     ['/data/guide', 'Data access guide'],
   ])('marks only the exact data destination current at %s', async (pathname, label) => {
@@ -71,13 +70,13 @@ describe('SiteHeader household survey navigation', () => {
 })
 
 describe('SiteFooter household survey navigation', () => {
-  it('offers the same three data destinations as the header', async () => {
+  it('offers the same two data destinations as the header', async () => {
     await act(async () => {
       root.render(<MemoryRouter><SiteFooter /></MemoryRouter>)
     })
 
     const navigation = container.querySelector('nav[aria-label="Site sections"]')
-    expect(navigation?.querySelector('a[href="/data"]')?.textContent).toBe('How to access data')
+    expect(navigation?.querySelector('a[href="/data"]')).toBe(null)
     expect(navigation?.querySelector('a[href="/data/surveys"]')?.textContent).toBe('Your surveys')
     expect(navigation?.querySelector('a[href="/data/guide"]')?.textContent).toBe('Data access guide')
   })

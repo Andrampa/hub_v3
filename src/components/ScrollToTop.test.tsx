@@ -35,7 +35,7 @@ async function renderAt(path: string) {
 
 describe('route scrolling', () => {
   it('scrolls ordinary navigation to the top', async () => {
-    await renderAt('/data')
+    await renderAt('/data/guide')
 
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'instant' })
   })
@@ -43,7 +43,7 @@ describe('route scrolling', () => {
   it('scrolls to an anchor that already exists', async () => {
     await act(async () => {
       root.render(
-        <MemoryRouter initialEntries={['/data#microdata']}>
+        <MemoryRouter initialEntries={['/data/guide#microdata']}>
           <ScrollToTop />
           <section id="microdata" ref={(target) => {
             if (target) target.getBoundingClientRect = () => ({ top: 640 } as DOMRect)
@@ -56,7 +56,7 @@ describe('route scrolling', () => {
   })
 
   it('waits for an anchor inside lazy route content', async () => {
-    await renderAt('/data#microdata')
+    await renderAt('/data/guide#microdata')
     expect(scrollTo).not.toHaveBeenCalled()
 
     const target = document.createElement('section')

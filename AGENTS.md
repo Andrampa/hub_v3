@@ -19,7 +19,7 @@ DIEM Hub 3.0 is a React/TypeScript public catalog over FAO DIEM content held in 
 
 ## Architecture Short Form
 
-`main.tsx` owns routing; `App.tsx` owns the homepage; `pages/Country*.tsx` own country discovery; `pages/DataAccess.tsx` owns the protected workspace. `services/arcgis.ts` owns shared remote utilities, `services/countries.ts` owns country category normalization, and `services/protectedData.ts` owns protected item configuration. See `docs/architecture.md` before changing boundaries.
+`main.tsx` owns routing; `App.tsx` owns the homepage; `pages/Country*.tsx` own country discovery; `pages/SurveyWorkspace.tsx` owns the protected workspace at `/data/surveys`, and `pages/DataGuide.tsx` owns the public access guide at `/data/guide` (`/data` redirects there). `services/arcgis.ts` owns shared remote utilities, `services/countries.ts` owns country category normalization, and `services/protectedData.ts` owns protected item configuration. See `docs/architecture.md` before changing boundaries.
 
 ## Design Style
 

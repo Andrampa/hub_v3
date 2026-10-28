@@ -106,7 +106,7 @@ describe('dataset explorer visibility', () => {
     await open(AGGREGATE_ID)
 
     const breadcrumb = container.querySelector('nav[aria-label="Breadcrumb"]')
-    expect(breadcrumb?.querySelector('a[href="/data"]')?.textContent).toBe('How to access data')
+    expect(breadcrumb?.querySelector('a[href="/data"]')).toBe(null)
     expect(breadcrumb?.querySelector('a[href="/data/surveys"]')?.textContent).toBe('Your surveys')
     expect(breadcrumb?.textContent).toContain('Dataset explorer')
   })

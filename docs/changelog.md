@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-10-28 - Data access guidance consolidated into the guide
+
+- Retire the "How to access data" page: `/data` now redirects to `/data/guide`,
+  keeping query string and fragment, so `/data#aggregated` and `/data#microdata`
+  land on the matching guide sections. Header (desktop and mobile), footer, About,
+  the workspace gate and the dataset explorer breadcrumb now point at Your
+  surveys or the guide; the sitemap drops `/data`.
+- The guide leads with three actions (choose and download surveys, FAM, request
+  microdata access) and puts access, aggregated data and microdata before a
+  shortened DIEM background, generations and reference sections. Generation
+  cards now say "No production data yet" while a generation's aggregated
+  services are all preview.
+- Remove `DataAccess.tsx`, its test and the stylesheet rules only it used. Add
+  `DataGuide.test.tsx`. Not yet deployed.
+
 ## 2026-10-22 - Guided survey data flow
 
 - Turn `/data/surveys` into a step-by-step flow: an entry choice between

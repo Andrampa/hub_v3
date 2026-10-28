@@ -50,7 +50,7 @@ service, so a campaign failure does not block discovery.
 
 Authentication initializes independently. It restores a same-tab session when present; otherwise public catalog loading remains anonymous. Interactive sign-in uses a popup callback, then validates the returned ArcGIS user's community organization before exposing an authenticated state.
 
-The `/data` route requests no protected item metadata for anonymous visitors. After login it uses the context-owned authenticated request closure to resolve each configured item. ArcGIS responses determine available, restricted, and error states.
+The public data pages (`/data/guide`, and `/data`, which redirects there) request no protected item metadata. After login the workspace and dataset explorer use the context-owned authenticated request closure to resolve each configured item. ArcGIS responses determine available, restricted, and error states.
 
 ## Core Modules
 
@@ -81,7 +81,7 @@ The `/data` route requests no protected item metadata for anonymous visitors. Af
 - `src/components/FeaturedEvidence.tsx`: compact recent-evidence selection for the homepage.
 - `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
 - `src/components/CountryMap.tsx`, `src/components/ImpactAtlasMap.tsx`: projected SVG world maps over UN Geodata simplified (`src/lib/unGeometry.ts`), with UN boundary symbols (`UnBoundaries.tsx`) and shared zoom (`useMapZoom.ts`, `MapZoomControls.tsx`).
-- `src/pages/DataAccess.tsx`: protected data gate and authenticated workspace.
+- `src/pages/DataGuide.tsx`: public data access guide at `/data/guide`; `/data` redirects to it.
 - `src/pages/SurveyWorkspace.tsx`: the `/data/surveys` survey-first workspace —
   sign-in gate that keeps its destination, access summary, progressive survey
   picker with a per-package selection cap, scoped test-data mode, thematic

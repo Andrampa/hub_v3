@@ -32,7 +32,6 @@ const CountryExplorer = lazy(() => import('./pages/CountryExplorer'))
 const Catalog = lazy(() => import('./pages/Catalog'))
 const CatalogProduct = lazy(() => import('./pages/CatalogProduct'))
 const CountryDetail = lazy(() => import('./pages/CountryDetail'))
-const DataAccess = lazy(() => import('./pages/DataAccess'))
 const DataGuide = lazy(() => import('./pages/DataGuide'))
 const MicrodataRequest = lazy(() => import('./pages/MicrodataRequest'))
 const SurveyWorkspace = lazy(() => import('./pages/SurveyWorkspace'))
@@ -109,7 +108,9 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/catalog/:itemId" element={<CatalogProduct />} />
             <Route path="/countries" element={<CountryExplorer />} />
             <Route path="/countries/:iso3" element={<CountryDetail />} />
-            <Route path="/data" element={<DataAccess />} />
+            {/* "How to access data" was folded into the guide; its #aggregated
+                and #microdata anchors exist there too. */}
+            <Route path="/data" element={<RenamedRoute to="/data/guide" />} />
             <Route path="/data/guide" element={<DataGuide />} />
             <Route path="/data/microdata-request" element={<MicrodataRequest />} />
             {/* Static segment, declared before `/data/:datasetId` so the dataset

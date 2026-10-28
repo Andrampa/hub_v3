@@ -3,7 +3,15 @@ import { Link } from 'react-router-dom'
 import '../data-access.css'
 import { SiteFooter } from '../components/SiteFooter'
 import { SiteHeader } from '../components/SiteHeader'
-import { ARCHIVE_GENERATIONS, GENERATIONS, REFERENCE_GENERATION, REFERENCE_RESOURCES } from '../services/protectedData'
+import {
+  AGGREGATE_RESOURCES,
+  ARCHIVE_GENERATIONS,
+  GENERATIONS,
+  REFERENCE_GENERATION,
+  REFERENCE_RESOURCES,
+  resourcesForGeneration,
+  type DataGeneration,
+} from '../services/protectedData'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 import { CitationText } from '../components/CitationText'
 import { CITATION_LANGUAGES, citationText, collectionCitationModel, type CitationLanguage } from '../lib/citation'
@@ -16,12 +24,16 @@ const QUESTIONNAIRES_PATH = '/catalog?product=Questionnaires'
 const FAM_URL = 'https://microdata.fao.org/index.php/catalog/Emergencies-Monitoring-Surveys/?page=1&sort_by=popularity&sort_order=desc&ps=15&repo=Emergencies-Monitoring-Surveys'
 const FAM_POLICY_URL = 'https://www.fao.org/food-agriculture-microdata/en/'
 
+/**
+ * Practical sections first: this page is also what `/data` now redirects to, so
+ * a visitor who came for access reads how to get it before any background.
+ */
 const SECTIONS = [
-  { id: 'about', title: 'What DIEM is' },
-  { id: 'generations', title: 'Three data generations' },
   { id: 'accessibility', title: 'Who can access what' },
   { id: 'aggregated', title: 'Aggregated data' },
   { id: 'microdata', title: 'Microdata' },
+  { id: 'about', title: 'What DIEM is' },
+  { id: 'generations', title: 'Three data generations' },
   { id: 'documentation', title: 'Documentation and metadata' },
   { id: 'boundaries', title: 'Administrative boundaries' },
   { id: 'methodology', title: 'Methodology notes' },
@@ -30,12 +42,21 @@ const SECTIONS = [
   { id: 'licensing', title: 'Licensing' },
 ]
 
+/**
+ * A generation whose aggregated services hold only simulated records says so,
+ * rather than being presented as the current standard with surveys behind it.
+ */
+function awaitingProductionData(id: DataGeneration) {
+  const themes = resourcesForGeneration(AGGREGATE_RESOURCES, id)
+  return themes.length > 0 && themes.every((resource) => resource.preview)
+}
+
 export default function DataGuide() {
   usePageMetadata({
     title: 'Data access guide',
     description: 'How to find, download, interpret and cite DIEM monitoring data: what is published, which questionnaire generation produced it, how access is granted, and the required citation. Public guide; the data itself needs a DIEM community account.',
   })
-  const [activeSection, setActiveSection] = useState('about')
+  const [activeSection, setActiveSection] = useState(SECTIONS[0].id)
   const [citationLanguage, setCitationLanguage] = useState<CitationLanguage>('English')
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle')
   const citationModel = collectionCitationModel(citationLanguage)
@@ -78,8 +99,11 @@ export default function DataGuide() {
             <h1>Finding, downloading and citing DIEM data</h1>
             <p>Everything needed to explore, download and interpret DIEM monitoring data: what is published, which questionnaire generation produced it, how access is granted, and how to reference it correctly. This guide is public; the data itself requires a DIEM community account.</p>
             <div className="guide-hero-actions">
-              <Link to="/data/surveys">See surveys available for download</Link>
+              {/* Sign-in and account creation are the workspace's job: its gate
+                  keeps the visitor where they were heading. */}
+              <Link to="/data/surveys">Choose and download surveys</Link>
               <a href={FAM_URL} target="_blank" rel="noreferrer">Browse microdata in FAM</a>
+              <Link to="/data/microdata-request">Request microdata access</Link>
             </div>
           </div>
         </section>
@@ -97,38 +121,6 @@ export default function DataGuide() {
           </nav>
 
           <article className="guide-body">
-            <section id="about">
-              <h2>What DIEM is</h2>
-              <p>FAO established Data in Emergencies (DIEM) in 2020 to understand how shocks affect agricultural livelihoods in food-crisis contexts. At its centre is the DIEM-Monitoring System, which runs regular, standardized household surveys in the most food-insecure countries. Surveys have been completed in over 30 countries, reaching roughly 150 000 households per year.</p>
-              <p>Data are collected at household level through computer-assisted telephone interviews or face-to-face surveys. Semi-automatic cleaning, aggregation, analysis and validation keep the results timely enough to inform decisions. DIEM-Monitoring data is open, accessible and reusable, and DIEM is committed to supporting researchers and programme designers who work with it.</p>
-            </section>
-
-            <section id="generations">
-              <h2>Three data generations</h2>
-              <p>DIEM data is organized around three questionnaire generations. Each revision changed fields, definitions, codebooks and data structures, so every generation keeps its own documentation and archived rounds stay reproducible. Comparisons across generations may be limited or impossible for some variables and should be approached with caution.</p>
-              <div className="guide-generation-list">
-                <article className="guide-generation guide-generation--reference">
-                  <div><span className="generation-badge">{reference.label}</span><strong>Current standard</strong></div>
-                  <h3>{reference.name}</h3>
-                  <p className="guide-generation-period">{reference.period}</p>
-                  <p>{reference.summary}</p>
-                </article>
-                {ARCHIVE_GENERATIONS.map((id) => {
-                  const generation = GENERATIONS[id]
-                  return (
-                    <article className="guide-generation" key={id}>
-                      <div><span className="generation-badge generation-badge--muted">{generation.label}</span><strong>Archived</strong></div>
-                      <h3>{generation.name}</h3>
-                      <p className="guide-generation-period">{generation.period}</p>
-                      <p>{generation.summary}</p>
-                      <p className="guide-generation-caution">{generation.comparability}</p>
-                    </article>
-                  )
-                })}
-              </div>
-              <p>You do not need to choose a generation. <Link to="/data/surveys">Your surveys</Link> lists surveys by country and round and works out which generation holds each one. Every package links the relevant generation's field descriptions and metadata, reference boundaries and source services, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
-            </section>
-
             <section id="accessibility">
               <h2>Who can access what</h2>
               <p>There are three levels of access, and signing in is not the same thing as being authorized. Signing in opens the workspace; what you can download is decided by the permissions attached to your account.</p>
@@ -143,7 +135,7 @@ export default function DataGuide() {
             <section id="aggregated">
               <h2>Aggregated data</h2>
               <p>All DIEM users with an account can download survey data aggregated at the lowest administrative level each survey supports — administrative level 1 or 2, depending on the sample design of that specific survey. Aggregated datasets become available roughly three weeks after data collection ends.</p>
-              <p>Data is organized by thematic area. In the current generation those are income and shocks, crop production, livestock and fisheries, food security and needs, and a set of optional indicators asked only in selected surveys. Earlier generations grouped the same material into four thematic datasets.</p>
+              <p>Data is organized by thematic area. In the current <a href="#generations">questionnaire generation</a> those are income and shocks, crop production, livestock and fisheries, food security and needs, and a set of optional indicators asked only in selected surveys. Earlier generations grouped the same material into four thematic datasets.</p>
               <h3>Downloading</h3>
               <ol className="guide-steps">
                 <li>Sign in and open <Link to="/data/surveys">Your surveys</Link>.</li>
@@ -170,6 +162,39 @@ export default function DataGuide() {
               <p>To make that easier, DIEM publishes Python and R tools that detect the questionnaire generation automatically and apply the official value labels, producing an analysis-ready dataset while preserving the original structure and file format. They are available in the <a href="https://github.com/Andrampa/diem-microdata-labelling" target="_blank" rel="noreferrer">public microdata labelling repository</a>.</p>
               <h3>Reading empty fields</h3>
               <p>The questionnaire has its own internal logic with skip patterns, and not every question is asked of every household. If a question was not asked, the corresponding field for that household is empty. An empty field therefore means the household was not eligible for that question — it is not a missing value to be imputed.</p>
+            </section>
+
+            <section id="about">
+              <h2>What DIEM is</h2>
+              <p>FAO established Data in Emergencies (DIEM) in 2020 to understand how shocks affect agricultural livelihoods in food-crisis contexts. Its Monitoring System runs regular, standardized household surveys — by telephone or face to face — in the most food-insecure countries: over 30 countries so far, reaching roughly 150 000 households per year. Semi-automatic cleaning, aggregation and validation keep the results timely enough to inform decisions.</p>
+            </section>
+
+            <section id="generations">
+              <h2>Three data generations</h2>
+              <p>DIEM data is organized around three questionnaire generations. Each revision changed fields, definitions, codebooks and data structures, so every generation keeps its own documentation and archived rounds stay reproducible. Comparisons across generations may be limited or impossible for some variables and should be approached with caution.</p>
+              <div className="guide-generation-list">
+                <article className="guide-generation guide-generation--reference">
+                  <div><span className="generation-badge">{reference.label}</span><strong>Current standard</strong></div>
+                  <h3>{reference.name}</h3>
+                  <p className="guide-generation-period">{reference.period}</p>
+                  <p>{reference.summary}</p>
+                  {awaitingProductionData(REFERENCE_GENERATION) && <p className="guide-generation-caution">Being prepared for its first surveys. No production data yet.</p>}
+                </article>
+                {ARCHIVE_GENERATIONS.map((id) => {
+                  const generation = GENERATIONS[id]
+                  return (
+                    <article className="guide-generation" key={id}>
+                      <div><span className="generation-badge generation-badge--muted">{generation.label}</span><strong>Archived</strong></div>
+                      <h3>{generation.name}</h3>
+                      <p className="guide-generation-period">{generation.period}</p>
+                      <p>{generation.summary}</p>
+                      <p className="guide-generation-caution">{generation.comparability}</p>
+                      {awaitingProductionData(id) && <p className="guide-generation-caution">Being prepared for its first surveys. No production data yet.</p>}
+                    </article>
+                  )
+                })}
+              </div>
+              <p>You do not need to choose a generation. <Link to="/data/surveys">Your surveys</Link> lists surveys by country and round and works out which generation holds each one. Every package links the relevant generation's field descriptions and metadata, reference boundaries and source services, so archived rounds stay reproducible and one generation's codebook is never applied to another's data.</p>
             </section>
 
             <section id="documentation">

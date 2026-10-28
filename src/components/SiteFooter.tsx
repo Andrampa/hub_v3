@@ -33,7 +33,6 @@ export function SiteFooter() {
           <ul>
             <li><Link to="/monitoring-system">Surveys catalogue</Link></li>
             <li><Link to="/monitoring">Survey explorer</Link></li>
-            <li><Link to="/data">How to access data</Link></li>
             <li><Link to="/data/surveys">Your surveys</Link></li>
             <li><Link to="/data/guide">Data access guide</Link></li>
           </ul>
