@@ -12,7 +12,7 @@ export function SiteFooter() {
         </a>
         <div className="footer-about">
           <strong>DIEM Hub</strong>
-          <p>Data in Emergencies evidence for resilient agricultural livelihoods and food security.</p>
+          <p>Data in Emergencies: supporting evidence-based action to protect livelihoods and food security in crises.</p>
         </div>
       </div>
       {/* The footer previously held FAO corporate links only, so the reader who
