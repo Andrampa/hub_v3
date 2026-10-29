@@ -27,7 +27,6 @@ const EVE_URL = 'https://diem-eve.apps.fao.org/'
 const VISTA_WEBSITE_URL = 'https://diem-vista.web.app/'
 const VISTA_PREVIEW_URL = 'https://fao-oer.projects.earthengine.app/view/vista-preview'
 const VISTA_MANUAL_URL = 'https://diem-vista.web.app/user_guide.html'
-const ACCESS_REQUEST_URL = 'https://survey123.arcgis.com/share/d644c40b9aa14515a1b25d1297d4ebd7'
 
 // The Hub content group carries a `Shock types` category branch, and `Flood` is
 // its reviewed selector for flood evidence. Reusing the hazard impact-assessment
@@ -526,7 +525,6 @@ export default function FloodServices() {
               <p>Everything on this page is public except Field Data. Because field submissions carry precise locations, photographs and reporter context, that workspace is limited to approved members of the DIEM Community group. The same approval opens the Hub's contributor surfaces, so one request covers both.</p>
             </div>
             <div className="flood-access-actions">
-              <a href={ACCESS_REQUEST_URL} target="_blank" rel="noreferrer">Request DIEM Community access ↗</a>
               <Link to="/contact">Contact the DIEM team →</Link>
             </div>
           </div>
