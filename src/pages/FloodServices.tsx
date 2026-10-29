@@ -22,9 +22,11 @@ import type { ImpactAssessmentResource } from '../services/impactAssessments'
 import { usePageMetadata } from '../hooks/usePageMetadata'
 
 const EVE_URL = 'https://diem-eve.apps.fao.org/'
-const VISTA_EXPLORER_URL = 'https://fao-oer.projects.earthengine.app/view/vistaproductscomparisonapp'
-const VISTA_BUCKET_URL = 'https://diem.fao.org/vista/vista_bucket_browser.html'
-const VISTA_MANUAL_URL = 'https://diem.fao.org/vista/user_guide.html'
+// VISTA links point at the official VISTA site and its Earth Engine apps, never
+// at the retired diem.fao.org pages.
+const VISTA_WEBSITE_URL = 'https://diem-vista.web.app/'
+const VISTA_PREVIEW_URL = 'https://fao-oer.projects.earthengine.app/view/vista-preview'
+const VISTA_MANUAL_URL = 'https://diem-vista.web.app/user_guide.html'
 const ACCESS_REQUEST_URL = 'https://survey123.arcgis.com/share/d644c40b9aa14515a1b25d1297d4ebd7'
 
 // The Hub content group carries a `Shock types` category branch, and `Flood` is
@@ -46,6 +48,56 @@ const vistaConsortium = [
   { name: 'Columbia Climate School', src: columbiaLogo, tall: false },
   { name: 'World Food Programme', src: wfpLogo, tall: true },
   { name: 'Google', src: googleLogo, tall: false },
+]
+
+// Facts, method and product questions follow the official VISTA website, so the
+// Hub explains the same atlas in the same terms.
+const vistaFacts = [
+  { value: 'Global', label: 'Spatial coverage' },
+  { value: '2012–2026', label: 'Historical record' },
+  { value: '~375 m', label: 'Nominal resolution' },
+  { value: '10 days', label: 'Time step (dekad)' },
+  { value: 'CC BY 4.0', label: 'Open data' },
+]
+
+const vistaMethod = [
+  {
+    step: 'Gather',
+    description: 'Each satellite flood map joins the stack for its period of the year: the same 10 days, across every year since 2012. Three dekads a month make 36 stacks.',
+  },
+  {
+    step: 'Summarise',
+    description: 'For each stack, VISTA records how often every pixel was flooded among the years the satellite could actually see the ground. Cloud and no-data are left out.',
+  },
+  {
+    step: 'Set a threshold',
+    description: 'Take the baseline for the same time of year as the event and choose a frequency cutoff. Places flooded at least that often are treated as seasonal water.',
+  },
+  {
+    step: 'Apply',
+    description: 'Remove seasonal water from the current observation. What remains is flooding that is exceptional for that place and season. Pixels without a valid baseline stay unclassified.',
+  },
+]
+
+const vistaProducts = [
+  {
+    name: 'Count',
+    question: 'In how many years was flooding seen here at this time of year?',
+    description: 'Also records in how many years the ground was visible, so you can judge how much evidence lies behind each figure.',
+    anchor: 'statistical-product-count',
+  },
+  {
+    name: 'Frequency',
+    question: 'In what share of clear-sky years was this place flooded?',
+    description: 'Flooded observations divided by valid observations. 80% means flooding in 8 out of 10 valid years for that period.',
+    anchor: 'statistical-product-frequency',
+  },
+  {
+    name: 'Dominant class',
+    question: 'What is this place usually at this time of year?',
+    description: 'Dry land, permanent water, flooded or cloud-covered: the state seen most often across years.',
+    anchor: 'statistical-product-dominant-class',
+  },
 ]
 
 const pathway = [
@@ -314,8 +366,29 @@ export default function FloodServices() {
               <p>Observing water is not the same as observing a flood. VISTA is what makes the difference measurable.</p>
             </div>
             <div className="reference-body">
-              <p>VISTA is a global flood and surface-water reference built from NOAA JPSS/VIIRS observations at roughly 375 m. Alongside a dekadal archive reaching back to 2012, it holds multi-year statistics for every recurring dekad and month of the year: how often each pixel is flooded, how many valid observations support that record, and which water, land or flood state dominates in a typical period.</p>
-              <p>EVE 2.0 compares each observed dekad against this reference for the same time of year. Flooding that falls inside the seasonally expected pattern is separated from flooding that is exceptional for that place and season, which is what allows an impact figure to describe an event rather than a river behaving normally.</p>
+              <p>Floodplains fill and recede, and rivers swell with the season. A pixel under water can be part of a pattern that returns every year, or a departure from it. To read a flood observation, you first need to know whether this flood is normal for the time of year.</p>
+              <p>VISTA is a free, global record of where satellites have seen floodwater and surface water since 2012, built from NOAA VIIRS flood maps in 10-day steps (dekads). It answers two questions on the same grid and calendar: <strong>what was seen here</strong> during a given 10-day period, from the dated archives, and <strong>what is normal here</strong> at this time of year, from the multi-year baselines.</p>
+            </div>
+            <ul className="reference-facts" aria-label="VISTA at a glance">
+              {vistaFacts.map((fact) => (
+                <li key={fact.label}>
+                  <strong>{fact.value}</strong>
+                  <span>{fact.label}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="reference-method">
+              <h3>How the seasonal baseline is built</h3>
+              <ol>
+                {vistaMethod.map((item, index) => (
+                  <li key={item.step}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <h4>{item.step}</h4>
+                    <p>{item.description}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="reference-method-eve">EVE 2.0 applies this to VISTA's rolling monthly flood-frequency baseline: flooding is treated as seasonal where that place flooded in at least 25% of valid years for the same window, and the rest is counted as event flooding. That 25% cutoff is EVE's configured rule, not a universal VISTA classification, which is what lets an impact figure describe an event rather than a river behaving normally.</p>
             </div>
             <figure className="reference-figure">
               <img
@@ -327,21 +400,37 @@ export default function FloodServices() {
                 alt="The VISTA comparison explorer showing the 10-day composite flood extent for 11 to 20 January 2026 over coastal Mozambique in blues and teals, drawn over the multi-annual flood-frequency baseline for the same dekad shown as a purple ramp from 30 to 100 percent, with legends for both layers and controls for archive type, event date, statistic and minimum threshold."
               />
               <figcaption>
-                The observed 10-day flood extent for 11–20 January 2026, in blue and teal, drawn over the multi-year frequency baseline for that same dekad, in purple. Where blue sits on purple, the water is where it usually is at this point in the season. Where blue sits on bare ground, the flooding is exceptional — and that is the part EVE counts as event impact. Hosted on Google Earth Engine.
+                The observed 10-day flood extent for 11–20 January 2026, in blue and teal, drawn over the multi-year frequency baseline for that same dekad, in purple. Where blue sits on purple, the water is where it usually is at this point in the season. Where blue sits on bare ground, the flooding is exceptional — and that is the part EVE counts as event impact. Shown in the VISTA comparison explorer on Google Earth Engine, linked from the VISTA website.
               </figcaption>
             </figure>
+            <div className="reference-products">
+              <h3>Three baselines, three questions</h3>
+              <div className="reference-product-grid">
+                {vistaProducts.map((product) => (
+                  <article key={product.name}>
+                    <span>{product.name}</span>
+                    <h4>{product.question}</h4>
+                    <p>{product.description}</p>
+                    <a href={`${VISTA_MANUAL_URL}#${product.anchor}`} target="_blank" rel="noreferrer">{product.name} in the user guide ↗</a>
+                  </article>
+                ))}
+              </div>
+            </div>
+            <p className="reference-limits">
+              <strong>Know the limits.</strong> VISTA reorganises VIIRS flood maps produced by NOAA and George Mason University and inherits their limits. Flood classes describe the share of a pixel covered by water, not depth or damage. Cloud reduces the evidence behind each statistic, and thresholds are an analytical choice. It is a historical record, not a real-time alert service.
+            </p>
             <div className="service-card-grid">
               <article className="service-card service-card--internal">
-                <span>Public explorer</span>
-                <h3>VISTA comparison explorer</h3>
-                <p>Display an observed event from the dekadal or rolling-monthly archive beside the multi-year baseline for the same calendar period, and apply a minimum historical threshold to see whether a flood footprint is common or spatially unusual for that time of year.</p>
-                <a href={VISTA_EXPLORER_URL} target="_blank" rel="noreferrer">Open the comparison explorer ↗</a>
+                <span>Official website</span>
+                <h3>VISTA website</h3>
+                <p>The home of the atlas: how the seasonal baseline is built, GeoTIFF downloads with no account needed, Earth Engine asset IDs and a quick-start script, and the citation and CC BY 4.0 reuse terms.</p>
+                <a href={VISTA_WEBSITE_URL} target="_blank" rel="noreferrer">Visit the VISTA website ↗</a>
               </article>
               <article className="service-card service-card--internal">
-                <span>Data access</span>
-                <h3>VISTA product downloads</h3>
-                <p>Browse and download the published GeoTIFF products directly: the dekadal and monthly archives, and the count, frequency and dominant-class statistics derived from them.</p>
-                <a href={VISTA_BUCKET_URL} target="_blank" rel="noreferrer">Browse VISTA products ↗</a>
+                <span>Interactive map</span>
+                <h3>VISTA asset preview</h3>
+                <p>Explore the VISTA layers on a map in your browser, from dated flood observations to the multi-year count, frequency and dominant-class baselines, without an Earth Engine account.</p>
+                <a href={VISTA_PREVIEW_URL} target="_blank" rel="noreferrer">Open the asset preview ↗</a>
               </article>
               <article className="service-card service-card--internal">
                 <span>Documentation</span>

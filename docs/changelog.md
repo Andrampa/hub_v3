@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-29 - VISTA links moved to the official VISTA website
+
+- The flood analysis VISTA cards now link the official VISTA website
+  (`https://diem-vista.web.app/`), the Earth Engine asset preview
+  (`https://fao-oer.projects.earthengine.app/view/vista-preview`) and the user
+  guide (`https://diem-vista.web.app/user_guide.html`). The comparison-explorer
+  and bucket-browser cards were replaced; both remain reachable from the VISTA
+  website. No Hub page links `diem.fao.org` any more, and the VISTA
+  architecture diagram names the new host. Not yet deployed.
+- The VISTA section now explains the atlas in the VISTA website's terms: a
+  plain-language lead ("is this flood normal for the time of year?"), the two
+  questions VISTA answers, a key-facts row, a static four-step method strip
+  (gather, summarise, set a threshold, apply), three cards for the count,
+  frequency and dominant-class baselines linked to their user-guide anchors,
+  and a short limits note.
+- Corrected the EVE description: EVE uses VISTA's rolling monthly
+  flood-frequency baseline with a configured 25% seasonal cutoff, which is
+  EVE's rule rather than a universal VISTA classification. The page previously
+  said EVE compares each observed dekad.
+
 ## 2026-10-28 - Combined microdata packages by questionnaire version
 
 - The microdata Options step offers "Combine surveys by questionnaire version"
