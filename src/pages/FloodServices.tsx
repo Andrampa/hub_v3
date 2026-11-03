@@ -25,7 +25,7 @@ const EVE_URL = 'https://diem-eve.apps.fao.org/'
 // VISTA links point at the official VISTA site and its Earth Engine apps, never
 // at the retired diem.fao.org pages.
 const VISTA_WEBSITE_URL = 'https://diem-vista.web.app/'
-const VISTA_PREVIEW_URL = 'https://fao-oer.projects.earthengine.app/view/vista-preview'
+const VISTA_EXPLORER_URL = 'https://fao-oer.projects.earthengine.app/view/vistaexplorer'
 const VISTA_MANUAL_URL = 'https://diem-vista.web.app/user_guide.html'
 
 // The Hub content group carries a `Shock types` category branch, and `Flood` is
@@ -427,9 +427,9 @@ export default function FloodServices() {
               </article>
               <article className="service-card service-card--internal">
                 <span>Interactive map</span>
-                <h3>VISTA asset preview</h3>
-                <p>Explore the VISTA layers on a map in your browser, from dated flood observations to the multi-year count, frequency and dominant-class baselines, without an Earth Engine account.</p>
-                <a href={VISTA_PREVIEW_URL} target="_blank" rel="noreferrer">Open the asset preview ↗</a>
+                <h3>VISTA Explorer</h3>
+                <p>Browse the historical flood frequency, observation counts and dominant class for any 10-day period, or pick a dated observation and see which of its flooded pixels are seasonal and which are exceptional against an adjustable threshold. Click any pixel for its full record, year by year. No Earth Engine account needed.</p>
+                <a href={VISTA_EXPLORER_URL} target="_blank" rel="noreferrer">Open VISTA Explorer ↗</a>
               </article>
               <article className="service-card service-card--internal">
                 <span>Documentation</span>
