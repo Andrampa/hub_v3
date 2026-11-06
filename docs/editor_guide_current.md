@@ -146,8 +146,8 @@ content = No**:
 
 1. **[Afghanistan — DIEM Monitoring Brief, Round 11](https://hqfao.maps.arcgis.com/home/item.html?id=64ed561c0c5e4de581c02c581a1a19e7)**
    at display order `10`, with the link label “Read the monitoring brief”.
-2. **[Afghanistan — DIEM StoryMap](https://hqfao.maps.arcgis.com/home/item.html?id=74419b128b2a42f59277eb68de35b9d2)**
-   at display order `20`, with the link label “Explore the StoryMap”.
+2. **[Afghanistan: Effect of fertilizer prices on input access and production expectations](https://data-in-emergencies.fao.org/catalog/66201c44d2da4c15aa459baeabb7830e)**
+   at display order `20`, with the link label “Read the report”.
 
 See them together on the **[Afghanistan country page](https://data-in-emergencies.fao.org/countries/afg)**.
 

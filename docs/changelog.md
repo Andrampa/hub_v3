@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-06 - Afghanistan fertilizer report featured
+
+- Replaced the StoryMap in the second **In evidence** slot on the Afghanistan
+  country page with the fertilizer price assessment. Published through the
+  ArcGIS country editorial table.
+
 ## 2026-10-29 - VISTA links moved to the official VISTA website
 
 - The flood analysis VISTA cards now link the official VISTA website
