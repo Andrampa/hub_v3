@@ -125,8 +125,8 @@ not affect the country editorial or Evidence collection.
 
 ## Analytical Pathways
 
-Country product families expose a separate, URL-backed **Evidence pathway**
-filter and retain the existing product-type filters. Cards show text labels,
+Country product families expose a URL-backed **Evidence pathway** filter
+(`?pathway=`) beside the product-type filter (`?type=`). Cards show text labels,
 icons and restrained color accents for every controlled pathway assigned to a
 family:
 
@@ -140,6 +140,36 @@ equivalent DIEM-pillar leaf exists. No pathway is inferred from titles, item
 types or uncontrolled tags. Families may display more than one pathway when
 their authoritative variants carry more than one relevant assignment, and
 unassigned products remain available under **All pathways**.
+
+### Country evidence filters
+
+Since 2026-11-10 the country page has a single **Find country evidence**
+section (`src/pages/CountryDetail.tsx`): product-type tiles first, then a bar
+with search, an **Evidence pathway** select, **Year added** and **Sort**. The
+earlier separate "Choose a product" section with a row of pathway tiles was
+removed: within one country the pathway mostly restates the product type
+(Hazard impact matched exactly one type in 33 of 45 countries on 2026-11-10),
+so it stays available as a filter without taking a row of its own.
+
+- **Contextual counts.** Each tile and option shows how many families choosing
+  it would give under the search and every *other* active filter
+  (`src/lib/countryFacets.ts`). A family counts once per option, whatever its
+  number of language variants; a family with several types or pathways counts
+  under each, so the counts are not expected to add up to the total.
+- **Zero-count options** are disabled, not hidden, so the tile grid does not
+  reflow. The selected value always stays enabled.
+- **URL validation** uses the country's full inventory, not the contextual
+  counts: any type, pathway or year the country carries is a valid link even
+  when the other filters give zero results (the empty state handles that).
+- **Pathway values** stay the stored ones; `?pathway=Seasonal+calendar` is shown
+  as "Agricultural calendar".
+- **"No pathway assigned"** is not offered on country pages. A link carrying it,
+  or the older `No pillar assigned`, is named in the removal notice and dropped,
+  keeping the other filters and resetting the page. `/catalog` keeps the option
+  and its alias.
+- **Scroll.** A tile, pathway or page change brings the result count into view
+  only when it is off screen (phones, page turns); on desktop the tiles sit just
+  above the results and the page does not jump.
 
 ## EVE Regular Monitoring
 

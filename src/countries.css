@@ -196,28 +196,23 @@
 .country-eve-action:hover { background: var(--deep-blue); color: white; }
 .country-eve-action span { color: #f5a776; font-size: 16px; }
 
-.country-products { padding-block: 82px 75px; }
-.country-pathway-filter { margin-bottom: 28px; padding: 7px; display: flex; flex-wrap: wrap; gap: 6px; background: #f2f6f5; border: 1px solid var(--line-soft); }
-.country-pathway-filter button { min-height: 40px; padding: 8px 12px; display: inline-flex; align-items: center; gap: 10px; background: white; border: 1px solid transparent; color: #405961; cursor: pointer; font-size: var(--text-small); font-weight: 700; }
-.country-pathway-filter button::before { content: ''; width: 4px; align-self: stretch; background: var(--ink-faint); }
-.country-pathway-filter button strong { color: inherit; font-size: 12px; }
-.country-pathway-filter button[aria-pressed="true"] { background: var(--deep-blue); color: white; }
-.country-pathway-filter--regular-monitoring::before { background: var(--fao-blue) !important; }
-.country-pathway-filter--hazard-impact::before { background: var(--orange) !important; }
-.country-pathway-filter--research-analysis::before { background: var(--deep-blue) !important; }
-.country-pathway-filter--seasonal-calendar::before { background: #5792c9 !important; }
-.product-filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.product-filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
 .product-filter-grid button { min-height: 78px; padding: 15px; display: flex; align-items: center; gap: 12px; text-align: left; border: 1px solid var(--line-soft); background: white; color: #4f6269; cursor: pointer; }
 .product-filter-grid button:hover { border-color: #a8c4c5; }
 .product-filter-grid button[aria-pressed="true"] { border-color: var(--deep-blue); background: var(--deep-blue); color: white; }
 .product-filter-grid strong { min-width: 31px; color: var(--orange); font-size: 20px; }
 .product-filter-grid button[aria-pressed="true"] strong { color: var(--orange-on-dark); }
 .product-filter-grid span { font-size: var(--text-small); font-weight: 700; line-height: 1.3; }
+/* A type that the other active filters exclude. Kept in place, not hidden, so
+   the grid does not reflow; the count already says 0. */
+.product-filter-grid button:disabled { background: #f6f8f8; border-color: var(--line-faint); color: #8a989d; cursor: not-allowed; }
+.product-filter-grid button:disabled strong { color: #a3afb3; }
+.product-filter-grid button:disabled:hover { border-color: var(--line-faint); }
 
 .country-library { padding-block: 80px 90px; background: var(--line-faint); }
 .country-section-heading--library { align-items: center; }
 .country-section-heading--library > a { color: var(--fao-blue); font-size: var(--text-small); font-weight: 700; }
-.country-filter-bar { display: grid; grid-template-columns: 2fr .7fr .9fr auto; gap: 1px; margin-bottom: 22px; background: #d7dfdd; border: 1px solid #d7dfdd; }
+.country-filter-bar { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.05fr) minmax(0, .75fr) minmax(0, .8fr) auto; gap: 1px; margin-bottom: 22px; background: #d7dfdd; border: 1px solid #d7dfdd; }
 .country-filter-bar label { height: 72px; padding: 12px 16px; background: white; }
 .country-filter-bar label > span { display: block; margin-bottom: 7px; color: var(--ink-faint); font-size: var(--text-micro); font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
 .country-filter-bar input, .country-filter-bar select { width: 100%; border: 0; outline: 0; background: white; color: #263d45; font-size: 12px; font-weight: 600; }
@@ -272,7 +267,8 @@
   .country-monitoring-secondary { margin: 0; padding: 9px 0; border: 0; }
   .country-eve-card { grid-template-columns: 145px minmax(0, 1fr); }
   .country-eve-action { grid-column: 1 / -1; justify-content: space-between; margin: 0; padding: 0 28px; }
-  .country-filter-bar { grid-template-columns: 1.4fr .7fr .9fr; }
+  .country-filter-bar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .country-filter-bar .country-filter-search { grid-column: 1 / -1; }
   .country-filter-bar > button { grid-column: 1 / -1; min-height: 38px; }
 }
 
@@ -327,18 +323,17 @@
   .country-eve-identity { min-height: 92px; padding: 20px 25px; }
   .country-eve-copy { padding: 25px; }
   .country-eve-action { grid-column: auto; margin: 0 25px 25px; padding: 0 16px; }
-  .country-products { padding-block: 65px; }
   .product-filter-grid { grid-template-columns: 1fr 1fr; }
-  .country-pathway-filter { align-items: stretch; }
-  .country-pathway-filter button { flex: 1 1 calc(50% - 6px); justify-content: space-between; }
-  .product-filter-grid button { min-height: 70px; }
+  .product-filter-grid button { min-height: 64px; }
   .country-library { padding-block: 65px; }
   .country-filter-bar { grid-template-columns: 1fr; }
   .country-filter-bar > button { grid-column: auto; min-height: 40px; }
 }
 
 @media (max-width: 410px) {
-  .product-filter-grid { grid-template-columns: 1fr; }
+  .product-filter-grid { gap: 6px; }
+  .product-filter-grid button { min-height: 56px; padding: 10px; gap: 8px; }
+  .product-filter-grid strong { min-width: 0; font-size: 17px; }
   .region-filters button { flex: 1 1 auto; }
 }
 
@@ -424,8 +419,6 @@
 .coverage-matrix-scroll::-webkit-scrollbar { width: 11px; height: 11px; }
 .coverage-matrix-scroll::-webkit-scrollbar-thumb { border: 3px solid #fff; border-radius: 6px; background: #9fb4bc; }
 .coverage-matrix-scroll:focus-visible { outline: 2px solid var(--fao-blue); outline-offset: 2px; }
-
-.country-pathway-filter--unassigned::before { background: #b0bcc1 !important; }
 
 /* The directory's text filter. Sits in the section heading beside the title, so
    its scope — the country cards below, not the atlas above — is visible. */

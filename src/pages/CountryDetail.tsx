@@ -14,8 +14,6 @@ import { usePageMetadata } from '../hooks/usePageMetadata'
 import { distinctSummary, formatDate, itemEdition, itemTypeLabel, itemYear } from '../lib/catalog'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
 import {
-  LEGACY_UNASSIGNED_PATHWAY,
-  UNASSIGNED_PATHWAY,
   readFilters,
   stripUnsupportedFilters,
   unsupportedFilterKey,
@@ -23,6 +21,7 @@ import {
   type FilterSpec,
   type UnsupportedFilter,
 } from '../lib/catalogFilters'
+import { countryFacetCounts, familyMatchesCountryFilters } from '../lib/countryFacets'
 import {
   UNRECORDED_LANGUAGE,
   groupProductFamilies,
@@ -44,7 +43,6 @@ import {
   resourcesForCountry,
   type CountryResource,
   type EvidencePathway,
-  type ProductType,
 } from '../services/countries'
 import {
   fetchCountryMonitoringCoverage,
@@ -187,59 +185,44 @@ export default function CountryDetail() {
     () => groupProductFamilies(allResources),
     [allResources],
   )
-  const productCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-    allResourceFamilies.forEach((family) => {
-      const types = new Set(family.variants.flatMap((item) => item.productTypes))
-      types.forEach((type) => counts.set(type, (counts.get(type) || 0) + 1))
-    })
-    return counts
-  }, [allResourceFamilies])
-  const pathwayCounts = useMemo(() => {
-    const counts = new Map<EvidencePathway, number>()
-    allResourceFamilies.forEach((family) => {
-      const pathways = new Set(family.variants.flatMap((item) => item.evidencePathways))
-      pathways.forEach((pathway) => counts.set(pathway, (counts.get(pathway) || 0) + 1))
-    })
-    return counts
-  }, [allResourceFamilies])
+  /**
+   * What the country carries at all, whatever is selected. This decides which
+   * controls exist and which URL values are valid; the numbers shown on them
+   * are the contextual counts further down, so a tile never disappears or
+   * moves because another filter changed.
+   */
+  const inventoryTypes = useMemo(
+    () => PRODUCT_TYPES.filter((type) => allResourceFamilies.some((family) => family.variants.some((item) => item.productTypes.includes(type)))),
+    [allResourceFamilies],
+  )
+  const inventoryPathways = useMemo(
+    () => EVIDENCE_PATHWAYS.filter((pathway) => allResourceFamilies.some((family) => family.variants.some((item) => item.evidencePathways.includes(pathway)))),
+    [allResourceFamilies],
+  )
   const years = useMemo(
     () => [...new Set(allResourceFamilies.flatMap((family) => family.variants.map(itemYear)))].sort((a, b) => b - a),
     [allResourceFamilies],
   )
-  /**
-   * Products carrying no pathway category at all. Without this the pathway tiles
-   * summed to 32 against a stated 33 on `/countries/ner`, which reads as a
-   * broken count rather than as missing metadata. `/catalog` already shows it.
-   */
-  const unassignedPathwayCount = useMemo(
-    () => allResourceFamilies.filter((family) => !family.variants.some((item) => item.evidencePathways.length)).length,
-    [allResourceFamilies],
-  )
-
   /**
    * URL filter validation, on the same contract as `/catalog`: a value the
    * controls cannot produce is read as the default, named to the reader and
    * dropped, rather than applied behind a control that denies it exists.
    * Asserted only once the country's own resources are known.
    */
+  /**
+   * The pathway accepts only the real pathways. "No pathway assigned" (and its
+   * older spelling) was a country-page option that existed to make the old
+   * pathway tiles add up; a shared link carrying it is now named and dropped,
+   * which widens it to every pathway, where those products still appear.
+   * `/catalog` keeps the option and its alias.
+   */
   const settled = Boolean(catalog && country)
   const filterSpecs = useMemo<FilterSpec[]>(() => [
-    {
-      key: 'pathway',
-      defaultValue: 'All pathways',
-      allowed: settled
-        ? [
-            ...EVIDENCE_PATHWAYS.filter((pathway) => pathwayCounts.has(pathway)),
-            ...(unassignedPathwayCount > 0 ? [UNASSIGNED_PATHWAY] : []),
-          ]
-        : undefined,
-      aliases: { [LEGACY_UNASSIGNED_PATHWAY]: UNASSIGNED_PATHWAY },
-    },
-    { key: 'type', defaultValue: 'All products', allowed: settled ? PRODUCT_TYPES.filter((type) => productCounts.has(type)) : undefined },
+    { key: 'pathway', defaultValue: 'All pathways', allowed: settled ? inventoryPathways : undefined },
+    { key: 'type', defaultValue: 'All products', allowed: settled ? inventoryTypes : undefined },
     { key: 'year', defaultValue: 'All years', allowed: settled ? years.map(String) : undefined },
     { key: 'sort', defaultValue: 'latest', allowed: [...SORT_VALUES] },
-  ], [pathwayCounts, productCounts, settled, unassignedPathwayCount, years])
+  ], [inventoryPathways, inventoryTypes, settled, years])
 
   const { values: filterValues, unsupported } = useMemo(
     () => readFilters(searchParams, filterSpecs),
@@ -268,26 +251,23 @@ export default function CountryDetail() {
   const thumbnailIndex = useMemo(() => buildDistinctThumbnailIndex(catalog?.items || []), [catalog])
   const searchIndex = useMemo(() => buildCatalogSearchIndex(allResourceFamilies), [allResourceFamilies])
   const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
+  const selection = useMemo(
+    () => ({ pathway: selectedPathway, type: selectedType, year: selectedYear }),
+    [selectedPathway, selectedType, selectedYear],
+  )
+  const facetCounts = useMemo(
+    () => countryFacetCounts(allResourceFamilies, selection, matchedIds),
+    [allResourceFamilies, matchedIds, selection],
+  )
   const filtered = useMemo(() => {
     return allResourceFamilies
-      .filter((family) => {
-        const productTypes = new Set(family.variants.flatMap((item) => item.productTypes))
-        return (
-          (!matchedIds || matchedIds.has(family.id)) &&
-          (selectedPathway === 'All pathways' ||
-            (selectedPathway === UNASSIGNED_PATHWAY
-              ? !family.variants.some((item) => item.evidencePathways.length)
-              : family.variants.some((item) => item.evidencePathways.includes(selectedPathway as EvidencePathway)))) &&
-          (selectedType === 'All products' || productTypes.has(selectedType as ProductType)) &&
-          (selectedYear === 'All years' || family.variants.some((item) => String(itemYear(item)) === selectedYear))
-        )
-      })
+      .filter((family) => familyMatchesCountryFilters(family, selection, matchedIds))
       .sort((a, b) => {
         if (sort === 'title') return a.primary.title.localeCompare(b.primary.title)
         if (sort === 'oldest') return a.latestCreated - b.latestCreated
         return b.latestCreated - a.latestCreated
       })
-  }, [allResourceFamilies, matchedIds, selectedPathway, selectedType, selectedYear, sort])
+  }, [allResourceFamilies, matchedIds, selection, sort])
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, pageCount)
@@ -307,11 +287,15 @@ export default function CountryDetail() {
   }, [page, pageCount, searchParams, setSearchParams, unsupported.length])
 
   /**
-   * Brings the results heading back into view; see Catalog.tsx for the reason.
-   * The pathway tiles and the product tiles sit roughly 500 px above the
-   * results, so a tile click changed a count the reader could not see. Keyed on
-   * the page and both tile filters, and seeded with the first render's value so
-   * arriving on a filtered link does not scroll.
+   * Brings the results count back into view; see Catalog.tsx for the reason.
+   * Keyed on the page and the tile and pathway filters, and seeded with the
+   * first render's value so arriving on a filtered link does not scroll.
+   *
+   * Only when the count is out of view. On a desktop the product tiles sit
+   * directly above the results, so jumping would push the tiles the reader
+   * just used off the top; on a phone they stack above the filter bar and the
+   * count is a screen or more below. A page turn leaves the count above the
+   * viewport, so it always scrolls.
    */
   const resultsRef = useRef<HTMLDivElement>(null)
   const scrollKey = `${safePage}|${selectedPathway}|${selectedType}`
@@ -321,7 +305,9 @@ export default function CountryDetail() {
     previousScrollKey.current = scrollKey
     const target = resultsRef.current
     if (!target) return
-    window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY, behavior: 'instant' })
+    const top = target.getBoundingClientRect().top
+    if (top >= 0 && top <= window.innerHeight - 120) return
+    window.scrollTo({ top: top + window.scrollY, behavior: 'instant' })
   }, [scrollKey])
 
   useEffect(() => {
@@ -472,47 +458,52 @@ export default function CountryDetail() {
 
             <CountryPhotoGalleries countryName={definition.name} iso3={definition.iso3} />
 
-            <section className="country-products section-wrap" aria-labelledby="products-heading">
-              <div className="country-section-heading">
-                <div><span className="kicker">Evidence collection</span><h2 id="products-heading">Choose a product</h2></div>
-              </div>
-              {pathwayCounts.size > 0 && (
-                <div className="country-pathway-filter" role="group" aria-label="Filter by evidence pathway">
-                  <button type="button" aria-pressed={selectedPathway === 'All pathways'} onClick={() => setFilter('pathway', 'All pathways', 'All pathways')}>
-                    <span>All pathways</span><strong>{allResourceFamilies.length}</strong>
-                  </button>
-                  {EVIDENCE_PATHWAYS.filter((pathway) => pathwayCounts.has(pathway)).map((pathway) => (
-                    <button type="button" className={`country-pathway-filter--${pathway.toLowerCase().replace(/[^a-z]+/g, '-')}`} aria-pressed={selectedPathway === pathway} onClick={() => setFilter('pathway', pathway, 'All pathways')} key={pathway}>
-                      <span>{pathwayLabel(pathway)}</span><strong>{pathwayCounts.get(pathway)}</strong>
-                    </button>
-                  ))}
-                  {/* Closes the arithmetic: the pathway counts otherwise sum to
-                      less than the total with no way to see the difference.
-                      Absent when nothing is unassigned, so it never states a
-                      gap that does not exist. */}
-                  {unassignedPathwayCount > 0 && (
-                    <button type="button" className="country-pathway-filter--unassigned" aria-pressed={selectedPathway === UNASSIGNED_PATHWAY} onClick={() => setFilter('pathway', UNASSIGNED_PATHWAY, 'All pathways')}>
-                      <span>{UNASSIGNED_PATHWAY}</span><strong>{unassignedPathwayCount}</strong>
-                    </button>
-                  )}
-                </div>
-              )}
-              <div className="product-filter-grid">
-                <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{allResourceFamilies.length}</strong><span>All products</span></button>
-                {PRODUCT_TYPES.filter((type) => productCounts.has(type)).map((type) => (
-                  <button type="button" key={type} aria-pressed={selectedType === type} onClick={() => setFilter('type', type, 'All products')}><strong>{productCounts.get(type)}</strong><span>{type}</span></button>
-                ))}
-              </div>
-            </section>
-
-            <section className="country-library">
+            {/* One section, one filter set. The page previously split these
+                controls under two headings ("Choose a product", then "Find
+                country evidence"), which read as two separate filtering
+                systems over the same list. Product type leads because it is
+                the classification readers recognise; the pathway, which within
+                one country mostly restates the type, is a select beside year. */}
+            <section className="country-library" aria-labelledby="country-evidence-heading">
               <div className="section-wrap">
                 <div className="country-section-heading country-section-heading--library">
-                  <div><span className="kicker">Resource library</span><h2>Find country evidence</h2></div>
+                  <div><span className="kicker">Evidence collection</span><h2 id="country-evidence-heading">Find country evidence</h2></div>
+                </div>
+                {/* Counts are contextual: each states what choosing it would
+                    give under the other active filters and the search. An
+                    option that would give nothing is disabled, not hidden, so
+                    the grid never reflows under the reader. */}
+                <div className="product-filter-grid" role="group" aria-label="Filter by product type">
+                  <button type="button" aria-pressed={selectedType === 'All products'} onClick={() => setFilter('type', 'All products', 'All products')}><strong>{facetCounts.type.all}</strong><span>All products</span></button>
+                  {inventoryTypes.map((type) => {
+                    const count = facetCounts.type.byValue.get(type) || 0
+                    const selected = selectedType === type
+                    return (
+                      <button type="button" key={type} aria-pressed={selected} disabled={!count && !selected} onClick={() => setFilter('type', type, 'All products')}><strong>{count}</strong><span>{type}</span></button>
+                    )
+                  })}
                 </div>
                 <div className="country-filter-bar">
                   <label className="country-filter-search"><span>Search</span><input type="search" placeholder={`Search ${definition.name}`} value={query} onChange={(event) => setFilter('q', event.target.value, '')} /></label>
-                  <label><span>Year added</span><select value={selectedYear} onChange={(event) => setFilter('year', event.target.value, 'All years')}><option>All years</option>{years.map((year) => <option key={year}>{year}</option>)}</select></label>
+                  {/* Values stay the stored ones, so `?pathway=Seasonal+calendar`
+                      links keep working while the reader sees "Agricultural
+                      calendar". */}
+                  {inventoryPathways.length > 0 && (
+                    <label><span>Evidence pathway</span><select value={selectedPathway} onChange={(event) => setFilter('pathway', event.target.value, 'All pathways')}>
+                      <option value="All pathways">All pathways ({facetCounts.pathway.all})</option>
+                      {inventoryPathways.map((pathway) => {
+                        const count = facetCounts.pathway.byValue.get(pathway) || 0
+                        return <option key={pathway} value={pathway} disabled={!count && selectedPathway !== pathway}>{pathwayLabel(pathway)} ({count})</option>
+                      })}
+                    </select></label>
+                  )}
+                  <label><span>Year added</span><select value={selectedYear} onChange={(event) => setFilter('year', event.target.value, 'All years')}>
+                    <option value="All years">All years ({facetCounts.year.all})</option>
+                    {years.map((year) => {
+                      const count = facetCounts.year.byValue.get(String(year)) || 0
+                      return <option key={year} value={String(year)} disabled={!count && selectedYear !== String(year)}>{year} ({count})</option>
+                    })}
+                  </select></label>
                   <label><span>Sort</span><select value={sort} onChange={(event) => setFilter('sort', event.target.value, 'latest')}><option value="latest">Recently added</option><option value="oldest">Oldest first</option><option value="title">Title A–Z</option></select></label>
                   {(query || selectedPathway !== 'All pathways' || selectedType !== 'All products' || selectedYear !== 'All years' || sort !== 'latest') && <button type="button" onClick={clearFilters}>Clear filters</button>}
                 </div>
@@ -526,7 +517,7 @@ export default function CountryDetail() {
                     "Agricultural calendar" and the stored value is
                     "Seasonal calendar", so the unlabelled form named a filter
                     the interface never shows. */}
-                <div className="country-results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${selectedPathway === UNASSIGNED_PATHWAY ? selectedPathway : pathwayLabel(selectedPathway as EvidencePathway)}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
+                <div className="country-results-meta" aria-live="polite" ref={resultsRef}><p><strong>{filtered.length}</strong> {filtered.length === 1 ? 'product' : 'products'} found{selectedPathway !== 'All pathways' ? ` · ${pathwayLabel(selectedPathway as EvidencePathway)}` : ''}{selectedType !== 'All products' ? ` · ${selectedType}` : ''}</p></div>
                 {visible.length ? <div className="country-resource-grid">{visible.map((family) => <ResourceCard family={family} thumbnailIndex={thumbnailIndex} key={family.id} />)}</div> : <div className="empty-state"><strong>No matching evidence found</strong><p>Try a broader search or remove a pathway, product or year filter.</p><button type="button" onClick={clearFilters}>Clear filters</button></div>}
                 {pageCount > 1 && <nav className="pagination" aria-label="Country resource pages"><button disabled={safePage === 1} onClick={() => setFilter('page', String(safePage - 1), '1')}>Previous</button><span>Page <strong>{safePage}</strong> of {pageCount}</span><button disabled={safePage === pageCount} onClick={() => setFilter('page', String(safePage + 1), '1')}>Next</button></nav>}
               </div>

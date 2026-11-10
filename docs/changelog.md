@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-11-10 - Country page filters merged into one section
+
+- Country pages now have a single **Find country evidence** section: product-type
+  tiles, then search, an **Evidence pathway** select, year and sort. The
+  separate "Choose a product" section and its row of pathway tiles were removed.
+- Tile and option counts now reflect the search and the other active filters
+  (`src/lib/countryFacets.ts`); choices that would give no results are disabled
+  instead of leading to an empty list (e.g. Questionnaires under Hazard impact
+  on `/countries/afg`).
+- "No pathway assigned" is no longer offered on country pages; links carrying it
+  (or `No pillar assigned`) are named and dropped. `/catalog` is unchanged.
+- Product tiles stay in two columns down to 320 px. A tile click scrolls to the
+  results only when they are off screen.
+- Added `src/lib/countryFacets.test.ts` and `src/pages/CountryDetail.test.tsx`.
+  Not yet deployed.
+
 ## 2026-11-06 - Afghanistan fertilizer report featured
 
 - Replaced the StoryMap in the second **In evidence** slot on the Afghanistan

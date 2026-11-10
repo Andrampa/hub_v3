@@ -88,10 +88,13 @@ for the campaign's configured recurrence window.
 5. Where the country occurs in EVE's live ADM0 monitoring catalog, the user can
    open that country's EVE Overview directly. The action describes catalog
    coverage, not latest-dekad freshness.
-6. User distinguishes and filters Regular monitoring, Hazard impact, Research
-   & analysis and Seasonal calendar pathways through text labels reinforced by
-   icons and color, alongside publisher-maintained product types.
-7. User filters by text or year and can share the resulting URL.
+6. In one **Find country evidence** section the user picks a product type from
+   the tiles, and can narrow further by Evidence pathway (Regular monitoring,
+   Hazard impact, Research & analysis, Agricultural calendar), text or year.
+   Every tile and option states how many results it would give under the other
+   active filters; choices that would give none are disabled. Cards show the
+   pathways through text labels reinforced by icons and color.
+7. User can share the resulting URL; Back steps through filter changes one at a time.
 8. User opens the authoritative resource; cross-country products follow the same library pattern.
 
 ## Failure / Empty States
