@@ -141,4 +141,31 @@ describe('searchCountries', () => {
   it('breaks a tie on how much evidence a country has', () => {
     expect(searchCountries(countries, 'nig')[0].iso3).toBe('NER')
   })
+
+  const aliasCountries = [
+    { iso3: 'COD', name: 'Democratic Republic of the Congo', resourceCount: 10 },
+    { iso3: 'COG', name: 'Congo', resourceCount: 20 },
+    { iso3: 'CAF', name: 'Central African Republic', resourceCount: 5 },
+    { iso3: 'CIV', name: 'Côte d’Ivoire', resourceCount: 2 },
+  ] as CountrySummary[]
+
+  it.each([
+    ['DRC', 'COD'], ['d.r.c.', 'COD'], ['RDC', 'COD'], ['DR Congo', 'COD'],
+    ['Democratic Republic of Congo', 'COD'], ['Congo Kinshasa', 'COD'],
+    ['Republique democratique du Congo', 'COD'], ['CAR', 'CAF'], ['RCA', 'CAF'],
+    ['République centrafricaine', 'CAF'], ['CAF', 'CAF'], ['Ivory Coast', 'CIV'],
+    ['Congo-Brazzaville', 'COG'],
+  ])('finds %s as %s', (query, iso3) => {
+    expect(searchCountries(aliasCountries, query).map((country) => country.iso3)).toEqual([iso3])
+  })
+
+  it('ranks an exact name first and keeps other matching countries', () => {
+    expect(searchCountries(aliasCountries, 'Congo').map((country) => country.iso3)).toEqual(['COG', 'COD'])
+  })
+
+  it('requires a whole alias and an available country', () => {
+    expect(searchCountries(aliasCountries, 'carbon')).toEqual([])
+    expect(searchCountries(aliasCountries, 'CAR survey')).toEqual([])
+    expect(searchCountries(countries, 'DRC')).toEqual([])
+  })
 })

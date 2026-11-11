@@ -43,6 +43,10 @@ The group-content search endpoint is required because global search results do n
 
 Observed assignments define the directory. The ArcGIS category schema alone is not sufficient because assigned country codes can exist before they appear in the schema.
 
+Homepage country suggestions and the directory accept whole-query aliases from
+`src/lib/countryAliases.ts`. Aliases resolve against the countries already in
+the catalog, and results use the catalog name and existing country route.
+
 ## Migration Baseline
 
 The 2026-08-25 cutover followed an exact review of 1,084 editor-visible Hub

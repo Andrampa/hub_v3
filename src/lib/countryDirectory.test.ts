@@ -63,6 +63,11 @@ describe('countryMatchesQuery', () => {
 })
 
 describe('filterCountries', () => {
+  it('matches aliases within the selected region', () => {
+    expect(filterCountries(countries, { region: 'Africa', query: 'ivory coast' })).toEqual([ivory])
+    expect(filterCountries(countries, { region: 'Near East', query: 'ivory coast' })).toEqual([])
+  })
+
   it('applies region and query together', () => {
     expect(filterCountries(countries, { region: 'Africa', query: 'nig' })).toEqual([niger, nigeria])
     expect(filterCountries(countries, { region: 'Near East', query: 'nig' })).toEqual([])

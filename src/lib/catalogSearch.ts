@@ -1,5 +1,6 @@
 import type { ProductFamily } from './productFamilies'
 import { MACHINE_TAG_PATTERN } from './productFamilies'
+import { matchesCountryAlias, normalizeCountryText } from './countryAliases'
 import { CROSS_COUNTRY_CODE, countryDefinition, type CountryResource, type CountrySummary } from '../services/countries'
 
 /**
@@ -138,21 +139,26 @@ export function searchCatalog(index: CatalogSearchIndex, query: string, limit = 
 }
 
 export function searchCountries(countries: CountrySummary[], query: string, limit = 3) {
-  const tokens = queryTokens(query)
-  if (!tokens.length) return []
+  const normalizedQuery = normalizeCountryText(query)
+  if (!normalizedQuery) return []
+  const tokens = normalizedQuery.split(' ')
   return countries
     .map((country) => {
-      const name = foldText(country.name)
+      const name = normalizeCountryText(country.name)
+      const code = country.iso3.toLowerCase()
+      const exact = name === normalizedQuery || code === normalizedQuery
+        || matchesCountryAlias(country.iso3, normalizedQuery)
       const score = tokens.reduce((total, token) => {
         // Countries only match at a word boundary: "ni" should not offer Afghanistan.
         const boundaryScore = fieldScore(name, token)
-        const value = boundaryScore > 1 ? boundaryScore : foldText(country.iso3) === token ? 3 : 0
+        const value = boundaryScore > 1 ? boundaryScore : code === token ? 3 : 0
         return value && total >= 0 ? total + value : -1
       }, 0)
-      return { country, score }
+      return { country, score, exact }
     })
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score || b.country.resourceCount - a.country.resourceCount)
+    .filter((entry) => entry.exact || entry.score > 0)
+    .sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score
+      || b.country.resourceCount - a.country.resourceCount)
     .slice(0, limit)
     .map((entry) => entry.country)
 }

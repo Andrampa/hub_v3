@@ -1,3 +1,7 @@
+import { matchesCountryAlias, normalizeCountryText } from './countryAliases'
+
+export { normalizeCountryText } from './countryAliases'
+
 /**
  * Text matching for the country directory on `/countries`.
  *
@@ -19,23 +23,10 @@ export interface DirectoryCountry {
   region: string
 }
 
-/**
- * Lowercased, accent-stripped, punctuation-normalised. Apostrophes and hyphens
- * become spaces so "cote d ivoire", "cote-d'ivoire" and "Côte d’Ivoire" agree,
- * and the curly apostrophe ArcGIS stores does not defeat a typed straight one.
- */
-export function normalizeCountryText(value: string) {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-}
-
 export function countryMatchesQuery(country: DirectoryCountry, query: string) {
   const needle = normalizeCountryText(query)
   if (!needle) return true
+  if (matchesCountryAlias(country.iso3, needle)) return true
   const name = normalizeCountryText(country.name)
   if (name.includes(needle)) return true
   // A code is matched from its start: "ner" is Niger, not every name containing

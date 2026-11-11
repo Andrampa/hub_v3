@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-11 - Country search aliases
+
+- Homepage country suggestions and the country directory now recognize alternate
+  names and acronyms such as DRC, RDC, CAR and RCA for existing country pages.
+
 ## 2026-11-10 - Country page filters merged into one section
 
 - Country pages now have a single **Find country evidence** section: product-type
