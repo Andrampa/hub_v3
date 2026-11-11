@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-11-11 - Brief spotlight prototype
+
+- New homepage section showing one finding from a recent country brief at a time,
+  from a generated public export and gated on the public catalogue. Branch
+  `brief-spotlight`, not deployed. See `docs/brief_spotlight.md`.
+- Added a slow globe zoom toward the selected country using UN Geodata, with a
+  static view for reduced motion.
+- The spotlight repeats up to 20 distinct findings and links each brief to the
+  DIEM dashboard for its country and survey round.
+
 ## 2026-11-11 - Suggestions while typing country aliases
 
 - Homepage and country directory search now match prefixes of alternate country

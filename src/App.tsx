@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
+import { BriefSpotlightSlot } from './components/BriefSpotlightSlot'
 import { CatalogSearchBox } from './components/CatalogSearchBox'
 import { EditorialPopup } from './components/EditorialPopup'
 import { FeaturedEvidence } from './components/FeaturedEvidence'
@@ -83,6 +84,7 @@ export default function App() {
         {catalog && <LatestEvidenceBanner items={families.map((family) => family.primary)} />}
         {error && <div className="home-catalog-notice section-wrap" role="alert"><p><strong>Latest public evidence is temporarily unavailable.</strong> The programme pathways remain available.</p><button type="button" onClick={retry}>Try again</button></div>}
         <HubAreaCards counts={{ publicResources: stats.total, hazardImpactAssessments: stats.hazardImpactAssessments, countriesWithEvidence: catalog?.countries.length || 0, surveys: monitoringStatistics?.surveys || 0 }} />
+        <BriefSpotlightSlot items={catalog?.items} />
         <FeaturedEvidence families={families} />
         <ProgrammeNumbers statistics={monitoringStatistics} statisticsFailed={monitoringStatisticsFailed} hazardImpactAssessments={stats.hazardImpactAssessments} publicResources={stats.total} countriesWithEvidence={catalog?.countries.length || 0} catalogReady={Boolean(catalog)} />
 

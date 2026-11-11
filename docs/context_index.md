@@ -14,6 +14,7 @@
 | `docs/authentication.md` | OAuth, community validation, sessions, and redirect safety |
 | `docs/country_explorer.md` | Country routes, ArcGIS category contract, normalization, and map behavior |
 | `docs/country_editorial.md` | Editor-managed country introductions, highlights, HTML, images, and AGOL provisioning |
+| `docs/brief_spotlight.md` | Homepage Brief spotlight: public export of brief findings, visibility gate, rotation, graphics, measurement, decisions for Neil |
 | `docs/hub_promotions.md` | Homepage carousel, latest-evidence strip, popup campaigns, staging and editor workflow |
 | `docs/launch_strategy/README.md` | Coordinated launch context, decisions, milestones, audiences and training direction for the Hub, Household Survey Explorer and EVE 2.0 |
 | `docs/launch_strategy/communication_strategy.md` | Shareable source text for the cross-product launch and communication strategy |
@@ -46,6 +47,7 @@
 - UI, copy, or navigation work: `project_spec.md`, then `user_journeys.md`.
 - Design, copy-voice, accessibility or catalogue-UX backlog: `design_review_2026-09-03.md`, then the file it names.
 - Homepage promotion or campaign work: `hub_promotions.md`, then `user_journeys.md`.
+- Brief spotlight (homepage findings from country briefs): `brief_spotlight.md`.
 - Cross-product launch, dissemination or training campaign: `launch_strategy/README.md`, then `launch_strategy/communication_strategy.md`.
 - Content-editor question or training: start with `editor_guide.md`.
 - Whole-catalog category migration: `catalog_categorization.md`, then `country_explorer.md`.
