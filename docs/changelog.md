@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-11 - Suggestions while typing country aliases
+
+- Homepage and country directory search now match prefixes of alternate country
+  names. Homepage country suggestions show the matched alias in parentheses.
+
 ## 2026-11-11 - Country search aliases
 
 - Homepage country suggestions and the country directory now recognize alternate

@@ -27,10 +27,16 @@ export function normalizeCountryText(value: string) {
     .trim()
 }
 
-export function matchesCountryAlias(iso3: string, normalizedQuery: string) {
+export function matchCountryAlias(iso3: string, normalizedQuery: string) {
+  if (normalizedQuery.length < 2) return undefined
   // Accept separated initials such as D.R.C. without collapsing longer names.
   const query = /^(?:[a-z] ){2}[a-z]$/.test(normalizedQuery)
     ? normalizedQuery.replaceAll(' ', '')
     : normalizedQuery
-  return countryAliases[iso3]?.some((alias) => normalizeCountryText(alias) === query) ?? false
+  const aliases = countryAliases[iso3]
+  const exact = aliases?.find((alias) => normalizeCountryText(alias) === query)
+  if (exact) return { name: exact, exact: true }
+
+  const prefix = aliases?.find((alias) => normalizeCountryText(alias).startsWith(query))
+  if (prefix) return { name: prefix, exact: false }
 }

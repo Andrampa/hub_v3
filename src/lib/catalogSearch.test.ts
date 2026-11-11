@@ -147,6 +147,8 @@ describe('searchCountries', () => {
     { iso3: 'COG', name: 'Congo', resourceCount: 20 },
     { iso3: 'CAF', name: 'Central African Republic', resourceCount: 5 },
     { iso3: 'CIV', name: 'Côte d’Ivoire', resourceCount: 2 },
+    { iso3: 'MMR', name: 'Myanmar', resourceCount: 4 },
+    { iso3: 'TLS', name: 'Timor-Leste', resourceCount: 1 },
   ] as CountrySummary[]
 
   it.each([
@@ -163,7 +165,23 @@ describe('searchCountries', () => {
     expect(searchCountries(aliasCountries, 'Congo').map((country) => country.iso3)).toEqual(['COG', 'COD'])
   })
 
-  it('requires a whole alias and an available country', () => {
+  it.each([
+    ['bu', 'MMR', 'Burma'],
+    ['east', 'TLS', 'East Timor'],
+    ['east ti', 'TLS', 'East Timor'],
+    ['EAST-TIMOR', 'TLS', 'East Timor'],
+    ['ivory c', 'CIV', 'Ivory Coast'],
+    ['car', 'CAF', 'CAR'],
+  ])('shows the alias for %s', (query, iso3, matchedAlias) => {
+    expect(searchCountries(aliasCountries, query)[0]).toMatchObject({ iso3, matchedAlias })
+  })
+
+  it('keeps the regular country label when its name or code matches exactly', () => {
+    expect(searchCountries(aliasCountries, 'Timor-Leste')[0].matchedAlias).toBeUndefined()
+    expect(searchCountries(aliasCountries, 'CAF')[0].matchedAlias).toBeUndefined()
+  })
+
+  it('rejects text beyond an alias and requires an available country', () => {
     expect(searchCountries(aliasCountries, 'carbon')).toEqual([])
     expect(searchCountries(aliasCountries, 'CAR survey')).toEqual([])
     expect(searchCountries(countries, 'DRC')).toEqual([])

@@ -1,4 +1,4 @@
-import { matchesCountryAlias, normalizeCountryText } from './countryAliases'
+import { matchCountryAlias, normalizeCountryText } from './countryAliases'
 
 export { normalizeCountryText } from './countryAliases'
 
@@ -26,7 +26,7 @@ export interface DirectoryCountry {
 export function countryMatchesQuery(country: DirectoryCountry, query: string) {
   const needle = normalizeCountryText(query)
   if (!needle) return true
-  if (matchesCountryAlias(country.iso3, needle)) return true
+  if (matchCountryAlias(country.iso3, needle)) return true
   const name = normalizeCountryText(country.name)
   if (name.includes(needle)) return true
   // A code is matched from its start: "ner" is Niger, not every name containing

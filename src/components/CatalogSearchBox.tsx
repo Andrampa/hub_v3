@@ -83,7 +83,7 @@ export function CatalogSearchBox({
       ...matchedCountries.map((country) => ({
         key: `country-${country.iso3}`,
         kind: 'country' as const,
-        label: country.name,
+        label: country.matchedAlias ? `${country.name} (${country.matchedAlias})` : country.name,
         detail: `${country.resourceCount} ${country.resourceCount === 1 ? 'product' : 'products'}`,
         ...(inline ? { iso3: country.iso3 } : { to: `/countries/${country.iso3.toLowerCase()}` }),
       })),
