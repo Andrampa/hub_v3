@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import spotlightExport from '../data/briefSpotlight.json'
-import spotlightShapes from '../data/briefSpotlightShapes.json'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   attribution,
@@ -21,11 +20,11 @@ import {
 import { countryDefinition } from '../services/countries'
 import { monitoringCountryPath } from '../services/monitoringEmbed'
 import type { ArcGISItem } from '../types'
+import { BriefSpotlightGlobe } from './BriefSpotlightGlobe'
 import { CountryFlag } from './CountryFlag'
 import '../brief-spotlight.css'
 
 const DATA = spotlightExport as unknown as SpotlightData
-const COUNTRY_GLOBES: Readonly<Partial<Record<string, { land: string; grid: string; country: string }>>> = spotlightShapes
 /** Long enough to read the headline and reach the link before the card changes. */
 export const CARD_SECONDS = 12
 const MONTH_INITIALS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
@@ -228,7 +227,6 @@ export default function BriefSpotlight({ items, iso3 }: { items: ArcGISItem[]; i
   if (!entry) return null
 
   const { card, brief } = entry
-  const globe = COUNTRY_GLOBES[brief.iso3]
   const country = countryDefinition(brief.iso3)
   const canRotate = cycle.length > 1
   const autoplay = canRotate && !reducedMotion
@@ -243,12 +241,8 @@ export default function BriefSpotlight({ items, iso3 }: { items: ArcGISItem[]; i
 
   return (
     <section className="brief-spotlight section-wrap" aria-labelledby="brief-spotlight-title">
-      <div className="section-heading bs-heading">
-        <div>
-          <span className="kicker">Brief spotlight</span>
-          <h2 id="brief-spotlight-title">What the latest country briefs found</h2>
-        </div>
-        <p>One finding at a time from DIEM household surveys in food-crisis countries, each with the brief’s own words as proof.</p>
+      <div className="section-heading">
+        <h2 id="brief-spotlight-title">Recent DIEM findings</h2>
       </div>
 
       <article
@@ -259,20 +253,14 @@ export default function BriefSpotlight({ items, iso3 }: { items: ArcGISItem[]; i
         onFocus={() => setFocused(true)}
         onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false) }}
       >
-        <div className="bs-stage" key={`stage-${card.id}`}>
-          {globe && (
-            <svg className={`country-shape bs-globe${motionAllowed ? ' bs-globe--moving' : ''}`}
-              viewBox="0 0 200 200" aria-hidden="true" focusable="false">
-              <circle className="bs-globe-sphere" cx="100" cy="100" r="96" />
-              <path className="bs-globe-land" d={globe.land} />
-              <path className="bs-globe-grid" d={globe.grid} />
-              <path className="bs-globe-country" d={globe.country} />
-            </svg>
-          )}
-          <Stage card={card} />
+        <div className="bs-stage">
+          <BriefSpotlightGlobe iso3={brief.iso3} animate={!reducedMotion && visible && !documentHidden} />
+          <div className="bs-stage-content" key={card.id}>
+            <Stage card={card} />
+          </div>
           {autoplay && (
             <span
-              key={timerRestart}
+              key={`${card.id}-${timerRestart}`}
               className="bs-progress"
               style={{ '--seconds': `${CARD_SECONDS}s` } as CSSProperties}
               onAnimationEnd={(event) => {

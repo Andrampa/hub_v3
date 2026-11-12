@@ -6,7 +6,6 @@
  * under prefers-reduced-motion, where the final state is shown at once.
  */
 .brief-spotlight { padding-top: 72px; }
-.bs-heading { gap: 24px; }
 
 .bs-card {
   display: grid;
@@ -35,7 +34,6 @@
     radial-gradient(110% 85% at 12% 8%, rgba(17, 106, 171, .95) 0%, rgba(17, 106, 171, 0) 60%),
     linear-gradient(160deg, var(--deep-blue) 0%, #04354f 100%);
 }
-/* Move the projected globe as one layer so the country keeps its proportions. */
 .bs-stage .bs-globe {
   position: absolute;
   right: 6%;
@@ -44,10 +42,9 @@
   max-width: none;
   height: auto;
   pointer-events: none;
-  animation: bs-globe-approach 8s cubic-bezier(.2, .65, .35, 1) both paused;
+  transform: scale(1.14);
 }
 
-.bs-stage .bs-globe--moving { animation-play-state: running; }
 .bs-globe-sphere { fill: rgba(255, 255, 255, .02); stroke: rgba(255, 255, 255, .13); stroke-width: .65; }
 .bs-globe-land { fill: rgba(255, 255, 255, .085); }
 .bs-globe-grid { fill: none; stroke: rgba(255, 255, 255, .09); stroke-width: .4; }
@@ -56,10 +53,6 @@
 .bs-card--bars .bs-globe,
 .bs-card--timeline .bs-globe { opacity: .76; }
 
-@keyframes bs-globe-approach {
-  from { transform: translate(10%, 8%) rotate(-8deg) scale(.86); }
-  to { transform: translate(-7%, -4%) rotate(0) scale(1.32); }
-}
 
 .bs-graphic { position: relative; z-index: 1; width: 100%; margin: 0; text-align: center; }
 
@@ -198,7 +191,9 @@
 .is-running .bs-progress { animation-play-state: running; }
 
 /* ---- Body ---- */
-.bs-body { grid-area: body; display: flex; flex-direction: column; gap: 14px; padding: 34px 38px 26px; animation: bs-body .45s ease-out both; }
+.bs-stage-content { position: relative; z-index: 1; width: 100%; }
+.bs-body { grid-area: body; display: flex; flex-direction: column; gap: 14px; padding: 34px 38px 26px; }
+.is-visible :is(.bs-stage-content, .bs-body) { animation: bs-content-in .65s ease-out both; }
 .bs-origin { display: flex; align-items: center; gap: 9px; margin: 0; color: var(--ink-muted); font-size: .86rem; }
 .bs-origin strong { color: var(--ink); font-weight: 700; }
 .bs-origin span::before { content: "·"; margin-right: 9px; color: var(--ink-faint); }
@@ -269,7 +264,7 @@
 @keyframes bs-month-lit { to { background: var(--orange); color: #04354f; } }
 @keyframes bs-grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes bs-ring { from { stroke-dashoffset: var(--ring-length); } to { stroke-dashoffset: var(--ring-offset); } }
-@keyframes bs-body { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes bs-content-in { from { opacity: .25; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
 @media (max-width: 860px) {
   .brief-spotlight { padding-top: 56px; }
@@ -283,8 +278,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bs-stage .bs-globe { animation: none; }
-  .bs-body, .bs-cta, .bs-cta span[aria-hidden] { animation: none !important; transition: none; }
+  .bs-stage-content, .bs-body, .bs-cta, .bs-cta span[aria-hidden] { animation: none !important; transition: none; }
   .bs-char, .bs-word { opacity: 1; animation: none !important; }
   .bs-bar-fill { transform: none; animation: none !important; }
   .bs-ring-value { stroke-dashoffset: var(--ring-offset); animation: none !important; }

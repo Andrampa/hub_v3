@@ -43,8 +43,9 @@ After refreshing the export or UN boundary data, run `node scripts/build_spotlig
 from the Hub worktree to refresh the decorative globes. Each view centers its
 country using the Hub’s local UN Geodata. The surrounding land is simplified
 for the lazy payload. The country uses the Hub’s existing boundary detail.
-The globe moves and zooms once per card, pauses with the spotlight, and is
-static when reduced motion is enabled.
+The globe eases out from the current country, rotates along a great-circle
+path and eases in on the next country. The slide content fades in with the
+transition. With reduced motion enabled, both update immediately.
 
 The export requires current validation hashes and takes the evidence quote from
 the same edition as the link. The export decides what may be shown and which graphic a card supports

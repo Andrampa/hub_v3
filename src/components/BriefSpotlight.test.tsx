@@ -80,12 +80,19 @@ describe('BriefSpotlight', () => {
   it('moves to another finding on request, announces it and reports the click on the link', async () => {
     await render(ALL)
     const first = headline()
+    const globe = host.querySelector('.bs-globe')
+    expect(globe).toBeTruthy()
     expect(host.querySelector('[aria-live]')?.textContent).toBe('')
     await act(async () => { button('Next finding')!.click() })
     expect(headline()).not.toBe(first)
+    expect(host.querySelector('.bs-globe')).toBe(globe)
     expect(host.querySelector('[aria-live]')?.textContent).toContain(headline())
     expect(gtag).toHaveBeenCalledWith('event', 'brief_spotlight_impression', expect.objectContaining({ card_id: expect.any(String) }))
-    await act(async () => { host.querySelector<HTMLAnchorElement>('.bs-cta')!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })) })
+    await act(async () => {
+      const link = host.querySelector<HTMLAnchorElement>('.bs-cta')!
+      link.addEventListener('click', (event) => event.preventDefault(), { once: true })
+      link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+    })
     expect(gtag).toHaveBeenCalledWith('event', 'brief_spotlight_click', expect.objectContaining({ treatment: expect.any(String) }))
   })
 

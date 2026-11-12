@@ -7,6 +7,8 @@
   `brief-spotlight`, not deployed. See `docs/brief_spotlight.md`.
 - Added a slow globe zoom toward the selected country using UN Geodata, with a
   static view for reduced motion.
+- The globe now rotates between countries, and the section opens with the
+  heading “Recent DIEM findings.”
 - The spotlight repeats up to 20 distinct findings and links each brief to the
   DIEM dashboard for its country and survey round.
 
