@@ -30,6 +30,7 @@ export function CatalogContentCard({
   thumbnailIndex,
   roundEditionOnly = false,
   linkedTags = false,
+  publicationDate = false,
 }: {
   family: ProductFamily<CountryResource>
   /** Thumbnail names unique in the catalogue; see buildDistinctThumbnailIndex. */
@@ -38,6 +39,8 @@ export function CatalogContentCard({
   roundEditionOnly?: boolean
   /** Homepage discovery tags confirm before leaving for a broader result set. */
   linkedTags?: boolean
+  /** Recent publications shows when a gallery was published, not when photos were taken. */
+  publicationDate?: boolean
 }) {
   const navigate = useNavigate()
   const [relatedDestination, setRelatedDestination] = useState<{ label: string, to: string }>()
@@ -109,10 +112,12 @@ export function CatalogContentCard({
             so it is never presented here as if it were a publication date. */}
         <div className="card-context">
           <span>{itemTypeLabel(item)}</span>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true">Â·</span>
           {/* A gallery's `created` may be its field date (historical rows kept no
               publication date), so it states what the date is. */}
-          {item.galleryDate !== undefined
+          {publicationDate && item.galleryPublishedOn !== undefined
+            ? <time dateTime={new Date(item.galleryPublishedOn).toISOString()}>Published {formatDate(item.galleryPublishedOn)}</time>
+            : item.galleryDate !== undefined
             ? <time dateTime={new Date(item.galleryDate).toISOString()}>Photos {formatDate(item.galleryDate)}</time>
             : <time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time>}
         </div>
@@ -184,7 +189,7 @@ export function CatalogContentCard({
           <div className="related-dialog" role="dialog" aria-modal="true" aria-labelledby={`related-dialog-${item.id}`} tabIndex={-1} ref={dialogRef} onClick={(event) => event.stopPropagation()}>
             <span className="kicker">Explore related evidence</span>
             <h2 id={`related-dialog-${item.id}`}>See all products related to {relatedDestination.label}?</h2>
-            <p>You’ll leave this page and open the related collection.</p>
+            <p>Youâ€™ll leave this page and open the related collection.</p>
             <div className="related-dialog-actions">
               <button type="button" onClick={() => navigate(relatedDestination.to)}>Yes, show products</button>
               <button type="button" onClick={() => setRelatedDestination(undefined)}>No, stay here</button>

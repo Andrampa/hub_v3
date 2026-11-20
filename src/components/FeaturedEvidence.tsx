@@ -20,11 +20,11 @@ function familyCountry(family: EvidenceFamily) {
  * when there is no distinguishing image, so the image is no longer a gate.
  */
 function selectEvidence(families: EvidenceFamily[]) {
-  // Questionnaires are survey instruments and galleries are field photographs,
-  // not publications, so neither headlines the homepage.
+  // Galleries enter Recent publications only with a known Hub publication date.
+  // Their field/event date must never stand in for publication.
   const candidates = families
     .filter((family) => !family.variants.some((variant) => (
-      variant.productTypes.includes('Questionnaires') || variant.productTypes.includes('Photo gallery')
+      variant.productTypes.includes('Questionnaires') || (variant.galleryId && variant.galleryPublishedOn === undefined)
     )))
     .sort((a, b) => b.latestCreated - a.latestCreated)
   const selected: EvidenceFamily[] = []
@@ -57,11 +57,11 @@ export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
       <div className="section-wrap">
         <div className="section-heading">
           <div><span className="kicker">DIEM products</span><h2 id="featured-evidence-title">Recent publications</h2></div>
-          <Link to="/catalog">View all products <span aria-hidden="true">→</span></Link>
+          <Link to="/catalog">View all products <span aria-hidden="true">â†’</span></Link>
         </div>
         {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}
         <div className="card-grid featured-evidence-grid">
-          {evidence.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} roundEditionOnly linkedTags key={family.id} />)}
+          {evidence.map((family) => <CatalogContentCard family={family} thumbnailIndex={thumbnailIndex} roundEditionOnly linkedTags publicationDate key={family.id} />)}
         </div>
       </div>
     </section>

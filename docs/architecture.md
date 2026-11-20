@@ -82,7 +82,7 @@ The public data pages (`/data/guide`, and `/data`, which redirects there) reques
 - `src/components/EditorialPopup.tsx`: dwell/scroll-triggered, dismissible featured campaign.
 - `src/components/CountryMap.tsx`, `src/components/ImpactAtlasMap.tsx`: projected SVG world maps over UN Geodata simplified (`src/lib/unGeometry.ts`), with UN boundary symbols (`UnBoundaries.tsx`) and shared zoom (`useMapZoom.ts`, `MapZoomControls.tsx`).
 - `src/pages/DataGuide.tsx`: public data access guide at `/data/guide`; `/data` redirects to it.
-- `src/pages/SurveyWorkspace.tsx`: the `/data/surveys` survey-first workspace —
+- `src/pages/SurveyWorkspace.tsx`: the `/data/surveys` survey-first workspace â€”
   sign-in gate that keeps its destination, access summary, progressive survey
   picker with a per-package selection cap, scoped test-data mode, thematic
   selection stating each theme's reach, the package review table, and the
@@ -120,7 +120,7 @@ The public data pages (`/data/guide`, and `/data`, which redirects there) reques
 - `src/services/protectedData.ts`: protected item manifest and permission-aware metadata resolution.
 - `src/services/dataExplorer.ts`: feature-service discovery, safe filter clauses, previews, exports and API URLs.
 - `src/services/surveyAccess.ts`: authenticated, generation-aware survey discovery, per-theme availability and requester-scoped in-memory caching for the planned survey-first workspace.
-- `src/services/surveyBundle.ts`: the survey package archive — one zip with either per-survey folders or compatible surveys combined by source and questionnaire generation, plus documentation, README and manifest, built transactionally with a lazily loaded compressor.
+- `src/services/surveyBundle.ts`: the survey package archive â€” one zip with either per-survey folders or compatible surveys combined by source and questionnaire generation, plus documentation, README and manifest, built transactionally with a lazily loaded compressor.
 - `src/data-access.css`: data workspace visual and responsive behavior.
 - `src/pages/Architecture.tsx`: Contributor-only `/architecture` page - hero,
   manifest-driven system map (`components/ArchitectureSystemMap.tsx`), tabs and
@@ -167,7 +167,7 @@ The public data pages (`/data/guide`, and `/data`, which redirects there) reques
   products"). Published catalogue rows join the DIEM catalogue and the homepage
   product set as resources of type `Photo gallery` (`mergeGalleryResources`),
   linking to `/photo-galleries?gallery=<id>`; they count in the catalogue and
-  homepage totals, its filters and search, but never headline Featured evidence.
+  homepage totals, its filters and search, and enter Recent publications only when their Hub publication date is known.
   Country pages keep reading galleries separately (latest three by ISO3) and
   keep them out of country product totals. Visibility is governed by the
   catalogue item being public; `publication_status = 'Published'` is an
