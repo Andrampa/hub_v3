@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-20 - Photo-gallery operator workflow
+
+- Documented catalogue maintenance through management-group shared update, without enabling public service editing; corrected the deployed single-country limit and gallery placement/cache guidance. Authority: docs/editor_guide_current.md section 6 and docs/services_and_data.md.
+
 ## 2026-11-11 - Suggestions while typing country aliases
 
 - Homepage and country directory search now match prefixes of alternate country

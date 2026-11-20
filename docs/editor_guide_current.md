@@ -267,6 +267,12 @@ Open:
 
 **[DIEM Hub 3.0 — Photo gallery catalogue](https://hqfao.maps.arcgis.com/home/item.html?id=24afb02b6cf549f99380cd6b3780691b)**
 
+DIEM management-group members maintain rows through shared update, using the
+`hh_survey_v3` product-publication skill (Flickr photo galleries). The public
+service stays Query-only. Never enable service editing to work around a refused
+save; ask Andrea. The workflow previews all fields, takes one operator OK and
+adds the row directly as Published. Draft filters Hub discovery but is not private.
+
 Flickr remains the home of the photographs. The ArcGIS catalogue stores only
 the information the Hub needs to present and link to each album.
 
@@ -279,7 +285,7 @@ Complete:
 - meaningful **Thumbnail alt text**;
 - country ISO3 and country name;
 - event or monitoring round;
-- gallery date;
+- gallery date (field/event date; month-only evidence needs an explicitly approved day convention);
 - credit;
 - featured flag and display order, where needed.
 
@@ -290,9 +296,9 @@ field that does: the country name is a label for readers and is never read as an
 assignment.
 
 - one country: enter its code, for example `TCD`;
-- several countries: enter every code separated by a semicolon, for example
-  `IRQ;LBN`. The gallery then appears on each of those country pages and on the
-  cross-country page;
+- several countries: currently unsupported by the deployed three-character
+  `country_iso3` field. Do not enter a list or duplicate the album. Widening the
+  schema needs Andrea's separate approval; the Hub parser already supports lists;
 - no code: the gallery appears on **/photo-galleries** only. Leave it empty only
   when no country applies.
 
@@ -301,7 +307,8 @@ Hub ignores anything that is not a three-letter code, so the gallery would
 simply reach no country page.
 
 Each country page shows its three most recent galleries by gallery date, above
-the evidence collection, and links to the full list. Never create a StoryMap to
+the evidence collection, and links to the full list. An older gallery may be
+outside those three cards. Existing sessions cache galleries for up to 15 minutes. Never create a StoryMap to
 carry a photo gallery: a catalogue row is the only supported route, and it keeps
 the field date and leaves the gallery out of product counts.
 
@@ -315,8 +322,8 @@ separated by a semicolon.
 
 Set **Publication status** to `Published` only after opening both the album and
 thumbnail links anonymously. The service is normally public and read-only; its
-owner must temporarily enable editing for maintenance and disable it again
-immediately afterwards.
+management-group members edit through shared update without enabling service
+editing. A refused save must be reported to Andrea.
 
 ### HTML rules
 

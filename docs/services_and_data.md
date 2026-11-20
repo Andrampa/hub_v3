@@ -73,6 +73,16 @@ replaces the direct resource link.
 - a temporary read-only fallback to legacy popup item
   `015a1eabdb454d1c90fd9ad282e407e6`.
 
+Operators maintain catalogue item `24afb02b6cf549f99380cd6b3780691b`, layer 0,
+through the DIEM management group's shared-update rights using
+`hh_survey_v3/management/survey_publication/photo_gallery.py`. The public service
+stays Query-only; no editing toggle or Hub deployment is required. The workflow
+is a digest-confirmed public row edit with pushed intent/result records. Draft
+rows remain public at the table level and are only excluded from Hub discovery.
+The deployed `country_iso3` field has length 3: publication v1 allows one country
+or no assignment. Although the parser below supports lists, storing them requires
+a separately approved schema change.
+
 `src/services/photoGalleries.ts` reads the public, read-only hosted catalogue
 item `24afb02b6cf549f99380cd6b3780691b` (layer `0`). Only rows whose
 `publication_status` is `Published` are displayed. Flickr is authoritative for
