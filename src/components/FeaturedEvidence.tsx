@@ -20,9 +20,12 @@ function familyCountry(family: EvidenceFamily) {
  * when there is no distinguishing image, so the image is no longer a gate.
  */
 function selectEvidence(families: EvidenceFamily[]) {
-  // Questionnaires are survey instruments, not publications, so they never headline the homepage.
+  // Questionnaires are survey instruments and galleries are field photographs,
+  // not publications, so neither headlines the homepage.
   const candidates = families
-    .filter((family) => !family.variants.some((variant) => variant.productTypes.includes('Questionnaires')))
+    .filter((family) => !family.variants.some((variant) => (
+      variant.productTypes.includes('Questionnaires') || variant.productTypes.includes('Photo gallery')
+    )))
     .sort((a, b) => b.latestCreated - a.latestCreated)
   const selected: EvidenceFamily[] = []
   const countries = new Set<string>()

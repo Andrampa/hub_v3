@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-20 - Photo galleries in the catalogue and homepage
+
+- Published photo-gallery rows join the DIEM catalogue (product type Photo gallery, search, filters, counts) and the homepage product set; wrappers mapped through `legacy_item_id` are hidden. Galleries with a recorded first publication date (`published_on`) enter Latest evidence. New catalogue fields `survey_keys` and `published_on`. Authority: docs/architecture.md and docs/editor_guide_current.md section 6.
+
 ## 2026-11-20 - Photo-gallery operator workflow
 
 - Documented catalogue maintenance through management-group shared update, without enabling public service editing; corrected the deployed single-country limit and gallery placement/cache guidance. Authority: docs/editor_guide_current.md section 6 and docs/services_and_data.md.

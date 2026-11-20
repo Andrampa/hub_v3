@@ -102,6 +102,8 @@ export function catalogueVisible(item: ArcGISItem) {
 const THUMBNAIL_WIDTH = 400
 
 export function itemThumbnail(item: ArcGISItem) {
+  // A gallery resource is not an ArcGIS item: its image is the Flickr cover.
+  if (item.galleryId) return item.galleryThumbnailUrl
   if (!item.thumbnail) return undefined
   return `${REST_ROOT}/content/items/${item.id}/info/${item.thumbnail}?w=${THUMBNAIL_WIDTH}`
 }
@@ -148,7 +150,8 @@ const DIRECT_FILE_TYPES = new Set([
 ])
 
 /** Stable Hub URL for every product discovery surface. */
-export function itemProductPath(item: Pick<ArcGISItem, 'id'>) {
+export function itemProductPath(item: Pick<ArcGISItem, 'id' | 'galleryId'>) {
+  if (item.galleryId) return `/photo-galleries?${new URLSearchParams({ gallery: item.galleryId })}`
   return `/catalog/${item.id}`
 }
 

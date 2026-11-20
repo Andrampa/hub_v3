@@ -7,6 +7,8 @@ import { SiteHeader } from '../components/SiteHeader'
 import { HeroImage } from '../components/HeroImage'
 import { HeroCredit } from '../components/HeroCredit'
 import { useCountryCatalog } from '../hooks/useCountryCatalog'
+import { usePhotoGalleries } from '../hooks/usePhotoGalleries'
+import { mergeGalleryResources } from '../services/photoGalleries'
 import { itemYear } from '../lib/catalog'
 import { groupProductFamilies } from '../lib/productFamilies'
 import { buildCatalogSearchIndex, matchingFamilyIds } from '../lib/catalogSearch'
@@ -48,7 +50,7 @@ const typeGroups: Record<string, string[]> = {
   Data: ['Microsoft Excel', 'CSV', 'Shapefile', 'Feature Service', 'Service Definition'],
   Documents: ['Document Link', 'PDF', 'Microsoft Powerpoint'],
   'Maps & apps': ['StoryMap', 'Web Map', 'Dashboard', 'Web Experience', 'Web Mapping Application', 'Form'],
-  Media: ['Image'],
+  Media: ['Image', 'Photo gallery'],
   Pages: ['Hub Page'],
 }
 
@@ -78,7 +80,16 @@ export default function Catalog() {
   const query = params.get('q') || ''
   const page = Math.max(1, Number(params.get('page')) || 1)
 
-  const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+  // Photo galleries come from their own catalogue, not the content group (see
+  // docs/architecture.md). They join the items here so search, facets, families
+  // and pagination treat them like any product; a wrapper a gallery replaced is
+  // dropped, and a gallery-service failure leaves the ordinary results intact.
+  const photoGalleries = usePhotoGalleries()
+  const items = useMemo(
+    () => (catalog ? mergeGalleryResources(catalog.items, photoGalleries.galleries, photoGalleries.replacedWrapperIds) : []),
+    [catalog, photoGalleries.galleries, photoGalleries.replacedWrapperIds],
+  )
+  const families = useMemo(() => groupProductFamilies(items), [items])
 
   usePageMetadata({
     title: 'Catalogue',
@@ -101,22 +112,22 @@ export default function Catalog() {
     },
   })
 
-  const countries = useMemo(() => [...new Set(catalog?.items.flatMap((item) => item.countries) || [])]
+  const countries = useMemo(() => [...new Set(items.flatMap((item) => item.countries))]
     .map(countryDefinition)
     .sort((a, b) => {
       if (a.iso3 === CROSS_COUNTRY_CODE) return -1
       if (b.iso3 === CROSS_COUNTRY_CODE) return 1
       return a.name.localeCompare(b.name)
-    }), [catalog])
-  const years = useMemo(() => [...new Set(catalog?.items.map(itemYear) || [])].sort((a, b) => b - a), [catalog])
+    }), [items])
+  const years = useMemo(() => [...new Set(items.map(itemYear))].sort((a, b) => b - a), [items])
   // Only offer a pathway or product filter that some published product actually
   // carries, so an empty result is never reachable from the controls.
   const availablePathways = useMemo(() => EVIDENCE_PATHWAYS.filter((value) => (
-    catalog?.items.some((item) => item.evidencePathways.includes(value))
-  )), [catalog])
+    items.some((item) => item.evidencePathways.includes(value))
+  )), [items])
   const availableProducts = useMemo(() => PRODUCT_TYPES.filter((value) => (
-    catalog?.items.some((item) => item.productTypes.includes(value))
-  )), [catalog])
+    items.some((item) => item.productTypes.includes(value))
+  )), [items])
   const hasUnassignedProducts = useMemo(
     () => families.some((family) => !family.variants.some((item) => item.evidencePathways.length)),
     [families],
@@ -127,7 +138,10 @@ export default function Catalog() {
    * content group has been read: the catalogue pages in, so a value missing from
    * the first page is not yet evidence that it is gone from the group.
    */
-  const settled = Boolean(catalog?.complete)
+  // A failed gallery load is not evidence that a gallery-only value (a country
+  // or year with only galleries, `product=Photo gallery`) is gone, so filters
+  // are then kept as given rather than stripped from a shared link.
+  const settled = Boolean(catalog?.complete) && photoGalleries.settled && !photoGalleries.failed
   const filterSpecs = useMemo<FilterSpec[]>(() => [
     { key: 'content', defaultValue: 'All content', allowed: settled ? Object.keys(typeGroups) : undefined },
     { key: 'country', defaultValue: 'All countries', allowed: settled ? countries.map((entry) => entry.iso3) : undefined },
@@ -163,7 +177,7 @@ export default function Catalog() {
   }, [unsupportedKey])
 
   const resultsRef = useRef<HTMLDivElement>(null)
-  const thumbnailIndex = useMemo(() => buildDistinctThumbnailIndex(catalog?.items || []), [catalog])
+  const thumbnailIndex = useMemo(() => buildDistinctThumbnailIndex(items), [items])
   const searchIndex = useMemo(() => buildCatalogSearchIndex(families), [families])
   const matchedIds = useMemo(() => matchingFamilyIds(searchIndex, query), [query, searchIndex])
 
@@ -203,13 +217,13 @@ export default function Catalog() {
     // The filter validation writes the URL in this same commit and drops the
     // page along with the values it removes; clamping here as well would write
     // the rejected values straight back.
-    if (unsupported.length) return
+    if (!settled || unsupported.length) return
     if (page > pageCount) {
       const next = new URLSearchParams(params)
       next.set('page', String(pageCount))
       setParams(next, { replace: true })
     }
-  }, [page, pageCount, params, setParams, unsupported.length])
+  }, [page, pageCount, params, setParams, settled, unsupported.length])
 
   /**
    * Turning a page replaced the sixteen cards under the reader without moving
@@ -424,7 +438,7 @@ export default function Catalog() {
                   )}
                 </div>
               )}
-              <div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{formatNumber(filteredFamilies.length)}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && (catalog.complete
+              {photoGalleries.failed && <p className="catalog-notice" role="status">Photo galleries are temporarily unavailable, so they are missing from these results.</p>}<div className="results-meta" aria-live="polite" ref={resultsRef}><p><strong>{formatNumber(filteredFamilies.length)}</strong> {filteredFamilies.length === 1 ? 'product' : 'products'} found{pathway !== 'All pathways' ? ` · ${pathway === UNASSIGNED_PATHWAY ? pathway : pathwayLabel(pathway as EvidencePathway)}` : ''}{product !== 'All products' ? ` · ${product}` : ''}</p><div>{hasFilters && <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>}{catalog && (catalog.complete
   ? <span className="results-read-at" title={catalog.fetchedAt.toString()}>Read {formatReadTime(catalog.fetchedAt)}</span>
   // Counts, facet options and page total are all a floor until the last page
   // lands. Saying so is cheaper than freezing the controls, and it is the only

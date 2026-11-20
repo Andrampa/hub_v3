@@ -110,7 +110,11 @@ export function CatalogContentCard({
         <div className="card-context">
           <span>{itemTypeLabel(item)}</span>
           <span aria-hidden="true">·</span>
-          <time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time>
+          {/* A gallery's `created` may be its field date (historical rows kept no
+              publication date), so it states what the date is. */}
+          {item.galleryDate !== undefined
+            ? <time dateTime={new Date(item.galleryDate).toISOString()}>Photos {formatDate(item.galleryDate)}</time>
+            : <time dateTime={new Date(item.created).toISOString()}>Added {formatDate(item.created)}</time>}
         </div>
         {pathways.length > 0 && (
           <ul className="catalog-pathways" aria-label="Evidence pathways">

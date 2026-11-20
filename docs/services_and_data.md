@@ -92,6 +92,22 @@ accepts only FAO emergencies Flickr album URLs and `live.staticflickr.com`
 thumbnails. `VITE_PHOTO_GALLERY_SERVICE_URL` can override the service endpoint
 for a staging catalogue.
 
+`survey_keys` (`ISO3:round`, `;`-separated; malformed segments dropped) and
+`published_on` (DateOnly, first Hub publication) are read alongside.
+The load reads every row (`where=1=1`): only Published rows become galleries,
+but wrapper ids in `legacy_item_id` are collected from all rows
+(`replacedWrapperIds`), so a withdrawn gallery keeps its wrapper hidden.
+`mergeGalleryResources` turns each gallery into a catalogue resource (id
+`gallery-<gallery_id>`, type `Photo gallery`, `created` = `published_on` or else
+`gallery_date`) for the catalogue page and the homepage, and drops those wrapper
+items. `usePhotoGalleries` reports `settled` and `failed`: URL filters are
+validated only after a successful gallery load; after a failure they are kept as
+given and the catalogue shows its ordinary results with a notice. The homepage now issues the
+gallery request on first visit; later surfaces reuse the cached copy.
+Catalogue URL pagination is clamped only after both discovery sources load successfully.
+Pending or failed gallery requests preserve the requested page as well as its filters.
+`galleriesForSurvey` serves survey-round lookups.
+
 `country_iso3` is read as a list so one gallery can serve several countries:
 codes may be separated by `;`, `,`, `/`, `|` or spaces, and a segment counts
 only when every word in it is a three-letter code. A prose value yields no

@@ -8,7 +8,13 @@ const FEATURED_TAGS = new Set(['impact assessment', 'country brief'])
 const NEW_WINDOW_MS = 14 * 24 * 60 * 60 * 1000
 const MAX_ITEMS = 6
 
+/**
+ * Tagged briefs and impact assessments, plus galleries with a recorded first
+ * publication date. A historical gallery has none, and its field date must not
+ * pass for news, so it never enters the strip.
+ */
 function isFeatured(item: ArcGISItem) {
+  if (item.galleryId) return item.galleryPublishedOn !== undefined
   return item.tags?.some((tag) => FEATURED_TAGS.has(tag.trim().toLowerCase()))
 }
 

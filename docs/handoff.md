@@ -575,7 +575,14 @@ Note that the `DIEM 2024 - Photo Gallery` wrapper is categorised `Countries/PAK`
 although its album is the global 2024 activities album. Do not copy that
 assignment into the catalogue.
 
-### Step 2 — backfill `legacy_item_id` (22 rows)
+### Step 2 — backfill `legacy_item_id` — done 2026-11-20 except IRQ/LBN
+
+All single-wrapper rows now record their wrapper (25 of 27 wrappers; operations
+`gallery-backfill-discovery-20261120` and `gallery-backfill-legacy-20261120b` in
+`diem-survey-operations/photo_galleries/events.jsonl`). The two Iraq and Lebanon
+wrappers cannot be recorded on `irq-lbn-monitoring-2022`: the deployed
+`legacy_item_id` field holds 32 characters. The catalogue hides every mapped
+wrapper, so only those two still appear beside their gallery until Step 3.
 
 **Required before Step 3, though nothing is broken while it waits.** All 27
 wrappers already send readers to their gallery: five through `legacy_item_id`,
@@ -625,15 +632,16 @@ Remove all 27 items from `ab8a43038b6347ac93507988f7e2a90b`. **Do not delete the
 StoryMap items**: they stay public in ArcGIS, so links already circulating keep
 resolving. Removing them from the group is what ends Hub discovery.
 
-Expect country product counts and product-type counts to fall for AFG, CAF, COD,
-COL, GTM, IRQ, LBN, NGA, PAK, SDN, SLE, SOM, SYR and TCD. That is the intended
-outcome of galleries ceasing to be catalogue products, not a regression.
+Expect country product counts to fall for AFG, CAF, COD, COL, GTM, IRQ, LBN,
+NGA, PAK, SDN, SLE, SOM, SYR and TCD (country pages count content-group items
+only). The catalogue is unaffected: galleries are listed there from the gallery
+catalogue since 2026-11-20 and mapped wrappers are already hidden.
 
 ### Step 4 — retire the category and the code path
 
 Once no item carries it, remove the `Product types/Photo gallery` branch from
-the group category schema and drop `'Photo gallery'` from `PRODUCT_TYPES` in
-`src/services/countries.ts`.
+the group category schema. **Keep `'Photo gallery'` in `PRODUCT_TYPES`**
+(superseded 2026-11-20): gallery resources use it for the catalogue filter.
 
 ### Step 5 — legacy redirect: implemented
 

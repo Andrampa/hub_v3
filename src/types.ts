@@ -24,6 +24,17 @@ export interface ArcGISItem {
   access: string
   licenseInfo?: string
   groupCategories?: string[]
+  /**
+   * Set only on a resource built from a photo-gallery catalogue row: the row's
+   * `gallery_id`. Such a resource is not an ArcGIS item; it links to
+   * `/photo-galleries?gallery=<id>` and shows the Flickr cover.
+   */
+  galleryId?: string
+  galleryThumbnailUrl?: string
+  /** Field date of a gallery resource (when the photographs were taken), epoch ms. */
+  galleryDate?: number
+  /** First Hub publication of a gallery resource, epoch ms; absent when unknown. */
+  galleryPublishedOn?: number
 }
 
 export interface CatalogData {

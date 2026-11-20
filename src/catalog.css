@@ -310,3 +310,5 @@
 @media (max-width: 620px) {
   .catalog-hero { min-height: 260px; padding: 28px 0 32px; }
 }
+/* Gallery-source outage: the ordinary results stay, with this one line of explanation. */
+.catalog-notice { margin: 0 0 14px; padding: 10px 14px; border-left: 4px solid #f58320; background: #fff5eb; font-size: .92rem; }

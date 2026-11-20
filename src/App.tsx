@@ -11,6 +11,8 @@ import { ProgrammeNumbers } from './components/ProgrammeNumbers'
 import { SiteFooter } from './components/SiteFooter'
 import { SiteHeader } from './components/SiteHeader'
 import { useCountryCatalog } from './hooks/useCountryCatalog'
+import { usePhotoGalleries } from './hooks/usePhotoGalleries'
+import { mergeGalleryResources } from './services/photoGalleries'
 import { usePageMetadata } from './hooks/usePageMetadata'
 import { isHazardImpactAssessment } from './lib/catalog'
 import { groupProductFamilies } from './lib/productFamilies'
@@ -58,7 +60,13 @@ export default function App() {
     return () => controller.abort()
   }, [])
 
-  const families = useMemo(() => groupProductFamilies(catalog?.items || []), [catalog])
+  // The same product set as the catalogue: galleries joined, replaced wrappers
+  // dropped, so the homepage and catalogue counts agree.
+  const { galleries, replacedWrapperIds } = usePhotoGalleries()
+  const families = useMemo(
+    () => groupProductFamilies(catalog ? mergeGalleryResources(catalog.items, galleries, replacedWrapperIds) : []),
+    [catalog, galleries, replacedWrapperIds],
+  )
   const stats = useMemo(() => ({
     total: families.length,
     hazardImpactAssessments: families.filter((family) => family.variants.some(isHazardImpactAssessment)).length,

@@ -162,10 +162,30 @@ The public data pages (`/data/guide`, and `/data`, which redirects there) reques
 - Flickr hosts gallery images, while ArcGIS item
   `24afb02b6cf549f99380cd6b3780691b` is the authoritative editorial catalogue
   for gallery titles, countries, dates, thumbnails and publication status.
-- Photo galleries are not catalogue products. They are never carried by content
-  group items, never counted in country product totals or product-type filters,
-  and are dated by `gallery_date` rather than by any record's creation date.
-  A gallery reaches a country page only through a stored ISO3 code.
+- Photo galleries are an explicit second discovery source, not content-group
+  items (decision 2026-11-20, superseding "galleries are not catalogue
+  products"). Published catalogue rows join the DIEM catalogue and the homepage
+  product set as resources of type `Photo gallery` (`mergeGalleryResources`),
+  linking to `/photo-galleries?gallery=<id>`; they count in the catalogue and
+  homepage totals, its filters and search, but never headline Featured evidence.
+  Country pages keep reading galleries separately (latest three by ISO3) and
+  keep them out of country product totals. Visibility is governed by the
+  catalogue item being public; `publication_status = 'Published'` is an
+  editorial filter, not access control, and Draft rows stay anonymously readable.
+- A gallery is dated by `gallery_date` (field date) on cards and country pages.
+  `published_on` (first Hub publication, set by the agent tool) alone admits a
+  gallery to the homepage Latest evidence strip; rows without it never enter.
+  `survey_keys` (`ISO3:round;...`) links a gallery to DIEM survey rounds: it
+  places the gallery on the regular-monitoring pathway and drives the monitoring
+  app's survey catalogue button. A gallery reaches a country page only through
+  a stored ISO3 code.
+- A StoryMap wrapper is hidden from the catalogue when any row, Published or
+  Draft, records its item id in `legacy_item_id`, so withdrawing a gallery never
+  brings its wrapper back. Unmapped wrappers stay listed until mapped or retired;
+  retirement is a separate, verified ArcGIS migration.
+- If the gallery service fails, the catalogue keeps its ordinary results, shows
+  a one-line notice and does not validate URL filters (a gallery-only value must
+  not be stripped from a shared link).
 - A product address that belongs to a retired photo-gallery StoryMap wrapper
   resolves to the gallery, not to the wrapper. The mapping is the catalogue's
   `legacy_item_id`; a gallery published without a wrapper records none. The

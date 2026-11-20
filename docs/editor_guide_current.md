@@ -286,10 +286,23 @@ Complete:
 - country ISO3 and country name;
 - event or monitoring round;
 - gallery date (field/event date; month-only evidence needs an explicitly approved day convention);
+- **Survey keys**, when the photographs come from a DIEM survey round: `ISO3:round`,
+  several separated by `;` (for example `TCD:10` or `IRQ:8;LBN:3`); leave empty for
+  field missions, highlights, impact studies and other survey families;
 - credit;
 - featured flag and display order, where needed.
 
+**First published on** is filled by the publication tool the day a row is first
+Published and never changes afterwards; do not type it.
+
 ### Where the gallery appears
+
+Besides country pages and **/photo-galleries**, a Published gallery is listed in
+the DIEM catalogue (product type **Photo gallery**), enters the homepage
+**Latest evidence** strip only when it has a *First published on* date, and gets
+a **Photo gallery** button on the survey catalogue of the monitoring system for
+each survey key.
+
 
 The country ISO3 decides which country page shows the gallery. It is the only
 field that does: the country name is a label for readers and is never read as an
@@ -310,15 +323,17 @@ Each country page shows its three most recent galleries by gallery date, above
 the evidence collection, and links to the full list. An older gallery may be
 outside those three cards. Existing sessions cache galleries for up to 15 minutes. Never create a StoryMap to
 carry a photo gallery: a catalogue row is the only supported route, and it keeps
-the field date and leaves the gallery out of product counts.
+the field date and leaves the gallery out of country product counts.
 
 ### Legacy item ID
 
 **Leave this empty for a new gallery.** It exists only for the galleries that
 were once published as a StoryMap wrapper: it holds that wrapper's ArcGIS item
 ID, so Hub links already circulating for it open the gallery instead of the
-StoryMap. Where one gallery replaced two wrappers, both IDs are recorded,
-separated by a semicolon.
+StoryMap, and hides that wrapper from the catalogue so the album is listed once.
+The field holds one ID (32 characters): `irq-lbn-monitoring-2022`, which replaced
+two wrappers, therefore records none, and its two wrappers stay listed until the
+wrappers are retired.
 
 Set **Publication status** to `Published` only after opening both the album and
 thumbnail links anonymously. The service is normally public and read-only; its

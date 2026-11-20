@@ -262,6 +262,7 @@ export type HubLinkTarget =
   | { kind: 'external', href: string }
 
 export function itemHubLink(item: ArcGISItem): HubLinkTarget {
+  if (item.galleryId) return { kind: 'product', to: itemProductPath(item) }
   return isDiscoverableProduct(item.groupCategories || [])
     ? { kind: 'product', to: itemProductPath(item) }
     : { kind: 'external', href: itemDestination(item) }

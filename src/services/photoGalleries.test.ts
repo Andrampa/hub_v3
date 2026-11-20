@@ -1,9 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { CountryResource } from './countries'
+import { itemProductPath, itemThumbnail } from './arcgis'
+import { itemHubLink } from './countries'
 import {
   fetchPhotoGalleries,
+  fetchPhotoGalleryCatalogue,
   galleriesForCountry,
   galleryForFlickrAlbum,
   galleryForLegacyItem,
+  galleriesForSurvey,
+  galleryPath,
+  galleryResource,
+  extractSurveyKeys,
+  mergeGalleryResources,
   resetPhotoGalleryCache,
   type PhotoGallery,
 } from './photoGalleries'
@@ -33,6 +42,7 @@ function row(overrides: Record<string, unknown> = {}) {
       featured: 0,
       display_order: 0,
       credit: 'FAO emergencies / Flickr',
+      publication_status: 'Published',
       ...overrides,
     },
   }
@@ -191,5 +201,94 @@ describe('shared loading', () => {
     const controller = new AbortController()
     controller.abort()
     await expect(fetchPhotoGalleries(controller.signal)).rejects.toMatchObject({ name: 'AbortError' })
+  })
+})
+
+describe('survey links and first publication', () => {
+  it('reads several survey keys and drops malformed ones', () => {
+    expect(extractSurveyKeys('IRQ:8;LBN:3')).toEqual([{ iso3: 'IRQ', round: 8 }, { iso3: 'LBN', round: 3 }])
+    expect(extractSurveyKeys('TCD10; COD:0 ;tcd:9;TCD:9')).toEqual([{ iso3: 'TCD', round: 9 }])
+    expect(extractSurveyKeys(null)).toEqual([])
+  })
+
+  it('parses survey keys and an optional first publication date', async () => {
+    const [linked, historical] = await loadGalleries([
+      row({ survey_keys: 'AFG:9', published_on: '2026-11-20' }),
+      row({ gallery_id: 'afg-monitoring-r8', survey_keys: null, published_on: null }),
+    ])
+    expect(linked.surveyKeys).toEqual([{ iso3: 'AFG', round: 9 }])
+    expect(linked.publishedOn?.toISOString().slice(0, 10)).toBe('2026-11-20')
+    expect(historical.surveyKeys).toEqual([])
+    expect(historical.publishedOn).toBeUndefined()
+  })
+
+  it('finds the galleries of one survey round, including shared ones', async () => {
+    const galleries = await loadGalleries([
+      row({ survey_keys: 'AFG:9' }),
+      row({ gallery_id: 'irq-lbn', country_iso3: '', survey_keys: 'IRQ:8;LBN:3' }),
+    ])
+    expect(galleriesForSurvey(galleries, 'afg', 9).map((g) => g.id)).toEqual(['afg-monitoring-r9'])
+    expect(galleriesForSurvey(galleries, 'LBN', 3).map((g) => g.id)).toEqual(['irq-lbn'])
+    expect(galleriesForSurvey(galleries, 'AFG', 8)).toEqual([])
+  })
+})
+
+describe('galleries as catalogue resources', () => {
+  const wrapper = {
+    id: 'a1e64777d4fa40859796aba1b9b60219', title: 'Afghanistan - Photo Gallery - Round 9', type: 'StoryMap',
+    owner: 'x', created: 1, modified: 1, access: 'public', countries: ['AFG'], productTypes: ['Photo gallery'],
+    evidencePathways: [],
+  } as CountryResource
+  const brief = { ...wrapper, id: 'b'.repeat(32), title: 'Afghanistan - Brief', type: 'PDF', productTypes: ['Country Briefs'] } as CountryResource
+
+  it('links to the gallery page and shows the Flickr cover', async () => {
+    const [gallery] = await loadGalleries([row({ survey_keys: 'AFG:9', published_on: '2026-11-20' })])
+    const resource = galleryResource(gallery)
+    expect(itemProductPath(resource)).toBe(galleryPath('afg-monitoring-r9'))
+    expect(itemProductPath(resource)).toBe('/photo-galleries?gallery=afg-monitoring-r9')
+    expect(itemHubLink(resource)).toEqual({ kind: 'product', to: galleryPath('afg-monitoring-r9') })
+    expect(itemThumbnail(resource)).toBe(gallery.thumbnailUrl)
+    expect(resource).toMatchObject({ type: 'Photo gallery', productTypes: ['Photo gallery'], countries: ['AFG'], evidencePathways: ['Regular monitoring'] })
+    expect(resource.created).toBe(Date.UTC(2026, 10, 20))
+    expect(resource.galleryPublishedOn).toBe(Date.UTC(2026, 10, 20))
+  })
+
+  it('dates a historical gallery by its field date and assigns no pathway without a survey link', async () => {
+    const [gallery] = await loadGalleries([row()])
+    const resource = galleryResource(gallery)
+    expect(resource.created).toBe(Date.UTC(2024, 8, 23))
+    expect(resource.galleryPublishedOn).toBeUndefined()
+    expect(resource.evidencePathways).toEqual([])
+  })
+
+  it('replaces a mapped wrapper and keeps everything else', async () => {
+    const galleries = await loadGalleries([row({ legacy_item_id: wrapper.id })])
+    const merged = mergeGalleryResources([wrapper, brief], galleries)
+    expect(merged.map((item) => item.id)).toEqual([brief.id, 'gallery-afg-monitoring-r9'])
+  })
+
+  it('keeps an unmapped wrapper listed', async () => {
+    const galleries = await loadGalleries([row()])
+    expect(mergeGalleryResources([wrapper], galleries).map((item) => item.id)).toEqual([wrapper.id, 'gallery-afg-monitoring-r9'])
+  })
+})
+
+describe('withdrawn galleries and their wrappers', () => {
+  const wrapperId = 'a1e64777d4fa40859796aba1b9b60219'
+  const wrapper = {
+    id: wrapperId, title: 'Afghanistan - Photo Gallery - Round 9', type: 'StoryMap', owner: 'x', created: 1,
+    modified: 1, access: 'public', countries: ['AFG'], productTypes: ['Photo gallery'], evidencePathways: [],
+  } as CountryResource
+
+  it('lists only Published rows as galleries', async () => {
+    vi.stubGlobal('fetch', respondWith([row(), row({ gallery_id: 'draft-one', publication_status: 'Draft' })]))
+    expect((await fetchPhotoGalleries()).map((gallery) => gallery.id)).toEqual(['afg-monitoring-r9'])
+  })
+
+  it('keeps the wrapper of a withdrawn gallery hidden', async () => {
+    vi.stubGlobal('fetch', respondWith([row({ publication_status: 'Draft', legacy_item_id: wrapperId })]))
+    const { galleries, replacedWrapperIds } = await fetchPhotoGalleryCatalogue()
+    expect(galleries).toEqual([])
+    expect(mergeGalleryResources([wrapper], galleries, replacedWrapperIds)).toEqual([])
   })
 })
