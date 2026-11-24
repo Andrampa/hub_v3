@@ -31,6 +31,7 @@ PRODUCT_TYPES = [
     "Other DIEM documents",
     "Photo gallery",
     "Questionnaires",
+    "Risk analyses",
     "Storymaps",
 ]
 
