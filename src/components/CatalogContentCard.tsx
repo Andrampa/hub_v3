@@ -112,7 +112,7 @@ export function CatalogContentCard({
             so it is never presented here as if it were a publication date. */}
         <div className="card-context">
           <span>{itemTypeLabel(item)}</span>
-          <span aria-hidden="true">Â·</span>
+          <span aria-hidden="true">·</span>
           {/* A gallery's `created` may be its field date (historical rows kept no
               publication date), so it states what the date is. */}
           {publicationDate && item.galleryPublishedOn !== undefined
@@ -189,7 +189,7 @@ export function CatalogContentCard({
           <div className="related-dialog" role="dialog" aria-modal="true" aria-labelledby={`related-dialog-${item.id}`} tabIndex={-1} ref={dialogRef} onClick={(event) => event.stopPropagation()}>
             <span className="kicker">Explore related evidence</span>
             <h2 id={`related-dialog-${item.id}`}>See all products related to {relatedDestination.label}?</h2>
-            <p>Youâ€™ll leave this page and open the related collection.</p>
+            <p>You’ll leave this page and open the related collection.</p>
             <div className="related-dialog-actions">
               <button type="button" onClick={() => navigate(relatedDestination.to)}>Yes, show products</button>
               <button type="button" onClick={() => setRelatedDestination(undefined)}>No, stay here</button>

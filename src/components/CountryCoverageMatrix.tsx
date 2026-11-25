@@ -32,7 +32,7 @@ interface CoverageRow {
  */
 const COLUMN_GROUPS: Array<{ id: string; types: ProductType[] }> = [
   { id: 'monitoring', types: ['Country Briefs', 'Key Findings Presentations', 'Questionnaires', 'Photo gallery'] },
-  { id: 'assessment', types: ['Assessment Reports', 'EVE flood reports'] },
+  { id: 'assessment', types: ['Assessment Reports', 'Risk analyses', 'EVE flood reports'] },
   { id: 'other', types: ['Crop calendar', 'Storymaps', 'Other DIEM documents'] },
 ]
 

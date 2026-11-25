@@ -20,6 +20,7 @@ export const UNRECORDED_PRODUCT_TYPE_LABEL = 'Type not recorded'
 export const PRODUCT_TYPES = [
   'Country Briefs',
   'Assessment Reports',
+  'Risk analyses',
   'Key Findings Presentations',
   'Questionnaires',
   'EVE flood reports',

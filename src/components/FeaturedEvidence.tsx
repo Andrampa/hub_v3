@@ -57,7 +57,7 @@ export function FeaturedEvidence({ families }: { families: EvidenceFamily[] }) {
       <div className="section-wrap">
         <div className="section-heading">
           <div><span className="kicker">DIEM products</span><h2 id="featured-evidence-title">Recent publications</h2></div>
-          <Link to="/catalog">View all products <span aria-hidden="true">â†’</span></Link>
+          <Link to="/catalog">View all products <span aria-hidden="true">→</span></Link>
         </div>
         {/* Same card as the catalogue and country pages, so a product is characterized identically everywhere. */}
         <div className="card-grid featured-evidence-grid">
