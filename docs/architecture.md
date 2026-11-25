@@ -201,7 +201,18 @@ The public data pages (`/data/guide`, and `/data`, which redirects there) reques
 
 Firebase Hosting serves the Vite `dist/` output and rewrites the exact
 invitation-validation API path to a second-generation Firebase Function in
-`europe-west1`; the remaining routes fall back to `index.html`.
+`europe-west1`. Extensionless page routes are rewritten to the `linkPreview`
+function (`functions/link-preview.js`), which returns the built `index.html` with
+that route's title, description, canonical URL and image in the head, because
+Teams, Outlook, Slack and crawlers read the HTML without running JavaScript.
+Fixed routes come from `functions/link-preview-routes.js`, which must mirror each
+page's `usePageMetadata` text; `/catalog/:itemId` reads the public ArcGIS item
+anonymously (10-minute in-memory cache, 2.5 s timeout) and `/countries/:iso3`
+uses a country-name table. `npm run build` copies `dist/index.html` and that
+table into the git-ignored `functions/link-preview-generated/`, so the function
+and Hosting deploy the same build. Any lookup failure serves the unmodified
+template; unknown paths keep the default tags. `/` and other existing files are
+still served statically, and files with an extension fall back to `index.html`.
 The deployment config revalidates extensionless SPA route responses and
 `index.html` so a reload receives the current bundle. If a tab opened before a
 deployment requests a deleted lazy chunk, Vite's preload-error handler reloads

@@ -72,7 +72,9 @@ function meta(name: string, value: string, attribute: 'name' | 'property' = 'nam
 
 /**
  * Sets everything a shared link, a search result and a browser tab need for one
- * route.
+ * route in the browser. Link previews never run this code: keep each fixed
+ * page's title and description in step with functions/link-preview-routes.js,
+ * which writes them into the HTML on the server.
  *
  * A single-page application keeps whatever `index.html` declared unless a route
  * says otherwise. Every page therefore carried one title, one description and

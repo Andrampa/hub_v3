@@ -60,6 +60,7 @@ CODEX.md
 # Build output
 node_modules/
 dist/
+functions/link-preview-generated/
 
 # Environment
 .env
@@ -96,6 +97,7 @@ Thumbs.db
     ],
     "rewrites": [
       { "source": "/api/microdata/invitations/validate", "function": { "functionId": "validateMicrodataInvitations", "region": "europe-west1" } },
+      { "regex": "^/([^.]*/)*[^.]*$", "function": { "functionId": "linkPreview", "region": "europe-west1" } },
       { "source": "**", "destination": "/index.html" }
     ]
   }

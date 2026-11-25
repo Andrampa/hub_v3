@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-25 - Per-page link previews
+
+- Links pasted into Teams, Outlook, Slack or LinkedIn now preview the page they
+  point to (title, description, image) instead of the generic homepage card.
+  A new `linkPreview` Firebase Function serves `index.html` with route-specific
+  head tags for fixed pages, catalogue products and country pages; the
+  deployment `firebase.json` written by `scripts/sync-web-repository.ps1` routes
+  extensionless page paths to it.
+
 ## 2026-11-20 - Photo galleries in the catalogue and homepage
 
 - Published photo-gallery rows join the DIEM catalogue (product type Photo gallery, search, filters, counts) and the homepage product set; wrappers mapped through `legacy_item_id` are hidden. Galleries with a recorded first publication date (`published_on`) enter Latest evidence. New catalogue fields `survey_keys` and `published_on`. Authority: docs/architecture.md and docs/editor_guide_current.md section 6.

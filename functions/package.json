@@ -6,7 +6,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "node --test invitation-validation.node-test.js"
+    "test": "node --test invitation-validation.node-test.js link-preview.node-test.js"
   },
   "dependencies": {
     "firebase-functions": "^7.0.0"
