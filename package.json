@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/build_link_preview_assets.mjs",
+    "build": "tsc -b && vite build && node functions/build-link-preview-assets.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "preview": "vite preview",
