@@ -16,11 +16,15 @@
 
 const fs = require('node:fs')
 const path = require('node:path')
-const { STATIC_ROUTES, SITE_NAME } = require('./link-preview-routes')
+const {
+  COUNTRY_IMAGES, CROSS_COUNTRY_IMAGE, DEFAULT_IMAGE, EXPLORER_IMAGE, EXPLORER_THEMES, SITE_NAME, STATIC_ROUTES,
+} = require('./link-preview-routes')
 
 const CANONICAL_ORIGIN = 'https://data-in-emergencies.fao.org'
+/** Hosts whose own /link-previews/ photos may be referenced; anything else uses production. */
+const IMAGE_HOSTS = /^(data-in-emergencies\.fao\.org|[a-z0-9-]+\.web\.app|[a-z0-9-]+\.firebaseapp\.com)$/i
 const REST_ROOT = 'https://www.arcgis.com/sharing/rest'
-const DEFAULT_IMAGE = `${REST_ROOT}/content/items/9103febede744492ae43ebae1c5e3826/data`
+const ROUND = /^\d{1,3}$/
 const ITEM_ID = /^[0-9a-f]{32}$/i
 const ISO3 = /^[a-z]{3}$/i
 const CROSS_COUNTRY = 'cross-country'
@@ -51,6 +55,18 @@ function clip(text, limit = 300) {
 function normalisePath(rawPath) {
   const pathname = String(rawPath || '/').split('?')[0]
   return pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname
+}
+
+/** Absolute URL of a preview photo on the site that served the request. */
+function photoUrl(name, origin = CANONICAL_ORIGIN) {
+  return `${origin}/link-previews/${name}.jpg`
+}
+
+/** The origin of the request when it is a known Hub host, so review links use review photos. */
+function requestOrigin(req) {
+  const host = String(req.get?.('x-forwarded-host') || req.headers?.['x-forwarded-host'] || req.get?.('host') || '')
+    .split(',')[0].trim()
+  return IMAGE_HOSTS.test(host) ? `https://${host}` : CANONICAL_ORIGIN
 }
 
 /**
@@ -110,6 +126,34 @@ async function fetchPublicItem(itemId, fetchImpl = fetch) {
   }
 }
 
+/**
+ * A Household Survey Explorer link names its view in the query string
+ * (`?theme=shocks&iso=MMR&round=14&field=...`). The title names the country,
+ * round and theme so two shared views do not preview identically. Unknown or
+ * malformed values are left out rather than echoed into the page.
+ */
+function explorerView(rawUrl, countries) {
+  const query = String(rawUrl || '').split('?')[1]
+  if (!query) return null
+  const params = new URLSearchParams(query)
+  const iso = String(params.get('iso') || '').toUpperCase()
+  const country = ISO3.test(iso) ? countries[iso] : undefined
+  const roundValue = String(params.get('round') || '')
+  const round = ROUND.test(roundValue) ? `Round ${Number(roundValue)}` : undefined
+  const theme = EXPLORER_THEMES[String(params.get('theme') || '')]
+  const parts = [country, round, theme].filter(Boolean)
+  if (!parts.length) return null
+
+  const scope = [country, round && round.toLowerCase()].filter(Boolean).join(', ')
+  const description = `DIEM household survey results${scope ? ` for ${scope}` : ''}${theme ? `: ${theme.toLowerCase()}` : ''}, in the interactive Household Survey Explorer.`
+  return {
+    title: `${parts.join(' · ')} | Household Survey Explorer`,
+    description,
+    path: `/monitoring?${params.toString()}`,
+    photo: (country && COUNTRY_IMAGES[iso]) || EXPLORER_IMAGE,
+  }
+}
+
 function createResolver({ countries = {}, fetchItem = fetchPublicItem, now = () => Date.now() } = {}) {
   const itemCache = new Map()
 
@@ -123,11 +167,23 @@ function createResolver({ countries = {}, fetchItem = fetchPublicItem, now = () 
     return item
   }
 
-  /** Returns the metadata for a path, or null when the defaults should stand. */
-  return async function resolve(rawPath) {
-    const pathname = normalisePath(rawPath)
+  /**
+   * Returns the metadata for a URL (path and query), or null when the defaults
+   * should stand. `photo` names a public/link-previews image; `image` is an
+   * absolute URL.
+   */
+  return async function resolve(rawUrl) {
+    const pathname = normalisePath(rawUrl)
+
+    if (pathname === '/monitoring') {
+      const explorer = explorerView(rawUrl, countries)
+      if (explorer) return explorer
+    }
+
     const known = STATIC_ROUTES[pathname]
-    if (known) return { title: known.title, description: known.description, path: known.canonical || pathname }
+    if (known) {
+      return { title: known.title, description: known.description, path: known.canonical || pathname, photo: known.image || DEFAULT_IMAGE }
+    }
 
     const segments = pathname.split('/').filter(Boolean)
 
@@ -149,6 +205,7 @@ function createResolver({ countries = {}, fetchItem = fetchPublicItem, now = () 
           title: 'Cross-country analysis',
           description: 'DIEM multi-country and global products: cross-country monitoring, hazard impact assessments and published evidence on food security and agricultural livelihoods.',
           path: `/countries/${CROSS_COUNTRY}`,
+          photo: CROSS_COUNTRY_IMAGE,
         }
       }
       const name = ISO3.test(slug) ? countries[slug.toUpperCase()] : undefined
@@ -157,6 +214,7 @@ function createResolver({ countries = {}, fetchItem = fetchPublicItem, now = () 
         title: name,
         description: `DIEM products for ${name}: monitoring rounds, hazard impact assessments and published evidence on food security and agricultural livelihoods.`,
         path: `/countries/${slug}`,
+        photo: COUNTRY_IMAGES[slug.toUpperCase()] || DEFAULT_IMAGE,
       }
     }
 
@@ -186,13 +244,13 @@ function createHandler({ loadTemplate, resolve, log = console }) {
 
     let html = template
     try {
-      const metadata = await resolve(req.path || req.url)
+      const metadata = await resolve(req.originalUrl || req.url || req.path)
       if (metadata) {
         html = applyMetadata(template, {
           title: fullTitle(metadata.title),
           description: metadata.description,
           url: `${CANONICAL_ORIGIN}${metadata.path}`,
-          image: metadata.image || DEFAULT_IMAGE,
+          image: metadata.image || photoUrl(metadata.photo || DEFAULT_IMAGE, requestOrigin(req)),
           noindex: metadata.noindex,
         })
       }
@@ -234,4 +292,6 @@ module.exports = {
   fetchPublicItem,
   fullTitle,
   normalisePath,
+  photoUrl,
+  requestOrigin,
 }

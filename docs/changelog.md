@@ -8,6 +8,10 @@
   head tags for fixed pages, catalogue products and country pages; the
   deployment `firebase.json` written by `scripts/sync-web-repository.ps1` routes
   extensionless page paths to it.
+- Previews carry a section photo (the page hero where one exists), a
+  country photo for countries that have one, and Household Survey Explorer
+  links name the country, round and theme from the URL. Photos are served
+  from public/link-previews/ at fixed URLs.
 
 ## 2026-11-20 - Photo galleries in the catalogue and homepage
 
