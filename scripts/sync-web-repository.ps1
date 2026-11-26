@@ -11,6 +11,9 @@ $expectedRemote = 'https://github.com/un-fao/fao-oer-diem-hub.git'
 $allowedPaths = @(
   'src',
   'functions',
+  # Link-preview photos only; the rest of public/ (robots.txt, ArcGIS redirect
+  # page) is deliberately not deployed.
+  'public/link-previews',
   '.gitignore',
   'index.html',
   'oauth-callback.html',
@@ -43,6 +46,7 @@ try {
     $from = Join-Path $sourceRepository $path
     $to = Join-Path $stagingDirectory $path
     if (-not (Test-Path $from)) { throw "Required deployment path is missing: $path" }
+    New-Item -ItemType Directory -Path (Split-Path $to -Parent) -Force | Out-Null
     if ((Get-Item $from).PSIsContainer) {
       Copy-Item -LiteralPath $from -Destination $to -Recurse -Force
     } else {
