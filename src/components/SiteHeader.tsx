@@ -19,7 +19,7 @@ function activeSection(pathname: string): NavSection | undefined {
   if (section === 'catalog') return 'catalog'
   if (section === 'countries') return 'countries'
   if (section === 'data') return 'data'
-  if (section === 'monitoring' || section === 'monitoring-system') return 'monitoring'
+  if (section === 'monitoring' || section === 'monitoring-system' || section === 'questionnaire-guide') return 'monitoring'
   if (section === 'hazard-impact-assessments') return 'impact'
   if (section === 'flood-analysis') return 'flood'
   if (section === 'about' || section === 'contact' || section === 'photo-galleries' || section === 'architecture') return 'about'
@@ -81,6 +81,10 @@ export function SiteHeader() {
               <Link to="/data/guide" aria-current={pathname === '/data/guide' ? 'page' : undefined}>
                 <strong>Data access guide</strong>
                 <small>Understand access, metadata, licensing and citation</small>
+              </Link>
+              <Link to="/questionnaire-guide" aria-current={pathname === '/questionnaire-guide' ? 'page' : undefined}>
+                <strong>Questionnaire guide</strong>
+                <small>Explore the household questionnaire, routing and indicators</small>
               </Link>
           </NavDropdown>
           <Link className={active === 'impact' ? 'active' : ''} to="/hazard-impact-assessments">Hazard impacts</Link>
@@ -164,6 +168,7 @@ export function SiteHeader() {
         <Link to="/monitoring" onClick={() => setMobileMenuOpen(false)}>Survey explorer</Link>
         <Link className={pathname === '/data/surveys' ? 'active' : ''} aria-current={pathname === '/data/surveys' ? 'page' : undefined} to="/data/surveys" onClick={() => setMobileMenuOpen(false)}>Your surveys</Link>
         <Link className={pathname === '/data/guide' ? 'active' : ''} aria-current={pathname === '/data/guide' ? 'page' : undefined} to="/data/guide" onClick={() => setMobileMenuOpen(false)}>Data access guide</Link>
+        <Link className={pathname === '/questionnaire-guide' ? 'active' : ''} aria-current={pathname === '/questionnaire-guide' ? 'page' : undefined} to="/questionnaire-guide" onClick={() => setMobileMenuOpen(false)}>Questionnaire guide</Link>
         <span className="mobile-nav-heading">About DIEM</span>
         <Link className={active === 'about' ? 'active' : ''} to="/about" onClick={() => setMobileMenuOpen(false)}>What is DIEM?</Link>
         <Link className={active === 'about' ? 'active' : ''} to="/photo-galleries" onClick={() => setMobileMenuOpen(false)}>Photo galleries</Link>

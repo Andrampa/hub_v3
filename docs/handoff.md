@@ -1033,3 +1033,16 @@ Live local account: 208 confirmed surveys retained during Check again; grouped d
 N1 follow-up: failed refresh retains prior bundles in both discovery and pending results. Successful removal and sign-out still clear access. User authorized committing/pushing main and web and deploying review and production on 2026-10-06. The ten unreadable definitions remain open.
 
 Deployment completed 2026-10-06: development main 535a27b and web main 1f654b5c pushed. Review run 37497472308 and production run 37497477583 both succeeded. Both origins serve the CI-built index-DqvITGA4.js and SurveyWorkspace-saIszbhC.js (HTTP 200). Final affected regression suite: 136 passing tests; both checkout builds passed. Remaining investigation is the ten unreadable grant definitions; signed-in production lifecycle scenarios and controlled latency measurement remain unverified.
+
+
+## 2026-11-27 - Questionnaire guide completed
+
+Public route/menu and embed header behavior are implemented. Prior
+Contributor-only acceptance notes are superseded. Live anonymous production
+verification confirms the iframe loads without sign-in, no toolbar is rendered,
+the embedded masthead is hidden, and the standalone masthead stays visible.
+An additional visible-heading utility gap found live was corrected with explicit
+CSS clipping. Deployment outcomes are in the changelog. Unrelated pre-existing
+workspace edits are preserved. No account-based acceptance is required for this
+public guide. Recheck with npm run build and the two focused guide/header test
+suites (exclude **/.local-reports/**).

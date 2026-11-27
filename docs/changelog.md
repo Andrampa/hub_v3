@@ -3167,3 +3167,15 @@ attribution somewhere reasonable; the site currently gives none for them.
 
 ### 2026-10-06 — Failed grant refresh retention
 Retain previous grant bundles when discovery fails, including the pending result, so grant-only users keep their inventory and prepared ZIPs. Successful discovery and session changes still remove obsolete access.
+
+## 2026-11-27 - Public questionnaire guide
+
+- Added the public /questionnaire-guide page and its final Household surveys
+  desktop/mobile menu entry; no session or Contributor capability is required.
+- Embedded mode passes diemEmbed=hub, hides the guide masthead and omits the
+  Hub title/action bar. Standalone retains the guide's white FAO header.
+- Added explicit accessible-heading clipping because Bootstrap Reboot does not
+  provide visually-hidden. Live anonymous rendering exposed this final gap.
+- Sixteen focused Hub tests, the Hub build and 1,084 guide checks pass.
+  Monitoring source main ba64943 and deployment main 539cb3f8 retain the fix;
+  Claude's newer review-only designer changes were preserved.

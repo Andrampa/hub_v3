@@ -113,3 +113,33 @@ describe('SiteHeader architecture link', () => {
     }
   })
 })
+
+describe('SiteHeader questionnaire guide', () => {
+  afterEach(() => { Object.assign(auth, { status: 'anonymous', user: null }) })
+
+  it.each(['anonymous', 'loading', 'authenticating', 'authenticated'])('shows the public guide for %s visitors without Contributor capability', async (status) => {
+    Object.assign(auth, { status, user: { capabilities: { contributor: false } } })
+    await renderAt('/questionnaire-guide')
+    expect(container.querySelectorAll('a[href="/questionnaire-guide"]')).toHaveLength(2)
+  })
+
+  it('places the current guide last in both Household surveys menus for Contributors', async () => {
+    Object.assign(auth, { status: 'authenticated', user: { username: 'reader', capabilities: { contributor: true } } })
+    await renderAt('/questionnaire-guide')
+    const desktop = container.querySelector('.nav-dropdown')
+    expect(desktop?.classList.contains('active')).toBe(true)
+    const links = desktop?.querySelectorAll('a') ?? []
+    expect(links[links.length - 1]?.getAttribute('href')).toBe('/questionnaire-guide')
+    for (const selector of ['.nav-links', '#mobile-navigation']) {
+      const link = container.querySelector(`${selector} a[href="/questionnaire-guide"]`)
+      expect(link?.textContent).toContain('Questionnaire guide')
+      expect(link?.getAttribute('aria-current')).toBe('page')
+    }
+    const mobileLink = container.querySelector('#mobile-navigation a[href="/questionnaire-guide"]')
+    expect(mobileLink?.previousElementSibling?.getAttribute('href')).toBe('/data/guide')
+    expect(mobileLink?.nextElementSibling?.textContent).toBe('About DIEM')
+    Object.assign(auth, { status: 'anonymous', user: null })
+    await renderAt('/questionnaire-guide')
+    expect(container.querySelectorAll('a[href="/questionnaire-guide"]')).toHaveLength(2)
+  })
+})

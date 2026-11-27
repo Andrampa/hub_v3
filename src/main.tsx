@@ -45,6 +45,7 @@ const Contact = lazy(() => import('./pages/Contact'))
 const PhotoGalleries = lazy(() => import('./pages/PhotoGalleries'))
 const LegacyHubRoute = lazy(() => import('./pages/LegacyHubRoute'))
 const Architecture = lazy(() => import('./pages/Architecture'))
+const QuestionnaireGuide = lazy(() => import('./pages/QuestionnaireGuide'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function RouteLoading() {
@@ -123,6 +124,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/datasets/:datasetId/explore" element={<DatasetExplorer />} />
             <Route path="/monitoring-system" element={<HouseholdMonitoring />} />
             <Route path="/monitoring" element={<MonitoringSystem />} />
+            <Route path="/questionnaire-guide" element={<QuestionnaireGuide />} />
             <Route path="/flood-analysis" element={<FloodServices />} />
             <Route path="/flood-services" element={<RenamedRoute to="/flood-analysis" />} />
             <Route path="/hazard-impact-assessments" element={<HazardImpactAssessments />} />

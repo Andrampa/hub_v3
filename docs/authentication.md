@@ -181,3 +181,12 @@ Redirect URLs must match registered OAuth credential URLs. Add a separate HTTPS 
 - Expired session restoration.
 - Sign-out and reload.
 - Protected item shared and not shared with the active community member.
+
+## Questionnaire guide
+
+`/questionnaire-guide` and its final Household surveys menu entry (desktop and
+mobile) are public, regardless of session or Contributor capability.
+The iframe loads `https://diem-monitoring.apps.fao.org/questionnaire.html?diemEmbed=hub`.
+This reuses Monitoring's existing presentation flag to hide its own masthead;
+the Hub renders no extra title/action toolbar. The standalone guide keeps its
+white FAO masthead. No Hub credentials or authentication bridge are sent to it.
