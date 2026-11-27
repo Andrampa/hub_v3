@@ -3179,3 +3179,14 @@ Retain previous grant bundles when discovery fails, including the pending result
 - Sixteen focused Hub tests, the Hub build and 1,084 guide checks pass.
   Monitoring source main ba64943 and deployment main 539cb3f8 retain the fix;
   Claude's newer review-only designer changes were preserved.
+
+Deployment verification completed: Hub production run [46061147509](https://github.com/un-fao/fao-oer-diem-hub/actions/runs/46061147509)
+published bfd7aaa4; Monitoring review sync run [46060904199](https://github.com/un-fao/fao-oer-diem-monitoring-app/actions/runs/46060904199)
+published 539cb3f8. Both succeeded. Live anonymous Hub access, absent extra
+headers, standalone masthead visibility, and 375/768/1024/1440 px layouts were
+verified. Guide JS/CSS on Monitoring production and review match development
+(ignoring whitespace); all seven Hub task files match deployment source.
+Hub development source is committed/pushed as 53f0da9; Monitoring development
+source is ba64943. Claude's unrelated edits were preserved. Hub review was not
+deployed: automatic approval review requires explicit authorization for that
+additional environment.
